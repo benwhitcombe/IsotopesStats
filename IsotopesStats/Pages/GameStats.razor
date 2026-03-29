@@ -9,6 +9,7 @@
         <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" placeholder="Search Player or Opponent..." />
     </div>
     <div class="action-buttons">
+        <NavLink href="admin" class="view-btn" style="background-color: var(--isotopes-accent); color: white; border: none; text-decoration: none;">➕ Add New Game</NavLink>
         <button class="view-btn" @onclick="ExpandAll">Expand All</button>
         <button class="view-btn" @onclick="CollapseAll">Collapse All</button>
     </div>
@@ -75,7 +76,6 @@
                             <thead>
                                 <tr>
                                     <th class="sticky-col">Player</th>
-                                    <th>BO</th>
                                     <th>PA</th>
                                     <th>AB</th>
                                     <th>H</th>
@@ -99,8 +99,7 @@
                                 @foreach (StatEntry stat in group)
                                 {
                                     <tr>
-                                        <td class="player-name sticky-col">@stat.Player?.Name</td>
-                                        <td>@stat.BO</td>
+                                        <td class="player-name sticky-col">@stat.BO. @stat.Player?.Name</td>
                                         <td>@stat.PA</td>
                                         <td>@stat.AB</td>
                                         <td>@stat.H</td>
@@ -122,7 +121,6 @@
                                 }
                                 <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
                                     <td class="sticky-col">TOTALS</td>
-                                    <td>-</td>
                                     <td>@teamPA</td>
                                     <td>@teamAB</td>
                                     <td>@teamHits</td>

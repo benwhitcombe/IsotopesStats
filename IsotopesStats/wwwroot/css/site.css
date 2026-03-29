@@ -165,6 +165,14 @@ td {
     border-bottom: 1px solid #eee;
 }
 
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
 tr:last-child td {
     border-bottom: none;
 }
@@ -346,6 +354,52 @@ tr:last-child td {
 
 .box-score-table tr:hover {
     background-color: #fff9f9;
+}
+
+/* Player Leaderboard Enhancements */
+.leader-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.leader-card {
+    background: linear-gradient(135deg, var(--isotopes-accent), #002d5a);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.leader-card::after {
+    content: "🏆";
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 4rem;
+    opacity: 0.1;
+}
+
+.leader-category {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.leader-name {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0.5rem 0;
+}
+
+.leader-value {
+    font-size: 2rem;
+    font-weight: 300;
 }
 
 /* Form Styling */

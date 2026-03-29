@@ -35,6 +35,7 @@ public class StatsRepository
                 SUM(s.RBI) as RBI
             FROM Players p
             LEFT JOIN Stats s ON p.Id = s.PlayerId
+            WHERE p.Name != 'Spare'
             GROUP BY p.Id, p.Name
             ORDER BY (CAST(SUM(s.H1B + s.H2B + s.H3B + s.H4B + s.HR) AS FLOAT) / NULLIF(SUM(s.H1B + s.H2B + s.H3B + s.H4B + s.HR + s.FC + s.K + s.KF + s.GO + s.FO), 0)) DESC
         ";
