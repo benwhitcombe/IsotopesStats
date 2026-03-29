@@ -141,6 +141,72 @@ public class StatsService
         return players;
     }
 
+    public List<GameStatDetail> GetAllGameStats()
+    {
+        List<GameStatDetail> stats = new List<GameStatDetail>();
+        using SqliteConnection connection = new SqliteConnection(ConnectionString);
+        connection.Open();
+
+        SqliteCommand command = connection.CreateCommand();
+        command.CommandText = 
+        @"
+            SELECT 
+                g.GameNumber,
+                g.Date,
+                g.Diamond,
+                g.Opponent,
+                p.Name,
+                s.BO,
+                s.H1B,
+                s.H2B,
+                s.H3B,
+                s.H4B,
+                s.HR,
+                s.FC,
+                s.BB,
+                s.SF,
+                s.K,
+                s.KF,
+                s.GO,
+                s.FO,
+                s.R,
+                s.RBI
+            FROM Stats s
+            JOIN Games g ON s.GameId = g.Id
+            JOIN Players p ON s.PlayerId = p.Id
+            ORDER BY g.Date DESC, s.BO ASC
+        ";
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            stats.Add(new GameStatDetail
+            {
+                GameNumber = reader.GetInt32(0),
+                Date = DateTime.Parse(reader.GetString(1)),
+                Diamond = reader.GetString(2),
+                Opponent = reader.GetString(3),
+                PlayerName = reader.GetString(4),
+                BO = reader.GetInt32(5),
+                H1B = reader.GetInt32(6),
+                H2B = reader.GetInt32(7),
+                H3B = reader.GetInt32(8),
+                H4B = reader.GetInt32(9),
+                HR = reader.GetInt32(10),
+                FC = reader.GetInt32(11),
+                BB = reader.GetInt32(12),
+                SF = reader.GetInt32(13),
+                K = reader.GetInt32(14),
+                KF = reader.GetInt32(15),
+                GO = reader.GetInt32(16),
+                FO = reader.GetInt32(17),
+                R = reader.GetInt32(18),
+                RBI = reader.GetInt32(19)
+            });
+        }
+        return stats;
+    }
+
     public void AddGameWithStats(Game game, List<StatEntry> stats)
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
@@ -151,10 +217,9 @@ public class StatsService
         {
             SqliteCommand gameCommand = connection.CreateCommand();
             gameCommand.Transaction = transaction;
-            gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Time, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $time, $diamond, $opponent, $type); SELECT last_insert_rowid();";
+            gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $diamond, $opponent, $type); SELECT last_insert_rowid();";
             gameCommand.Parameters.AddWithValue("$gameNumber", game.GameNumber);
-            gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd"));
-            gameCommand.Parameters.AddWithValue("$time", game.Time);
+            gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm"));
             gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);
             gameCommand.Parameters.AddWithValue("$opponent", game.Opponent);
             gameCommand.Parameters.AddWithValue("$type", (int)game.Type);

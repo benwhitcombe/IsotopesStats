@@ -1,0 +1,192 @@
+@page "/gamestats"
+@using IsotopesStats.Data
+@using IsotopesStats.Models
+@inject StatsService StatsService
+
+<h3>Detailed Game Stats</h3>
+
+<div class="stat-card">
+    <div class="form-group">
+        <label>Filter by Player or Opponent:</label>
+        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" placeholder="Search..." />
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table-sm">
+        <thead>
+            <tr>
+                <th @onclick="@(() => Sort("GameNumber"))">Game # @(GetSortIcon("GameNumber"))</th>
+                <th @onclick="@(() => Sort("Date"))">Date/Time @(GetSortIcon("Date"))</th>
+                <th>Diamond</th>
+                <th @onclick="@(() => Sort("Opponent"))">Opposition @(GetSortIcon("Opponent"))</th>
+                <th @onclick="@(() => Sort("PlayerName"))">Player @(GetSortIcon("PlayerName"))</th>
+                <th @onclick="@(() => Sort("BO"))">BO @(GetSortIcon("BO"))</th>
+                <th @onclick="@(() => Sort("PA"))">PA @(GetSortIcon("PA"))</th>
+                <th @onclick="@(() => Sort("AB"))">AB @(GetSortIcon("AB"))</th>
+                <th @onclick="@(() => Sort("H"))">H @(GetSortIcon("H"))</th>
+                <th @onclick="@(() => Sort("H1B"))">1B @(GetSortIcon("H1B"))</th>
+                <th @onclick="@(() => Sort("H2B"))">2B @(GetSortIcon("H2B"))</th>
+                <th @onclick="@(() => Sort("H3B"))">3B @(GetSortIcon("H3B"))</th>
+                <th @onclick="@(() => Sort("H4B"))">4B @(GetSortIcon("H4B"))</th>
+                <th @onclick="@(() => Sort("HR"))">HR @(GetSortIcon("HR"))</th>
+                <th @onclick="@(() => Sort("FC"))">FC @(GetSortIcon("FC"))</th>
+                <th @onclick="@(() => Sort("BB"))">BB @(GetSortIcon("BB"))</th>
+                <th @onclick="@(() => Sort("SF"))">SF @(GetSortIcon("SF"))</th>
+                <th @onclick="@(() => Sort("K"))">K @(GetSortIcon("K"))</th>
+                <th @onclick="@(() => Sort("KF"))">KF @(GetSortIcon("KF"))</th>
+                <th @onclick="@(() => Sort("GO"))">GO @(GetSortIcon("GO"))</th>
+                <th @onclick="@(() => Sort("FO"))">FO @(GetSortIcon("FO"))</th>
+                <th @onclick="@(() => Sort("R"))">R @(GetSortIcon("R"))</th>
+                <th @onclick="@(() => Sort("RBI"))">RBI @(GetSortIcon("RBI"))</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (GameStatDetail stat in FilteredStats)
+            {
+                <tr>
+                    <td>@stat.GameNumber</td>
+                    <td>@stat.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@stat.Diamond</td>
+                    <td>@stat.Opponent</td>
+                    <td class="player-name">@stat.PlayerName</td>
+                    <td>@stat.BO</td>
+                    <td>@stat.PA</td>
+                    <td>@stat.AB</td>
+                    <td>@stat.H</td>
+                    <td>@stat.H1B</td>
+                    <td>@stat.H2B</td>
+                    <td>@stat.H3B</td>
+                    <td>@stat.H4B</td>
+                    <td>@stat.HR</td>
+                    <td>@stat.FC</td>
+                    <td>@stat.BB</td>
+                    <td>@stat.SF</td>
+                    <td>@stat.K</td>
+                    <td>@stat.KF</td>
+                    <td>@stat.GO</td>
+                    <td>@stat.FO</td>
+                    <td>@stat.R</td>
+                    <td>@stat.RBI</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<GameStatDetail> allStats = new();
+    private string filterText = "";
+    private string currentSortColumn = "Date";
+    private bool isAscending = false;
+
+    protected override void OnInitialized()
+    {
+        try 
+        {
+            allStats = StatsService.GetAllGameStats();
+            Sort(currentSortColumn, false);
+        }
+        catch (Exception)
+        {
+            allStats = new List<GameStatDetail>();
+        }
+    }
+
+    private IEnumerable<GameStatDetail> FilteredStats => allStats
+        .Where(s => string.IsNullOrWhiteSpace(filterText) 
+            || s.PlayerName.Contains(filterText, StringComparison.OrdinalIgnoreCase) 
+            || s.Opponent.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+
+    private void Sort(string column, bool toggle = true)
+    {
+        if (toggle)
+        {
+            if (currentSortColumn == column)
+            {
+                isAscending = !isAscending;
+            }
+            else
+            {
+                currentSortColumn = column;
+                isAscending = false;
+            }
+        }
+
+        switch (column)
+        {
+            case "GameNumber":
+                allStats = isAscending ? allStats.OrderBy(s => s.GameNumber).ToList() : allStats.OrderByDescending(s => s.GameNumber).ToList();
+                break;
+            case "Date":
+                allStats = isAscending ? allStats.OrderBy(s => s.Date).ToList() : allStats.OrderByDescending(s => s.Date).ToList();
+                break;
+            case "Opponent":
+                allStats = isAscending ? allStats.OrderBy(s => s.Opponent).ToList() : allStats.OrderByDescending(s => s.Opponent).ToList();
+                break;
+            case "PlayerName":
+                allStats = isAscending ? allStats.OrderBy(s => s.PlayerName).ToList() : allStats.OrderByDescending(s => s.PlayerName).ToList();
+                break;
+            case "BO":
+                allStats = isAscending ? allStats.OrderBy(s => s.BO).ToList() : allStats.OrderByDescending(s => s.BO).ToList();
+                break;
+            case "PA":
+                allStats = isAscending ? allStats.OrderBy(s => s.PA).ToList() : allStats.OrderByDescending(s => s.PA).ToList();
+                break;
+            case "AB":
+                allStats = isAscending ? allStats.OrderBy(s => s.AB).ToList() : allStats.OrderByDescending(s => s.AB).ToList();
+                break;
+            case "H":
+                allStats = isAscending ? allStats.OrderBy(s => s.H).ToList() : allStats.OrderByDescending(s => s.H).ToList();
+                break;
+            case "H1B":
+                allStats = isAscending ? allStats.OrderBy(s => s.H1B).ToList() : allStats.OrderByDescending(s => s.H1B).ToList();
+                break;
+            case "H2B":
+                allStats = isAscending ? allStats.OrderBy(s => s.H2B).ToList() : allStats.OrderByDescending(s => s.H2B).ToList();
+                break;
+            case "H3B":
+                allStats = isAscending ? allStats.OrderBy(s => s.H3B).ToList() : allStats.OrderByDescending(s => s.H3B).ToList();
+                break;
+            case "H4B":
+                allStats = isAscending ? allStats.OrderBy(s => s.H4B).ToList() : allStats.OrderByDescending(s => s.H4B).ToList();
+                break;
+            case "HR":
+                allStats = isAscending ? allStats.OrderBy(s => s.HR).ToList() : allStats.OrderByDescending(s => s.HR).ToList();
+                break;
+            case "FC":
+                allStats = isAscending ? allStats.OrderBy(s => s.FC).ToList() : allStats.OrderByDescending(s => s.FC).ToList();
+                break;
+            case "BB":
+                allStats = isAscending ? allStats.OrderBy(s => s.BB).ToList() : allStats.OrderByDescending(s => s.BB).ToList();
+                break;
+            case "SF":
+                allStats = isAscending ? allStats.OrderBy(s => s.SF).ToList() : allStats.OrderByDescending(s => s.SF).ToList();
+                break;
+            case "K":
+                allStats = isAscending ? allStats.OrderBy(s => s.K).ToList() : allStats.OrderByDescending(s => s.K).ToList();
+                break;
+            case "KF":
+                allStats = isAscending ? allStats.OrderBy(s => s.KF).ToList() : allStats.OrderByDescending(s => s.KF).ToList();
+                break;
+            case "GO":
+                allStats = isAscending ? allStats.OrderBy(s => s.GO).ToList() : allStats.OrderByDescending(s => s.GO).ToList();
+                break;
+            case "FO":
+                allStats = isAscending ? allStats.OrderBy(s => s.FO).ToList() : allStats.OrderByDescending(s => s.FO).ToList();
+                break;
+            case "R":
+                allStats = isAscending ? allStats.OrderBy(s => s.R).ToList() : allStats.OrderByDescending(s => s.R).ToList();
+                break;
+            case "RBI":
+                allStats = isAscending ? allStats.OrderBy(s => s.RBI).ToList() : allStats.OrderByDescending(s => s.RBI).ToList();
+                break;
+        }
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (currentSortColumn != column) return "↕️";
+        return isAscending ? "🔼" : "🔽";
+    }
+}

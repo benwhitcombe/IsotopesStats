@@ -76,10 +76,12 @@ public static class DataSeeder
             {
                 SqliteCommand gameCommand = connection.CreateCommand();
                 gameCommand.Transaction = transaction;
-                gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Time, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $time, $diamond, $opponent, 0); SELECT last_insert_rowid();";
+                gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $diamond, $opponent, 0); SELECT last_insert_rowid();";
                 gameCommand.Parameters.AddWithValue("$gameNumber", gameGroup.Key.GameNumber);
-                gameCommand.Parameters.AddWithValue("$date", gameGroup.Key.Date);
-                gameCommand.Parameters.AddWithValue("$time", gameGroup.Key.Time?.ToString() ?? "");
+                
+                string combinedDateTime = $"{gameGroup.Key.Date} {gameGroup.Key.Time?.ToString() ?? "00:00"}";
+                gameCommand.Parameters.AddWithValue("$date", combinedDateTime);
+                
                 gameCommand.Parameters.AddWithValue("$diamond", gameGroup.Key.Diamond);
                 gameCommand.Parameters.AddWithValue("$opponent", gameGroup.Key.Opposition);
                 int gameId = Convert.ToInt32(gameCommand.ExecuteScalar());

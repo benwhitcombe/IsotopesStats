@@ -128,6 +128,12 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
+.table-sm th, .table-sm td {
+    padding: 8px 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;

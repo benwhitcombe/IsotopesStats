@@ -24,7 +24,6 @@ public static class DatabaseInitializer
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 GameNumber INTEGER NOT NULL DEFAULT 0,
                 Date TEXT NOT NULL,
-                Time TEXT NOT NULL DEFAULT '',
                 Diamond TEXT NOT NULL DEFAULT '',
                 Opponent TEXT NOT NULL,
                 Type INTEGER NOT NULL DEFAULT 0
