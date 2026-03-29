@@ -1,9 +1,9 @@
-@page "/stats"
+@page "/playerstats"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @inject StatsService StatsService
 
-<h3>Player Leaderboard</h3>
+<h3>Player Stats Leaderboard</h3>
 
 <div class="view-switcher">
     <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => activeView = "Standard")">Standard</button>
