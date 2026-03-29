@@ -1,5 +1,5 @@
 using IsotopesStats.Models;
-using IsotopesStats.Data.Repositories;
+using IsotopesStats.Data;
 
 namespace IsotopesStats.Services;
 

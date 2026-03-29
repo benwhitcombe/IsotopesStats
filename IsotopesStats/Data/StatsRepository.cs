@@ -1,11 +1,11 @@
 using Microsoft.Data.Sqlite;
 using IsotopesStats.Models;
 
-namespace IsotopesStats.Data.Repositories;
+namespace IsotopesStats.Data;
 
 public class StatsRepository
 {
-    private const string ConnectionString = "Data Source=IsotopesStats.db";
+    private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
     public List<PlayerStatsSummary> GetStatsSummary()
     {

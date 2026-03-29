@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using IsotopesStats.Data;
-using IsotopesStats.Data.Repositories;
 using IsotopesStats.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);

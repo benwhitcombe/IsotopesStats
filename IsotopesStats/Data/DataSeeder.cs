@@ -7,7 +7,7 @@ namespace IsotopesStats.Data;
 
 public static class DataSeeder
 {
-    private const string ConnectionString = "Data Source=IsotopesStats.db";
+    private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
     private class RawGameData
     {
@@ -49,10 +49,10 @@ public static class DataSeeder
         checkCommand.CommandText = "SELECT COUNT(*) FROM Players";
         if (Convert.ToInt32(checkCommand.ExecuteScalar()) > 0) return;
 
-        string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "2025_data.json");
+        string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data/2025_data.json");
         if (!File.Exists(jsonPath))
         {
-            jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "2025_data.json");
+            jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "Data/2025_data.json");
         }
 
         if (!File.Exists(jsonPath))

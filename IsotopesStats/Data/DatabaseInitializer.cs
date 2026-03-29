@@ -4,7 +4,7 @@ namespace IsotopesStats.Data;
 
 public static class DatabaseInitializer
 {
-    private const string ConnectionString = "Data Source=IsotopesStats.db";
+    private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
     public static void Initialize()
     {
