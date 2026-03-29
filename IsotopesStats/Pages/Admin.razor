@@ -1,0 +1,122 @@
+@page "/admin"
+@using IsotopesStats.Data
+@using IsotopesStats.Models
+@inject StatsService StatsService
+@inject NavigationManager Navigation
+
+<h3>Enter Game Stats</h3>
+
+<div class="stat-card">
+    <div class="form-group">
+        <label>Date</label>
+        <input type="date" class="form-control" @bind="newGame.Date" />
+    </div>
+    <div class="form-group">
+        <label>Opponent</label>
+        <input type="text" class="form-control" placeholder="Opponent Name" @bind="newGame.Opponent" />
+    </div>
+    <div class="form-group">
+        <label>Game Type</label>
+        <select class="form-control" @bind="newGame.Type">
+            @foreach (GameType type in Enum.GetValues<GameType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+    </div>
+</div>
+
+<div class="stat-list">
+    @foreach (StatEntry stat in playerStats)
+    {
+        Player? player = players.FirstOrDefault(p => p.Id == stat.PlayerId);
+        <div class="admin-player-card">
+            <div class="admin-player-name">@player?.Name</div>
+            <div class="admin-stats-grid">
+                <div class="admin-stat-input"><label>1B</label><input type="number" @bind="stat.H1B" /></div>
+                <div class="admin-stat-input"><label>2B</label><input type="number" @bind="stat.H2B" /></div>
+                <div class="admin-stat-input"><label>3B</label><input type="number" @bind="stat.H3B" /></div>
+                <div class="admin-stat-input"><label>4B</label><input type="number" @bind="stat.H4B" /></div>
+                <div class="admin-stat-input"><label>HR</label><input type="number" @bind="stat.HR" /></div>
+                <div class="admin-stat-input"><label>BB</label><input type="number" @bind="stat.BB" /></div>
+                <div class="admin-stat-input"><label>SF</label><input type="number" @bind="stat.SF" /></div>
+                <div class="admin-stat-input"><label>FC</label><input type="number" @bind="stat.FC" /></div>
+                <div class="admin-stat-input"><label>K</label><input type="number" @bind="stat.K" /></div>
+                <div class="admin-stat-input"><label>KF</label><input type="number" @bind="stat.KF" /></div>
+                <div class="admin-stat-input"><label>B</label><input type="number" @bind="stat.B" /></div>
+                <div class="admin-stat-input"><label>GO</label><input type="number" @bind="stat.GO" /></div>
+                <div class="admin-stat-input"><label>FO</label><input type="number" @bind="stat.FO" /></div>
+                <div class="admin-stat-input"><label>O</label><input type="number" @bind="stat.O" /></div>
+                <div class="admin-stat-input"><label>R</label><input type="number" @bind="stat.R" /></div>
+                <div class="admin-stat-input"><label>RBI</label><input type="number" @bind="stat.RBI" /></div>
+            </div>
+        </div>
+    }
+
+    <button class="btn-primary" @onclick="SubmitGame">Save Game Stats</button>
+</div>
+
+@if (showSuccess)
+{
+    <div class="stat-card" style="background-color: #d4edda; color: #155724; margin-top: 1rem;">
+        Game saved successfully!
+    </div>
+}
+
+@code {
+    private Game newGame = new() { Date = DateTime.Today };
+    private List<Player> players = new();
+    private List<StatEntry> playerStats = new();
+    private bool showSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        try 
+        {
+            players = StatsService.GetPlayers();
+            ResetForm();
+        }
+        catch (Exception)
+        {
+            players = new List<Player>();
+            playerStats = new List<StatEntry>();
+        }
+    }
+
+    private void ResetForm()
+    {
+        playerStats.Clear();
+        foreach (Player player in players)
+        {
+            playerStats.Add(new StatEntry { PlayerId = player.Id });
+        }
+    }
+
+    private void SubmitGame()
+    {
+        try
+        {
+            foreach (StatEntry stat in playerStats)
+            {
+                // Calculate derived stats before saving
+                stat.H = stat.H1B + stat.H2B + stat.H3B + stat.H4B + stat.HR;
+                
+                // AB = H + FC + K + KF + B + GO + FO + O
+                stat.AB = stat.H + stat.FC + stat.K + stat.KF + stat.B + stat.GO + stat.FO + stat.O;
+                
+                // PA = AB + BB + SF
+                stat.PA = stat.AB + stat.BB + stat.SF;
+            }
+
+            StatsService.AddGameWithStats(newGame, playerStats);
+            showSuccess = true;
+            newGame = new() { Date = DateTime.Today };
+            ResetForm();
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            // Error handling
+        }
+    }
+}

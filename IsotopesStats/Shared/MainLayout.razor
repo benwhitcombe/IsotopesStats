@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Isotopes Stats 2026</PageTitle>
+
+<div class="page">
+    <header class="isotopes-header">
+        <div class="header-content">
+            <span class="logo-atom">⚛️</span>
+            <h1>ISOTOPES STATS</h1>
+        </div>
+    </header>
+
+    <main>
+        <article class="content">
+            @Body
+        </article>
+    </main>
+
+    <nav class="mobile-nav">
+        <NavLink href="" Match="NavLinkMatch.All">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </NavLink>
+        <NavLink href="stats">
+            <span class="nav-icon">📊</span>
+            <span>Stats</span>
+        </NavLink>
+        <NavLink href="admin">
+            <span class="nav-icon">✏️</span>
+            <span>Admin</span>
+        </NavLink>
+    </nav>
+</div>

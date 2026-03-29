@@ -1,0 +1,72 @@
+@page "/"
+@using IsotopesStats.Data
+@using IsotopesStats.Models
+@inject StatsService StatsService
+
+<div class="stat-card">
+    <h3>Team Summary</h3>
+    <div class="stat-grid">
+        <div class="stat-item">
+            <span class="stat-label">Hits</span>
+            <span class="stat-value">@teamTotals.H</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">HRs</span>
+            <span class="stat-value">@teamTotals.HR</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Runs</span>
+            <span class="stat-value">@teamTotals.R</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Team AVG</span>
+            <span class="stat-value">@teamTotals.AVG.ToString(".000")</span>
+        </div>
+    </div>
+</div>
+
+<div class="stat-card">
+    <h3>Top Performers</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>AVG</th>
+                    <th>OPS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (PlayerStatsSummary player in topPerformers)
+                {
+                    <tr>
+                        <td class="player-name">@player.PlayerName</td>
+                        <td>@player.AVG.ToString(".000")</td>
+                        <td>@player.OPS.ToString(".000")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private PlayerStatsSummary teamTotals = new();
+    private List<PlayerStatsSummary> topPerformers = new();
+
+    protected override void OnInitialized()
+    {
+        try 
+        {
+            teamTotals = StatsService.GetTeamTotals();
+            List<PlayerStatsSummary> summary = StatsService.GetStatsSummary();
+            topPerformers = summary?.Take(5).ToList() ?? new List<PlayerStatsSummary>();
+        }
+        catch (Exception)
+        {
+            // Fallback to empty data if service fails
+            teamTotals = new PlayerStatsSummary();
+            topPerformers = new List<PlayerStatsSummary>();
+        }
+    }
+}
