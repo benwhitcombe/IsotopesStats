@@ -16,59 +16,89 @@
     <table class="table-sm">
         <thead>
             <tr>
-                <th @onclick="@(() => Sort("GameNumber"))">Game # @(GetSortIcon("GameNumber"))</th>
-                <th @onclick="@(() => Sort("Date"))">Date/Time @(GetSortIcon("Date"))</th>
-                <th>Diamond</th>
-                <th @onclick="@(() => Sort("Opponent"))">Opposition @(GetSortIcon("Opponent"))</th>
-                <th @onclick="@(() => Sort("PlayerName"))">Player @(GetSortIcon("PlayerName"))</th>
-                <th @onclick="@(() => Sort("BO"))">BO @(GetSortIcon("BO"))</th>
-                <th @onclick="@(() => Sort("PA"))">PA @(GetSortIcon("PA"))</th>
-                <th @onclick="@(() => Sort("AB"))">AB @(GetSortIcon("AB"))</th>
-                <th @onclick="@(() => Sort("H"))">H @(GetSortIcon("H"))</th>
-                <th @onclick="@(() => Sort("H1B"))">1B @(GetSortIcon("H1B"))</th>
-                <th @onclick="@(() => Sort("H2B"))">2B @(GetSortIcon("H2B"))</th>
-                <th @onclick="@(() => Sort("H3B"))">3B @(GetSortIcon("H3B"))</th>
-                <th @onclick="@(() => Sort("H4B"))">4B @(GetSortIcon("H4B"))</th>
-                <th @onclick="@(() => Sort("HR"))">HR @(GetSortIcon("HR"))</th>
-                <th @onclick="@(() => Sort("FC"))">FC @(GetSortIcon("FC"))</th>
-                <th @onclick="@(() => Sort("BB"))">BB @(GetSortIcon("BB"))</th>
-                <th @onclick="@(() => Sort("SF"))">SF @(GetSortIcon("SF"))</th>
-                <th @onclick="@(() => Sort("K"))">K @(GetSortIcon("K"))</th>
-                <th @onclick="@(() => Sort("KF"))">KF @(GetSortIcon("KF"))</th>
-                <th @onclick="@(() => Sort("GO"))">GO @(GetSortIcon("GO"))</th>
-                <th @onclick="@(() => Sort("FO"))">FO @(GetSortIcon("FO"))</th>
-                <th @onclick="@(() => Sort("R"))">R @(GetSortIcon("R"))</th>
-                <th @onclick="@(() => Sort("RBI"))">RBI @(GetSortIcon("RBI"))</th>
+                <th>Player</th>
+                <th>BO</th>
+                <th>PA</th>
+                <th>AB</th>
+                <th>H</th>
+                <th>1B</th>
+                <th>2B</th>
+                <th>3B</th>
+                <th>4B</th>
+                <th>HR</th>
+                <th>FC</th>
+                <th>BB</th>
+                <th>SF</th>
+                <th>K</th>
+                <th>KF</th>
+                <th>GO</th>
+                <th>FO</th>
+                <th>R</th>
+                <th>RBI</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (StatEntry stat in FilteredStats)
+            @foreach (var group in GroupedStats)
             {
-                <tr>
-                    <td>@stat.Game?.GameNumber</td>
-                    <td>@stat.Game?.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@stat.Game?.Diamond</td>
-                    <td>@stat.Game?.Opponent</td>
-                    <td class="player-name">@stat.Player?.Name</td>
-                    <td>@stat.BO</td>
-                    <td>@stat.PA</td>
-                    <td>@stat.AB</td>
-                    <td>@stat.H</td>
-                    <td>@stat.H1B</td>
-                    <td>@stat.H2B</td>
-                    <td>@stat.H3B</td>
-                    <td>@stat.H4B</td>
-                    <td>@stat.HR</td>
-                    <td>@stat.FC</td>
-                    <td>@stat.BB</td>
-                    <td>@stat.SF</td>
-                    <td>@stat.K</td>
-                    <td>@stat.KF</td>
-                    <td>@stat.GO</td>
-                    <td>@stat.FO</td>
-                    <td>@stat.R</td>
-                    <td>@stat.RBI</td>
+                var gameInfo = group.First().Game;
+                var isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
+                
+                <tr class="game-header-row @(isExpanded ? "" : "collapsed")" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
+                    <th colspan="19">
+                        <span class="expand-icon">▼</span>
+                        Game #@gameInfo?.GameNumber - @gameInfo?.Date.ToString("yyyy-MM-dd HH:mm") vs @gameInfo?.Opponent (@gameInfo?.Diamond)
+                    </th>
                 </tr>
+
+                @if (isExpanded)
+                {
+                    @foreach (StatEntry stat in group)
+                    {
+                        <tr>
+                            <td class="player-name">@stat.Player?.Name</td>
+                            <td>@stat.BO</td>
+                            <td>@stat.PA</td>
+                            <td>@stat.AB</td>
+                            <td>@stat.H</td>
+                            <td>@stat.H1B</td>
+                            <td>@stat.H2B</td>
+                            <td>@stat.H3B</td>
+                            <td>@stat.H4B</td>
+                            <td>@stat.HR</td>
+                            <td>@stat.FC</td>
+                            <td>@stat.BB</td>
+                            <td>@stat.SF</td>
+                            <td>@stat.K</td>
+                            <td>@stat.KF</td>
+                            <td>@stat.GO</td>
+                            <td>@stat.FO</td>
+                            <td>@stat.R</td>
+                            <td>@stat.RBI</td>
+                        </tr>
+                    }
+                    
+                    <tr class="game-summary-row">
+                        <td>GAME TOTALS</td>
+                        <td>-</td>
+                        <td>@group.Sum(s => s.PA)</td>
+                        <td>@group.Sum(s => s.AB)</td>
+                        <td>@group.Sum(s => s.H)</td>
+                        <td>@group.Sum(s => s.H1B)</td>
+                        <td>@group.Sum(s => s.H2B)</td>
+                        <td>@group.Sum(s => s.H3B)</td>
+                        <td>@group.Sum(s => s.H4B)</td>
+                        <td>@group.Sum(s => s.HR)</td>
+                        <td>@group.Sum(s => s.FC)</td>
+                        <td>@group.Sum(s => s.BB)</td>
+                        <td>@group.Sum(s => s.SF)</td>
+                        <td>@group.Sum(s => s.K)</td>
+                        <td>@group.Sum(s => s.KF)</td>
+                        <td>@group.Sum(s => s.GO)</td>
+                        <td>@group.Sum(s => s.FO)</td>
+                        <td>@group.Sum(s => s.R)</td>
+                        <td>@group.Sum(s => s.RBI)</td>
+                    </tr>
+                }
             }
         </tbody>
     </table>
@@ -76,16 +106,20 @@
 
 @code {
     private List<StatEntry> allStats = new();
+    private HashSet<int> expandedGames = new();
     private string filterText = "";
-    private string currentSortColumn = "Date";
-    private bool isAscending = false;
 
     protected override void OnInitialized()
     {
         try 
         {
             allStats = StatsService.GetAllGameStats();
-            Sort(currentSortColumn, false);
+            // Expand the most recent game by default
+            var latestGame = allStats.FirstOrDefault()?.Game;
+            if (latestGame != null)
+            {
+                expandedGames.Add(latestGame.Id);
+            }
         }
         catch (Exception)
         {
@@ -93,100 +127,27 @@
         }
     }
 
-    private IEnumerable<StatEntry> FilteredStats => allStats
+    private IEnumerable<IGrouping<int, StatEntry>> GroupedStats => allStats
         .Where(s => string.IsNullOrWhiteSpace(filterText) 
             || (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) 
-            || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false));
+            || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
+        .GroupBy(s => s.GameId);
 
-    private void Sort(string column, bool toggle = true)
+    private void ToggleGame(int gameId)
     {
-        if (toggle)
+        if (expandedGames.Contains(gameId))
         {
-            if (currentSortColumn == column)
-            {
-                isAscending = !isAscending;
-            }
-            else
-            {
-                currentSortColumn = column;
-                isAscending = false;
-            }
+            expandedGames.Remove(gameId);
         }
-
-        switch (column)
+        else
         {
-            case "GameNumber":
-                allStats = isAscending ? allStats.OrderBy(s => s.Game?.GameNumber).ToList() : allStats.OrderByDescending(s => s.Game?.GameNumber).ToList();
-                break;
-            case "Date":
-                allStats = isAscending ? allStats.OrderBy(s => s.Game?.Date).ToList() : allStats.OrderByDescending(s => s.Game?.Date).ToList();
-                break;
-            case "Opponent":
-                allStats = isAscending ? allStats.OrderBy(s => s.Game?.Opponent).ToList() : allStats.OrderByDescending(s => s.Game?.Opponent).ToList();
-                break;
-            case "PlayerName":
-                allStats = isAscending ? allStats.OrderBy(s => s.Player?.Name).ToList() : allStats.OrderByDescending(s => s.Player?.Name).ToList();
-                break;
-            case "BO":
-                allStats = isAscending ? allStats.OrderBy(s => s.BO).ToList() : allStats.OrderByDescending(s => s.BO).ToList();
-                break;
-            case "PA":
-                allStats = isAscending ? allStats.OrderBy(s => s.PA).ToList() : allStats.OrderByDescending(s => s.PA).ToList();
-                break;
-            case "AB":
-                allStats = isAscending ? allStats.OrderBy(s => s.AB).ToList() : allStats.OrderByDescending(s => s.AB).ToList();
-                break;
-            case "H":
-                allStats = isAscending ? allStats.OrderBy(s => s.H).ToList() : allStats.OrderByDescending(s => s.H).ToList();
-                break;
-            case "H1B":
-                allStats = isAscending ? allStats.OrderBy(s => s.H1B).ToList() : allStats.OrderByDescending(s => s.H1B).ToList();
-                break;
-            case "H2B":
-                allStats = isAscending ? allStats.OrderBy(s => s.H2B).ToList() : allStats.OrderByDescending(s => s.H2B).ToList();
-                break;
-            case "H3B":
-                allStats = isAscending ? allStats.OrderBy(s => s.H3B).ToList() : allStats.OrderByDescending(s => s.H3B).ToList();
-                break;
-            case "H4B":
-                allStats = isAscending ? allStats.OrderBy(s => s.H4B).ToList() : allStats.OrderByDescending(s => s.H4B).ToList();
-                break;
-            case "HR":
-                allStats = isAscending ? allStats.OrderBy(s => s.HR).ToList() : allStats.OrderByDescending(s => s.HR).ToList();
-                break;
-            case "FC":
-                allStats = isAscending ? allStats.OrderBy(s => s.FC).ToList() : allStats.OrderByDescending(s => s.FC).ToList();
-                break;
-            case "BB":
-                allStats = isAscending ? allStats.OrderBy(s => s.BB).ToList() : allStats.OrderByDescending(s => s.BB).ToList();
-                break;
-            case "SF":
-                allStats = isAscending ? allStats.OrderBy(s => s.SF).ToList() : allStats.OrderByDescending(s => s.SF).ToList();
-                break;
-            case "K":
-                allStats = isAscending ? allStats.OrderBy(s => s.K).ToList() : allStats.OrderByDescending(s => s.K).ToList();
-                break;
-            case "KF":
-                allStats = isAscending ? allStats.OrderBy(s => s.KF).ToList() : allStats.OrderByDescending(s => s.KF).ToList();
-                break;
-            case "GO":
-                allStats = isAscending ? allStats.OrderBy(s => s.GO).ToList() : allStats.OrderByDescending(s => s.GO).ToList();
-                break;
-            case "FO":
-                allStats = isAscending ? allStats.OrderBy(s => s.FO).ToList() : allStats.OrderByDescending(s => s.FO).ToList();
-                break;
-            case "R":
-                allStats = isAscending ? allStats.OrderBy(s => s.R).ToList() : allStats.OrderByDescending(s => s.R).ToList();
-                break;
-            case "RBI":
-                allStats = isAscending ? allStats.OrderBy(s => s.RBI).ToList() : allStats.OrderByDescending(s => s.RBI).ToList();
-                break;
+            expandedGames.Add(gameId);
         }
     }
 
     private string GetSortIcon(string column)
     {
-        if (currentSortColumn != column) return "↕️";
-        return isAscending ? "🔼" : "🔽";
+        // Sorting is disabled for the grouped view to maintain game integrity
+        return "↕️";
     }
 }

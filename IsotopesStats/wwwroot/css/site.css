@@ -173,6 +173,36 @@ tr:last-child td {
     font-weight: bold;
 }
 
+.game-header-row {
+    background-color: var(--isotopes-accent) !important;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+}
+
+.game-header-row th {
+    background-color: transparent !important;
+    color: white !important;
+    font-weight: bold;
+    border-bottom: none;
+}
+
+.game-summary-row {
+    background-color: #f0f4f8 !important;
+    font-weight: bold;
+    border-top: 2px solid #ddd;
+}
+
+.expand-icon {
+    display: inline-block;
+    width: 20px;
+    transition: transform 0.3s;
+}
+
+.collapsed .expand-icon {
+    transform: rotate(-90deg);
+}
+
 /* Form Styling */
 .form-group {
     margin-bottom: 1rem;

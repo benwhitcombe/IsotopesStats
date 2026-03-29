@@ -14,7 +14,7 @@ public static class DataSeeder
         [JsonPropertyName("Game #")]
         public int GameNumber { get; set; }
         public string Date { get; set; } = string.Empty;
-        public object? Time { get; set; }
+        public string Time { get; set; } = string.Empty;
         public string Diamond { get; set; } = string.Empty;
         public string Opposition { get; set; } = string.Empty;
         public string Player { get; set; } = string.Empty;
