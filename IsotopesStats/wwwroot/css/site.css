@@ -59,6 +59,50 @@ body {
     font-size: 1.5rem;
 }
 
+/* Desktop Top Nav */
+.desktop-nav {
+    display: none;
+    margin-left: 2rem;
+    gap: 1.5rem;
+}
+
+.desktop-nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.desktop-nav a:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.desktop-nav a.active {
+    background: white;
+    color: var(--isotopes-red);
+}
+
+@media (min-width: 769px) {
+    .header-content {
+        justify-content: flex-start;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    .desktop-nav {
+        display: flex;
+    }
+    .mobile-nav {
+        display: none !important;
+    }
+    .page {
+        padding-bottom: 0 !important;
+    }
+}
+
 .content {
     padding: 1rem;
     max-width: 1200px;
@@ -356,6 +400,90 @@ tr:last-child td {
     background-color: #fff9f9;
 }
 
+/* Mobile Box Score Cards */
+.mobile-player-grid {
+    display: none;
+    padding: 1rem;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+.mobile-player-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-card-name {
+    font-weight: 800;
+    color: var(--isotopes-accent);
+}
+
+.rank-badge {
+    background: #f0f0f0;
+    color: #666;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+.m-stat.active {
+    background: #fff9f9;
+    border-radius: 8px;
+    border: 1px solid var(--isotopes-red);
+    padding: 2px;
+}
+
+.m-stat.active .m-stat-val {
+    color: var(--isotopes-red);
+}
+
+.mobile-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.m-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.m-stat-val {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.m-stat-label {
+    font-size: 0.65rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    .box-score-table-wrapper {
+        display: none;
+    }
+    .mobile-player-grid {
+        display: grid;
+    }
+}
+
 /* Player Leaderboard Enhancements */
 .leader-highlights {
     display: grid;
@@ -400,6 +528,11 @@ tr:last-child td {
 .leader-value {
     font-size: 2rem;
     font-weight: 300;
+}
+
+.active-sort-col {
+    background-color: #f0f4f8 !important;
+    font-weight: bold;
 }
 
 /* Form Styling */
@@ -501,6 +634,85 @@ tr:last-child td {
     white-space: nowrap;
     cursor: pointer;
     font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.view-btn.active {
+    background-color: var(--isotopes-accent);
+    color: white;
+    border-color: var(--isotopes-accent);
+    font-weight: bold;
+}
+
+/* Mobile Sort Modal */
+.sort-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+}
+
+.sort-modal {
+    background: white;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.sort-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.sort-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.sort-option {
+    padding: 0.75rem;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+    background: #f9f9f9;
+}
+
+.sort-option.active {
+    background: var(--isotopes-accent);
+    color: white;
+    border-color: var(--isotopes-accent);
+    font-weight: bold;
+}
+
+/* Visibility Helpers */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    .desktop-only {
+        display: none;
+    }
 }
 
 /* Blazor Error UI */
