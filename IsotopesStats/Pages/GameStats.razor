@@ -42,14 +42,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (GameStatDetail stat in FilteredStats)
+            @foreach (StatEntry stat in FilteredStats)
             {
                 <tr>
-                    <td>@stat.GameNumber</td>
-                    <td>@stat.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@stat.Diamond</td>
-                    <td>@stat.Opponent</td>
-                    <td class="player-name">@stat.PlayerName</td>
+                    <td>@stat.Game?.GameNumber</td>
+                    <td>@stat.Game?.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@stat.Game?.Diamond</td>
+                    <td>@stat.Game?.Opponent</td>
+                    <td class="player-name">@stat.Player?.Name</td>
                     <td>@stat.BO</td>
                     <td>@stat.PA</td>
                     <td>@stat.AB</td>
@@ -75,7 +75,7 @@
 </div>
 
 @code {
-    private List<GameStatDetail> allStats = new();
+    private List<StatEntry> allStats = new();
     private string filterText = "";
     private string currentSortColumn = "Date";
     private bool isAscending = false;
@@ -89,14 +89,14 @@
         }
         catch (Exception)
         {
-            allStats = new List<GameStatDetail>();
+            allStats = new List<StatEntry>();
         }
     }
 
-    private IEnumerable<GameStatDetail> FilteredStats => allStats
+    private IEnumerable<StatEntry> FilteredStats => allStats
         .Where(s => string.IsNullOrWhiteSpace(filterText) 
-            || s.PlayerName.Contains(filterText, StringComparison.OrdinalIgnoreCase) 
-            || s.Opponent.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+            || (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) 
+            || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false));
 
     private void Sort(string column, bool toggle = true)
     {
@@ -116,16 +116,16 @@
         switch (column)
         {
             case "GameNumber":
-                allStats = isAscending ? allStats.OrderBy(s => s.GameNumber).ToList() : allStats.OrderByDescending(s => s.GameNumber).ToList();
+                allStats = isAscending ? allStats.OrderBy(s => s.Game?.GameNumber).ToList() : allStats.OrderByDescending(s => s.Game?.GameNumber).ToList();
                 break;
             case "Date":
-                allStats = isAscending ? allStats.OrderBy(s => s.Date).ToList() : allStats.OrderByDescending(s => s.Date).ToList();
+                allStats = isAscending ? allStats.OrderBy(s => s.Game?.Date).ToList() : allStats.OrderByDescending(s => s.Game?.Date).ToList();
                 break;
             case "Opponent":
-                allStats = isAscending ? allStats.OrderBy(s => s.Opponent).ToList() : allStats.OrderByDescending(s => s.Opponent).ToList();
+                allStats = isAscending ? allStats.OrderBy(s => s.Game?.Opponent).ToList() : allStats.OrderByDescending(s => s.Game?.Opponent).ToList();
                 break;
             case "PlayerName":
-                allStats = isAscending ? allStats.OrderBy(s => s.PlayerName).ToList() : allStats.OrderByDescending(s => s.PlayerName).ToList();
+                allStats = isAscending ? allStats.OrderBy(s => s.Player?.Name).ToList() : allStats.OrderByDescending(s => s.Player?.Name).ToList();
                 break;
             case "BO":
                 allStats = isAscending ? allStats.OrderBy(s => s.BO).ToList() : allStats.OrderByDescending(s => s.BO).ToList();

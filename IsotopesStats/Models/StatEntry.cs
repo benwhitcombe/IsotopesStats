@@ -6,6 +6,10 @@ public class StatEntry
     public int PlayerId { get; set; }
     public int GameId { get; set; }
     public int BO { get; set; }
+
+    // Navigation Properties
+    public Player? Player { get; set; }
+    public Game? Game { get; set; }
     
     // Plate Appearance Stats
     public int H => H1B + H2B + H3B + H4B + HR;
