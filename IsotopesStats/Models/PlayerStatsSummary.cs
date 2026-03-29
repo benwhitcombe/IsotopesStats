@@ -5,9 +5,10 @@ public class PlayerStatsSummary
     public string PlayerName { get; set; } = string.Empty;
     public int GamesPlayed { get; set; }
     
-    public int PA { get; set; }
-    public int AB { get; set; }
-    public int H { get; set; }
+    public int H => H1B + H2B + H3B + H4B + HR;
+    public int AB => H + FC + K + KF + GO + FO;
+    public int PA => AB + BB + SF;
+
     public int H1B { get; set; }
     public int H2B { get; set; }
     public int H3B { get; set; }
@@ -20,10 +21,10 @@ public class PlayerStatsSummary
     
     public int K { get; set; }
     public int KF { get; set; }
-    public int B { get; set; }
     public int GO { get; set; }
     public int FO { get; set; }
-    public int O { get; set; }
+    public int O => GO + FO;
+    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
     
     public int R { get; set; }
     public int RBI { get; set; }
@@ -36,7 +37,7 @@ public class PlayerStatsSummary
         : 0;
 
     public double SLG => AB > 0 
-        ? (double)(H1B + 2 * H2B + 3 * H3B + 4 * (H4B + HR)) / AB 
+        ? (double)TB / AB 
         : 0;
 
     public double OPS => OBP + SLG;

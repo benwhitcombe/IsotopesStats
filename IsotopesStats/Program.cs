@@ -15,19 +15,15 @@ DatabaseInitializer.Initialize();
 WebApplication app = builder.Build();
 
 // Seed 2025 Data
-using (IServiceScope scope = app.Services.CreateScope())
+try 
 {
-    try 
-    {
-        Console.WriteLine("Initializing database and seeding data...");
-        StatsService statsService = scope.ServiceProvider.GetRequiredService<StatsService>();
-        statsService.Seed2025Data();
-        Console.WriteLine("Database initialization complete.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error during database initialization: {ex.Message}");
-    }
+    Console.WriteLine("Initializing database and seeding data...");
+    DataSeeder.Seed2025Data();
+    Console.WriteLine("Database initialization complete.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
 }
 
 // Configure the HTTP request pipeline.

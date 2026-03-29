@@ -43,10 +43,8 @@
                 <div class="admin-stat-input"><label>FC</label><input type="number" @bind="stat.FC" /></div>
                 <div class="admin-stat-input"><label>K</label><input type="number" @bind="stat.K" /></div>
                 <div class="admin-stat-input"><label>KF</label><input type="number" @bind="stat.KF" /></div>
-                <div class="admin-stat-input"><label>B</label><input type="number" @bind="stat.B" /></div>
                 <div class="admin-stat-input"><label>GO</label><input type="number" @bind="stat.GO" /></div>
                 <div class="admin-stat-input"><label>FO</label><input type="number" @bind="stat.FO" /></div>
-                <div class="admin-stat-input"><label>O</label><input type="number" @bind="stat.O" /></div>
                 <div class="admin-stat-input"><label>R</label><input type="number" @bind="stat.R" /></div>
                 <div class="admin-stat-input"><label>RBI</label><input type="number" @bind="stat.RBI" /></div>
             </div>
@@ -96,18 +94,6 @@
     {
         try
         {
-            foreach (StatEntry stat in playerStats)
-            {
-                // Calculate derived stats before saving
-                stat.H = stat.H1B + stat.H2B + stat.H3B + stat.H4B + stat.HR;
-                
-                // AB = H + FC + K + KF + B + GO + FO + O
-                stat.AB = stat.H + stat.FC + stat.K + stat.KF + stat.B + stat.GO + stat.FO + stat.O;
-                
-                // PA = AB + BB + SF
-                stat.PA = stat.AB + stat.BB + stat.SF;
-            }
-
             StatsService.AddGameWithStats(newGame, playerStats);
             showSuccess = true;
             newGame = new() { Date = DateTime.Today };

@@ -44,7 +44,7 @@
                     <th @onclick="@(() => Sort("FC"))" style="cursor:pointer">FC @(GetSortIcon("FC"))</th>
                     <th @onclick="@(() => Sort("K"))" style="cursor:pointer">K @(GetSortIcon("K"))</th>
                     <th @onclick="@(() => Sort("KF"))" style="cursor:pointer">KF @(GetSortIcon("KF"))</th>
-                    <th @onclick="@(() => Sort("B"))" style="cursor:pointer">B @(GetSortIcon("B"))</th>
+                    <th @onclick="@(() => Sort("TB"))" style="cursor:pointer">TB @(GetSortIcon("TB"))</th>
                     <th @onclick="@(() => Sort("GO"))" style="cursor:pointer">GO @(GetSortIcon("GO"))</th>
                     <th @onclick="@(() => Sort("FO"))" style="cursor:pointer">FO @(GetSortIcon("FO"))</th>
                     <th @onclick="@(() => Sort("O"))" style="cursor:pointer">O @(GetSortIcon("O"))</th>
@@ -85,7 +85,7 @@
                         <td>@player.FC</td>
                         <td>@player.K</td>
                         <td>@player.KF</td>
-                        <td>@player.B</td>
+                        <td>@player.TB</td>
                         <td>@player.GO</td>
                         <td>@player.FO</td>
                         <td>@player.O</td>
@@ -125,7 +125,7 @@
                     <td>@teamTotals.FC</td>
                     <td>@teamTotals.K</td>
                     <td>@teamTotals.KF</td>
-                    <td>@teamTotals.B</td>
+                    <td>@teamTotals.TB</td>
                     <td>@teamTotals.GO</td>
                     <td>@teamTotals.FO</td>
                     <td>@teamTotals.O</td>
@@ -220,8 +220,8 @@
             case "KF":
                 allStats = isAscending ? allStats.OrderBy(p => p.KF).ToList() : allStats.OrderByDescending(p => p.KF).ToList();
                 break;
-            case "B":
-                allStats = isAscending ? allStats.OrderBy(p => p.B).ToList() : allStats.OrderByDescending(p => p.B).ToList();
+            case "TB":
+                allStats = isAscending ? allStats.OrderBy(p => p.TB).ToList() : allStats.OrderByDescending(p => p.TB).ToList();
                 break;
             case "GO":
                 allStats = isAscending ? allStats.OrderBy(p => p.GO).ToList() : allStats.OrderByDescending(p => p.GO).ToList();
