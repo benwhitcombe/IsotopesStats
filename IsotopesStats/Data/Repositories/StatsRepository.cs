@@ -1,9 +1,9 @@
 using Microsoft.Data.Sqlite;
 using IsotopesStats.Models;
 
-namespace IsotopesStats.Data;
+namespace IsotopesStats.Data.Repositories;
 
-public class StatsService
+public class StatsRepository
 {
     private const string ConnectionString = "Data Source=IsotopesStats.db";
 

@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using IsotopesStats.Data;
+using IsotopesStats.Data.Repositories;
+using IsotopesStats.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
+builder.Services.AddScoped<StatsRepository>();
 builder.Services.AddScoped<StatsService>();
 
 // Initialize the database
