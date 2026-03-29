@@ -203,6 +203,151 @@ tr:last-child td {
     transform: rotate(-90deg);
 }
 
+/* Box Score Cards */
+.game-card {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.game-card-header {
+    padding: 1.25rem;
+    cursor: pointer;
+    background: #fff;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.game-card-header:hover {
+    background: #f8f9fa;
+}
+
+.game-info-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.game-number-badge {
+    background: var(--isotopes-accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    width: fit-content;
+    margin-bottom: 4px;
+}
+
+.game-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.game-matchup {
+    display: flex;
+    flex-direction: column;
+}
+
+.opponent-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--isotopes-dark);
+}
+
+.diamond-name {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.game-score-summary {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--isotopes-red);
+}
+
+.score-label {
+    font-size: 0.7rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.game-card-footer {
+    background: #fcfcfc;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 2rem;
+    font-size: 0.85rem;
+}
+
+.footer-stat {
+    display: flex;
+    gap: 6px;
+    color: #555;
+}
+
+.footer-stat-label {
+    font-weight: bold;
+    color: #888;
+}
+
+.game-card-detail {
+    padding: 0;
+    border-top: 1px solid #eee;
+    background: #f9f9f9;
+}
+
+.box-score-table-wrapper {
+    overflow-x: auto;
+    padding: 1rem;
+}
+
+.box-score-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.box-score-table th {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.box-score-table .sticky-col {
+    position: sticky;
+    left: 0;
+    background: inherit;
+    z-index: 20;
+    border-right: 2px solid #eee;
+}
+
+.box-score-table tr:hover {
+    background-color: #fff9f9;
+}
+
 /* Form Styling */
 .form-group {
     margin-bottom: 1rem;

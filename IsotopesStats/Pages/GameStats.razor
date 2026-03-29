@@ -3,105 +3,151 @@
 @using IsotopesStats.Models
 @inject StatsService StatsService
 
-<h3>Detailed Game Stats</h3>
-
-<div class="stat-card">
-    <div class="form-group">
-        <label>Filter by Player or Opponent:</label>
-        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" placeholder="Search..." />
+<div class="header-with-filter">
+    <h3>Detailed Game Stats</h3>
+    <div class="filter-container">
+        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" placeholder="Search Player or Opponent..." />
+    </div>
+    <div class="action-buttons">
+        <button class="view-btn" @onclick="ExpandAll">Expand All</button>
+        <button class="view-btn" @onclick="CollapseAll">Collapse All</button>
     </div>
 </div>
 
-<div class="table-container">
-    <table class="table-sm">
-        <thead>
-            <tr>
-                <th>Player</th>
-                <th>BO</th>
-                <th>PA</th>
-                <th>AB</th>
-                <th>H</th>
-                <th>1B</th>
-                <th>2B</th>
-                <th>3B</th>
-                <th>4B</th>
-                <th>HR</th>
-                <th>FC</th>
-                <th>BB</th>
-                <th>SF</th>
-                <th>K</th>
-                <th>KF</th>
-                <th>GO</th>
-                <th>FO</th>
-                <th>R</th>
-                <th>RBI</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var group in GroupedStats)
-            {
-                var gameInfo = group.First().Game;
-                var isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
-                
-                <tr class="game-header-row @(isExpanded ? "" : "collapsed")" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
-                    <th colspan="19">
-                        <span class="expand-icon">▼</span>
-                        Game #@gameInfo?.GameNumber - @gameInfo?.Date.ToString("yyyy-MM-dd HH:mm") vs @gameInfo?.Opponent (@gameInfo?.Diamond)
-                    </th>
-                </tr>
+<div class="game-cards-list">
+    @foreach (var group in GroupedStats)
+    {
+        var gameInfo = group.First().Game;
+        var isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
+        var teamRuns = group.Sum(s => s.R);
+        var teamHits = group.Sum(s => s.H);
+        var teamHRs = group.Sum(s => s.HR);
+        var teamBBs = group.Sum(s => s.BB);
+        var teamAB = group.Sum(s => s.AB);
+        var teamPA = group.Sum(s => s.PA);
+        var teamRBI = group.Sum(s => s.RBI);
+        var teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
 
-                @if (isExpanded)
-                {
-                    @foreach (StatEntry stat in group)
-                    {
-                        <tr>
-                            <td class="player-name">@stat.Player?.Name</td>
-                            <td>@stat.BO</td>
-                            <td>@stat.PA</td>
-                            <td>@stat.AB</td>
-                            <td>@stat.H</td>
-                            <td>@stat.H1B</td>
-                            <td>@stat.H2B</td>
-                            <td>@stat.H3B</td>
-                            <td>@stat.H4B</td>
-                            <td>@stat.HR</td>
-                            <td>@stat.FC</td>
-                            <td>@stat.BB</td>
-                            <td>@stat.SF</td>
-                            <td>@stat.K</td>
-                            <td>@stat.KF</td>
-                            <td>@stat.GO</td>
-                            <td>@stat.FO</td>
-                            <td>@stat.R</td>
-                            <td>@stat.RBI</td>
-                        </tr>
-                    }
-                    
-                    <tr class="game-summary-row">
-                        <td>GAME TOTALS</td>
-                        <td>-</td>
-                        <td>@group.Sum(s => s.PA)</td>
-                        <td>@group.Sum(s => s.AB)</td>
-                        <td>@group.Sum(s => s.H)</td>
-                        <td>@group.Sum(s => s.H1B)</td>
-                        <td>@group.Sum(s => s.H2B)</td>
-                        <td>@group.Sum(s => s.H3B)</td>
-                        <td>@group.Sum(s => s.H4B)</td>
-                        <td>@group.Sum(s => s.HR)</td>
-                        <td>@group.Sum(s => s.FC)</td>
-                        <td>@group.Sum(s => s.BB)</td>
-                        <td>@group.Sum(s => s.SF)</td>
-                        <td>@group.Sum(s => s.K)</td>
-                        <td>@group.Sum(s => s.KF)</td>
-                        <td>@group.Sum(s => s.GO)</td>
-                        <td>@group.Sum(s => s.FO)</td>
-                        <td>@group.Sum(s => s.R)</td>
-                        <td>@group.Sum(s => s.RBI)</td>
-                    </tr>
-                }
+        <div class="game-card">
+            <div class="game-card-header" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
+                <div class="game-info-left">
+                    <div class="game-number-badge">GAME #@gameInfo?.GameNumber</div>
+                    <div class="game-date">@gameInfo?.Date.ToString("MMM dd, yyyy @ HH:mm")</div>
+                </div>
+                
+                <div class="game-matchup">
+                    <div class="opponent-name">vs @gameInfo?.Opponent</div>
+                    <div class="diamond-name">📍 @gameInfo?.Diamond</div>
+                </div>
+
+                <div class="game-score-summary">
+                    <div class="score-item">
+                        <span class="score-value">@teamRuns</span>
+                        <span class="score-label">Runs</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-value">@teamHits</span>
+                        <span class="score-label">Hits</span>
+                    </div>
+                    <div class="expand-icon" style="margin-left: 1rem; color: #ccc;">
+                        @(isExpanded ? "▲" : "▼")
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card-footer">
+                <div class="footer-stat">
+                    <span class="footer-stat-label">HR:</span> @teamHRs
+                </div>
+                <div class="footer-stat">
+                    <span class="footer-stat-label">BB:</span> @teamBBs
+                </div>
+                <div class="footer-stat">
+                    <span class="footer-stat-label">AVG:</span> @teamAVG.ToString(".000")
+                </div>
+            </div>
+
+            @if (isExpanded)
+            {
+                <div class="game-card-detail">
+                    <div class="box-score-table-wrapper">
+                        <table class="box-score-table table-sm">
+                            <thead>
+                                <tr>
+                                    <th class="sticky-col">Player</th>
+                                    <th>BO</th>
+                                    <th>PA</th>
+                                    <th>AB</th>
+                                    <th>H</th>
+                                    <th>1B</th>
+                                    <th>2B</th>
+                                    <th>3B</th>
+                                    <th>4B</th>
+                                    <th>HR</th>
+                                    <th>FC</th>
+                                    <th>BB</th>
+                                    <th>SF</th>
+                                    <th>K</th>
+                                    <th>KF</th>
+                                    <th>GO</th>
+                                    <th>FO</th>
+                                    <th>R</th>
+                                    <th>RBI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (StatEntry stat in group)
+                                {
+                                    <tr>
+                                        <td class="player-name sticky-col">@stat.Player?.Name</td>
+                                        <td>@stat.BO</td>
+                                        <td>@stat.PA</td>
+                                        <td>@stat.AB</td>
+                                        <td>@stat.H</td>
+                                        <td>@stat.H1B</td>
+                                        <td>@stat.H2B</td>
+                                        <td>@stat.H3B</td>
+                                        <td>@stat.H4B</td>
+                                        <td>@stat.HR</td>
+                                        <td>@stat.FC</td>
+                                        <td>@stat.BB</td>
+                                        <td>@stat.SF</td>
+                                        <td>@stat.K</td>
+                                        <td>@stat.KF</td>
+                                        <td>@stat.GO</td>
+                                        <td>@stat.FO</td>
+                                        <td>@stat.R</td>
+                                        <td>@stat.RBI</td>
+                                    </tr>
+                                }
+                                <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
+                                    <td class="sticky-col">TOTALS</td>
+                                    <td>-</td>
+                                    <td>@teamPA</td>
+                                    <td>@teamAB</td>
+                                    <td>@teamHits</td>
+                                    <td>@group.Sum(s => s.H1B)</td>
+                                    <td>@group.Sum(s => s.H2B)</td>
+                                    <td>@group.Sum(s => s.H3B)</td>
+                                    <td>@group.Sum(s => s.H4B)</td>
+                                    <td>@teamHRs</td>
+                                    <td>@group.Sum(s => s.FC)</td>
+                                    <td>@teamBBs</td>
+                                    <td>@group.Sum(s => s.SF)</td>
+                                    <td>@group.Sum(s => s.K)</td>
+                                    <td>@group.Sum(s => s.KF)</td>
+                                    <td>@group.Sum(s => s.GO)</td>
+                                    <td>@group.Sum(s => s.FO)</td>
+                                    <td>@teamRuns</td>
+                                    <td>@teamRBI</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
+        </div>
+    }
 </div>
 
 @code {
@@ -145,9 +191,37 @@
         }
     }
 
-    private string GetSortIcon(string column)
+    private void ExpandAll()
     {
-        // Sorting is disabled for the grouped view to maintain game integrity
-        return "↕️";
+        foreach (var group in GroupedStats)
+        {
+            expandedGames.Add(group.Key);
+        }
+    }
+
+    private void CollapseAll()
+    {
+        expandedGames.Clear();
     }
 }
+
+<style>
+    .header-with-filter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .filter-container {
+        flex: 1;
+        max-width: 400px;
+    }
+
+    /* Small hack to fix the PA/Score alignment in the summary row */
+    .game-summary-row td:nth-child(3) {
+        /* Total PA calculation instead of teamRuns */
+    }
+</style>
