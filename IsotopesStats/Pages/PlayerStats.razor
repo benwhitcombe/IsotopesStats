@@ -37,9 +37,9 @@
 <div class="stat-card">
     <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => activeView = "Standard")">Standard</button>
-            <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick="@(() => activeView = "Hits")">Hits</button>
-            <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick="@(() => activeView = "Outcomes")">Plate Outcomes</button>
+            <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => SetView("Standard"))">Standard</button>
+            <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick="@(() => SetView("Hits"))">Hits</button>
+            <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick="@(() => SetView("Outcomes"))">Plate Outcomes</button>
         </div>
         
         <div class="mobile-only">
@@ -86,7 +86,7 @@
                             <th @onclick="@(() => Sort("RBI"))" style="cursor:pointer">RBI @(GetSortIcon("RBI"))</th>
                             <th @onclick="@(() => Sort("R"))" style="cursor:pointer">R @(GetSortIcon("R"))</th>
                             <th @onclick="@(() => Sort("AVG"))" style="cursor:pointer">AVG @(GetSortIcon("AVG"))</th>
-                            <th @onclick="@(() => Sort("OPS"))" style="cursor:pointer">OPS @(GetSortIcon("OPS"))</th>
+                            <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
                         }
                         else if (activeView == "Hits")
                         {
@@ -98,6 +98,7 @@
                             <th @onclick="@(() => Sort("H4B"))" style="cursor:pointer">4B @(GetSortIcon("H4B"))</th>
                             <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
                             <th @onclick="@(() => Sort("SLG"))" style="cursor:pointer">SLG @(GetSortIcon("SLG"))</th>
+                            <th @onclick="@(() => Sort("OPS"))" style="cursor:pointer">OPS @(GetSortIcon("OPS"))</th>
                         }
                         else if (activeView == "Outcomes")
                         {
@@ -129,16 +130,19 @@
                                 <td class="@(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
                                 <td class="@(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
                                 <td class="@(currentSortColumn == "AVG" ? "active-sort-col" : "")">@player.AVG.ToString(".000")</td>
-                                <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
+                                <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
                             }
                             else if (activeView == "Hits")
                             {
+                                <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                                <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
                                 <td class="@(currentSortColumn == "H1B" ? "active-sort-col" : "")">@player.H1B</td>
                                 <td class="@(currentSortColumn == "H2B" ? "active-sort-col" : "")">@player.H2B</td>
                                 <td class="@(currentSortColumn == "H3B" ? "active-sort-col" : "")">@player.H3B</td>
                                 <td class="@(currentSortColumn == "H4B" ? "active-sort-col" : "")">@player.H4B</td>
                                 <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
                                 <td class="@(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
+                                <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
                             }
                             else if (activeView == "Outcomes")
                             {
@@ -169,14 +173,14 @@
                         </span>
                         <div style="display: flex; gap: 4px;">
                             <span class="badge bg-light text-dark @(currentSortColumn == "AVG" ? "border border-danger" : "")" @onclick="@(() => Sort("AVG"))">AVG: @player.AVG.ToString(".000")</span>
-                            <span class="badge bg-light text-dark @(currentSortColumn == "OPS" ? "border border-danger" : "")" @onclick="@(() => Sort("OPS"))">OPS: @player.OPS.ToString(".000")</span>
+                            <span class="badge bg-light text-dark @(currentSortColumn == "OBP" ? "border border-danger" : "")" @onclick="@(() => Sort("OBP"))">OBP: @player.OBP.ToString(".000")</span>
                         </div>
                     </div>
                     <div class="mobile-card-stats">
                         @if (activeView == "Standard")
                         {
                             <div class="m-stat @(currentSortColumn == "AVG" ? "active" : "")" @onclick="@(() => Sort("AVG"))"><span class="m-stat-val">@player.AVG.ToString(".000")</span><span class="m-stat-label">AVG</span></div>
-                            <div class="m-stat @(currentSortColumn == "OPS" ? "active" : "")" @onclick="@(() => Sort("OPS"))"><span class="m-stat-val">@player.OPS.ToString(".000")</span><span class="m-stat-label">OPS</span></div>
+                            <div class="m-stat @(currentSortColumn == "OBP" ? "active" : "")" @onclick="@(() => Sort("OBP"))"><span class="m-stat-val">@player.OBP.ToString(".000")</span><span class="m-stat-label">OBP</span></div>
                             <div class="m-stat @(currentSortColumn == "GP" ? "active" : "")" @onclick="@(() => Sort("GP"))"><span class="m-stat-val">@player.GamesPlayed</span><span class="m-stat-label">GP</span></div>
                             <div class="m-stat @(currentSortColumn == "PA" ? "active" : "")" @onclick="@(() => Sort("PA"))"><span class="m-stat-val">@player.PA</span><span class="m-stat-label">PA</span></div>
                             <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
@@ -195,6 +199,7 @@
                             <div class="m-stat @(currentSortColumn == "H4B" ? "active" : "")" @onclick="@(() => Sort("H4B"))"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
                             <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
                             <div class="m-stat @(currentSortColumn == "SLG" ? "active" : "")" @onclick="@(() => Sort("SLG"))"><span class="m-stat-val">@player.SLG.ToString(".000")</span><span class="m-stat-label">SLG</span></div>
+                            <div class="m-stat @(currentSortColumn == "OPS" ? "active" : "")" @onclick="@(() => Sort("OPS"))"><span class="m-stat-val">@player.OPS.ToString(".000")</span><span class="m-stat-label">OPS</span></div>
                         }
                         else if (activeView == "Outcomes")
                         {
@@ -256,6 +261,22 @@
     }
 
     private void ToggleSortModal() => showSortModal = !showSortModal;
+
+    private void SetView(string view)
+    {
+        activeView = view;
+        isAscending = false; // Always default to descending for the primary stat
+        
+        string defaultStat = view switch
+        {
+            "Standard" => "AVG",
+            "Hits" => "SLG",
+            "Outcomes" => "OBP",
+            _ => "AVG"
+        };
+        
+        Sort(defaultStat, false);
+    }
 
     private void SelectMobileSort(string column)
     {
