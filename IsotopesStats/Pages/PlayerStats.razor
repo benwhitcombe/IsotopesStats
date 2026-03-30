@@ -11,22 +11,22 @@
 @if (allStats.Any())
 {
     <div class="leader-highlights">
-        <div class="leader-card" @onclick="@(() => Sort("AVG"))" style="cursor:pointer">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "AVG"))" style="cursor:pointer">
             <div class="leader-category">Batting Average</div>
             <div class="leader-name">@avgLeader?.PlayerName</div>
             <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
         </div>
-        <div class="leader-card" @onclick="@(() => Sort("HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000);">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000);">
             <div class="leader-category">Home Runs</div>
             <div class="leader-name">@hrLeader?.PlayerName</div>
             <div class="leader-value">@hrLeader?.HR</div>
         </div>
-        <div class="leader-card" @onclick="@(() => Sort("RBI"))" style="cursor:pointer">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer">
             <div class="leader-category">RBIs</div>
             <div class="leader-name">@rbiLeader?.PlayerName</div>
             <div class="leader-value">@rbiLeader?.RBI</div>
         </div>
-        <div class="leader-card" @onclick="@(() => Sort("OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000);">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000);">
             <div class="leader-category">OPS</div>
             <div class="leader-name">@opsLeader?.PlayerName</div>
             <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
@@ -261,6 +261,12 @@
     }
 
     private void ToggleSortModal() => showSortModal = !showSortModal;
+
+    private void SetViewAndSort(string view, string column)
+    {
+        activeView = view;
+        Sort(column, false);
+    }
 
     private void SetView(string view)
     {
