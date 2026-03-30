@@ -718,18 +718,13 @@ tr:last-child td {
 }
 
 /* Visibility Helpers */
-.mobile-only {
-    display: none !important;
-}
-
-.desktop-only {
-    display: block !important;
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
 }
 
 @media (max-width: 768px) {
-    .mobile-only {
-        display: block !important;
-    }
     .desktop-only {
         display: none !important;
     }
