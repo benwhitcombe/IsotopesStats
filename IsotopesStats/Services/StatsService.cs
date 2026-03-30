@@ -12,24 +12,29 @@ public class StatsService
         _repository = repository;
     }
 
-    public List<PlayerStatsSummary> GetStatsSummary()
+    public List<Season> GetSeasons()
     {
-        return _repository.GetStatsSummary();
+        return _repository.GetSeasons();
     }
 
-    public PlayerStatsSummary GetTeamTotals()
+    public List<PlayerStatsSummary> GetStatsSummary(int seasonId)
     {
-        return _repository.GetTeamTotals();
+        return _repository.GetStatsSummary(seasonId);
     }
 
-    public List<Player> GetPlayers()
+    public PlayerStatsSummary GetTeamTotals(int seasonId)
     {
-        return _repository.GetPlayers();
+        return _repository.GetTeamTotals(seasonId);
     }
 
-    public List<StatEntry> GetAllGameStats()
+    public List<Player> GetPlayers(int seasonId)
     {
-        return _repository.GetAllGameStats();
+        return _repository.GetPlayers(seasonId);
+    }
+
+    public List<StatEntry> GetAllGameStats(int seasonId)
+    {
+        return _repository.GetAllGameStats(seasonId);
     }
 
     public void AddGameWithStats(Game game, List<StatEntry> stats)

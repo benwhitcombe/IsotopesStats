@@ -2,6 +2,7 @@ namespace IsotopesStats.Services;
 
 public class PlayerStatsState
 {
+    public int SelectedSeasonId { get; set; } = 0;
     public string ActiveView { get; set; } = "Standard";
     
     // Standard View State
@@ -34,6 +35,7 @@ public class PlayerStatsState
 
 public class GameStatsState
 {
+    public int SelectedSeasonId { get; set; } = 0;
     public HashSet<int> ExpandedGames { get; set; } = new();
     public string FilterText { get; set; } = string.Empty;
 }

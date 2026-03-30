@@ -8,6 +8,15 @@
 
 <div class="stat-card">
     <div class="form-group">
+        <label>Season</label>
+        <select class="form-control" @onchange="OnSeasonChange">
+            @foreach (Season season in seasons)
+            {
+                <option value="@season.Id" selected="@(newGame.SeasonId == season.Id)">@season.Name</option>
+            }
+        </select>
+    </div>
+    <div class="form-group">
         <label>Date & Time</label>
         <input type="datetime-local" class="form-control" @bind="newGame.Date" />
     </div>
@@ -64,6 +73,7 @@
 @code {
     private Game newGame = new() { Date = DateTime.Today };
     private List<Player> players = new();
+    private List<Season> seasons = new();
     private List<StatEntry> playerStats = new();
     private bool showSuccess = false;
 
@@ -71,13 +81,34 @@
     {
         try 
         {
-            players = StatsService.GetPlayers();
-            ResetForm();
+            seasons = StatsService.GetSeasons();
+            if (seasons.Any())
+            {
+                newGame.SeasonId = seasons.First().Id;
+            }
+            
+            LoadPlayers();
         }
         catch (Exception)
         {
+            seasons = new List<Season>();
             players = new List<Player>();
             playerStats = new List<StatEntry>();
+        }
+    }
+
+    private void LoadPlayers()
+    {
+        players = StatsService.GetPlayers(newGame.SeasonId);
+        ResetForm();
+    }
+
+    private void OnSeasonChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            newGame.SeasonId = id;
+            LoadPlayers();
         }
     }
 
@@ -96,7 +127,8 @@
         {
             StatsService.AddGameWithStats(newGame, playerStats);
             showSuccess = true;
-            newGame = new() { Date = DateTime.Today };
+            int currentSeason = newGame.SeasonId;
+            newGame = new() { Date = DateTime.Today, SeasonId = currentSeason };
             ResetForm();
             StateHasChanged();
         }

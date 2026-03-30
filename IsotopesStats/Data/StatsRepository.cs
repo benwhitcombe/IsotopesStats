@@ -7,7 +7,28 @@ public class StatsRepository
 {
     private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
-    public List<PlayerStatsSummary> GetStatsSummary()
+    public List<Season> GetSeasons()
+    {
+        List<Season> seasons = new List<Season>();
+        using SqliteConnection connection = new SqliteConnection(ConnectionString);
+        connection.Open();
+
+        SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, Name FROM Seasons ORDER BY Name DESC";
+
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            seasons.Add(new Season
+            {
+                Id = reader.GetInt32(0),
+                Name = reader.GetString(1)
+            });
+        }
+        return seasons;
+    }
+
+    public List<PlayerStatsSummary> GetStatsSummary(int seasonId)
     {
         List<PlayerStatsSummary> summaries = new List<PlayerStatsSummary>();
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
@@ -35,10 +56,11 @@ public class StatsRepository
                 SUM(s.RBI) as RBI
             FROM Players p
             LEFT JOIN Stats s ON p.Id = s.PlayerId
-            WHERE p.Name != 'Spare'
+            WHERE p.Name != 'Spare' AND p.SeasonId = $seasonId
             GROUP BY p.Id, p.Name
             ORDER BY (CAST(SUM(s.H1B + s.H2B + s.H3B + s.H4B + s.HR) AS FLOAT) / NULLIF(SUM(s.H1B + s.H2B + s.H3B + s.H4B + s.HR + s.FC + s.K + s.KF + s.GO + s.FO), 0)) DESC
         ";
+        command.Parameters.AddWithValue("$seasonId", seasonId);
 
         using SqliteDataReader reader = command.ExecuteReader();
         while (reader.Read())
@@ -66,7 +88,7 @@ public class StatsRepository
         return summaries;
     }
 
-    public PlayerStatsSummary GetTeamTotals()
+    public PlayerStatsSummary GetTeamTotals(int seasonId)
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
         connection.Open();
@@ -76,23 +98,26 @@ public class StatsRepository
         @"
             SELECT 
                 'TEAM' as PlayerName,
-                COUNT(DISTINCT GameId) as GamesPlayed,
-                SUM(H1B) as H1B,
-                SUM(H2B) as H2B,
-                SUM(H3B) as H3B,
-                SUM(H4B) as H4B,
-                SUM(HR) as HR,
-                SUM(FC) as FC,
-                SUM(BB) as BB,
-                SUM(SF) as SF,
-                SUM(K) as K,
-                SUM(KF) as KF,
-                SUM(GO) as GO,
-                SUM(FO) as FO,
-                SUM(R) as R,
-                SUM(RBI) as RBI
-            FROM Stats
+                COUNT(DISTINCT s.GameId) as GamesPlayed,
+                SUM(s.H1B) as H1B,
+                SUM(s.H2B) as H2B,
+                SUM(s.H3B) as H3B,
+                SUM(s.H4B) as H4B,
+                SUM(s.HR) as HR,
+                SUM(s.FC) as FC,
+                SUM(s.BB) as BB,
+                SUM(s.SF) as SF,
+                SUM(s.K) as K,
+                SUM(s.KF) as KF,
+                SUM(s.GO) as GO,
+                SUM(s.FO) as FO,
+                SUM(s.R) as R,
+                SUM(s.RBI) as RBI
+            FROM Stats s
+            JOIN Games g ON s.GameId = g.Id
+            WHERE g.SeasonId = $seasonId
         ";
+        command.Parameters.AddWithValue("$seasonId", seasonId);
 
         using SqliteDataReader reader = command.ExecuteReader();
         if (reader.Read())
@@ -120,14 +145,15 @@ public class StatsRepository
         return new PlayerStatsSummary();
     }
 
-    public List<Player> GetPlayers()
+    public List<Player> GetPlayers(int seasonId)
     {
         List<Player> players = new List<Player>();
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
         connection.Open();
 
         SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT Id, Name, IsActive FROM Players ORDER BY Name";
+        command.CommandText = "SELECT Id, Name, IsActive, SeasonId FROM Players WHERE SeasonId = $seasonId ORDER BY Name";
+        command.Parameters.AddWithValue("$seasonId", seasonId);
 
         using SqliteDataReader reader = command.ExecuteReader();
         while (reader.Read())
@@ -136,13 +162,14 @@ public class StatsRepository
             {
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
-                IsActive = reader.GetInt32(2) != 0
+                IsActive = reader.GetInt32(2) != 0,
+                SeasonId = reader.GetInt32(3)
             });
         }
         return players;
     }
 
-    public List<StatEntry> GetAllGameStats()
+    public List<StatEntry> GetAllGameStats(int seasonId)
     {
         List<StatEntry> stats = new List<StatEntry>();
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
@@ -179,8 +206,10 @@ public class StatsRepository
             FROM Stats s
             JOIN Games g ON s.GameId = g.Id
             JOIN Players p ON s.PlayerId = p.Id
+            WHERE g.SeasonId = $seasonId
             ORDER BY g.Date DESC, s.BO ASC
         ";
+        command.Parameters.AddWithValue("$seasonId", seasonId);
 
         using SqliteDataReader reader = command.ExecuteReader();
         while (reader.Read())
@@ -208,6 +237,7 @@ public class StatsRepository
                 Game = new Game
                 {
                     Id = reader.GetInt32(2),
+                    SeasonId = seasonId,
                     GameNumber = reader.GetInt32(18),
                     Date = DateTime.Parse(reader.GetString(19)),
                     Diamond = reader.GetString(20),
@@ -217,6 +247,7 @@ public class StatsRepository
                 Player = new Player
                 {
                     Id = reader.GetInt32(1),
+                    SeasonId = seasonId,
                     Name = reader.GetString(23)
                 }
             });
@@ -234,7 +265,8 @@ public class StatsRepository
         {
             SqliteCommand gameCommand = connection.CreateCommand();
             gameCommand.Transaction = transaction;
-            gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $diamond, $opponent, $type); SELECT last_insert_rowid();";
+            gameCommand.CommandText = "INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, Opponent, Type) VALUES ($seasonId, $gameNumber, $date, $diamond, $opponent, $type); SELECT last_insert_rowid();";
+            gameCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
             gameCommand.Parameters.AddWithValue("$gameNumber", game.GameNumber);
             gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm"));
             gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);

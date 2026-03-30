@@ -14,19 +14,28 @@ public static class DatabaseInitializer
         SqliteCommand command = connection.CreateCommand();
         command.CommandText = 
         @"
+            CREATE TABLE IF NOT EXISTS Seasons (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS Players (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                SeasonId INTEGER NOT NULL DEFAULT 0,
                 Name TEXT NOT NULL,
-                IsActive INTEGER NOT NULL DEFAULT 1
+                IsActive INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY (SeasonId) REFERENCES Seasons(Id)
             );
 
             CREATE TABLE IF NOT EXISTS Games (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                SeasonId INTEGER NOT NULL DEFAULT 0,
                 GameNumber INTEGER NOT NULL DEFAULT 0,
                 Date TEXT NOT NULL,
                 Diamond TEXT NOT NULL DEFAULT '',
                 Opponent TEXT NOT NULL,
-                Type INTEGER NOT NULL DEFAULT 0
+                Type INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (SeasonId) REFERENCES Seasons(Id)
             );
 
             CREATE TABLE IF NOT EXISTS Stats (

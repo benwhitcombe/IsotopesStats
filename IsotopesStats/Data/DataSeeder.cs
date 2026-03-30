@@ -46,8 +46,13 @@ public static class DataSeeder
 
         // Check if data already exists
         SqliteCommand checkCommand = connection.CreateCommand();
-        checkCommand.CommandText = "SELECT COUNT(*) FROM Players";
+        checkCommand.CommandText = "SELECT COUNT(*) FROM Seasons";
         if (Convert.ToInt32(checkCommand.ExecuteScalar()) > 0) return;
+
+        // 1. Create 2025 Season
+        SqliteCommand seasonCommand = connection.CreateCommand();
+        seasonCommand.CommandText = "INSERT INTO Seasons (Name) VALUES ('2025'); SELECT last_insert_rowid();";
+        int seasonId = Convert.ToInt32(seasonCommand.ExecuteScalar());
 
         string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data/2025_data.json");
         if (!File.Exists(jsonPath))
@@ -76,7 +81,8 @@ public static class DataSeeder
             {
                 SqliteCommand gameCommand = connection.CreateCommand();
                 gameCommand.Transaction = transaction;
-                gameCommand.CommandText = "INSERT INTO Games (GameNumber, Date, Diamond, Opponent, Type) VALUES ($gameNumber, $date, $diamond, $opponent, 0); SELECT last_insert_rowid();";
+                gameCommand.CommandText = "INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, Opponent, Type) VALUES ($seasonId, $gameNumber, $date, $diamond, $opponent, 0); SELECT last_insert_rowid();";
+                gameCommand.Parameters.AddWithValue("$seasonId", seasonId);
                 gameCommand.Parameters.AddWithValue("$gameNumber", gameGroup.Key.GameNumber);
                 
                 string combinedDateTime = $"{gameGroup.Key.Date} {gameGroup.Key.Time?.ToString() ?? "00:00"}";
@@ -92,7 +98,8 @@ public static class DataSeeder
                     {
                         SqliteCommand playerCommand = connection.CreateCommand();
                         playerCommand.Transaction = transaction;
-                        playerCommand.CommandText = "INSERT INTO Players (Name) VALUES ($name); SELECT last_insert_rowid();";
+                        playerCommand.CommandText = "INSERT INTO Players (SeasonId, Name) VALUES ($seasonId, $name); SELECT last_insert_rowid();";
+                        playerCommand.Parameters.AddWithValue("$seasonId", seasonId);
                         playerCommand.Parameters.AddWithValue("$name", row.Player);
                         playerIds[row.Player] = Convert.ToInt32(playerCommand.ExecuteScalar());
                     }

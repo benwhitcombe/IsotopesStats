@@ -7,6 +7,15 @@
 
 <div class="header-with-filter">
     <h3>Player Statistics</h3>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <label style="margin:0; font-weight: bold;">Season:</label>
+        <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
+            @foreach (Season season in seasons)
+            {
+                <option value="@season.Id">@season.Name</option>
+            }
+        </select>
+    </div>
 </div>
 
 @if (allStats.Any())
@@ -225,6 +234,8 @@
 
 @code {
     private List<PlayerStatsSummary> allStats = new();
+    private List<Season> seasons = new();
+    private int selectedSeasonId;
     private string activeView = "Standard";
     private string currentSortColumn = "AVG";
     private bool isAscending = false;
@@ -244,17 +255,36 @@
     {
         try 
         {
+            seasons = StatsService.GetSeasons();
+            if (SessionState.SelectedSeasonId == 0 && seasons.Any())
+            {
+                SessionState.SelectedSeasonId = seasons.First().Id;
+            }
+            selectedSeasonId = SessionState.SelectedSeasonId;
+
             activeView = SessionState.ActiveView;
             currentSortColumn = SessionState.CurrentSortColumn;
             isAscending = SessionState.IsAscending;
 
-            allStats = StatsService.GetStatsSummary();
+            allStats = StatsService.GetStatsSummary(selectedSeasonId);
             CalculateLeaders();
             Sort(currentSortColumn, false);
         }
         catch (Exception)
         {
             allStats = new List<PlayerStatsSummary>();
+        }
+    }
+
+    private void OnSeasonChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedSeasonId = id;
+            SessionState.SelectedSeasonId = id;
+            allStats = StatsService.GetStatsSummary(selectedSeasonId);
+            CalculateLeaders();
+            Sort(currentSortColumn, false);
         }
     }
 

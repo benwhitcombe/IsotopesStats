@@ -6,8 +6,19 @@
 
 <div class="header-with-filter">
     <h3>Detailed Game Stats</h3>
-    <div class="filter-container">
-        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <label style="margin:0; font-weight: bold;">Season:</label>
+            <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
+                @foreach (Season season in seasons)
+                {
+                    <option value="@season.Id">@season.Name</option>
+                }
+            </select>
+        </div>
+        <div class="filter-container">
+            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
+        </div>
     </div>
     <div class="action-buttons">
         <NavLink href="admin" class="view-btn" style="background-color: var(--isotopes-accent); color: white; border: none; text-decoration: none;">➕ Add New Game</NavLink>
@@ -215,6 +226,8 @@
 
 @code {
     private List<StatEntry> allStats = new();
+    private List<Season> seasons = new();
+    private int selectedSeasonId;
     private HashSet<int> expandedGames = new();
     private string filterText = "";
 
@@ -222,7 +235,14 @@
     {
         try 
         {
-            allStats = StatsService.GetAllGameStats();
+            seasons = StatsService.GetSeasons();
+            if (SessionState.SelectedSeasonId == 0 && seasons.Any())
+            {
+                SessionState.SelectedSeasonId = seasons.First().Id;
+            }
+            selectedSeasonId = SessionState.SelectedSeasonId;
+
+            allStats = StatsService.GetAllGameStats(selectedSeasonId);
             filterText = SessionState.FilterText;
             expandedGames = SessionState.ExpandedGames;
 
@@ -244,6 +264,19 @@
             || (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) 
             || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
         .GroupBy(s => s.GameId);
+
+    private void OnSeasonChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedSeasonId = id;
+            SessionState.SelectedSeasonId = id;
+            allStats = StatsService.GetAllGameStats(selectedSeasonId);
+            expandedGames.Clear();
+            SessionState.ExpandedGames = expandedGames;
+            StateHasChanged();
+        }
+    }
 
     private void UpdateFilterState()
     {
