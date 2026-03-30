@@ -17,18 +17,18 @@
 </div>
 
 <div class="game-cards-list">
-    @foreach (var group in GroupedStats)
+    @foreach (IGrouping<int, StatEntry> group in GroupedStats)
     {
-        var gameInfo = group.First().Game;
-        var isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
-        var teamRuns = group.Sum(s => s.R);
-        var teamHits = group.Sum(s => s.H);
-        var teamHRs = group.Sum(s => s.HR);
-        var teamBBs = group.Sum(s => s.BB);
-        var teamAB = group.Sum(s => s.AB);
-        var teamPA = group.Sum(s => s.PA);
-        var teamRBI = group.Sum(s => s.RBI);
-        var teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
+        Game? gameInfo = group.First().Game;
+        bool isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
+        int teamRuns = group.Sum(s => s.R);
+        int teamHits = group.Sum(s => s.H);
+        int teamHRs = group.Sum(s => s.HR);
+        int teamBBs = group.Sum(s => s.BB);
+        int teamAB = group.Sum(s => s.AB);
+        int teamPA = group.Sum(s => s.PA);
+        int teamRBI = group.Sum(s => s.RBI);
+        double teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
 
         <div class="game-card">
             <div class="game-card-header" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
@@ -100,8 +100,8 @@
                             <tbody>
                                 @foreach (StatEntry stat in group)
                                 {
-                                    var playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
-                                    var playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
+                                    double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
+                                    double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
                                         ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
                                         : 0;
                                     <tr>
@@ -146,8 +146,8 @@
                                     <td>@group.Sum(s => s.FO)</td>
                                     <td class="group-divider">@teamAVG.ToString(".000")</td>
                                     @{
-                                        var teamSF = group.Sum(s => s.SF);
-                                        var teamOBP = (teamAB + teamBBs + teamSF) > 0 
+                                        int teamSF = group.Sum(s => s.SF);
+                                        double teamOBP = (teamAB + teamBBs + teamSF) > 0 
                                             ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + teamSF) 
                                             : 0;
                                     }
@@ -160,8 +160,8 @@
                     <div class="mobile-player-grid">
                         @foreach (StatEntry stat in group)
                         {
-                            var playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
-                            var playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
+                            double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
+                            double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
                                 ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
                                 : 0;
                             <div class="mobile-player-card">
@@ -189,8 +189,8 @@
                             </div>
                         }
                         @{
-                            var tSF = group.Sum(s => s.SF);
-                            var tOBP = (teamAB + teamBBs + tSF) > 0 ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + tSF) : 0;
+                            int tSF = group.Sum(s => s.SF);
+                            double tOBP = (teamAB + teamBBs + tSF) > 0 ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + tSF) : 0;
                         }
                         <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
                             <div class="mobile-card-header">
@@ -229,7 +229,7 @@
             // If first time visiting and nothing is expanded, expand the latest game
             if (expandedGames.Count == 0 && allStats.Any())
             {
-                var latestGameId = allStats.First().GameId;
+                int latestGameId = allStats.First().GameId;
                 expandedGames.Add(latestGameId);
             }
         }
@@ -265,7 +265,7 @@
 
     private void ExpandAll()
     {
-        foreach (var group in GroupedStats)
+        foreach (IGrouping<int, StatEntry> group in GroupedStats)
         {
             expandedGames.Add(group.Key);
         }

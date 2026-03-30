@@ -70,9 +70,9 @@ public static class DataSeeder
         try
         {
             Dictionary<string, int> playerIds = new Dictionary<string, int>();
-            var games = allRows.GroupBy(r => new { r.GameNumber, r.Date, r.Opposition, r.Time, r.Diamond });
+            IEnumerable<IGrouping<dynamic, RawGameData>> games = allRows.GroupBy(r => new { r.GameNumber, r.Date, r.Opposition, r.Time, r.Diamond });
 
-            foreach (var gameGroup in games)
+            foreach (IGrouping<dynamic, RawGameData> gameGroup in games)
             {
                 SqliteCommand gameCommand = connection.CreateCommand();
                 gameCommand.Transaction = transaction;
