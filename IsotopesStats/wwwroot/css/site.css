@@ -198,7 +198,7 @@ table {
 th {
     background-color: #f8f9fa;
     padding: 12px;
-    text-align: left;
+    text-align: center;
     font-size: 0.9rem;
     color: #666;
     border-bottom: 2px solid #eee;
@@ -207,6 +207,7 @@ th {
 td {
     padding: 12px;
     border-bottom: 1px solid #eee;
+    text-align: center;
 }
 
 tbody tr:nth-child(even) {
@@ -221,7 +222,8 @@ tr:last-child td {
     border-bottom: none;
 }
 
-.player-name {
+.player-name, .sticky-col {
+    text-align: left !important;
     font-weight: bold;
 }
 
@@ -533,6 +535,10 @@ tr:last-child td {
 .active-sort-col {
     background-color: #f0f4f8 !important;
     font-weight: bold;
+}
+
+.group-divider {
+    border-left: 2px solid #ddd !important;
 }
 
 /* Form Styling */

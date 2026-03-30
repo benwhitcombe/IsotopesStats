@@ -58,10 +58,10 @@
 
             <div class="game-card-footer">
                 <div class="footer-stat">
-                    <span class="footer-stat-label">HR:</span> @teamHRs
+                    <span class="footer-stat-label">Players:</span> @group.Count()
                 </div>
                 <div class="footer-stat">
-                    <span class="footer-stat-label">BB:</span> @teamBBs
+                    <span class="footer-stat-label">HR:</span> @teamHRs
                 </div>
                 <div class="footer-stat">
                     <span class="footer-stat-label">AVG:</span> @teamAVG.ToString(".000")
@@ -76,68 +76,81 @@
                             <thead>
                                 <tr>
                                     <th class="sticky-col">Player</th>
-                                    <th>PA</th>
+                                    <th class="group-divider">PA</th>
                                     <th>AB</th>
+                                    <th class="group-divider">R</th>
                                     <th>H</th>
-                                    <th>1B</th>
                                     <th>2B</th>
                                     <th>3B</th>
                                     <th>4B</th>
                                     <th>HR</th>
-                                    <th>FC</th>
-                                    <th>BB</th>
-                                    <th>SF</th>
+                                    <th>RBI</th>
+                                    <th class="group-divider">BB</th>
                                     <th>K</th>
                                     <th>KF</th>
+                                    <th class="group-divider">SF</th>
+                                    <th>FC</th>
                                     <th>GO</th>
                                     <th>FO</th>
-                                    <th>R</th>
-                                    <th>RBI</th>
+                                    <th class="group-divider">AVG</th>
+                                    <th>OBP</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (StatEntry stat in group)
                                 {
+                                    var playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
+                                    var playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
+                                        ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
+                                        : 0;
                                     <tr>
                                         <td class="player-name sticky-col">@stat.BO. @stat.Player?.Name</td>
-                                        <td>@stat.PA</td>
+                                        <td class="group-divider">@stat.PA</td>
                                         <td>@stat.AB</td>
+                                        <td class="group-divider">@stat.R</td>
                                         <td>@stat.H</td>
-                                        <td>@stat.H1B</td>
                                         <td>@stat.H2B</td>
                                         <td>@stat.H3B</td>
                                         <td>@stat.H4B</td>
                                         <td>@stat.HR</td>
-                                        <td>@stat.FC</td>
-                                        <td>@stat.BB</td>
-                                        <td>@stat.SF</td>
+                                        <td>@stat.RBI</td>
+                                        <td class="group-divider">@stat.BB</td>
                                         <td>@stat.K</td>
                                         <td>@stat.KF</td>
+                                        <td class="group-divider">@stat.SF</td>
+                                        <td>@stat.FC</td>
                                         <td>@stat.GO</td>
                                         <td>@stat.FO</td>
-                                        <td>@stat.R</td>
-                                        <td>@stat.RBI</td>
+                                        <td class="group-divider">@playerAVG.ToString(".000")</td>
+                                        <td>@playerOBP.ToString(".000")</td>
                                     </tr>
                                 }
                                 <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
                                     <td class="sticky-col">TOTALS</td>
-                                    <td>@teamPA</td>
+                                    <td class="group-divider">@teamPA</td>
                                     <td>@teamAB</td>
+                                    <td class="group-divider">@teamRuns</td>
                                     <td>@teamHits</td>
-                                    <td>@group.Sum(s => s.H1B)</td>
                                     <td>@group.Sum(s => s.H2B)</td>
                                     <td>@group.Sum(s => s.H3B)</td>
                                     <td>@group.Sum(s => s.H4B)</td>
                                     <td>@teamHRs</td>
-                                    <td>@group.Sum(s => s.FC)</td>
-                                    <td>@teamBBs</td>
-                                    <td>@group.Sum(s => s.SF)</td>
+                                    <td>@teamRBI</td>
+                                    <td class="group-divider">@teamBBs</td>
                                     <td>@group.Sum(s => s.K)</td>
                                     <td>@group.Sum(s => s.KF)</td>
+                                    <td class="group-divider">@group.Sum(s => s.SF)</td>
+                                    <td>@group.Sum(s => s.FC)</td>
                                     <td>@group.Sum(s => s.GO)</td>
                                     <td>@group.Sum(s => s.FO)</td>
-                                    <td>@teamRuns</td>
-                                    <td>@teamRBI</td>
+                                    <td class="group-divider">@teamAVG.ToString(".000")</td>
+                                    @{
+                                        var teamSF = group.Sum(s => s.SF);
+                                        var teamOBP = (teamAB + teamBBs + teamSF) > 0 
+                                            ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + teamSF) 
+                                            : 0;
+                                    }
+                                    <td>@teamOBP.ToString(".000")</td>
                                 </tr>
                             </tbody>
                         </table>
