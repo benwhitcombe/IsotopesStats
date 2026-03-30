@@ -59,7 +59,7 @@
                     <button class="view-btn" @onclick="ToggleSortModal">Close</button>
                 </div>
                 <div class="sort-grid">
-                    @foreach (var stat in AllSortableStats)
+                    @foreach (string stat in AllSortableStats)
                     {
                         <div class="sort-option @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)">
                             @stat
@@ -117,7 +117,7 @@
                 <tbody>
                     @for (int i = 0; i < allStats.Count; i++)
                     {
-                        var player = allStats[i];
+                        PlayerStatsSummary player = allStats[i];
                         <tr>
                             <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
                             <td class="player-name sticky-col">@player.PlayerName</td>
@@ -165,7 +165,7 @@
         <div class="mobile-player-grid">
             @for (int i = 0; i < allStats.Count; i++)
             {
-                var player = allStats[i];
+                PlayerStatsSummary player = allStats[i];
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
                         <span class="mobile-card-name">
