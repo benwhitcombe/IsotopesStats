@@ -30,8 +30,6 @@ body {
     padding: 1rem;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    position: sticky;
-    top: 0;
     z-index: 1000;
 }
 
@@ -86,6 +84,10 @@ body {
 }
 
 @media (min-width: 769px) {
+    .isotopes-header {
+        position: sticky;
+        top: 0;
+    }
     .header-content {
         justify-content: flex-start;
         max-width: 1200px;
