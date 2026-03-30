@@ -41,8 +41,8 @@ body {
 }
 
 .logo-atom {
-    font-size: 2rem;
     animation: spin 5s linear infinite;
+    transform-origin: center;
 }
 
 @keyframes spin {
