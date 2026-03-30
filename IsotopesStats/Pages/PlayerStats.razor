@@ -90,6 +90,8 @@
                         }
                         else if (activeView == "Hits")
                         {
+                            <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
+                            <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
                             <th @onclick="@(() => Sort("H1B"))" style="cursor:pointer">1B @(GetSortIcon("H1B"))</th>
                             <th @onclick="@(() => Sort("H2B"))" style="cursor:pointer">2B @(GetSortIcon("H2B"))</th>
                             <th @onclick="@(() => Sort("H3B"))" style="cursor:pointer">3B @(GetSortIcon("H3B"))</th>
