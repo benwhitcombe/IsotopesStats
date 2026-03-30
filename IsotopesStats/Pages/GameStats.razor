@@ -4,10 +4,10 @@
 @inject StatsService StatsService
 @inject GameStatsState SessionState
 
-<div class="header-with-filter">
-    <h3>Detailed Game Stats</h3>
-    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Game Stats</h3>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
             <label style="margin:0; font-weight: bold;">Season:</label>
             <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
                 @foreach (Season season in seasons)
@@ -16,14 +16,37 @@
                 }
             </select>
         </div>
-        <div class="filter-container">
-            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
+        <div class="mobile-only">
+             <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal">
+                🗓️ @seasons.FirstOrDefault(s => s.Id == selectedSeasonId)?.Name
+            </button>
         </div>
     </div>
-    <div class="action-buttons">
-        <NavLink href="admin" class="view-btn" style="background-color: var(--isotopes-accent); color: white; border: none; text-decoration: none;">➕ Add New Game</NavLink>
-        <button class="view-btn" @onclick="ExpandAll">Expand All</button>
-        <button class="view-btn" @onclick="CollapseAll">Collapse All</button>
+</div>
+
+@if (showSeasonModal)
+{
+    <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
+        <div class="sort-modal" @onclick:stopPropagation="true">
+            <div class="sort-modal-header">
+                <h4 style="margin:0">Select Season</h4>
+                <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
+            </div>
+            <div class="sort-grid">
+                @foreach (Season season in seasons)
+                {
+                    <div class="sort-option @(selectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
+                        @season.Name
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="stat-card" style="margin-bottom: 1.5rem;">
+    <div class="filter-container" style="max-width: 100%;">
+        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
     </div>
 </div>
 
@@ -230,6 +253,7 @@
     private int selectedSeasonId;
     private HashSet<int> expandedGames = new();
     private string filterText = "";
+    private bool showSeasonModal = false;
 
     protected override void OnInitialized()
     {
@@ -276,6 +300,19 @@
             SessionState.ExpandedGames = expandedGames;
             StateHasChanged();
         }
+    }
+
+    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
+
+    private void SelectMobileSeason(int id)
+    {
+        selectedSeasonId = id;
+        SessionState.SelectedSeasonId = id;
+        allStats = StatsService.GetAllGameStats(selectedSeasonId);
+        expandedGames.Clear();
+        SessionState.ExpandedGames = expandedGames;
+        showSeasonModal = false;
+        StateHasChanged();
     }
 
     private void UpdateFilterState()

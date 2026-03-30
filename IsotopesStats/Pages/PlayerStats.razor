@@ -5,18 +5,45 @@
 @inject StatsService StatsService
 @inject PlayerStatsState SessionState
 
-<div class="header-with-filter">
-    <h3>Player Statistics</h3>
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3 style="margin:0">Player Statistics</h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
-        <label style="margin:0; font-weight: bold;">Season:</label>
-        <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
-            @foreach (Season season in seasons)
-            {
-                <option value="@season.Id">@season.Name</option>
-            }
-        </select>
+        <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
+            <label style="margin:0; font-weight: bold;">Season:</label>
+            <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
+                @foreach (Season season in seasons)
+                {
+                    <option value="@season.Id">@season.Name</option>
+                }
+            </select>
+        </div>
+        <div class="mobile-only">
+             <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal">
+                🗓️ @seasons.FirstOrDefault(s => s.Id == selectedSeasonId)?.Name
+            </button>
+        </div>
     </div>
 </div>
+
+@if (showSeasonModal)
+{
+    <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
+        <div class="sort-modal" @onclick:stopPropagation="true">
+            <div class="sort-modal-header">
+                <h4 style="margin:0">Select Season</h4>
+                <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
+            </div>
+            <div class="sort-grid">
+                @foreach (Season season in seasons)
+                {
+                    <div class="sort-option @(selectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
+                        @season.Name
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 @if (allStats.Any())
 {
@@ -240,6 +267,7 @@
     private string currentSortColumn = "AVG";
     private bool isAscending = false;
     private bool showSortModal = false;
+    private bool showSeasonModal = false;
 
     // Leader references
     private PlayerStatsSummary? avgLeader;
@@ -286,6 +314,18 @@
             CalculateLeaders();
             Sort(currentSortColumn, false);
         }
+    }
+
+    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
+
+    private void SelectMobileSeason(int id)
+    {
+        selectedSeasonId = id;
+        SessionState.SelectedSeasonId = id;
+        allStats = StatsService.GetStatsSummary(selectedSeasonId);
+        CalculateLeaders();
+        Sort(currentSortColumn, false);
+        showSeasonModal = false;
     }
 
     private void CalculateLeaders()
