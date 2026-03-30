@@ -2,11 +2,12 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @inject StatsService StatsService
+@inject GameStatsState SessionState
 
 <div class="header-with-filter">
     <h3>Detailed Game Stats</h3>
     <div class="filter-container">
-        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" placeholder="Search Player or Opponent..." />
+        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
     </div>
     <div class="action-buttons">
         <NavLink href="admin" class="view-btn" style="background-color: var(--isotopes-accent); color: white; border: none; text-decoration: none;">➕ Add New Game</NavLink>
@@ -222,11 +223,14 @@
         try 
         {
             allStats = StatsService.GetAllGameStats();
-            // Expand the most recent game by default
-            var latestGame = allStats.FirstOrDefault()?.Game;
-            if (latestGame != null)
+            filterText = SessionState.FilterText;
+            expandedGames = SessionState.ExpandedGames;
+
+            // If first time visiting and nothing is expanded, expand the latest game
+            if (expandedGames.Count == 0 && allStats.Any())
             {
-                expandedGames.Add(latestGame.Id);
+                var latestGameId = allStats.First().GameId;
+                expandedGames.Add(latestGameId);
             }
         }
         catch (Exception)
@@ -241,6 +245,11 @@
             || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
         .GroupBy(s => s.GameId);
 
+    private void UpdateFilterState()
+    {
+        SessionState.FilterText = filterText;
+    }
+
     private void ToggleGame(int gameId)
     {
         if (expandedGames.Contains(gameId))
@@ -251,6 +260,7 @@
         {
             expandedGames.Add(gameId);
         }
+        SessionState.ExpandedGames = expandedGames;
     }
 
     private void ExpandAll()
@@ -259,11 +269,13 @@
         {
             expandedGames.Add(group.Key);
         }
+        SessionState.ExpandedGames = expandedGames;
     }
 
     private void CollapseAll()
     {
         expandedGames.Clear();
+        SessionState.ExpandedGames = expandedGames;
     }
 }
 

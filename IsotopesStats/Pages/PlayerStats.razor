@@ -3,6 +3,7 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @inject StatsService StatsService
+@inject PlayerStatsState SessionState
 
 <div class="header-with-filter">
     <h3>Player Statistics</h3>
@@ -243,6 +244,10 @@
     {
         try 
         {
+            activeView = SessionState.ActiveView;
+            currentSortColumn = SessionState.CurrentSortColumn;
+            isAscending = SessionState.IsAscending;
+
             allStats = StatsService.GetStatsSummary();
             CalculateLeaders();
             Sort(currentSortColumn, false);
@@ -268,32 +273,54 @@
     private void SetViewAndSort(string view, string column)
     {
         activeView = view;
+        SessionState.ActiveView = view;
+        
+        // Update the specific view's sort column in state
+        if (view == "Standard") { SessionState.StandardSortColumn = column; SessionState.StandardIsAscending = false; }
+        else if (view == "Hits") { SessionState.HitsSortColumn = column; SessionState.HitsIsAscending = false; }
+        else if (view == "Outcomes") { SessionState.OutcomesSortColumn = column; SessionState.OutcomesIsAscending = false; }
+
         Sort(column, false);
     }
 
     private void SetView(string view)
     {
         activeView = view;
-        isAscending = false; // Always default to descending for the primary stat
+        SessionState.ActiveView = view;
         
-        string defaultStat = view switch
+        // Load the saved sort for this view
+        string targetSortColumn = view switch
         {
-            "Standard" => "AVG",
-            "Hits" => "SLG",
-            "Outcomes" => "OBP",
+            "Standard" => SessionState.StandardSortColumn,
+            "Hits" => SessionState.HitsSortColumn,
+            "Outcomes" => SessionState.OutcomesSortColumn,
             _ => "AVG"
         };
+
+        bool targetIsAscending = view switch
+        {
+            "Standard" => SessionState.StandardIsAscending,
+            "Hits" => SessionState.HitsIsAscending,
+            "Outcomes" => SessionState.OutcomesIsAscending,
+            _ => false
+        };
         
-        Sort(defaultStat, false);
+        currentSortColumn = targetSortColumn;
+        isAscending = targetIsAscending;
+        
+        Sort(currentSortColumn, false);
     }
 
     private void SelectMobileSort(string column)
     {
-        // Automatically switch view based on stat
-        if (new[] { "AVG", "OPS", "GP", "PA", "AB", "H", "HR", "RBI", "R", "PlayerName" }.Contains(column)) activeView = "Standard";
-        else if (new[] { "H1B", "H2B", "H3B", "H4B", "SLG", "1B", "2B", "3B", "4B" }.Contains(column)) activeView = "Hits";
-        else if (new[] { "BB", "SF", "FC", "K", "KF", "GO", "FO", "OBP" }.Contains(column)) activeView = "Outcomes";
+        string targetView = activeView;
+        if (new[] { "AVG", "OPS", "GP", "PA", "AB", "H", "HR", "RBI", "R", "PlayerName" }.Contains(column)) targetView = "Standard";
+        else if (new[] { "H1B", "H2B", "H3B", "H4B", "SLG", "1B", "2B", "3B", "4B" }.Contains(column)) targetView = "Hits";
+        else if (new[] { "BB", "SF", "FC", "K", "KF", "GO", "FO", "OBP" }.Contains(column)) targetView = "Outcomes";
 
+        activeView = targetView;
+        SessionState.ActiveView = targetView;
+        
         Sort(column, false);
         showSortModal = false;
     }
@@ -332,7 +359,13 @@
             case "GO": allStats = isAscending ? allStats.OrderBy(p => p.GO).ToList() : allStats.OrderByDescending(p => p.GO).ToList(); break;
             case "FO": allStats = isAscending ? allStats.OrderBy(p => p.FO).ToList() : allStats.OrderByDescending(p => p.FO).ToList(); break;
         }
+        
         currentSortColumn = column;
+
+        // Save sort state for the active view
+        if (activeView == "Standard") { SessionState.StandardSortColumn = column; SessionState.StandardIsAscending = isAscending; }
+        else if (activeView == "Hits") { SessionState.HitsSortColumn = column; SessionState.HitsIsAscending = isAscending; }
+        else if (activeView == "Outcomes") { SessionState.OutcomesSortColumn = column; SessionState.OutcomesIsAscending = isAscending; }
     }
 
     private string GetSortIcon(string column)

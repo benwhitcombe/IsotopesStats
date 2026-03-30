@@ -10,6 +10,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddScoped<StatsRepository>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<PlayerStatsState>();
+builder.Services.AddScoped<GameStatsState>();
 
 // Initialize the database
 DatabaseInitializer.Initialize();
