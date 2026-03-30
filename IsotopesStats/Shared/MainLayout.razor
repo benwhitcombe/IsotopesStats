@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
 <PageTitle>Isotopes Stats 2026</PageTitle>
 
@@ -11,8 +11,8 @@
             </div>
             
             <nav class="desktop-nav">
-                <NavLink href="" Match="NavLinkMatch.All">Players</NavLink>
                 <NavLink href="gamestats">Games</NavLink>
+                <NavLink href="" Match="NavLinkMatch.All">Players</NavLink>
             </nav>
         </div>
     </header>
@@ -24,13 +24,13 @@
     </main>
 
     <nav class="mobile-nav">
-        <NavLink href="" Match="NavLinkMatch.All">
-            <span class="nav-icon">📋</span>
-            <span>Players</span>
-        </NavLink>
         <NavLink href="gamestats">
             <span class="nav-icon">⚾</span>
             <span>Games</span>
+        </NavLink>
+        <NavLink href="" Match="NavLinkMatch.All">
+            <span class="nav-icon">📋</span>
+            <span>Players</span>
         </NavLink>
     </nav>
 </div>
