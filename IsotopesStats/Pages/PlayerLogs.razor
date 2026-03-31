@@ -134,6 +134,7 @@ else if (!isLoading)
         try 
         {
             logs = StatsService.GetPlayerGameLog(PlayerName, SeasonId);
+            await skeletonTask;
         }
         catch (Exception)
         {

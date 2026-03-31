@@ -2,9 +2,11 @@
 @page "/gamestats"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject StatsService StatsService
 @inject GameStatsState SessionState
 @inject SharedSessionState SharedState
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Game Stats</PageTitle>
 
@@ -299,6 +301,41 @@ else if (!isLoading)
             SharedState.SelectedSeasonId = seasons.First().Id;
         }
         await LoadData();
+        isLoading = true; // Stay in loading state for the interactive transition
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HydrateState();
+        }
+    }
+
+    private async Task HydrateState()
+    {
+        try 
+        {
+            ProtectedBrowserStorageResult<int> seasonResult = await ProtectedSessionStore.GetAsync<int>("SelectedSeasonId");
+            if (seasonResult.Success && seasonResult.Value != 0)
+            {
+                SharedState.SelectedSeasonId = seasonResult.Value;
+            }
+
+            ProtectedBrowserStorageResult<string> filterResult = await ProtectedSessionStore.GetAsync<string>("GameFilterText");
+            if (filterResult.Success && !string.IsNullOrEmpty(filterResult.Value))
+            {
+                filterText = filterResult.Value;
+                SessionState.FilterText = filterText;
+            }
+        }
+        catch (Exception)
+        {
+            // Silently fail, defaults are handled
+        }
+
+        await LoadData();
+        StateHasChanged();
     }
 
     private async Task LoadData()
@@ -349,6 +386,7 @@ else if (!isLoading)
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             SharedState.SelectedSeasonId = id;
+            _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
             _ = LoadData(); // Fire and forget load
         }
     }
@@ -358,6 +396,7 @@ else if (!isLoading)
     private async Task SelectMobileSeason(int id)
     {
         SharedState.SelectedSeasonId = id;
+        await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
         showSeasonModal = false;
         await LoadData();
     }
@@ -365,6 +404,7 @@ else if (!isLoading)
     private void UpdateFilterState()
     {
         SessionState.FilterText = filterText;
+        _ = ProtectedSessionStore.SetAsync("GameFilterText", filterText);
     }
 
     private void ToggleGame(int gameId)

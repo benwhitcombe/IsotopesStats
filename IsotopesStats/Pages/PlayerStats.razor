@@ -1,9 +1,11 @@
 @page "/players"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject StatsService StatsService
 @inject PlayerStatsState SessionState
 @inject SharedSessionState SharedState
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Player Stats</PageTitle>
 
@@ -315,6 +317,40 @@ else if (!isLoading)
             SharedState.SelectedSeasonId = seasons.First().Id;
         }
         await LoadData();
+        isLoading = true; // Stay in loading state for the interactive transition
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HydrateState();
+        }
+    }
+
+    private async Task HydrateState()
+    {
+        try 
+        {
+            ProtectedBrowserStorageResult<int> seasonResult = await ProtectedSessionStore.GetAsync<int>("SelectedSeasonId");
+            if (seasonResult.Success && seasonResult.Value != 0)
+            {
+                SharedState.SelectedSeasonId = seasonResult.Value;
+            }
+
+            ProtectedBrowserStorageResult<string> viewResult = await ProtectedSessionStore.GetAsync<string>("ActiveView");
+            if (viewResult.Success && !string.IsNullOrEmpty(viewResult.Value))
+            {
+                SessionState.ActiveView = viewResult.Value;
+            }
+        }
+        catch (Exception)
+        {
+            // Silently fail, defaults are handled
+        }
+
+        await LoadData();
+        StateHasChanged();
     }
 
     private async Task LoadData()
@@ -357,6 +393,7 @@ else if (!isLoading)
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             SharedState.SelectedSeasonId = id;
+            _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
             _ = LoadData(); // Fire and forget load
         }
     }
@@ -366,6 +403,7 @@ else if (!isLoading)
     private async Task SelectMobileSeason(int id)
     {
         SharedState.SelectedSeasonId = id;
+        await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
         showSeasonModal = false;
         await LoadData();
     }
@@ -386,6 +424,7 @@ else if (!isLoading)
     {
         activeView = view;
         SessionState.ActiveView = view;
+        _ = ProtectedSessionStore.SetAsync("ActiveView", view);
         
         // Update the specific view's sort column in state
         if (view == "Standard") { SessionState.StandardSortColumn = column; SessionState.StandardIsAscending = false; }
@@ -399,6 +438,7 @@ else if (!isLoading)
     {
         activeView = view;
         SessionState.ActiveView = view;
+        _ = ProtectedSessionStore.SetAsync("ActiveView", view);
         
         // Load the saved sort for this view
         string targetSortColumn = view switch
@@ -432,6 +472,7 @@ else if (!isLoading)
 
         activeView = targetView;
         SessionState.ActiveView = targetView;
+        _ = ProtectedSessionStore.SetAsync("ActiveView", targetView);
         
         Sort(column, false);
         showSortModal = false;
