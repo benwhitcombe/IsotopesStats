@@ -77,17 +77,17 @@
     private List<StatEntry> playerStats = new();
     private bool showSuccess = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         try 
         {
-            seasons = StatsService.GetSeasons();
+            seasons = await StatsService.GetSeasonsAsync();
             if (seasons.Any())
             {
                 newGame.SeasonId = seasons.First().Id;
             }
             
-            LoadPlayers();
+            await LoadPlayers();
         }
         catch (Exception)
         {
@@ -97,18 +97,18 @@
         }
     }
 
-    private void LoadPlayers()
+    private async Task LoadPlayers()
     {
-        players = StatsService.GetPlayers(newGame.SeasonId);
+        players = await StatsService.GetPlayersAsync(newGame.SeasonId);
         ResetForm();
     }
 
-    private void OnSeasonChange(ChangeEventArgs e)
+    private async Task OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             newGame.SeasonId = id;
-            LoadPlayers();
+            await LoadPlayers();
         }
     }
 
@@ -117,15 +117,15 @@
         playerStats.Clear();
         foreach (Player player in players)
         {
-            playerStats.Add(new StatEntry { PlayerId = player.Id });
+            playerStats.Add(new StatEntry { PlayerId = player.Id, Player = player });
         }
     }
 
-    private void SubmitGame()
+    private async Task SubmitGame()
     {
         try
         {
-            StatsService.AddGameWithStats(newGame, playerStats);
+            await StatsService.AddGameWithStatsAsync(newGame, playerStats);
             showSuccess = true;
             int currentSeason = newGame.SeasonId;
             newGame = new() { Date = DateTime.Today, SeasonId = currentSeason };

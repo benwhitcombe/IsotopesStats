@@ -52,7 +52,13 @@
 
 <div class="stat-card" style="margin-bottom: 1.5rem;">
     <div class="filter-container" style="max-width: 100%;">
-        <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
+        <div class="search-container">
+            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
+            @if (!string.IsNullOrEmpty(filterText))
+            {
+                <button class="clear-button" @onclick="ClearFilter">✕</button>
+            }
+        </div>
     </div>
 </div>
 
@@ -292,14 +298,23 @@ else if (!isLoading)
     private bool isLoading = true;
     private bool showSkeleton = false;
 
+    private IEnumerable<IGrouping<int, StatEntry>> GroupedStats => 
+        allStats.Where(s => 
+            string.IsNullOrEmpty(filterText) || 
+            (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)
+        ).GroupBy(s => s.GameId);
+
     protected override async Task OnInitializedAsync()
     {
         SharedState.ReturnUrl = ""; // Root is Game Stats
-        seasons = StatsService.GetSeasons();
+        seasons = await StatsService.GetSeasonsAsync();
+
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {
             SharedState.SelectedSeasonId = seasons.First().Id;
         }
+
         await LoadData();
         isLoading = true; // Stay in loading state for the interactive transition
     }
@@ -343,8 +358,8 @@ else if (!isLoading)
         isLoading = true;
         showSkeleton = false;
 
-        // Start a task to show skeleton after 250ms
-        Task skeletonTask = Task.Run(async () => {
+        // Start a timer task to show skeleton after 250ms
+        _ = Task.Run(async () => {
             await Task.Delay(250);
             if (isLoading) 
             {
@@ -355,7 +370,7 @@ else if (!isLoading)
 
         try 
         {
-            allStats = StatsService.GetAllGameStats(SharedState.SelectedSeasonId);
+            allStats = await StatsService.GetAllGameStatsAsync(SharedState.SelectedSeasonId);
             filterText = SessionState.FilterText;
             expandedGames = SessionState.ExpandedGames;
 
@@ -375,30 +390,30 @@ else if (!isLoading)
         }
     }
 
-    private IEnumerable<IGrouping<int, StatEntry>> GroupedStats => allStats
-        .Where(s => string.IsNullOrWhiteSpace(filterText) 
-            || (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) 
-            || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
-        .GroupBy(s => s.GameId);
-
-    private void OnSeasonChange(ChangeEventArgs e)
+    private async Task OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             SharedState.SelectedSeasonId = id;
-            _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
-            _ = LoadData(); // Fire and forget load
+            await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
+            await LoadData();
         }
     }
 
     private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
 
-    private async Task SelectMobileSeason(int id)
+    private void SelectMobileSeason(int id)
     {
         SharedState.SelectedSeasonId = id;
-        await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
+        _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
         showSeasonModal = false;
-        await LoadData();
+        _ = LoadData();
+    }
+
+    private void ClearFilter()
+    {
+        filterText = "";
+        UpdateFilterState();
     }
 
     private void UpdateFilterState()
@@ -449,6 +464,34 @@ else if (!isLoading)
     .filter-container {
         flex: 1;
         max-width: 400px;
+    }
+
+    .search-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .clear-button {
+        position: absolute;
+        right: 10px;
+        background: #eee;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        font-size: 12px;
+        transition: background 0.2s;
+    }
+
+    .clear-button:hover {
+        background: #ddd;
+        color: #333;
     }
 
     .game-summary-row td:nth-child(3) {

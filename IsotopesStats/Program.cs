@@ -15,7 +15,7 @@ builder.Services.AddScoped<PlayerStatsState>();
 builder.Services.AddScoped<GameStatsState>();
 
 // Initialize the database
-DatabaseInitializer.Initialize();
+await DatabaseInitializer.InitializeAsync();
 
 WebApplication app = builder.Build();
 
@@ -23,7 +23,7 @@ WebApplication app = builder.Build();
 try 
 {
     Console.WriteLine("Initializing database and seeding data...");
-    DataSeeder.SeedData();
+    await DataSeeder.SeedDataAsync();
     Console.WriteLine("Database initialization complete.");
 }
 catch (Exception ex)

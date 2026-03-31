@@ -6,10 +6,10 @@ public static class DatabaseInitializer
 {
     private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
-    public static void Initialize()
+    public static async Task InitializeAsync()
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
-        connection.Open();
+        await connection.OpenAsync();
 
         SqliteCommand command = connection.CreateCommand();
         command.CommandText = 
@@ -61,6 +61,6 @@ public static class DatabaseInitializer
                 FOREIGN KEY (GameId) REFERENCES Games(Id)
             );
         ";
-        command.ExecuteNonQuery();
+        await command.ExecuteNonQueryAsync();
     }
 }

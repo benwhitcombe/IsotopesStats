@@ -65,20 +65,20 @@ else if (!isLoading)
                 <div class="leader-name">@avgLeader?.PlayerName</div>
                 <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
             </div>
-            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.2s;">
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.2s;">
+                <div class="leader-category">On-Base Plus Slugging</div>
+                <div class="leader-name">@opsLeader?.PlayerName</div>
+                <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
+            </div>
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.3s;">
                 <div class="leader-category">Home Runs</div>
                 <div class="leader-name">@hrLeader?.PlayerName</div>
                 <div class="leader-value">@hrLeader?.HR</div>
             </div>
-            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer; animation-delay: 0.3s;">
-                <div class="leader-category">RBIs</div>
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer; background: linear-gradient(135deg, #666, #444); animation-delay: 0.4s;">
+                <div class="leader-category">Runs Batted In</div>
                 <div class="leader-name">@rbiLeader?.PlayerName</div>
                 <div class="leader-value">@rbiLeader?.RBI</div>
-            </div>
-            <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.4s;">
-                <div class="leader-category">OPS</div>
-                <div class="leader-name">@opsLeader?.PlayerName</div>
-                <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
             </div>
         </div>
     }
@@ -300,9 +300,9 @@ else if (!isLoading)
 
     // Leader references
     private PlayerStatsSummary? avgLeader;
+    private PlayerStatsSummary? opsLeader;
     private PlayerStatsSummary? hrLeader;
     private PlayerStatsSummary? rbiLeader;
-    private PlayerStatsSummary? opsLeader;
 
     private readonly string[] AllSortableStats = {
         "AB", "AVG", "BB", "FC", "FO", "GO", "GP", "H", "1B", "2B", "3B", "4B", "HR", "K", "KF", "OBP", "OPS", "PA", "R", "RBI", "SF", "SLG"
@@ -311,11 +311,13 @@ else if (!isLoading)
     protected override async Task OnInitializedAsync()
     {
         SharedState.ReturnUrl = "players";
-        seasons = StatsService.GetSeasons();
+        seasons = await StatsService.GetSeasonsAsync();
+        
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {
             SharedState.SelectedSeasonId = seasons.First().Id;
         }
+
         await LoadData();
         isLoading = true; // Stay in loading state for the interactive transition
     }
@@ -358,8 +360,8 @@ else if (!isLoading)
         isLoading = true;
         showSpinner = false;
 
-        // Start a task to show spinner after 250ms
-        Task spinnerTask = Task.Run(async () => {
+        // Start a timer task to show spinner after 250ms
+        _ = Task.Run(async () => {
             await Task.Delay(250);
             if (isLoading) 
             {
@@ -374,7 +376,7 @@ else if (!isLoading)
             currentSortColumn = SessionState.CurrentSortColumn;
             isAscending = SessionState.IsAscending;
 
-            allStats = StatsService.GetStatsSummary(SharedState.SelectedSeasonId);
+            allStats = await StatsService.GetStatsSummaryAsync(SharedState.SelectedSeasonId);
             CalculateLeaders();
             Sort(currentSortColumn, false);
         }
@@ -388,13 +390,13 @@ else if (!isLoading)
         }
     }
 
-    private void OnSeasonChange(ChangeEventArgs e)
+    private async Task OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             SharedState.SelectedSeasonId = id;
-            _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
-            _ = LoadData(); // Fire and forget load
+            await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
+            await LoadData();
         }
     }
 
@@ -413,9 +415,9 @@ else if (!isLoading)
         if (!allStats.Any()) return;
 
         avgLeader = allStats.OrderByDescending(p => p.AVG).FirstOrDefault();
+        opsLeader = allStats.OrderByDescending(p => p.OPS).FirstOrDefault();
         hrLeader = allStats.OrderByDescending(p => p.HR).FirstOrDefault();
         rbiLeader = allStats.OrderByDescending(p => p.RBI).FirstOrDefault();
-        opsLeader = allStats.OrderByDescending(p => p.OPS).FirstOrDefault();
     }
 
     private void ToggleSortModal() => showSortModal = !showSortModal;

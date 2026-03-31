@@ -133,7 +133,7 @@ else if (!isLoading)
 
         try 
         {
-            logs = StatsService.GetPlayerGameLog(PlayerName, SeasonId);
+            logs = await StatsService.GetPlayerGameLogAsync(PlayerName, SeasonId);
             await skeletonTask;
         }
         catch (Exception)

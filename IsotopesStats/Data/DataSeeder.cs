@@ -39,42 +39,42 @@ public static class DataSeeder
         public int RBI { get; set; }
     }
 
-    public static void SeedData()
+    public static async Task SeedDataAsync()
     {
-        Seed2025Data();
-        Seed2026Season();
+        await Seed2025DataAsync();
+        await Seed2026SeasonAsync();
     }
 
-    private static void Seed2026Season()
+    private static async Task Seed2026SeasonAsync()
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
-        connection.Open();
+        await connection.OpenAsync();
 
         // Check if 2026 already exists
         SqliteCommand checkCommand = connection.CreateCommand();
         checkCommand.CommandText = "SELECT COUNT(*) FROM Seasons WHERE Name = '2026'";
-        if (Convert.ToInt32(checkCommand.ExecuteScalar()) > 0) return;
+        if (Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0) return;
 
         // Create 2026 Season
         SqliteCommand seasonCommand = connection.CreateCommand();
         seasonCommand.CommandText = "INSERT INTO Seasons (Name) VALUES ('2026')";
-        seasonCommand.ExecuteNonQuery();
+        await seasonCommand.ExecuteNonQueryAsync();
     }
 
-    private static void Seed2025Data()
+    private static async Task Seed2025DataAsync()
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
-        connection.Open();
+        await connection.OpenAsync();
 
         // Check if data already exists
         SqliteCommand checkCommand = connection.CreateCommand();
         checkCommand.CommandText = "SELECT COUNT(*) FROM Seasons";
-        if (Convert.ToInt32(checkCommand.ExecuteScalar()) > 0) return;
+        if (Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0) return;
 
         // 1. Create 2025 Season
         SqliteCommand seasonCommand = connection.CreateCommand();
         seasonCommand.CommandText = "INSERT INTO Seasons (Name) VALUES ('2025'); SELECT last_insert_rowid();";
-        int seasonId = Convert.ToInt32(seasonCommand.ExecuteScalar());
+        int seasonId = Convert.ToInt32(await seasonCommand.ExecuteScalarAsync());
 
         string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data/2025_data.json");
         if (!File.Exists(jsonPath))
@@ -88,7 +88,7 @@ public static class DataSeeder
             return;
         }
 
-        string jsonContent = File.ReadAllText(jsonPath);
+        string jsonContent = await File.ReadAllTextAsync(jsonPath);
         List<RawGameData>? allRows = JsonSerializer.Deserialize<List<RawGameData>>(jsonContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         if (allRows == null) return;
@@ -112,7 +112,7 @@ public static class DataSeeder
                 
                 gameCommand.Parameters.AddWithValue("$diamond", gameGroup.Key.Diamond);
                 gameCommand.Parameters.AddWithValue("$opponent", gameGroup.Key.Opposition);
-                int gameId = Convert.ToInt32(gameCommand.ExecuteScalar());
+                int gameId = Convert.ToInt32(await gameCommand.ExecuteScalarAsync());
 
                 foreach (RawGameData row in gameGroup)
                 {
@@ -123,7 +123,7 @@ public static class DataSeeder
                         playerCommand.CommandText = "INSERT INTO Players (SeasonId, Name) VALUES ($seasonId, $name); SELECT last_insert_rowid();";
                         playerCommand.Parameters.AddWithValue("$seasonId", seasonId);
                         playerCommand.Parameters.AddWithValue("$name", row.Player);
-                        playerIds[row.Player] = Convert.ToInt32(playerCommand.ExecuteScalar());
+                        playerIds[row.Player] = Convert.ToInt32(await playerCommand.ExecuteScalarAsync());
                     }
 
                     int playerId = playerIds[row.Player];
@@ -152,14 +152,14 @@ public static class DataSeeder
                     statCommand.Parameters.AddWithValue("$fo", row.FO);
                     statCommand.Parameters.AddWithValue("$r", row.R);
                     statCommand.Parameters.AddWithValue("$rbi", row.RBI);
-                    statCommand.ExecuteNonQuery();
+                    await statCommand.ExecuteNonQueryAsync();
                 }
             }
-            transaction.Commit();
+            await transaction.CommitAsync();
         }
         catch (Exception ex)
         {
-            transaction.Rollback();
+            await transaction.RollbackAsync();
             Console.WriteLine($"Error seeding data: {ex.Message}");
             throw;
         }

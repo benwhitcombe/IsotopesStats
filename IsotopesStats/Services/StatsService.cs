@@ -12,38 +12,38 @@ public class StatsService
         _repository = repository;
     }
 
-    public List<Season> GetSeasons()
+    public async Task<List<Season>> GetSeasonsAsync()
     {
-        return _repository.GetSeasons();
+        return await _repository.GetSeasonsAsync();
     }
 
-    public List<PlayerStatsSummary> GetStatsSummary(int seasonId)
+    public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
-        return _repository.GetStatsSummary(seasonId);
+        return await _repository.GetStatsSummaryAsync(seasonId);
     }
 
-    public PlayerStatsSummary GetTeamTotals(int seasonId)
+    public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
     {
-        return _repository.GetTeamTotals(seasonId);
+        return await _repository.GetTeamTotalsAsync(seasonId);
     }
 
-    public List<Player> GetPlayers(int seasonId)
+    public async Task<List<Player>> GetPlayersAsync(int seasonId)
     {
-        return _repository.GetPlayers(seasonId);
+        return await _repository.GetPlayersAsync(seasonId);
     }
 
-    public List<StatEntry> GetAllGameStats(int seasonId)
+    public async Task<List<StatEntry>> GetAllGameStatsAsync(int seasonId)
     {
-        return _repository.GetAllGameStats(seasonId);
+        return await _repository.GetAllGameStatsAsync(seasonId);
     }
 
-    public List<StatEntry> GetPlayerGameLog(string playerName, int seasonId)
+    public async Task<List<StatEntry>> GetPlayerGameLogAsync(string playerName, int seasonId)
     {
-        return _repository.GetPlayerGameLog(playerName, seasonId);
+        return await _repository.GetPlayerGameLogAsync(playerName, seasonId);
     }
 
-    public void AddGameWithStats(Game game, List<StatEntry> stats)
+    public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
-        _repository.AddGameWithStats(game, stats);
+        await _repository.AddGameWithStatsAsync(game, stats);
     }
 }
