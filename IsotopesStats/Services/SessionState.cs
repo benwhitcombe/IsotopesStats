@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace IsotopesStats.Services;
 
 public class SharedSessionState
@@ -39,6 +41,21 @@ public class PlayerStatsState
 
 public class GameStatsState
 {
+    [JsonInclude]
     public HashSet<int> ExpandedGames { get; set; } = new();
+    [JsonInclude]
     public string FilterText { get; set; } = string.Empty;
+    [JsonInclude]
+    public Dictionary<int, string> SortColumns { get; set; } = new();
+    [JsonInclude]
+    public Dictionary<int, bool> SortDirections { get; set; } = new();
+
+    public string GetSortColumn(int gameId) => SortColumns.TryGetValue(gameId, out var col) ? col : "BO";
+    public bool GetIsAscending(int gameId) => SortDirections.TryGetValue(gameId, out var asc) ? asc : true;
+
+    public void SetSort(int gameId, string column, bool isAscending)
+    {
+        SortColumns[gameId] = column;
+        SortDirections[gameId] = isAscending;
+    }
 }

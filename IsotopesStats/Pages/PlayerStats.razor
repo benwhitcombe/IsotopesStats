@@ -525,7 +525,7 @@ else if (!isLoading)
 
     private string GetSortIcon(string column)
     {
-        if (currentSortColumn != column) return "↕️";
-        return isAscending ? "🔼" : "🔽";
+        if (currentSortColumn != column) return "";
+        return isAscending ? " ▴" : " ▾";
     }
 }

@@ -91,7 +91,8 @@ else if (!isLoading)
             @foreach (IGrouping<int, StatEntry> group in GroupedStats)
             {
                 Game? gameInfo = group.First().Game;
-                bool isExpanded = expandedGames.Contains(gameInfo?.Id ?? 0);
+                int gameId = gameInfo?.Id ?? 0;
+                bool isExpanded = expandedGames.Contains(gameId);
                 int teamRuns = group.Sum(s => s.R);
                 int teamHits = group.Sum(s => s.H);
                 int teamHRs = group.Sum(s => s.HR);
@@ -103,8 +104,11 @@ else if (!isLoading)
                 double currentDelay = index * 0.1;
                 index++;
 
+                // Apply inner sorting for each game group
+                IEnumerable<StatEntry> sortedStats = ApplyInnerSorting(gameId, group);
+
                 <div class="game-card" style="animation-delay: @(currentDelay)s">
-                    <div class="game-card-header" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
+                    <div class="game-card-header" @onclick="() => ToggleGame(gameId)">
                         <div class="game-info-left">
                             <div class="game-number-badge">GAME #@gameInfo?.GameNumber</div>
                             <div class="game-date">@gameInfo?.Date.ToString("MMM dd, yyyy @ HH:mm")</div>
@@ -147,29 +151,32 @@ else if (!isLoading)
                             <table class="box-score-table table-sm">
                                 <thead>
                                     <tr>
-                                        <th class="sticky-col">Player</th>
-                                        <th class="group-divider">PA</th>
-                                        <th>AB</th>
-                                        <th class="group-divider">R</th>
-                                        <th>H</th>
-                                        <th>2B</th>
-                                        <th>3B</th>
-                                        <th>4B</th>
-                                        <th>HR</th>
-                                        <th>RBI</th>
-                                        <th class="group-divider">BB</th>
-                                        <th>K</th>
-                                        <th>KF</th>
-                                        <th class="group-divider">SF</th>
-                                        <th>FC</th>
-                                        <th>GO</th>
-                                        <th>FO</th>
-                                        <th class="group-divider">AVG</th>
-                                        <th>OBP</th>
+                                        <th @onclick="@(() => Sort(gameId, "Player"))" style="cursor:pointer" class="sticky-col">Player @(GetSortIcon(gameId, "Player"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "PA"))" style="cursor:pointer" class="group-divider">PA @(GetSortIcon(gameId, "PA"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "AB"))" style="cursor:pointer">AB @(GetSortIcon(gameId, "AB"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "R"))" style="cursor:pointer" class="group-divider">R @(GetSortIcon(gameId, "R"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "H"))" style="cursor:pointer">H @(GetSortIcon(gameId, "H"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "2B"))" style="cursor:pointer">2B @(GetSortIcon(gameId, "2B"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "3B"))" style="cursor:pointer">3B @(GetSortIcon(gameId, "3B"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "4B"))" style="cursor:pointer">4B @(GetSortIcon(gameId, "4B"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "HR"))" style="cursor:pointer">HR @(GetSortIcon(gameId, "HR"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "RBI"))" style="cursor:pointer">RBI @(GetSortIcon(gameId, "RBI"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "BB"))" style="cursor:pointer" class="group-divider">BB @(GetSortIcon(gameId, "BB"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "K"))" style="cursor:pointer">K @(GetSortIcon(gameId, "K"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "KF"))" style="cursor:pointer">KF @(GetSortIcon(gameId, "KF"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "SF"))" style="cursor:pointer" class="group-divider">SF @(GetSortIcon(gameId, "SF"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "FC"))" style="cursor:pointer">FC @(GetSortIcon(gameId, "FC"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "GO"))" style="cursor:pointer">GO @(GetSortIcon(gameId, "GO"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "FO"))" style="cursor:pointer">FO @(GetSortIcon(gameId, "FO"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "AVG"))" style="cursor:pointer" class="group-divider">AVG @(GetSortIcon(gameId, "AVG"))</th>
+                                        <th @onclick="@(() => Sort(gameId, "OBP"))" style="cursor:pointer">OBP @(GetSortIcon(gameId, "OBP"))</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (StatEntry stat in group)
+                                    @{
+                                        string currentSortCol = SessionState.GetSortColumn(gameId);
+                                    }
+                                    @foreach (StatEntry stat in sortedStats)
                                     {
                                         double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
                                         double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
@@ -181,24 +188,24 @@ else if (!isLoading)
                                                     @stat.BO. @stat.Player?.Name
                                                 </a>
                                             </td>
-                                            <td class="group-divider">@stat.PA</td>
-                                            <td>@stat.AB</td>
-                                            <td class="group-divider">@stat.R</td>
-                                            <td>@stat.H</td>
-                                            <td>@stat.H2B</td>
-                                            <td>@stat.H3B</td>
-                                            <td>@stat.H4B</td>
-                                            <td>@stat.HR</td>
-                                            <td>@stat.RBI</td>
-                                            <td class="group-divider">@stat.BB</td>
-                                            <td>@stat.K</td>
-                                            <td>@stat.KF</td>
-                                            <td class="group-divider">@stat.SF</td>
-                                            <td>@stat.FC</td>
-                                            <td>@stat.GO</td>
-                                            <td>@stat.FO</td>
-                                            <td class="group-divider">@playerAVG.ToString(".000")</td>
-                                            <td>@playerOBP.ToString(".000")</td>
+                                            <td class="group-divider @(currentSortCol == "PA" ? "active-sort-col" : "")">@stat.PA</td>
+                                            <td class="@(currentSortCol == "AB" ? "active-sort-col" : "")">@stat.AB</td>
+                                            <td class="group-divider @(currentSortCol == "R" ? "active-sort-col" : "")">@stat.R</td>
+                                            <td class="@(currentSortCol == "H" ? "active-sort-col" : "")">@stat.H</td>
+                                            <td class="@(currentSortCol == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
+                                            <td class="@(currentSortCol == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
+                                            <td class="@(currentSortCol == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
+                                            <td class="@(currentSortCol == "HR" ? "active-sort-col" : "")">@stat.HR</td>
+                                            <td class="@(currentSortCol == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
+                                            <td class="group-divider @(currentSortCol == "BB" ? "active-sort-col" : "")">@stat.BB</td>
+                                            <td class="@(currentSortCol == "K" ? "active-sort-col" : "")">@stat.K</td>
+                                            <td class="@(currentSortCol == "KF" ? "active-sort-col" : "")">@stat.KF</td>
+                                            <td class="group-divider @(currentSortCol == "SF" ? "active-sort-col" : "")">@stat.SF</td>
+                                            <td class="@(currentSortCol == "FC" ? "active-sort-col" : "")">@stat.FC</td>
+                                            <td class="@(currentSortCol == "GO" ? "active-sort-col" : "")">@stat.GO</td>
+                                            <td class="@(currentSortCol == "FO" ? "active-sort-col" : "")">@stat.FO</td>
+                                            <td class="group-divider @(currentSortCol == "AVG" ? "active-sort-col" : "")">@playerAVG.ToString(".000")</td>
+                                            <td class="@(currentSortCol == "OBP" ? "active-sort-col" : "")">@playerOBP.ToString(".000")</td>
                                         </tr>
                                     }
                                     <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
@@ -233,7 +240,7 @@ else if (!isLoading)
                         </div>
 
                         <div class="mobile-player-grid">
-                            @foreach (StatEntry stat in group)
+                            @foreach (StatEntry stat in sortedStats)
                             {
                                 double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
                                 double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
@@ -303,7 +310,8 @@ else if (!isLoading)
             string.IsNullOrEmpty(filterText) || 
             (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) ||
             (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)
-        ).GroupBy(s => s.GameId);
+        ).GroupBy(s => s.GameId)
+        .OrderByDescending(g => g.First().Game?.Date);
 
     protected override async Task OnInitializedAsync()
     {
@@ -342,6 +350,25 @@ else if (!isLoading)
             {
                 filterText = filterResult.Value;
                 SessionState.FilterText = filterText;
+            }
+
+            ProtectedBrowserStorageResult<HashSet<int>> expandedResult = await ProtectedSessionStore.GetAsync<HashSet<int>>("ExpandedGames");
+            if (expandedResult.Success && expandedResult.Value != null)
+            {
+                expandedGames = expandedResult.Value;
+                SessionState.ExpandedGames = expandedGames;
+            }
+
+            ProtectedBrowserStorageResult<Dictionary<int, string>> sortColsResult = await ProtectedSessionStore.GetAsync<Dictionary<int, string>>("GameSortColumns");
+            if (sortColsResult.Success && sortColsResult.Value != null)
+            {
+                SessionState.SortColumns = sortColsResult.Value;
+            }
+
+            ProtectedBrowserStorageResult<Dictionary<int, bool>> sortDirsResult = await ProtectedSessionStore.GetAsync<Dictionary<int, bool>>("GameSortDirections");
+            if (sortDirsResult.Success && sortDirsResult.Value != null)
+            {
+                SessionState.SortDirections = sortDirsResult.Value;
             }
         }
         catch (Exception)
@@ -402,27 +429,27 @@ else if (!isLoading)
 
     private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
 
-    private void SelectMobileSeason(int id)
+    private async Task SelectMobileSeason(int id)
     {
         SharedState.SelectedSeasonId = id;
-        _ = ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
+        await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
         showSeasonModal = false;
-        _ = LoadData();
+        await LoadData();
     }
 
-    private void ClearFilter()
+    private async Task ClearFilter()
     {
         filterText = "";
-        UpdateFilterState();
+        await UpdateFilterState();
     }
 
-    private void UpdateFilterState()
+    private async Task UpdateFilterState()
     {
         SessionState.FilterText = filterText;
-        _ = ProtectedSessionStore.SetAsync("GameFilterText", filterText);
+        await ProtectedSessionStore.SetAsync("GameFilterText", filterText);
     }
 
-    private void ToggleGame(int gameId)
+    private async Task ToggleGame(int gameId)
     {
         if (expandedGames.Contains(gameId))
         {
@@ -433,21 +460,86 @@ else if (!isLoading)
             expandedGames.Add(gameId);
         }
         SessionState.ExpandedGames = expandedGames;
+        await ProtectedSessionStore.SetAsync("ExpandedGames", expandedGames);
     }
 
-    private void ExpandAll()
+    private async Task ExpandAll()
     {
         foreach (IGrouping<int, StatEntry> group in GroupedStats)
         {
             expandedGames.Add(group.Key);
         }
         SessionState.ExpandedGames = expandedGames;
+        await ProtectedSessionStore.SetAsync("ExpandedGames", expandedGames);
     }
 
-    private void CollapseAll()
+    private async Task CollapseAll()
     {
         expandedGames.Clear();
         SessionState.ExpandedGames = expandedGames;
+        await ProtectedSessionStore.SetAsync("ExpandedGames", expandedGames);
+    }
+
+    private async Task Sort(int gameId, string column)
+    {
+        string currentSortCol = SessionState.GetSortColumn(gameId);
+        bool currentIsAscending = SessionState.GetIsAscending(gameId);
+
+        if (currentSortCol == column)
+        {
+            SessionState.SetSort(gameId, column, !currentIsAscending);
+        }
+        else
+        {
+            bool nextIsAscending = false;
+            // Default ascending for Player and BO
+            if (column == "Player" || column == "BO") nextIsAscending = true;
+            SessionState.SetSort(gameId, column, nextIsAscending);
+        }
+        
+        await ProtectedSessionStore.SetAsync("GameSortColumns", SessionState.SortColumns);
+        await ProtectedSessionStore.SetAsync("GameSortDirections", SessionState.SortDirections);
+        
+        StateHasChanged();
+    }
+
+    private string GetSortIcon(int gameId, string column)
+    {
+        if (SessionState.GetSortColumn(gameId) != column) return "";
+        return SessionState.GetIsAscending(gameId) ? " ▴" : " ▾";
+    }
+
+    private IEnumerable<StatEntry> ApplyInnerSorting(int gameId, IEnumerable<StatEntry> stats)
+    {
+        string sortCol = SessionState.GetSortColumn(gameId);
+        bool isAsc = SessionState.GetIsAscending(gameId);
+
+        return sortCol switch
+        {
+            "Player" => isAsc ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),
+            "BO" => isAsc ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),
+            "PA" => isAsc ? stats.OrderBy(s => s.PA) : stats.OrderByDescending(s => s.PA),
+            "AB" => isAsc ? stats.OrderBy(s => s.AB) : stats.OrderByDescending(s => s.AB),
+            "R" => isAsc ? stats.OrderBy(s => s.R) : stats.OrderByDescending(s => s.R),
+            "H" => isAsc ? stats.OrderBy(s => s.H) : stats.OrderByDescending(s => s.H),
+            "2B" => isAsc ? stats.OrderBy(s => s.H2B) : stats.OrderByDescending(s => s.H2B),
+            "3B" => isAsc ? stats.OrderBy(s => s.H3B) : stats.OrderByDescending(s => s.H3B),
+            "4B" => isAsc ? stats.OrderBy(s => s.H4B) : stats.OrderByDescending(s => s.H4B),
+            "HR" => isAsc ? stats.OrderBy(s => s.HR) : stats.OrderByDescending(s => s.HR),
+            "RBI" => isAsc ? stats.OrderBy(s => s.RBI) : stats.OrderByDescending(s => s.RBI),
+            "BB" => isAsc ? stats.OrderBy(s => s.BB) : stats.OrderByDescending(s => s.BB),
+            "K" => isAsc ? stats.OrderBy(s => s.K) : stats.OrderByDescending(s => s.K),
+            "KF" => isAsc ? stats.OrderBy(s => s.KF) : stats.OrderByDescending(s => s.KF),
+            "SF" => isAsc ? stats.OrderBy(s => s.SF) : stats.OrderByDescending(s => s.SF),
+            "FC" => isAsc ? stats.OrderBy(s => s.FC) : stats.OrderByDescending(s => s.FC),
+            "GO" => isAsc ? stats.OrderBy(s => s.GO) : stats.OrderByDescending(s => s.GO),
+            "FO" => isAsc ? stats.OrderBy(s => s.FO) : stats.OrderByDescending(s => s.FO),
+            "AVG" => isAsc ? stats.OrderBy(s => s.AB > 0 ? (double)s.H / s.AB : 0) : stats.OrderByDescending(s => s.AB > 0 ? (double)s.H / s.AB : 0),
+            "OBP" => isAsc 
+                ? stats.OrderBy(s => (s.AB + s.BB + s.SF) > 0 ? (double)(s.H + s.BB) / (s.AB + s.BB + s.SF) : 0) 
+                : stats.OrderByDescending(s => (s.AB + s.BB + s.SF) > 0 ? (double)(s.H + s.BB) / (s.AB + s.BB + s.SF) : 0),
+            _ => stats.OrderBy(s => s.BO)
+        };
     }
 }
 
