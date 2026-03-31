@@ -176,7 +176,11 @@ else if (!isLoading)
                                 PlayerStatsSummary player = allStats[i];
                                 <tr>
                                     <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
-                                    <td class="player-name sticky-col">@player.PlayerName</td>
+                                    <td class="player-name sticky-col">
+                                        <a href="/player/@player.PlayerName/@SharedState.SelectedSeasonId" style="text-decoration: none; color: inherit;">
+                                            @player.PlayerName
+                                        </a>
+                                    </td>
                                     @if (activeView == "Standard")
                                     {
                                         <td class="@(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
@@ -304,6 +308,7 @@ else if (!isLoading)
 
     protected override async Task OnInitializedAsync()
     {
+        SharedState.ReturnUrl = "players";
         seasons = StatsService.GetSeasons();
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {

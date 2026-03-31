@@ -3,6 +3,7 @@ namespace IsotopesStats.Services;
 public class SharedSessionState
 {
     public int SelectedSeasonId { get; set; } = 0;
+    public string ReturnUrl { get; set; } = "players"; // Default to players
 }
 
 public class PlayerStatsState

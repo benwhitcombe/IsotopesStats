@@ -168,7 +168,11 @@ else if (!isLoading)
                                             ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
                                             : 0;
                                         <tr>
-                                            <td class="player-name sticky-col">@stat.BO. @stat.Player?.Name</td>
+                                            <td class="player-name sticky-col">
+                                                <a href="/player/@stat.Player?.Name/@SharedState.SelectedSeasonId" style="text-decoration: none; color: inherit;">
+                                                    @stat.BO. @stat.Player?.Name
+                                                </a>
+                                            </td>
                                             <td class="group-divider">@stat.PA</td>
                                             <td>@stat.AB</td>
                                             <td class="group-divider">@stat.R</td>
@@ -288,6 +292,7 @@ else if (!isLoading)
 
     protected override async Task OnInitializedAsync()
     {
+        SharedState.ReturnUrl = ""; // Root is Game Stats
         seasons = StatsService.GetSeasons();
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {

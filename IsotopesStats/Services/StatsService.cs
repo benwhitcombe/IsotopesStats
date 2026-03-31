@@ -37,6 +37,11 @@ public class StatsService
         return _repository.GetAllGameStats(seasonId);
     }
 
+    public List<StatEntry> GetPlayerGameLog(string playerName, int seasonId)
+    {
+        return _repository.GetPlayerGameLog(playerName, seasonId);
+    }
+
     public void AddGameWithStats(Game game, List<StatEntry> stats)
     {
         _repository.AddGameWithStats(game, stats);

@@ -255,6 +255,69 @@ public class StatsRepository
         return stats;
     }
 
+    public List<StatEntry> GetPlayerGameLog(string playerName, int seasonId)
+    {
+        List<StatEntry> stats = new List<StatEntry>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            connection.Open();
+
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT 
+                    s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
+                    g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type
+                FROM Stats s
+                JOIN Games g ON s.GameId = g.Id
+                JOIN Players p ON s.PlayerId = p.Id
+                WHERE p.Name = $playerName AND g.SeasonId = $seasonId
+                ORDER BY g.Date DESC
+            ";
+            command.Parameters.AddWithValue("$playerName", playerName);
+            command.Parameters.AddWithValue("$seasonId", seasonId);
+
+            using (SqliteDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    stats.Add(new StatEntry
+                    {
+                        Id = reader.GetInt32(0),
+                        PlayerId = reader.GetInt32(1),
+                        GameId = reader.GetInt32(2),
+                        BO = reader.GetInt32(3),
+                        H1B = reader.GetInt32(4),
+                        H2B = reader.GetInt32(5),
+                        H3B = reader.GetInt32(6),
+                        H4B = reader.GetInt32(7),
+                        HR = reader.GetInt32(8),
+                        FC = reader.GetInt32(9),
+                        BB = reader.GetInt32(10),
+                        SF = reader.GetInt32(11),
+                        K = reader.GetInt32(12),
+                        KF = reader.GetInt32(13),
+                        GO = reader.GetInt32(14),
+                        FO = reader.GetInt32(15),
+                        R = reader.GetInt32(16),
+                        RBI = reader.GetInt32(17),
+                        Game = new Game
+                        {
+                            Id = reader.GetInt32(2),
+                            SeasonId = seasonId,
+                            GameNumber = reader.GetInt32(18),
+                            Date = DateTime.Parse(reader.GetString(19)),
+                            Diamond = reader.GetString(20),
+                            Opponent = reader.GetString(21),
+                            Type = (GameType)reader.GetInt32(22)
+                        }
+                    });
+                }
+            }
+        }
+        return stats;
+    }
+
     public void AddGameWithStats(Game game, List<StatEntry> stats)
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
