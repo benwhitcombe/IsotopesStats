@@ -47,7 +47,13 @@
     </div>
 }
 
-@if (!isLoading)
+@if (isLoading && showSpinner)
+{
+    <div class="spinner-container">
+        <div class="spinner"></div>
+    </div>
+}
+else if (!isLoading)
 {
     @if (allStats.Any())
     {
@@ -284,6 +290,7 @@
     private bool showSortModal = false;
     private bool showSeasonModal = false;
     private bool isLoading = true;
+    private bool showSpinner = false;
 
     // Leader references
     private PlayerStatsSummary? avgLeader;
@@ -308,6 +315,18 @@
     private async Task LoadData()
     {
         isLoading = true;
+        showSpinner = false;
+
+        // Start a task to show spinner after 250ms
+        Task spinnerTask = Task.Run(async () => {
+            await Task.Delay(250);
+            if (isLoading) 
+            {
+                showSpinner = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
         try 
         {
             activeView = SessionState.ActiveView;
