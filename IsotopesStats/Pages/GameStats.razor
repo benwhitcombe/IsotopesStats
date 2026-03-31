@@ -344,12 +344,12 @@ else if (!isLoading)
             || (s.Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
         .GroupBy(s => s.GameId);
 
-    private async Task OnSeasonChange(ChangeEventArgs e)
+    private void OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             SharedState.SelectedSeasonId = id;
-            await LoadData();
+            _ = LoadData(); // Fire and forget load
         }
     }
 

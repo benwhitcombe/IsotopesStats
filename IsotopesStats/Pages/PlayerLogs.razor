@@ -4,6 +4,7 @@
 @inject StatsService StatsService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject SharedSessionState SharedState
 
 <PageTitle>Isotopes - @PlayerName Game Log</PageTitle>
 
@@ -12,88 +13,94 @@
     <button class="view-btn" @onclick="GoBack">Back to Stats</button>
 </div>
 
-@if (logs == null)
+@if (isLoading && showSkeleton)
 {
-    <div class="stat-card">
+    <div class="stat-card" style="margin-bottom: 1.5rem;">
+        <div class="skeleton" style="height: 100px; width: 100%;"></div>
+    </div>
+    <div class="table-container">
         <div class="skeleton" style="height: 400px; width: 100%;"></div>
     </div>
 }
-else if (!logs.Any())
+else if (!isLoading)
 {
-    <div class="empty-state">
-        <span class="empty-icon">⚾</span>
-        <h4>No Games Found</h4>
-        <p>This player doesn't have any stats for the selected season.</p>
-    </div>
-}
-else
-{
-    <div class="stat-card view-fade-in" style="margin-bottom: 1.5rem;">
-        <div class="stat-grid">
-            <div class="stat-item">
-                <span class="stat-label">Games</span>
-                <span class="stat-value">@logs.Count</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Hits</span>
-                <span class="stat-value">@logs.Sum(l => l.H)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">HR</span>
-                <span class="stat-value">@logs.Sum(l => l.HR)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">RBI</span>
-                <span class="stat-value">@logs.Sum(l => l.RBI)</span>
+    @if (logs == null || !logs.Any())
+    {
+        <div class="empty-state">
+            <span class="empty-icon">⚾</span>
+            <h4>No Games Found</h4>
+            <p>This player doesn't have any stats for the selected season.</p>
+        </div>
+    }
+    else
+    {
+        <div class="stat-card view-fade-in" style="margin-bottom: 1.5rem;">
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Games</span>
+                    <span class="stat-value">@logs.Count</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Hits</span>
+                    <span class="stat-value">@logs.Sum(l => l.H)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">HR</span>
+                    <span class="stat-value">@logs.Sum(l => l.HR)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">RBI</span>
+                    <span class="stat-value">@logs.Sum(l => l.RBI)</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="table-container view-fade-in">
-        <div class="box-score-table-wrapper">
-            <table class="box-score-table table-sm">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Opponent</th>
-                        <th>PA</th>
-                        <th>AB</th>
-                        <th>H</th>
-                        <th>2B</th>
-                        <th>3B</th>
-                        <th>4B</th>
-                        <th>HR</th>
-                        <th>RBI</th>
-                        <th>BB</th>
-                        <th>K</th>
-                        <th>KF</th>
-                        <th>R</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (StatEntry log in logs)
-                    {
+        <div class="table-container view-fade-in">
+            <div class="box-score-table-wrapper">
+                <table class="box-score-table table-sm">
+                    <thead>
                         <tr>
-                            <td style="color: #666;">@log.Game?.Date.ToString("MMM dd")</td>
-                            <td style="font-weight: bold; text-align: left;">@log.Game?.Opponent</td>
-                            <td>@log.PA</td>
-                            <td>@log.AB</td>
-                            <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
-                            <td>@log.H2B</td>
-                            <td>@log.H3B</td>
-                            <td>@log.H4B</td>
-                            <td style="color: var(--isotopes-red); font-weight: bold;">@log.HR</td>
-                            <td>@log.RBI</td>
-                            <td>@log.BB</td>
-                            <td>@log.K</td>
-                            <td>@log.KF</td>
-                            <td>@log.R</td>
+                            <th>Date</th>
+                            <th>Opponent</th>
+                            <th>PA</th>
+                            <th>AB</th>
+                            <th>H</th>
+                            <th>2B</th>
+                            <th>3B</th>
+                            <th>4B</th>
+                            <th>HR</th>
+                            <th>RBI</th>
+                            <th>BB</th>
+                            <th>K</th>
+                            <th>KF</th>
+                            <th>R</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (StatEntry log in logs)
+                        {
+                            <tr>
+                                <td style="color: #666;">@log.Game?.Date.ToString("MMM dd")</td>
+                                <td style="font-weight: bold; text-align: left;">@log.Game?.Opponent</td>
+                                <td>@log.PA</td>
+                                <td>@log.AB</td>
+                                <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
+                                <td>@log.H2B</td>
+                                <td>@log.H3B</td>
+                                <td>@log.H4B</td>
+                                <td style="color: var(--isotopes-red); font-weight: bold;">@log.HR</td>
+                                <td>@log.RBI</td>
+                                <td>@log.BB</td>
+                                <td>@log.K</td>
+                                <td>@log.KF</td>
+                                <td>@log.R</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    }
 }
 
 @code {
@@ -101,12 +108,41 @@ else
     [Parameter] public int SeasonId { get; set; }
 
     private List<StatEntry>? logs;
+    private bool isLoading = true;
+    private bool showSkeleton = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Small delay for smooth entry
-        await Task.Delay(100);
-        logs = StatsService.GetPlayerGameLog(PlayerName, SeasonId);
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        showSkeleton = false;
+
+        // Start a task to show skeleton after 250ms
+        Task skeletonTask = Task.Run(async () => {
+            await Task.Delay(250);
+            if (isLoading) 
+            {
+                showSkeleton = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        try 
+        {
+            logs = StatsService.GetPlayerGameLog(PlayerName, SeasonId);
+        }
+        catch (Exception)
+        {
+            logs = new List<StatEntry>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void GoBack()
