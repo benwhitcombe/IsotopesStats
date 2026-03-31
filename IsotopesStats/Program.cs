@@ -10,6 +10,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddScoped<StatsRepository>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<SharedSessionState>();
 builder.Services.AddScoped<PlayerStatsState>();
 builder.Services.AddScoped<GameStatsState>();
 
@@ -18,11 +19,11 @@ DatabaseInitializer.Initialize();
 
 WebApplication app = builder.Build();
 
-// Seed 2025 Data
+// Seed Data
 try 
 {
     Console.WriteLine("Initializing database and seeding data...");
-    DataSeeder.Seed2025Data();
+    DataSeeder.SeedData();
     Console.WriteLine("Database initialization complete.");
 }
 catch (Exception ex)

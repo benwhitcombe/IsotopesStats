@@ -39,7 +39,29 @@ public static class DataSeeder
         public int RBI { get; set; }
     }
 
-    public static void Seed2025Data()
+    public static void SeedData()
+    {
+        Seed2025Data();
+        Seed2026Season();
+    }
+
+    private static void Seed2026Season()
+    {
+        using SqliteConnection connection = new SqliteConnection(ConnectionString);
+        connection.Open();
+
+        // Check if 2026 already exists
+        SqliteCommand checkCommand = connection.CreateCommand();
+        checkCommand.CommandText = "SELECT COUNT(*) FROM Seasons WHERE Name = '2026'";
+        if (Convert.ToInt32(checkCommand.ExecuteScalar()) > 0) return;
+
+        // Create 2026 Season
+        SqliteCommand seasonCommand = connection.CreateCommand();
+        seasonCommand.CommandText = "INSERT INTO Seasons (Name) VALUES ('2026')";
+        seasonCommand.ExecuteNonQuery();
+    }
+
+    private static void Seed2025Data()
     {
         using SqliteConnection connection = new SqliteConnection(ConnectionString);
         connection.Open();

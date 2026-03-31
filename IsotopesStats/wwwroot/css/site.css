@@ -839,3 +839,15 @@ tr:last-child td {
 .collapsed .expand-icon {
     transform: rotate(-90deg);
 }
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}

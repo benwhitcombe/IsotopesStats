@@ -4,6 +4,7 @@
 @using IsotopesStats.Models
 @inject StatsService StatsService
 @inject GameStatsState SessionState
+@inject SharedSessionState SharedState
 
 <PageTitle>Isotopes - Game Stats</PageTitle>
 
@@ -12,7 +13,7 @@
     <div style="display: flex; gap: 1rem; align-items: center;">
         <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
             <label style="margin:0; font-weight: bold;">Season:</label>
-            <select class="form-control" style="width: auto;" value="@selectedSeasonId" @onchange="OnSeasonChange">
+            <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
                 @foreach (Season season in seasons)
                 {
                     <option value="@season.Id">@season.Name</option>
@@ -21,7 +22,7 @@
         </div>
         <div class="mobile-only">
              <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal">
-                🗓️ @seasons.FirstOrDefault(s => s.Id == selectedSeasonId)?.Name
+                🗓️ @seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name
             </button>
         </div>
     </div>
@@ -38,7 +39,7 @@
             <div class="sort-grid">
                 @foreach (Season season in seasons)
                 {
-                    <div class="sort-option @(selectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
+                    <div class="sort-option @(SharedState.SelectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
                         @season.Name
                     </div>
                 }
@@ -279,7 +280,6 @@ else
 @code {
     private List<StatEntry> allStats = new();
     private List<Season> seasons = new();
-    private int selectedSeasonId;
     private HashSet<int> expandedGames = new();
     private string filterText = "";
     private bool showSeasonModal = false;
@@ -287,6 +287,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        seasons = StatsService.GetSeasons();
+        if (SharedState.SelectedSeasonId == 0 && seasons.Any())
+        {
+            SharedState.SelectedSeasonId = seasons.First().Id;
+        }
         await LoadData();
     }
 
@@ -295,14 +300,7 @@ else
         isLoading = true;
         try 
         {
-            seasons = StatsService.GetSeasons();
-            if (SessionState.SelectedSeasonId == 0 && seasons.Any())
-            {
-                SessionState.SelectedSeasonId = seasons.First().Id;
-            }
-            selectedSeasonId = SessionState.SelectedSeasonId;
-
-            allStats = StatsService.GetAllGameStats(selectedSeasonId);
+            allStats = StatsService.GetAllGameStats(SharedState.SelectedSeasonId);
             filterText = SessionState.FilterText;
             expandedGames = SessionState.ExpandedGames;
 
@@ -333,8 +331,7 @@ else
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
-            selectedSeasonId = id;
-            SessionState.SelectedSeasonId = id;
+            SharedState.SelectedSeasonId = id;
             await LoadData();
         }
     }
@@ -343,8 +340,7 @@ else
 
     private async Task SelectMobileSeason(int id)
     {
-        selectedSeasonId = id;
-        SessionState.SelectedSeasonId = id;
+        SharedState.SelectedSeasonId = id;
         showSeasonModal = false;
         await LoadData();
     }

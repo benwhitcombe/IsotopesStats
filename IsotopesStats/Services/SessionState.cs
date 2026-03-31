@@ -1,8 +1,12 @@
 namespace IsotopesStats.Services;
 
-public class PlayerStatsState
+public class SharedSessionState
 {
     public int SelectedSeasonId { get; set; } = 0;
+}
+
+public class PlayerStatsState
+{
     public string ActiveView { get; set; } = "Standard";
     
     // Standard View State
@@ -17,7 +21,6 @@ public class PlayerStatsState
     public string OutcomesSortColumn { get; set; } = "OBP";
     public bool OutcomesIsAscending { get; set; } = false;
 
-    // Helper to get current sort for active view
     public string CurrentSortColumn => ActiveView switch {
         "Standard" => StandardSortColumn,
         "Hits" => HitsSortColumn,
@@ -35,7 +38,6 @@ public class PlayerStatsState
 
 public class GameStatsState
 {
-    public int SelectedSeasonId { get; set; } = 0;
     public HashSet<int> ExpandedGames { get; set; } = new();
     public string FilterText { get; set; } = string.Empty;
 }
