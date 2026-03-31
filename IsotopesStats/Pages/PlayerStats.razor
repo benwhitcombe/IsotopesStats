@@ -47,23 +47,7 @@
     </div>
 }
 
-@if (isLoading)
-{
-    <div class="leader-highlights">
-        @for (int i = 0; i < 4; i++)
-        {
-            <div class="leader-card" style="background: #eee;">
-                <div class="skeleton" style="width: 60%; height: 1rem; margin: 0 auto 0.5rem;"></div>
-                <div class="skeleton" style="width: 80%; height: 1.5rem; margin: 0 auto 0.5rem;"></div>
-                <div class="skeleton" style="width: 40%; height: 2rem; margin: 0 auto;"></div>
-            </div>
-        }
-    </div>
-    <div class="stat-card">
-        <div class="skeleton" style="height: 400px; width: 100%;"></div>
-    </div>
-}
-else
+@if (!isLoading)
 {
     @if (allStats.Any())
     {
@@ -340,7 +324,6 @@ else
         }
         finally
         {
-            await Task.Delay(300); // Small delay for smooth transition
             isLoading = false;
         }
     }

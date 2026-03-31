@@ -54,7 +54,7 @@
     </div>
 </div>
 
-@if (isLoading)
+@if (isLoading && showSkeleton)
 {
     <div class="game-cards-list">
         @for (int i = 0; i < 3; i++)
@@ -66,7 +66,7 @@
         }
     </div>
 }
-else
+else if (!isLoading)
 {
     @if (!GroupedStats.Any())
     {
@@ -284,6 +284,7 @@ else
     private string filterText = "";
     private bool showSeasonModal = false;
     private bool isLoading = true;
+    private bool showSkeleton = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -298,6 +299,18 @@ else
     private async Task LoadData()
     {
         isLoading = true;
+        showSkeleton = false;
+
+        // Start a task to show skeleton after 250ms
+        Task skeletonTask = Task.Run(async () => {
+            await Task.Delay(250);
+            if (isLoading) 
+            {
+                showSkeleton = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
         try 
         {
             allStats = StatsService.GetAllGameStats(SharedState.SelectedSeasonId);
@@ -316,7 +329,6 @@ else
         }
         finally
         {
-            await Task.Delay(300);
             isLoading = false;
         }
     }
