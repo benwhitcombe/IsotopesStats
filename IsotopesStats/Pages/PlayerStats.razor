@@ -46,219 +46,238 @@
     </div>
 }
 
-@if (allStats.Any())
+@if (isLoading)
 {
     <div class="leader-highlights">
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "AVG"))" style="cursor:pointer; animation-delay: 0.1s;">
-            <div class="leader-category">Batting Average</div>
-            <div class="leader-name">@avgLeader?.PlayerName</div>
-            <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
-        </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.2s;">
-            <div class="leader-category">Home Runs</div>
-            <div class="leader-name">@hrLeader?.PlayerName</div>
-            <div class="leader-value">@hrLeader?.HR</div>
-        </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer; animation-delay: 0.3s;">
-            <div class="leader-category">RBIs</div>
-            <div class="leader-name">@rbiLeader?.PlayerName</div>
-            <div class="leader-value">@rbiLeader?.RBI</div>
-        </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.4s;">
-            <div class="leader-category">OPS</div>
-            <div class="leader-name">@opsLeader?.PlayerName</div>
-            <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
-        </div>
+        @for (int i = 0; i < 4; i++)
+        {
+            <div class="leader-card" style="background: #eee;">
+                <div class="skeleton" style="width: 60%; height: 1rem; margin: 0 auto 0.5rem;"></div>
+                <div class="skeleton" style="width: 80%; height: 1.5rem; margin: 0 auto 0.5rem;"></div>
+                <div class="skeleton" style="width: 40%; height: 2rem; margin: 0 auto;"></div>
+            </div>
+        }
+    </div>
+    <div class="stat-card">
+        <div class="skeleton" style="height: 400px; width: 100%;"></div>
     </div>
 }
-
-<div class="stat-card" style="animation-delay: 0.5s;">
-    <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => SetView("Standard"))">Standard</button>
-            <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick="@(() => SetView("Hits"))">Hits</button>
-            <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick="@(() => SetView("Outcomes"))">Plate Outcomes</button>
-        </div>
-        
-        <div class="mobile-only">
-            <button class="view-btn" style="width: 100%; background: var(--isotopes-accent); color: white; border: none; padding: 0.75rem;" @onclick="ToggleSortModal">
-                ⇅ Sort By: @currentSortColumn
-            </button>
-        </div>
-    </div>
-
-    @if (showSortModal)
+else
+{
+    @if (allStats.Any())
     {
-        <div class="sort-modal-overlay" @onclick="ToggleSortModal">
-            <div class="sort-modal" @onclick:stopPropagation="true">
-                <div class="sort-modal-header">
-                    <h4 style="margin:0">Sort Statistics</h4>
-                    <button class="view-btn" @onclick="ToggleSortModal">Close</button>
-                </div>
-                <div class="sort-grid">
-                    @foreach (string stat in AllSortableStats)
-                    {
-                        <div class="sort-option @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)">
-                            @stat
-                        </div>
-                    }
-                </div>
+        <div class="leader-highlights">
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "AVG"))" style="cursor:pointer; animation-delay: 0.1s;">
+                <div class="leader-category">Batting Average</div>
+                <div class="leader-name">@avgLeader?.PlayerName</div>
+                <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
+            </div>
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.2s;">
+                <div class="leader-category">Home Runs</div>
+                <div class="leader-name">@hrLeader?.PlayerName</div>
+                <div class="leader-value">@hrLeader?.HR</div>
+            </div>
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer; animation-delay: 0.3s;">
+                <div class="leader-category">RBIs</div>
+                <div class="leader-name">@rbiLeader?.PlayerName</div>
+                <div class="leader-value">@rbiLeader?.RBI</div>
+            </div>
+            <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.4s;">
+                <div class="leader-category">OPS</div>
+                <div class="leader-name">@opsLeader?.PlayerName</div>
+                <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
             </div>
         </div>
     }
 
-    <div class="table-container view-fade-in" style="border: none; box-shadow: none;" @key="@("desktop-" + activeView)">
-        <div class="box-score-table-wrapper">
-            <table class="box-score-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">Rank</th>
-                        <th @onclick="@(() => Sort("PlayerName"))" style="cursor:pointer" class="sticky-col">Player @(GetSortIcon("PlayerName"))</th>
-                        @if (activeView == "Standard")
-                        {
-                            <th @onclick="@(() => Sort("GP"))" style="cursor:pointer">GP @(GetSortIcon("GP"))</th>
-                            <th @onclick="@(() => Sort("PA"))" style="cursor:pointer">PA @(GetSortIcon("PA"))</th>
-                            <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
-                            <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
-                            <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
-                            <th @onclick="@(() => Sort("RBI"))" style="cursor:pointer">RBI @(GetSortIcon("RBI"))</th>
-                            <th @onclick="@(() => Sort("R"))" style="cursor:pointer">R @(GetSortIcon("R"))</th>
-                            <th @onclick="@(() => Sort("AVG"))" style="cursor:pointer">AVG @(GetSortIcon("AVG"))</th>
-                            <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
-                        }
-                        else if (activeView == "Hits")
-                        {
-                            <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
-                            <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
-                            <th @onclick="@(() => Sort("H1B"))" style="cursor:pointer">1B @(GetSortIcon("H1B"))</th>
-                            <th @onclick="@(() => Sort("H2B"))" style="cursor:pointer">2B @(GetSortIcon("H2B"))</th>
-                            <th @onclick="@(() => Sort("H3B"))" style="cursor:pointer">3B @(GetSortIcon("H3B"))</th>
-                            <th @onclick="@(() => Sort("H4B"))" style="cursor:pointer">4B @(GetSortIcon("H4B"))</th>
-                            <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
-                            <th @onclick="@(() => Sort("SLG"))" style="cursor:pointer">SLG @(GetSortIcon("SLG"))</th>
-                            <th @onclick="@(() => Sort("OPS"))" style="cursor:pointer">OPS @(GetSortIcon("OPS"))</th>
-                        }
-                        else if (activeView == "Outcomes")
-                        {
-                            <th @onclick="@(() => Sort("BB"))" style="cursor:pointer">BB @(GetSortIcon("BB"))</th>
-                            <th @onclick="@(() => Sort("K"))" style="cursor:pointer">K @(GetSortIcon("K"))</th>
-                            <th @onclick="@(() => Sort("KF"))" style="cursor:pointer">KF @(GetSortIcon("KF"))</th>
-                            <th @onclick="@(() => Sort("SF"))" style="cursor:pointer">SF @(GetSortIcon("SF"))</th>
-                            <th @onclick="@(() => Sort("FC"))" style="cursor:pointer">FC @(GetSortIcon("FC"))</th>
-                            <th @onclick="@(() => Sort("GO"))" style="cursor:pointer">GO @(GetSortIcon("GO"))</th>
-                            <th @onclick="@(() => Sort("FO"))" style="cursor:pointer">FO @(GetSortIcon("FO"))</th>
-                            <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (int i = 0; i < allStats.Count; i++)
-                    {
-                        PlayerStatsSummary player = allStats[i];
-                        <tr>
-                            <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
-                            <td class="player-name sticky-col">@player.PlayerName</td>
-                            @if (activeView == "Standard")
-                            {
-                                <td class="@(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
-                                <td class="@(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
-                                <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
-                                <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
-                                <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
-                                <td class="@(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
-                                <td class="@(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
-                                <td class="@(currentSortColumn == "AVG" ? "active-sort-col" : "")">@player.AVG.ToString(".000")</td>
-                                <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
-                            }
-                            else if (activeView == "Hits")
-                            {
-                                <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
-                                <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
-                                <td class="@(currentSortColumn == "H1B" ? "active-sort-col" : "")">@player.H1B</td>
-                                <td class="@(currentSortColumn == "H2B" ? "active-sort-col" : "")">@player.H2B</td>
-                                <td class="@(currentSortColumn == "H3B" ? "active-sort-col" : "")">@player.H3B</td>
-                                <td class="@(currentSortColumn == "H4B" ? "active-sort-col" : "")">@player.H4B</td>
-                                <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
-                                <td class="@(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
-                                <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
-                            }
-                            else if (activeView == "Outcomes")
-                            {
-                                <td class="@(currentSortColumn == "BB" ? "active-sort-col" : "")">@player.BB</td>
-                                <td class="@(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
-                                <td class="@(currentSortColumn == "KF" ? "active-sort-col" : "")">@player.KF</td>
-                                <td class="@(currentSortColumn == "SF" ? "active-sort-col" : "")">@player.SF</td>
-                                <td class="@(currentSortColumn == "FC" ? "active-sort-col" : "")">@player.FC</td>
-                                <td class="@(currentSortColumn == "GO" ? "active-sort-col" : "")">@player.GO</td>
-                                <td class="@(currentSortColumn == "FO" ? "active-sort-col" : "")">@player.FO</td>
-                                <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    <div class="stat-card" style="animation-delay: 0.5s;">
+        <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => SetView("Standard"))">Standard</button>
+                <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick="@(() => SetView("Hits"))">Hits</button>
+                <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick="@(() => SetView("Outcomes"))">Plate Outcomes</button>
+            </div>
+            
+            <div class="mobile-only">
+                <button class="view-btn" style="width: 100%; background: var(--isotopes-accent); color: white; border: none; padding: 0.75rem;" @onclick="ToggleSortModal">
+                    ⇅ Sort By: @currentSortColumn
+                </button>
+            </div>
         </div>
 
-        <div class="mobile-player-grid view-fade-in" @key="@("mobile-" + activeView)">
-            @for (int i = 0; i < allStats.Count; i++)
-            {
-                PlayerStatsSummary player = allStats[i];
-                <div class="mobile-player-card">
-                    <div class="mobile-card-header">
-                        <span class="mobile-card-name">
-                            <span class="rank-badge">#@(i + 1)</span>
-                            @player.PlayerName
-                        </span>
-                        <div style="display: flex; gap: 4px;">
-                            @if (activeView == "Hits")
-                            {
-                                <span class="badge bg-light text-dark @(currentSortColumn == "SLG" ? "border border-danger" : "")" @onclick="@(() => Sort("SLG"))">SLG: @player.SLG.ToString(".000")</span>
-                                <span class="badge bg-light text-dark @(currentSortColumn == "OPS" ? "border border-danger" : "")" @onclick="@(() => Sort("OPS"))">OPS: @player.OPS.ToString(".000")</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-dark @(currentSortColumn == "AVG" ? "border border-danger" : "")" @onclick="@(() => Sort("AVG"))">AVG: @player.AVG.ToString(".000")</span>
-                                <span class="badge bg-light text-dark @(currentSortColumn == "OBP" ? "border border-danger" : "")" @onclick="@(() => Sort("OBP"))">OBP: @player.OBP.ToString(".000")</span>
-                            }
-                        </div>
+        @if (showSortModal)
+        {
+            <div class="sort-modal-overlay" @onclick="ToggleSortModal">
+                <div class="sort-modal" @onclick:stopPropagation="true">
+                    <div class="sort-modal-header">
+                        <h4 style="margin:0">Sort Statistics</h4>
+                        <button class="view-btn" @onclick="ToggleSortModal">Close</button>
                     </div>
-                    <div class="mobile-card-stats">
-                        @if (activeView == "Standard")
+                    <div class="sort-grid">
+                        @foreach (string stat in AllSortableStats)
                         {
-                            <div class="m-stat @(currentSortColumn == "GP" ? "active" : "")" @onclick="@(() => Sort("GP"))"><span class="m-stat-val">@player.GamesPlayed</span><span class="m-stat-label">GP</span></div>
-                            <div class="m-stat @(currentSortColumn == "PA" ? "active" : "")" @onclick="@(() => Sort("PA"))"><span class="m-stat-val">@player.PA</span><span class="m-stat-label">PA</span></div>
-                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
-                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick="@(() => Sort("H"))"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
-                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
-                            <div class="m-stat @(currentSortColumn == "RBI" ? "active" : "")" @onclick="@(() => Sort("RBI"))"><span class="m-stat-val">@player.RBI</span><span class="m-stat-label">RBI</span></div>
-                            <div class="m-stat @(currentSortColumn == "R" ? "active" : "")" @onclick="@(() => Sort("R"))"><span class="m-stat-val">@player.R</span><span class="m-stat-label">R</span></div>
-                        }
-                        else if (activeView == "Hits")
-                        {
-                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
-                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick="@(() => Sort("H"))"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
-                            <div class="m-stat @(currentSortColumn == "H1B" ? "active" : "")" @onclick="@(() => Sort("H1B"))"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
-                            <div class="m-stat @(currentSortColumn == "H2B" ? "active" : "")" @onclick="@(() => Sort("H2B"))"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
-                            <div class="m-stat @(currentSortColumn == "H3B" ? "active" : "")" @onclick="@(() => Sort("H3B"))"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
-                            <div class="m-stat @(currentSortColumn == "H4B" ? "active" : "")" @onclick="@(() => Sort("H4B"))"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
-                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
-                        }
-                        else if (activeView == "Outcomes")
-                        {
-                            <div class="m-stat @(currentSortColumn == "BB" ? "active" : "")" @onclick="@(() => Sort("BB"))"><span class="m-stat-val">@player.BB</span><span class="m-stat-label">BB</span></div>
-                            <div class="m-stat @(currentSortColumn == "K" ? "active" : "")" @onclick="@(() => Sort("K"))"><span class="m-stat-val">@player.K</span><span class="m-stat-label">K</span></div>
-                            <div class="m-stat @(currentSortColumn == "KF" ? "active" : "")" @onclick="@(() => Sort("KF"))"><span class="m-stat-val">@player.KF</span><span class="m-stat-label">KF</span></div>
-                            <div class="m-stat @(currentSortColumn == "SF" ? "active" : "")" @onclick="@(() => Sort("SF"))"><span class="m-stat-val">@player.SF</span><span class="m-stat-label">SF</span></div>
-                            <div class="m-stat @(currentSortColumn == "FC" ? "active" : "")" @onclick="@(() => Sort("FC"))"><span class="m-stat-val">@player.FC</span><span class="m-stat-label">FC</span></div>
-                            <div class="m-stat @(currentSortColumn == "GO" ? "active" : "")" @onclick="@(() => Sort("GO"))"><span class="m-stat-val">@player.GO</span><span class="m-stat-label">GO</span></div>
-                            <div class="m-stat @(currentSortColumn == "FO" ? "active" : "")" @onclick="@(() => Sort("FO"))"><span class="m-stat-val">@player.FO</span><span class="m-stat-label">FO</span></div>
+                            <div class="sort-option @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)">
+                                @stat
+                            </div>
                         }
                     </div>
                 </div>
-            }
+            </div>
+        }
+
+        <div class="table-container view-fade-in" style="border: none; box-shadow: none;" @key="@("desktop-" + activeView)">
+            <div class="box-score-table-wrapper">
+                <table class="box-score-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">Rank</th>
+                            <th @onclick="@(() => Sort("PlayerName"))" style="cursor:pointer" class="sticky-col">Player @(GetSortIcon("PlayerName"))</th>
+                            @if (activeView == "Standard")
+                            {
+                                <th @onclick="@(() => Sort("GP"))" style="cursor:pointer">GP @(GetSortIcon("GP"))</th>
+                                <th @onclick="@(() => Sort("PA"))" style="cursor:pointer">PA @(GetSortIcon("PA"))</th>
+                                <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
+                                <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
+                                <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
+                                <th @onclick="@(() => Sort("RBI"))" style="cursor:pointer">RBI @(GetSortIcon("RBI"))</th>
+                                <th @onclick="@(() => Sort("R"))" style="cursor:pointer">R @(GetSortIcon("R"))</th>
+                                <th @onclick="@(() => Sort("AVG"))" style="cursor:pointer">AVG @(GetSortIcon("AVG"))</th>
+                                <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
+                            }
+                            else if (activeView == "Hits")
+                            {
+                                <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
+                                <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
+                                <th @onclick="@(() => Sort("H1B"))" style="cursor:pointer">1B @(GetSortIcon("H1B"))</th>
+                                <th @onclick="@(() => Sort("H2B"))" style="cursor:pointer">2B @(GetSortIcon("H2B"))</th>
+                                <th @onclick="@(() => Sort("H3B"))" style="cursor:pointer">3B @(GetSortIcon("H3B"))</th>
+                                <th @onclick="@(() => Sort("H4B"))" style="cursor:pointer">4B @(GetSortIcon("H4B"))</th>
+                                <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
+                                <th @onclick="@(() => Sort("SLG"))" style="cursor:pointer">SLG @(GetSortIcon("SLG"))</th>
+                                <th @onclick="@(() => Sort("OPS"))" style="cursor:pointer">OPS @(GetSortIcon("OPS"))</th>
+                            }
+                            else if (activeView == "Outcomes")
+                            {
+                                <th @onclick="@(() => Sort("BB"))" style="cursor:pointer">BB @(GetSortIcon("BB"))</th>
+                                <th @onclick="@(() => Sort("K"))" style="cursor:pointer">K @(GetSortIcon("K"))</th>
+                                <th @onclick="@(() => Sort("KF"))" style="cursor:pointer">KF @(GetSortIcon("KF"))</th>
+                                <th @onclick="@(() => Sort("SF"))" style="cursor:pointer">SF @(GetSortIcon("SF"))</th>
+                                <th @onclick="@(() => Sort("FC"))" style="cursor:pointer">FC @(GetSortIcon("FC"))</th>
+                                <th @onclick="@(() => Sort("GO"))" style="cursor:pointer">GO @(GetSortIcon("GO"))</th>
+                                <th @onclick="@(() => Sort("FO"))" style="cursor:pointer">FO @(GetSortIcon("FO"))</th>
+                                <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < allStats.Count; i++)
+                        {
+                            PlayerStatsSummary player = allStats[i];
+                            <tr>
+                                <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
+                                <td class="player-name sticky-col">@player.PlayerName</td>
+                                @if (activeView == "Standard")
+                                {
+                                    <td class="@(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
+                                    <td class="@(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
+                                    <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
+                                    <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                                    <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
+                                    <td class="@(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
+                                    <td class="@(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
+                                    <td class="@(currentSortColumn == "AVG" ? "active-sort-col" : "")">@player.AVG.ToString(".000")</td>
+                                    <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
+                                }
+                                else if (activeView == "Hits")
+                                {
+                                    <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                                    <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
+                                    <td class="@(currentSortColumn == "H1B" ? "active-sort-col" : "")">@player.H1B</td>
+                                    <td class="@(currentSortColumn == "H2B" ? "active-sort-col" : "")">@player.H2B</td>
+                                    <td class="@(currentSortColumn == "H3B" ? "active-sort-col" : "")">@player.H3B</td>
+                                    <td class="@(currentSortColumn == "H4B" ? "active-sort-col" : "")">@player.H4B</td>
+                                    <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
+                                    <td class="@(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
+                                    <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
+                                }
+                                else if (activeView == "Outcomes")
+                                {
+                                    <td class="@(currentSortColumn == "BB" ? "active-sort-col" : "")">@player.BB</td>
+                                    <td class="@(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
+                                    <td class="@(currentSortColumn == "KF" ? "active-sort-col" : "")">@player.KF</td>
+                                    <td class="@(currentSortColumn == "SF" ? "active-sort-col" : "")">@player.SF</td>
+                                    <td class="@(currentSortColumn == "FC" ? "active-sort-col" : "")">@player.FC</td>
+                                    <td class="@(currentSortColumn == "GO" ? "active-sort-col" : "")">@player.GO</td>
+                                    <td class="@(currentSortColumn == "FO" ? "active-sort-col" : "")">@player.FO</td>
+                                    <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mobile-player-grid view-fade-in" @key="@("mobile-" + activeView)">
+                @for (int i = 0; i < allStats.Count; i++)
+                {
+                    PlayerStatsSummary player = allStats[i];
+                    <div class="mobile-player-card">
+                        <div class="mobile-card-header">
+                            <span class="mobile-card-name">
+                                <span class="rank-badge">#@(i + 1)</span>
+                                @player.PlayerName
+                            </span>
+                            <div style="display: flex; gap: 4px;">
+                                @if (activeView == "Hits")
+                                {
+                                    <span class="badge bg-light text-dark @(currentSortColumn == "SLG" ? "border border-danger" : "")" @onclick="@(() => Sort("SLG"))">SLG: @player.SLG.ToString(".000")</span>
+                                    <span class="badge bg-light text-dark @(currentSortColumn == "OPS" ? "border border-danger" : "")" @onclick="@(() => Sort("OPS"))">OPS: @player.OPS.ToString(".000")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark @(currentSortColumn == "AVG" ? "border border-danger" : "")" @onclick="@(() => Sort("AVG"))">AVG: @player.AVG.ToString(".000")</span>
+                                    <span class="badge bg-light text-dark @(currentSortColumn == "OBP" ? "border border-danger" : "")" @onclick="@(() => Sort("OBP"))">OBP: @player.OBP.ToString(".000")</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="mobile-card-stats">
+                            @if (activeView == "Standard")
+                            {
+                                <div class="m-stat @(currentSortColumn == "GP" ? "active" : "")" @onclick="@(() => Sort("GP"))"><span class="m-stat-val">@player.GamesPlayed</span><span class="m-stat-label">GP</span></div>
+                                <div class="m-stat @(currentSortColumn == "PA" ? "active" : "")" @onclick="@(() => Sort("PA"))"><span class="m-stat-val">@player.PA</span><span class="m-stat-label">PA</span></div>
+                                <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
+                                <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick="@(() => Sort("H"))"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
+                                <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
+                                <div class="m-stat @(currentSortColumn == "RBI" ? "active" : "")" @onclick="@(() => Sort("RBI"))"><span class="m-stat-val">@player.RBI</span><span class="m-stat-label">RBI</span></div>
+                                <div class="m-stat @(currentSortColumn == "R" ? "active" : "")" @onclick="@(() => Sort("R"))"><span class="m-stat-val">@player.R</span><span class="m-stat-label">R</span></div>
+                            }
+                            else if (activeView == "Hits")
+                            {
+                                <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
+                                <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick="@(() => Sort("H"))"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
+                                <div class="m-stat @(currentSortColumn == "H1B" ? "active" : "")" @onclick="@(() => Sort("H1B"))"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
+                                <div class="m-stat @(currentSortColumn == "H2B" ? "active" : "")" @onclick="@(() => Sort("H2B"))"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
+                                <div class="m-stat @(currentSortColumn == "H3B" ? "active" : "")" @onclick="@(() => Sort("H3B"))"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
+                                <div class="m-stat @(currentSortColumn == "H4B" ? "active" : "")" @onclick="@(() => Sort("H4B"))"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
+                                <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
+                            }
+                            else if (activeView == "Outcomes")
+                            {
+                                <div class="m-stat @(currentSortColumn == "BB" ? "active" : "")" @onclick="@(() => Sort("BB"))"><span class="m-stat-val">@player.BB</span><span class="m-stat-label">BB</span></div>
+                                <div class="m-stat @(currentSortColumn == "K" ? "active" : "")" @onclick="@(() => Sort("K"))"><span class="m-stat-val">@player.K</span><span class="m-stat-label">K</span></div>
+                                <div class="m-stat @(currentSortColumn == "KF" ? "active" : "")" @onclick="@(() => Sort("KF"))"><span class="m-stat-val">@player.KF</span><span class="m-stat-label">KF</span></div>
+                                <div class="m-stat @(currentSortColumn == "SF" ? "active" : "")" @onclick="@(() => Sort("SF"))"><span class="m-stat-val">@player.SF</span><span class="m-stat-label">SF</span></div>
+                                <div class="m-stat @(currentSortColumn == "FC" ? "active" : "")" @onclick="@(() => Sort("FC"))"><span class="m-stat-val">@player.FC</span><span class="m-stat-label">FC</span></div>
+                                <div class="m-stat @(currentSortColumn == "GO" ? "active" : "")" @onclick="@(() => Sort("GO"))"><span class="m-stat-val">@player.GO</span><span class="m-stat-label">GO</span></div>
+                                <div class="m-stat @(currentSortColumn == "FO" ? "active" : "")" @onclick="@(() => Sort("FO"))"><span class="m-stat-val">@player.FO</span><span class="m-stat-label">FO</span></div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     </div>
-</div>
+}
 
 @code {
     private List<PlayerStatsSummary> allStats = new();
@@ -269,6 +288,7 @@
     private bool isAscending = false;
     private bool showSortModal = false;
     private bool showSeasonModal = false;
+    private bool isLoading = true;
 
     // Leader references
     private PlayerStatsSummary? avgLeader;
@@ -280,8 +300,14 @@
         "AB", "AVG", "BB", "FC", "FO", "GO", "GP", "H", "1B", "2B", "3B", "4B", "HR", "K", "KF", "OBP", "OPS", "PA", "R", "RBI", "SF", "SLG"
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
         try 
         {
             seasons = StatsService.GetSeasons();
@@ -303,30 +329,31 @@
         {
             allStats = new List<PlayerStatsSummary>();
         }
+        finally
+        {
+            await Task.Delay(300); // Small delay for smooth transition
+            isLoading = false;
+        }
     }
 
-    private void OnSeasonChange(ChangeEventArgs e)
+    private async Task OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             selectedSeasonId = id;
             SessionState.SelectedSeasonId = id;
-            allStats = StatsService.GetStatsSummary(selectedSeasonId);
-            CalculateLeaders();
-            Sort(currentSortColumn, false);
+            await LoadData();
         }
     }
 
     private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
 
-    private void SelectMobileSeason(int id)
+    private async Task SelectMobileSeason(int id)
     {
         selectedSeasonId = id;
         SessionState.SelectedSeasonId = id;
-        allStats = StatsService.GetStatsSummary(selectedSeasonId);
-        CalculateLeaders();
-        Sort(currentSortColumn, false);
         showSeasonModal = false;
+        await LoadData();
     }
 
     private void CalculateLeaders()
