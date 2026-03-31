@@ -49,22 +49,22 @@
 @if (allStats.Any())
 {
     <div class="leader-highlights">
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "AVG"))" style="cursor:pointer">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "AVG"))" style="cursor:pointer; animation-delay: 0.1s;">
             <div class="leader-category">Batting Average</div>
             <div class="leader-name">@avgLeader?.PlayerName</div>
             <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
         </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000);">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "HR"))" style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.2s;">
             <div class="leader-category">Home Runs</div>
             <div class="leader-name">@hrLeader?.PlayerName</div>
             <div class="leader-value">@hrLeader?.HR</div>
         </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Standard", "RBI"))" style="cursor:pointer; animation-delay: 0.3s;">
             <div class="leader-category">RBIs</div>
             <div class="leader-name">@rbiLeader?.PlayerName</div>
             <div class="leader-value">@rbiLeader?.RBI</div>
         </div>
-        <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000);">
+        <div class="leader-card" @onclick="@(() => SetViewAndSort("Hits", "OPS"))" style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.4s;">
             <div class="leader-category">OPS</div>
             <div class="leader-name">@opsLeader?.PlayerName</div>
             <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
@@ -72,7 +72,7 @@
     </div>
 }
 
-<div class="stat-card">
+<div class="stat-card" style="animation-delay: 0.5s;">
     <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick="@(() => SetView("Standard"))">Standard</button>
@@ -107,7 +107,7 @@
         </div>
     }
 
-    <div class="table-container" style="border: none; box-shadow: none;">
+    <div class="table-container view-fade-in" style="border: none; box-shadow: none;" @key="@("desktop-" + activeView)">
         <div class="box-score-table-wrapper">
             <table class="box-score-table">
                 <thead>
@@ -199,7 +199,7 @@
             </table>
         </div>
 
-        <div class="mobile-player-grid">
+        <div class="mobile-player-grid view-fade-in" @key="@("mobile-" + activeView)">
             @for (int i = 0; i < allStats.Count; i++)
             {
                 PlayerStatsSummary player = allStats[i];

@@ -54,6 +54,7 @@
 </div>
 
 <div class="game-cards-list">
+    @{ int index = 0; }
     @foreach (IGrouping<int, StatEntry> group in GroupedStats)
     {
         Game? gameInfo = group.First().Game;
@@ -66,8 +67,10 @@
         int teamPA = group.Sum(s => s.PA);
         int teamRBI = group.Sum(s => s.RBI);
         double teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
+        double currentDelay = index * 0.1;
+        index++;
 
-        <div class="game-card">
+        <div class="game-card" style="animation-delay: @(currentDelay)s">
             <div class="game-card-header" @onclick="() => ToggleGame(gameInfo?.Id ?? 0)">
                 <div class="game-info-left">
                     <div class="game-number-badge">GAME #@gameInfo?.GameNumber</div>
@@ -106,10 +109,8 @@
                 </div>
             </div>
 
-            @if (isExpanded)
-            {
-                <div class="game-card-detail">
-                    <div class="box-score-table-wrapper">
+            <div class="game-card-detail @(isExpanded ? "expanded" : "")">
+                <div class="box-score-table-wrapper">
                         <table class="box-score-table table-sm">
                             <thead>
                                 <tr>
@@ -245,8 +246,7 @@
                         </div>
                     </div>
                 </div>
-            }
-        </div>
+            </div>
     }
 </div>
 
