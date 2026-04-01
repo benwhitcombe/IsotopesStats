@@ -1,0 +1,158 @@
+@page "/management/players"
+@using IsotopesStats.Services
+@using IsotopesStats.Models
+@attribute [Authorize]
+@inject StatsService StatsService
+
+<PageTitle>Isotopes - Manage Players</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Manage Players</h3>
+    <button class="view-btn active" @onclick="() => StartEdit(new Player())">Add New Player</button>
+</div>
+
+@if (isEditing)
+{
+    <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
+        <h4 style="margin-top:0">@(editingPlayer.Id == 0 ? "Add" : "Edit") Player</h4>
+        <div class="form-group">
+            <label>Player Name</label>
+            <input type="text" class="form-control" @bind="editingPlayer.Name" placeholder="e.g. John Doe" />
+        </div>
+        <div class="form-group">
+            <label>Season</label>
+            <select class="form-control" @bind="editingPlayer.SeasonId">
+                <option value="0">-- Select Season --</option>
+                @foreach (Season season in seasons)
+                {
+                    <option value="@season.Id">@season.Name</option>
+                }
+            </select>
+        </div>
+        <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center; margin: 1.5rem 0;">
+            <input type="checkbox" @bind="editingPlayer.IsActive" id="isActive" style="width: 20px; height: 20px;" />
+            <label for="isActive" style="margin:0; font-weight: bold;">Active Player</label>
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button class="view-btn active" @onclick="SavePlayer">Save Player</button>
+            <button class="view-btn" @onclick="CancelEdit">Cancel</button>
+        </div>
+    </div>
+}
+
+<div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
+    <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
+        <label>Filter by Season</label>
+        <select class="form-control" @onchange="OnSeasonFilterChange">
+            <option value="0">All Seasons</option>
+            @foreach (Season season in seasons)
+            {
+                <option value="@season.Id">@season.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Name</th>
+                    <th style="text-align: left;">Season</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Player player in filteredPlayers)
+                {
+                    Season? s = seasons.FirstOrDefault(x => x.Id == player.SeasonId);
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
+                        <td style="text-align: left;">@(s?.Name ?? "Unknown")</td>
+                        <td>
+                            <span class="badge @(player.IsActive ? "bg-success" : "bg-secondary")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                @(player.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="view-btn" @onclick="() => StartEdit(player)">Edit</button>
+                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Player> players = new();
+    private List<Season> seasons = new();
+    private Player editingPlayer = new();
+    private bool isEditing = false;
+    private int selectedSeasonId = 0;
+
+    private IEnumerable<Player> filteredPlayers => 
+        selectedSeasonId == 0 ? players : players.Where(p => p.SeasonId == selectedSeasonId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        seasons = await StatsService.GetSeasonsAsync();
+        players = await StatsService.GetAllPlayersAsync();
+    }
+
+    private async Task OnSeasonFilterChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedSeasonId = id;
+        }
+        await Task.CompletedTask;
+    }
+
+    private void StartEdit(Player player)
+    {
+        editingPlayer = new Player 
+        { 
+            Id = player.Id, 
+            Name = player.Name, 
+            SeasonId = player.SeasonId, 
+            IsActive = player.IsActive 
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        editingPlayer = new Player();
+    }
+
+    private async Task SavePlayer()
+    {
+        if (string.IsNullOrEmpty(editingPlayer.Name) || editingPlayer.SeasonId == 0) return;
+
+        if (editingPlayer.Id == 0)
+        {
+            await StatsService.AddPlayerAsync(editingPlayer);
+        }
+        else
+        {
+            await StatsService.UpdatePlayerAsync(editingPlayer);
+        }
+
+        isEditing = false;
+        await LoadData();
+    }
+
+    private async Task DeletePlayer(int id)
+    {
+        await StatsService.DeletePlayerAsync(id);
+        await LoadData();
+    }
+}

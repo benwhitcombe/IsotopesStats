@@ -60,6 +60,22 @@ public static class DatabaseInitializer
                 FOREIGN KEY (PlayerId) REFERENCES Players(Id),
                 FOREIGN KEY (GameId) REFERENCES Games(Id)
             );
+
+            CREATE TABLE IF NOT EXISTS Users (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Email TEXT NOT NULL UNIQUE,
+                PasswordHash TEXT NOT NULL,
+                IsAdmin INTEGER NOT NULL DEFAULT 0,
+                CreatedAt TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS PasswordResetTokens (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                UserId INTEGER NOT NULL,
+                Token TEXT NOT NULL,
+                ExpiryDate TEXT NOT NULL,
+                FOREIGN KEY (UserId) REFERENCES Users(Id)
+            );
         ";
         await command.ExecuteNonQueryAsync();
     }

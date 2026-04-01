@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Authorization;
 using IsotopesStats.Data;
 using IsotopesStats.Services;
 
@@ -10,6 +11,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
 builder.Services.AddScoped<StatsRepository>();
 builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+builder.Services.AddAuthorizationCore();
+
 builder.Services.AddScoped<SharedSessionState>();
 builder.Services.AddScoped<PlayerStatsState>();
 builder.Services.AddScoped<GameStatsState>();
@@ -24,6 +29,19 @@ try
 {
     Console.WriteLine("Initializing database and seeding data...");
     await DataSeeder.SeedDataAsync();
+    
+    // Seed Admin User
+    using (IServiceScope scope = app.Services.CreateScope())
+    {
+        AuthService authService = scope.ServiceProvider.GetRequiredService<AuthService>();
+        List<IsotopesStats.Models.User> users = await authService.GetUsersAsync();
+        if (!users.Any())
+        {
+            await authService.RegisterAsync("admin@isotopes.com", "Admin123!", true);
+            Console.WriteLine("Initial admin user created: admin@isotopes.com / Admin123!");
+        }
+    }
+    
     Console.WriteLine("Database initialization complete.");
 }
 catch (Exception ex)

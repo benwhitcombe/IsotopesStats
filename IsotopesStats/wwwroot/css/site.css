@@ -5,6 +5,10 @@
     --isotopes-accent: #004684;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 html, body {
     height: 100%;
 }
@@ -27,7 +31,7 @@ body {
 .isotopes-header {
     background-color: var(--isotopes-red);
     color: var(--isotopes-white);
-    padding: 1rem;
+    padding: 1rem 0;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
@@ -36,8 +40,11 @@ body {
 .header-content {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 10px;
+    width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .logo-atom {
@@ -90,7 +97,7 @@ body {
         top: 0;
     }
     .header-content {
-        justify-content: flex-start;
+        justify-content: space-between;
         max-width: 1200px;
         margin: 0 auto;
         width: 100%;
@@ -893,6 +900,124 @@ tr:last-child td {
     border-top-color: var(--isotopes-red);
     border-radius: 50%;
     animation: spinnerRotation 0.8s linear infinite;
+}
+
+/* Management Sub Nav */
+.management-sub-nav {
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ddd;
+    padding: 0.5rem 0;
+}
+
+.sub-nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2rem;
+    padding: 0 1rem;
+}
+
+.sub-nav-content a {
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.sub-nav-content a:hover {
+    color: var(--isotopes-red);
+}
+
+.sub-nav-content a.active {
+    color: var(--isotopes-red);
+    border-bottom-color: var(--isotopes-red);
+}
+
+/* Hamburger Menu */
+.hamburger-btn {
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: white;
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+.drawer-header {
+    background: var(--isotopes-red);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drawer-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0;
+}
+
+.drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    text-decoration: none;
+    color: var(--isotopes-dark);
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.drawer-item:active {
+    background: #f5f5f5;
+}
+
+.drawer-item.active {
+    color: var(--isotopes-red);
+    background: #fff5f5;
+}
+
+.drawer-footer {
+    padding: 1rem;
+    border-top: 1px solid #eee;
 }
 
 @keyframes spinnerRotation {

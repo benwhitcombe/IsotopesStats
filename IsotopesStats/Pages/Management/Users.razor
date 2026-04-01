@@ -1,0 +1,124 @@
+@page "/management/users"
+@using IsotopesStats.Services
+@using IsotopesStats.Models
+@attribute [Authorize(Roles = "Admin")]
+@inject AuthService AuthService
+
+<PageTitle>Isotopes - Manage Users</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">User Management</h3>
+    <button class="view-btn active" @onclick="() => isAdding = true">Add New User</button>
+</div>
+
+@if (isAdding)
+{
+    <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
+        <h4 style="margin-top:0">Add User</h4>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" @bind="newUserEmail" placeholder="user@isotopes.com" />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" @bind="newUserPassword" placeholder="••••••••" />
+        </div>
+        <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center; margin: 1.5rem 0;">
+            <input type="checkbox" @bind="newUserIsAdmin" id="isAdmin" style="width: 20px; height: 20px;" />
+            <label for="isAdmin" style="margin:0; font-weight: bold;">Is Administrator</label>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div style="background: #f8d7da; color: #721c24; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;">
+                @errorMessage
+            </div>
+        }
+
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button class="view-btn active" @onclick="AddUser">Create User</button>
+            <button class="view-btn" @onclick="() => isAdding = false">Cancel</button>
+        </div>
+    </div>
+}
+
+<div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Email</th>
+                    <th>Role</th>
+                    <th style="text-align: left;">Created</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (User user in users)
+                {
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@user.Email</td>
+                        <td>
+                            <span class="badge @(user.IsAdmin ? "bg-dark" : "bg-info")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                @(user.IsAdmin ? "Admin" : "User")
+                            </span>
+                        </td>
+                        <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                        <td style="text-align: right;">
+                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<User> users = new();
+    private bool isAdding = false;
+    private string newUserEmail = "";
+    private string newUserPassword = "";
+    private bool newUserIsAdmin = false;
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        users = await AuthService.GetUsersAsync();
+    }
+
+    private async Task AddUser()
+    {
+        errorMessage = "";
+        if (string.IsNullOrEmpty(newUserEmail) || string.IsNullOrEmpty(newUserPassword))
+        {
+            errorMessage = "Email and password are required.";
+            return;
+        }
+
+        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserIsAdmin);
+        if (result)
+        {
+            isAdding = false;
+            newUserEmail = "";
+            newUserPassword = "";
+            newUserIsAdmin = false;
+            await LoadUsers();
+        }
+        else
+        {
+            errorMessage = "Error creating user. Email might already exist.";
+        }
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        await AuthService.DeleteUserAsync(id);
+        await LoadUsers();
+    }
+}

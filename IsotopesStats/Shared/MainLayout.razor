@@ -1,39 +1,154 @@
 @inherits LayoutComponentBase
+@using IsotopesStats.Services
+@inject NavigationManager Navigation
+@inject SharedSessionState SharedState
 
 <div class="page">
     <header class="isotopes-header">
         <div class="header-content">
             <div style="display: flex; align-items: center; gap: 10px;">
+                @* Mobile Hamburger Button - Always visible *@
+                <button class="hamburger-btn mobile-only" @onclick="ToggleMenu" title="Menu" style="margin-right: 5px;">
+                    <span>☰</span>
+                </button>
+
                 <svg class="logo-atom" viewBox="0 0 100 100" width="32" height="32" style="fill:none; stroke:white; stroke-width:5;">
                     <circle cx="50" cy="50" r="5" fill="white" stroke="none"/>
                     <ellipse cx="50" cy="50" rx="45" ry="15" />
                     <ellipse cx="50" cy="50" rx="45" ry="15" transform="rotate(60 50 50)" />
                     <ellipse cx="50" cy="50" rx="45" ry="15" transform="rotate(120 50 50)" />
                 </svg>
-                <h1>ISOTOPES STATS</h1>
+                <h1 style="margin:0; font-size: 1.25rem;">ISOTOPES STATS</h1>
+                
+                <nav class="desktop-only" style="margin-left: 2rem; display: flex; gap: 1rem;">
+                    <NavLink href="" Match="NavLinkMatch.All" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Games</NavLink>
+                    <NavLink href="players" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Players</NavLink>
+                </nav>
             </div>
             
-            <nav class="desktop-nav">
-                <NavLink href="" Match="NavLinkMatch.All">Games</NavLink>
-                <NavLink href="players">Players</NavLink>
-            </nav>
+            <div class="header-auth">
+                <AuthorizeView>
+                    <Authorized>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;" class="desktop-only">
+                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@context.User.Identity?.Name</span>
+                            <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; text-decoration: none; font-weight: bold; border-radius: 20px;">
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="@GetLoginUrl()" class="view-btn desktop-only" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; border-radius: 20px;">
+                            <span>Login</span>
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
         </div>
     </header>
+
+    @if (isMenuOpen)
+    {
+        <div class="mobile-drawer-overlay" @onclick="ToggleMenu"></div>
+        <div class="mobile-drawer">
+            <div class="drawer-header">
+                <h3 style="margin:0">Isotopes</h3>
+                <button class="hamburger-btn" @onclick="ToggleMenu">✕</button>
+            </div>
+            <div class="drawer-content">
+                @* Public Links *@
+                <NavLink href="" Match="NavLinkMatch.All" class="drawer-item" @onclick="ToggleMenu">
+                    <span>⚾</span> Games
+                </NavLink>
+                <NavLink href="players" class="drawer-item" @onclick="ToggleMenu">
+                    <span>📋</span> Players
+                </NavLink>
+
+                @* Management Links - Only for logged in users *@
+                <AuthorizeView>
+                    <Authorized>
+                        <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; border-top: 1px solid #eee; margin-top: 0.5rem;">
+                            Management
+                        </div>
+                        <NavLink href="management/games" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                            <span>🏟️</span> Manage Games
+                        </NavLink>
+                        <NavLink href="management/players" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                            <span>👥</span> Manage Players
+                        </NavLink>
+                        <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                            <span>🗓️</span> Manage Seasons
+                        </NavLink>
+                        <AuthorizeView Roles="Admin" Context="innerContext">
+                            <NavLink href="management/users" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                                <span>🔐</span> Manage Users
+                            </NavLink>
+                        </AuthorizeView>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+            <div class="drawer-footer">
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="account/logout" class="drawer-item" style="border:none; color: var(--isotopes-red);" @onclick="ToggleMenu">
+                            <span>🚪</span> Logout (@context.User.Identity?.Name)
+                        </a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="@GetLoginUrl()" class="drawer-item" style="border:none;" @onclick="ToggleMenu">
+                            <span>🔑</span> Login
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    }
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="desktop-only management-sub-nav">
+                <div class="sub-nav-content">
+                    <NavLink href="management/games">Games</NavLink>
+                    <NavLink href="management/players">Players</NavLink>
+                    <NavLink href="management/seasons">Seasons</NavLink>
+                    <AuthorizeView Roles="Admin" Context="adminContext">
+                        <NavLink href="management/users">Users</NavLink>
+                    </AuthorizeView>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
 
     <main>
         <article class="content">
             @Body
         </article>
     </main>
-
-    <nav class="mobile-nav">
-        <NavLink href="" Match="NavLinkMatch.All">
-            <span class="nav-icon">⚾</span>
-            <span>Games</span>
-        </NavLink>
-        <NavLink href="players">
-            <span class="nav-icon">📋</span>
-            <span>Players</span>
-        </NavLink>
-    </nav>
 </div>
+
+@code {
+    private bool isMenuOpen = false;
+
+    protected override void OnParametersSet()
+    {
+        if (SharedState.OpenMenuOnLoad)
+        {
+            isMenuOpen = true;
+            SharedState.OpenMenuOnLoad = false;
+        }
+    }
+
+    private void ToggleMenu()
+    {
+        isMenuOpen = !isMenuOpen;
+    }
+
+    private string GetLoginUrl()
+    {
+        string relativePath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (string.IsNullOrEmpty(relativePath) || relativePath.StartsWith("account/login"))
+        {
+            return "account/login";
+        }
+        return $"account/login?returnUrl={Uri.EscapeDataString(relativePath)}";
+    }
+}

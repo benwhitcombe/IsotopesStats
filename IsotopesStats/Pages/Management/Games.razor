@@ -1,0 +1,100 @@
+@page "/management/games"
+@using IsotopesStats.Services
+@using IsotopesStats.Models
+@attribute [Authorize]
+@inject StatsService StatsService
+
+<PageTitle>Isotopes - Manage Games</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Manage Games</h3>
+    <a href="/admin" class="view-btn active">Add New Game</a>
+</div>
+
+<div class="stat-card view-fade-in">
+    <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
+        <label>Season</label>
+        <select class="form-control" @onchange="OnSeasonChange">
+            @foreach (Season season in seasons)
+            {
+                <option value="@season.Id" selected="@(selectedSeasonId == season.Id)">@season.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">#</th>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Opponent</th>
+                    <th style="text-align: left;">Diamond</th>
+                    <th>Type</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Game game in games)
+                {
+                    <tr>
+                        <td style="text-align: left;">@game.GameNumber</td>
+                        <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@game.Opponent</td>
+                        <td style="text-align: left;">@game.Diamond</td>
+                        <td>
+                            <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                @game.Type
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            @* Editing full game stats is complex, for now we provide deletion. *@
+                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteGame(game.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Season> seasons = new();
+    private List<Game> games = new();
+    private int selectedSeasonId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        seasons = await StatsService.GetSeasonsAsync();
+        if (seasons.Any())
+        {
+            selectedSeasonId = seasons.First().Id;
+            await LoadGames();
+        }
+    }
+
+    private async Task LoadGames()
+    {
+        // Get all stats and group by game to get game info
+        List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
+        games = stats.GroupBy(s => s.GameId)
+                    .Select(g => g.First().Game!)
+                    .OrderByDescending(g => g.Date)
+                    .ToList();
+    }
+
+    private async Task OnSeasonChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedSeasonId = id;
+            await LoadGames();
+        }
+    }
+
+    private async Task DeleteGame(int id)
+    {
+        await StatsService.DeleteGameAsync(id);
+        await LoadGames();
+    }
+}

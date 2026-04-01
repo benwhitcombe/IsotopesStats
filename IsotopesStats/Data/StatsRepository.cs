@@ -332,8 +332,9 @@ public class StatsRepository
                     // Get or Create Player
                     SqliteCommand playerCommand = connection.CreateCommand();
                     playerCommand.Transaction = transaction;
-                    playerCommand.CommandText = "SELECT Id FROM Players WHERE Name = $name";
+                    playerCommand.CommandText = "SELECT Id FROM Players WHERE Name = $name AND SeasonId = $seasonId";
                     playerCommand.Parameters.AddWithValue("$name", stat.Player?.Name ?? "Unknown");
+                    playerCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
                     
                     object? playerIdObj = await playerCommand.ExecuteScalarAsync();
                     int playerId;
@@ -388,5 +389,166 @@ public class StatsRepository
                 throw;
             }
         }
+    }
+
+    public async Task UpdateGameAsync(Game game)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                UPDATE Games SET 
+                    SeasonId = $seasonId, 
+                    GameNumber = $gameNumber, 
+                    Date = $date, 
+                    Diamond = $diamond, 
+                    Opponent = $opponent, 
+                    Type = $type 
+                WHERE Id = $id
+            ";
+            command.Parameters.AddWithValue("$seasonId", game.SeasonId);
+            command.Parameters.AddWithValue("$gameNumber", game.GameNumber);
+            command.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm:ss"));
+            command.Parameters.AddWithValue("$diamond", game.Diamond);
+            command.Parameters.AddWithValue("$opponent", game.Opponent);
+            command.Parameters.AddWithValue("$type", (int)game.Type);
+            command.Parameters.AddWithValue("$id", game.Id);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task DeleteGameAsync(int gameId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand statsCommand = connection.CreateCommand();
+                statsCommand.Transaction = transaction;
+                statsCommand.CommandText = "DELETE FROM Stats WHERE GameId = $gameId";
+                statsCommand.Parameters.AddWithValue("$gameId", gameId);
+                await statsCommand.ExecuteNonQueryAsync();
+
+                SqliteCommand gameCommand = connection.CreateCommand();
+                gameCommand.Transaction = transaction;
+                gameCommand.CommandText = "DELETE FROM Games WHERE Id = $gameId";
+                gameCommand.Parameters.AddWithValue("$gameId", gameId);
+                await gameCommand.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task AddSeasonAsync(Season season)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO Seasons (Name) VALUES ($name)";
+            command.Parameters.AddWithValue("$name", season.Name);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task UpdateSeasonAsync(Season season)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE Seasons SET Name = $name WHERE Id = $id";
+            command.Parameters.AddWithValue("$name", season.Name);
+            command.Parameters.AddWithValue("$id", season.Id);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task DeleteSeasonAsync(int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Seasons WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", seasonId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task AddPlayerAsync(Player player)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO Players (SeasonId, Name, IsActive) VALUES ($seasonId, $name, $isActive)";
+            command.Parameters.AddWithValue("$seasonId", player.SeasonId);
+            command.Parameters.AddWithValue("$name", player.Name);
+            command.Parameters.AddWithValue("$isActive", player.IsActive ? 1 : 0);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task UpdatePlayerAsync(Player player)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE Players SET Name = $name, IsActive = $isActive WHERE Id = $id";
+            command.Parameters.AddWithValue("$name", player.Name);
+            command.Parameters.AddWithValue("$isActive", player.IsActive ? 1 : 0);
+            command.Parameters.AddWithValue("$id", player.Id);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task DeletePlayerAsync(int playerId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Players WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", playerId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task<List<Player>> GetAllPlayersAsync()
+    {
+        List<Player> players = new List<Player>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, SeasonId, Name, IsActive FROM Players ORDER BY Name";
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    players.Add(new Player
+                    {
+                        Id = reader.GetInt32(0),
+                        SeasonId = reader.GetInt32(1),
+                        Name = reader.GetString(2),
+                        IsActive = reader.GetInt32(3) == 1
+                    });
+                }
+            }
+        }
+        return players;
     }
 }
