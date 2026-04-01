@@ -3,13 +3,86 @@
 @using IsotopesStats.Models
 @attribute [Authorize]
 @inject StatsService StatsService
+@inject NavigationManager Navigation
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Games</h3>
-    <a href="/admin" class="view-btn active">Add New Game</a>
+    @if (!isEditing)
+    {
+        <button class="view-btn active" @onclick="StartNewGame">Add New Game</button>
+    }
 </div>
+
+@if (isEditing)
+{
+    <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h4 style="margin:0">@(editingGame.Id == 0 ? "Add New" : "Edit") Game</h4>
+            <button class="view-btn" @onclick="CancelEdit">Cancel</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label>Season</label>
+                <select class="form-control" @bind="editingGame.SeasonId">
+                    @foreach (Season season in seasons)
+                    {
+                        <option value="@season.Id">@season.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date & Time</label>
+                <input type="datetime-local" class="form-control" @bind="editingGame.Date" />
+            </div>
+            <div class="form-group">
+                <label>Opponent</label>
+                <input type="text" class="form-control" placeholder="Opponent Name" @bind="editingGame.Opponent" />
+            </div>
+            <div class="form-group">
+                <label>Game Type</label>
+                <select class="form-control" @bind="editingGame.Type">
+                    @foreach (GameType type in Enum.GetValues<GameType>())
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+            @foreach (StatEntry stat in playerStats)
+            {
+                <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 1px solid #eee;">
+                    <div class="admin-player-name" style="color: var(--isotopes-accent); border-bottom: 2px solid #f0f0f0; margin-bottom: 0.5rem; padding-bottom: 0.3rem; font-weight: bold;">@stat.Player?.Name</div>
+                    <div class="admin-stats-grid">
+                        <div class="admin-stat-input"><label>1B</label><input type="number" @bind="stat.H1B" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>2B</label><input type="number" @bind="stat.H2B" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>3B</label><input type="number" @bind="stat.H3B" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>4B</label><input type="number" @bind="stat.H4B" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>HR</label><input type="number" @bind="stat.HR" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>BB</label><input type="number" @bind="stat.BB" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>SF</label><input type="number" @bind="stat.SF" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>FC</label><input type="number" @bind="stat.FC" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>K</label><input type="number" @bind="stat.K" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>KF</label><input type="number" @bind="stat.KF" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>GO</label><input type="number" @bind="stat.GO" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>FO</label><input type="number" @bind="stat.FO" class="form-control" style="padding: 0.3rem; text-align: center;" /></div>
+                        <div class="admin-stat-input"><label>R</label><input type="number" @bind="stat.R" class="form-control" style="padding: 0.3rem; text-align: center; font-weight: bold; color: var(--isotopes-red);" /></div>
+                        <div class="admin-stat-input"><label>RBI</label><input type="number" @bind="stat.RBI" class="form-control" style="padding: 0.3rem; text-align: center; font-weight: bold; color: var(--isotopes-red);" /></div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="view-btn active" style="padding: 1rem 3rem; font-size: 1.2rem; background-color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="SaveGame">Save Game & Stats</button>
+        </div>
+    </div>
+}
 
 <div class="stat-card view-fade-in">
     <div class="desktop-only">
@@ -78,6 +151,7 @@
                                 </span>
                             </td>
                             <td style="text-align: right;">
+                                <button class="view-btn" @onclick="() => StartEdit(game)">Edit</button>
                                 <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteGame(game.Id)">Delete</button>
                             </td>
                         </tr>
@@ -107,22 +181,36 @@
                         <span class="m-stat-val" style="font-size: 0.9rem;">@game.Diamond</span>
                     </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
                     <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
                         @game.Type
                     </span>
-                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => DeleteGame(game.Id)">Delete</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="view-btn" @onclick="() => StartEdit(game)">Edit</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => DeleteGame(game.Id)">Delete</button>
+                    </div>
                 </div>
             </div>
         }
     </div>
 </div>
 
+@if (showSuccess)
+{
+    <div class="view-fade-in" style="position: fixed; bottom: 2rem; right: 2rem; background: #155724; color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 3000;">
+        ✨ Game saved successfully!
+    </div>
+}
+
 @code {
     private List<Season> seasons = new();
     private List<Game> games = new();
+    private List<StatEntry> playerStats = new();
+    private Game editingGame = new() { Date = DateTime.Today };
     private int selectedSeasonId;
+    private bool isEditing = false;
     private bool showSeasonModal = false;
+    private bool showSuccess = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,13 +218,13 @@
         if (seasons.Any())
         {
             selectedSeasonId = seasons.First().Id;
+            editingGame.SeasonId = selectedSeasonId;
             await LoadGames();
         }
     }
 
     private async Task LoadGames()
     {
-        // Get all stats and group by game to get game info
         List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
         games = stats.GroupBy(s => s.GameId)
                     .Select(g => g.First().Game!)
@@ -163,6 +251,68 @@
         selectedSeasonId = id;
         showSeasonModal = false;
         await LoadGames();
+    }
+
+    private async Task StartNewGame()
+    {
+        editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId };
+        List<Player> players = await StatsService.GetPlayersAsync(selectedSeasonId);
+        playerStats = players.Select(p => new StatEntry { PlayerId = p.Id, Player = p }).ToList();
+        isEditing = true;
+    }
+
+    private async Task StartEdit(Game game)
+    {
+        editingGame = new Game 
+        { 
+            Id = game.Id, 
+            SeasonId = game.SeasonId, 
+            GameNumber = game.GameNumber, 
+            Date = game.Date, 
+            Diamond = game.Diamond, 
+            Opponent = game.Opponent, 
+            Type = game.Type 
+        };
+        
+        playerStats = await StatsService.GetGameStatsAsync(game.Id);
+        isEditing = true;
+        Navigation.NavigateTo("/management/games#top"); // Scroll to top if possible or just visual
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId };
+        playerStats.Clear();
+    }
+
+    private async Task SaveGame()
+    {
+        try
+        {
+            if (editingGame.Id == 0)
+            {
+                await StatsService.AddGameWithStatsAsync(editingGame, playerStats);
+            }
+            else
+            {
+                await StatsService.UpdateGameWithStatsAsync(editingGame, playerStats);
+            }
+            
+            showSuccess = true;
+            isEditing = false;
+            await LoadGames();
+            
+            _ = Task.Run(async () => {
+                await Task.Delay(3000);
+                showSuccess = false;
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception)
+        {
+            // Error handling
+        }
     }
 
     private async Task DeleteGame(int id)

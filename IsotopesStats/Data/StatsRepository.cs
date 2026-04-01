@@ -301,6 +301,167 @@ public class StatsRepository
         return stats;
     }
 
+    public async Task<Game?> GetGameAsync(int gameId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, SeasonId, GameNumber, Date, Diamond, Opponent, Type FROM Games WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", gameId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                if (await reader.ReadAsync())
+                {
+                    return new Game
+                    {
+                        Id = reader.GetInt32(0),
+                        SeasonId = reader.GetInt32(1),
+                        GameNumber = reader.GetInt32(2),
+                        Date = DateTime.Parse(reader.GetString(3)),
+                        Diamond = reader.GetString(4),
+                        Opponent = reader.GetString(5),
+                        Type = (GameType)reader.GetInt32(6)
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
+    public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
+    {
+        List<StatEntry> stats = new List<StatEntry>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
+                       p.Name, p.SeasonId
+                FROM Stats s
+                JOIN Players p ON s.PlayerId = p.Id
+                WHERE s.GameId = $gameId
+            ";
+            command.Parameters.AddWithValue("$gameId", gameId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    stats.Add(new StatEntry
+                    {
+                        Id = reader.GetInt32(0),
+                        PlayerId = reader.GetInt32(1),
+                        GameId = reader.GetInt32(2),
+                        BO = reader.GetInt32(3),
+                        H1B = reader.GetInt32(4),
+                        H2B = reader.GetInt32(5),
+                        H3B = reader.GetInt32(6),
+                        H4B = reader.GetInt32(7),
+                        HR = reader.GetInt32(8),
+                        FC = reader.GetInt32(9),
+                        BB = reader.GetInt32(10),
+                        SF = reader.GetInt32(11),
+                        K = reader.GetInt32(12),
+                        KF = reader.GetInt32(13),
+                        GO = reader.GetInt32(14),
+                        FO = reader.GetInt32(15),
+                        R = reader.GetInt32(16),
+                        RBI = reader.GetInt32(17),
+                        Player = new Player
+                        {
+                            Id = reader.GetInt32(1),
+                            Name = reader.GetString(18),
+                            SeasonId = reader.GetInt32(19)
+                        }
+                    });
+                }
+            }
+        }
+        return stats;
+    }
+
+    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+
+            try
+            {
+                // Update Game
+                SqliteCommand gameCommand = connection.CreateCommand();
+                gameCommand.Transaction = transaction;
+                gameCommand.CommandText = 
+                @"
+                    UPDATE Games SET 
+                        SeasonId = $seasonId, 
+                        GameNumber = $gameNumber, 
+                        Date = $date, 
+                        Diamond = $diamond, 
+                        Opponent = $opponent, 
+                        Type = $type 
+                    WHERE Id = $id
+                ";
+                gameCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
+                gameCommand.Parameters.AddWithValue("$gameNumber", game.GameNumber);
+                gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm:ss"));
+                gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);
+                gameCommand.Parameters.AddWithValue("$opponent", game.Opponent);
+                gameCommand.Parameters.AddWithValue("$type", (int)game.Type);
+                gameCommand.Parameters.AddWithValue("$id", game.Id);
+                await gameCommand.ExecuteNonQueryAsync();
+
+                // Update Stats (Delete and re-insert is simplest for this scale)
+                SqliteCommand deleteStats = connection.CreateCommand();
+                deleteStats.Transaction = transaction;
+                deleteStats.CommandText = "DELETE FROM Stats WHERE GameId = $gameId";
+                deleteStats.Parameters.AddWithValue("$gameId", game.Id);
+                await deleteStats.ExecuteNonQueryAsync();
+
+                foreach (StatEntry stat in stats)
+                {
+                    SqliteCommand statCommand = connection.CreateCommand();
+                    statCommand.Transaction = transaction;
+                    statCommand.CommandText = 
+                    @"
+                        INSERT INTO Stats (PlayerId, GameId, BO, H1B, H2B, H3B, H4B, HR, FC, BB, SF, K, KF, GO, FO, R, RBI)
+                        VALUES ($playerId, $gameId, $bo, $h1b, $h2b, $h3b, $h4b, $hr, $fc, $bb, $sf, $k, $kf, $go, $fo, $r, $rbi)
+                    ";
+                    statCommand.Parameters.AddWithValue("$playerId", stat.PlayerId);
+                    statCommand.Parameters.AddWithValue("$gameId", game.Id);
+                    statCommand.Parameters.AddWithValue("$bo", stat.BO);
+                    statCommand.Parameters.AddWithValue("$h1b", stat.H1B);
+                    statCommand.Parameters.AddWithValue("$h2b", stat.H2B);
+                    statCommand.Parameters.AddWithValue("$h3b", stat.H3B);
+                    statCommand.Parameters.AddWithValue("$h4b", stat.H4B);
+                    statCommand.Parameters.AddWithValue("$hr", stat.HR);
+                    statCommand.Parameters.AddWithValue("$fc", stat.FC);
+                    statCommand.Parameters.AddWithValue("$bb", stat.BB);
+                    statCommand.Parameters.AddWithValue("$sf", stat.SF);
+                    statCommand.Parameters.AddWithValue("$k", stat.K);
+                    statCommand.Parameters.AddWithValue("$kf", stat.KF);
+                    statCommand.Parameters.AddWithValue("$go", stat.GO);
+                    statCommand.Parameters.AddWithValue("$fo", stat.FO);
+                    statCommand.Parameters.AddWithValue("$r", stat.R);
+                    statCommand.Parameters.AddWithValue("$rbi", stat.RBI);
+                    await statCommand.ExecuteNonQueryAsync();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
     public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))

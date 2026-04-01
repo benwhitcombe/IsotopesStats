@@ -42,6 +42,21 @@ public class StatsService
         return await _repository.GetPlayerGameLogAsync(playerName, seasonId);
     }
 
+    public async Task<Game?> GetGameAsync(int gameId)
+    {
+        return await _repository.GetGameAsync(gameId);
+    }
+
+    public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
+    {
+        return await _repository.GetGameStatsAsync(gameId);
+    }
+
+    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        await _repository.UpdateGameWithStatsAsync(game, stats);
+    }
+
     public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
         await _repository.AddGameWithStatsAsync(game, stats);
