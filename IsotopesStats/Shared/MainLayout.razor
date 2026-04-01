@@ -2,12 +2,13 @@
 @using IsotopesStats.Services
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
+@inject IJSRuntime JSRuntime
 
 <div class="page">
     <header class="isotopes-header">
         <div class="header-content">
             <div style="display: flex; align-items: center; gap: 10px;">
-                @* Mobile Hamburger Button - Always visible *@
+                @* Mobile Hamburger Button - Now on the left *@
                 <button class="hamburger-btn mobile-only" @onclick="ToggleMenu" title="Menu" style="margin-right: 5px;">
                     <span>☰</span>
                 </button>
@@ -128,11 +129,16 @@
 @code {
     private bool isMenuOpen = false;
 
-    protected override void OnParametersSet()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (SharedState.OpenMenuOnLoad)
         {
-            isMenuOpen = true;
+            int width = await JSRuntime.InvokeAsync<int>("getWindowWidth");
+            if (width <= 768)
+            {
+                isMenuOpen = true;
+                StateHasChanged();
+            }
             SharedState.OpenMenuOnLoad = false;
         }
     }

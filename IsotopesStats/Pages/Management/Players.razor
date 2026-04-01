@@ -40,48 +40,106 @@
     </div>
 }
 
-<div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
-    <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
-        <label>Filter by Season</label>
-        <select class="form-control" @onchange="OnSeasonFilterChange">
-            <option value="0">All Seasons</option>
-            @foreach (Season season in seasons)
-            {
-                <option value="@season.Id">@season.Name</option>
-            }
-        </select>
-    </div>
-
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th style="text-align: left;">Name</th>
-                    <th style="text-align: left;">Season</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (Player player in filteredPlayers)
+<div class="stat-card view-fade-in" style="animation-delay: 0.1s; margin-bottom: 2rem;">
+    <div class="desktop-only">
+        <div class="form-group" style="max-width: 300px; margin-bottom: 0;">
+            <label>Filter by Season</label>
+            <select class="form-control" @onchange="OnSeasonFilterChange">
+                <option value="0">All Seasons</option>
+                @foreach (Season season in seasons)
                 {
-                    Season? s = seasons.FirstOrDefault(x => x.Id == player.SeasonId);
-                    <tr>
-                        <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
-                        <td style="text-align: left;">@(s?.Name ?? "Unknown")</td>
-                        <td>
-                            <span class="badge @(player.IsActive ? "bg-success" : "bg-secondary")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                @(player.IsActive ? "Active" : "Inactive")
-                            </span>
-                        </td>
-                        <td style="text-align: right;">
-                            <button class="view-btn" @onclick="() => StartEdit(player)">Edit</button>
-                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
-                        </td>
-                    </tr>
+                    <option value="@season.Id">@season.Name</option>
                 }
-            </tbody>
-        </table>
+            </select>
+        </div>
+    </div>
+    <div class="mobile-only">
+        <button class="view-btn" style="width: 100%; background: var(--isotopes-accent); color: white; border: none; padding: 0.75rem;" @onclick="ToggleSeasonModal">
+            📅 Filter by Season: @(selectedSeasonId == 0 ? "All Seasons" : seasons.FirstOrDefault(s => s.Id == selectedSeasonId)?.Name ?? "Unknown")
+        </button>
+    </div>
+</div>
+
+@if (showSeasonModal)
+{
+    <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
+        <div class="sort-modal" @onclick:stopPropagation="true">
+            <div class="sort-modal-header">
+                <h4 style="margin:0">Select Season</h4>
+                <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
+            </div>
+            <div class="sort-grid">
+                <div class="sort-option @(selectedSeasonId == 0 ? "active" : "")" @onclick="() => SelectMobileSeason(0)">
+                    All Seasons
+                </div>
+                @foreach (Season season in seasons)
+                {
+                    <div class="sort-option @(selectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
+                        @season.Name
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="desktop-only">
+    <div class="stat-card view-fade-in" style="animation-delay: 0.2s;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Name</th>
+                        <th style="text-align: left;">Season</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Player player in filteredPlayers)
+                    {
+                        Season? s = seasons.FirstOrDefault(x => x.Id == player.SeasonId);
+                        <tr>
+                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
+                            <td style="text-align: left;">@(s?.Name ?? "Unknown")</td>
+                            <td>
+                                <span class="badge @(player.IsActive ? "bg-success" : "bg-secondary")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                    @(player.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <button class="view-btn" @onclick="() => StartEdit(player)">Edit</button>
+                                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-only">
+    <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.2s; display: grid;">
+        @foreach (Player player in filteredPlayers)
+        {
+            Season? s = seasons.FirstOrDefault(x => x.Id == player.SeasonId);
+            <div class="mobile-player-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-name">@player.Name</div>
+                    <span class="badge @(player.IsActive ? "bg-success" : "bg-secondary")" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                        @(player.IsActive ? "Active" : "Inactive")
+                    </span>
+                </div>
+                <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
+                    <strong>Season:</strong> @(s?.Name ?? "Unknown")
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(player)">Edit</button>
+                    <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -91,6 +149,7 @@
     private Player editingPlayer = new();
     private bool isEditing = false;
     private int selectedSeasonId = 0;
+    private bool showSeasonModal = false;
 
     private IEnumerable<Player> filteredPlayers => 
         selectedSeasonId == 0 ? players : players.Where(p => p.SeasonId == selectedSeasonId);
@@ -113,6 +172,17 @@
             selectedSeasonId = id;
         }
         await Task.CompletedTask;
+    }
+
+    private void ToggleSeasonModal()
+    {
+        showSeasonModal = !showSeasonModal;
+    }
+
+    private void SelectMobileSeason(int id)
+    {
+        selectedSeasonId = id;
+        showSeasonModal = false;
     }
 
     private void StartEdit(Player player)
