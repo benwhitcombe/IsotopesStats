@@ -60,7 +60,7 @@ public class StatsRepository
                 FROM Stats s
                 JOIN Players p ON s.PlayerId = p.Id
                 JOIN Games g ON s.GameId = g.Id
-                WHERE g.SeasonId = $seasonId
+                WHERE g.SeasonId = $seasonId AND p.Name NOT LIKE 'spare'
                 GROUP BY p.Id, p.Name
             ";
             command.Parameters.AddWithValue("$seasonId", seasonId);

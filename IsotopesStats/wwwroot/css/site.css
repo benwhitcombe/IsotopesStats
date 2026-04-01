@@ -189,7 +189,7 @@ body {
 }
 
 .table-sm th, .table-sm td {
-    padding: 8px 4px;
+    padding: 12px 4px;
     font-size: 0.8rem;
     white-space: nowrap;
 }
@@ -373,7 +373,7 @@ tr:last-child td {
 }
 
 .game-card-detail.expanded {
-    max-height: 2000px;
+    max-height: 8000px;
     opacity: 1;
     border-top: 1px solid #eee;
 }
@@ -564,6 +564,31 @@ tr:last-child td {
 
 .active-sort-col {
     background-color: #f0f4f8 !important;
+    font-weight: bold;
+}
+
+.sortable-header {
+    position: relative;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.sortable-header:hover {
+    background-color: #f0f0f0 !important;
+}
+
+.sort-icon {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    text-align: center;
+    color: var(--isotopes-accent);
     font-weight: bold;
 }
 

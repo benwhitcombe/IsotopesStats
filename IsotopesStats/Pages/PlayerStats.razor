@@ -133,42 +133,42 @@ else if (!isLoading)
                     <table class="box-score-table">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">Rank</th>
-                                <th @onclick="@(() => Sort("PlayerName"))" style="cursor:pointer" class="sticky-col">Player @(GetSortIcon("PlayerName"))</th>
+                                <th style="width: 60px; min-width: 60px;">Rank</th>
+                                <th @onclick="@(() => Sort("PlayerName"))" class="sortable-header sticky-col" style="width: 200px; min-width: 200px;">Player<span class="sort-icon">@(GetSortIcon("PlayerName"))</span></th>
                                 @if (activeView == "Standard")
                                 {
-                                    <th @onclick="@(() => Sort("GP"))" style="cursor:pointer">GP @(GetSortIcon("GP"))</th>
-                                    <th @onclick="@(() => Sort("PA"))" style="cursor:pointer">PA @(GetSortIcon("PA"))</th>
-                                    <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
-                                    <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
-                                    <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
-                                    <th @onclick="@(() => Sort("RBI"))" style="cursor:pointer">RBI @(GetSortIcon("RBI"))</th>
-                                    <th @onclick="@(() => Sort("R"))" style="cursor:pointer">R @(GetSortIcon("R"))</th>
-                                    <th @onclick="@(() => Sort("AVG"))" style="cursor:pointer">AVG @(GetSortIcon("AVG"))</th>
-                                    <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
+                                    <th @onclick="@(() => Sort("GP"))" class="sortable-header">GP<span class="sort-icon">@(GetSortIcon("GP"))</span></th>
+                                    <th @onclick="@(() => Sort("PA"))" class="sortable-header">PA<span class="sort-icon">@(GetSortIcon("PA"))</span></th>
+                                    <th @onclick="@(() => Sort("AB"))" class="sortable-header">AB<span class="sort-icon">@(GetSortIcon("AB"))</span></th>
+                                    <th @onclick="@(() => Sort("H"))" class="sortable-header">H<span class="sort-icon">@(GetSortIcon("H"))</span></th>
+                                    <th @onclick="@(() => Sort("HR"))" class="sortable-header">HR<span class="sort-icon">@(GetSortIcon("HR"))</span></th>
+                                    <th @onclick="@(() => Sort("RBI"))" class="sortable-header">RBI<span class="sort-icon">@(GetSortIcon("RBI"))</span></th>
+                                    <th @onclick="@(() => Sort("R"))" class="sortable-header">R<span class="sort-icon">@(GetSortIcon("R"))</span></th>
+                                    <th @onclick="@(() => Sort("AVG"))" class="sortable-header">AVG<span class="sort-icon">@(GetSortIcon("AVG"))</span></th>
+                                    <th @onclick="@(() => Sort("OBP"))" class="sortable-header">OBP<span class="sort-icon">@(GetSortIcon("OBP"))</span></th>
                                 }
                                 else if (activeView == "Hits")
                                 {
-                                    <th @onclick="@(() => Sort("H"))" style="cursor:pointer">H @(GetSortIcon("H"))</th>
-                                    <th @onclick="@(() => Sort("AB"))" style="cursor:pointer">AB @(GetSortIcon("AB"))</th>
-                                    <th @onclick="@(() => Sort("H1B"))" style="cursor:pointer">1B @(GetSortIcon("H1B"))</th>
-                                    <th @onclick="@(() => Sort("H2B"))" style="cursor:pointer">2B @(GetSortIcon("H2B"))</th>
-                                    <th @onclick="@(() => Sort("H3B"))" style="cursor:pointer">3B @(GetSortIcon("H3B"))</th>
-                                    <th @onclick="@(() => Sort("H4B"))" style="cursor:pointer">4B @(GetSortIcon("H4B"))</th>
-                                    <th @onclick="@(() => Sort("HR"))" style="cursor:pointer">HR @(GetSortIcon("HR"))</th>
-                                    <th @onclick="@(() => Sort("SLG"))" style="cursor:pointer">SLG @(GetSortIcon("SLG"))</th>
-                                    <th @onclick="@(() => Sort("OPS"))" style="cursor:pointer">OPS @(GetSortIcon("OPS"))</th>
+                                    <th @onclick="@(() => Sort("H"))" class="sortable-header">H<span class="sort-icon">@(GetSortIcon("H"))</span></th>
+                                    <th @onclick="@(() => Sort("AB"))" class="sortable-header">AB<span class="sort-icon">@(GetSortIcon("AB"))</span></th>
+                                    <th @onclick="@(() => Sort("1B"))" class="sortable-header">1B<span class="sort-icon">@(GetSortIcon("1B"))</span></th>
+                                    <th @onclick="@(() => Sort("2B"))" class="sortable-header">2B<span class="sort-icon">@(GetSortIcon("2B"))</span></th>
+                                    <th @onclick="@(() => Sort("3B"))" class="sortable-header">3B<span class="sort-icon">@(GetSortIcon("3B"))</span></th>
+                                    <th @onclick="@(() => Sort("4B"))" class="sortable-header">4B<span class="sort-icon">@(GetSortIcon("4B"))</span></th>
+                                    <th @onclick="@(() => Sort("HR"))" class="sortable-header">HR<span class="sort-icon">@(GetSortIcon("HR"))</span></th>
+                                    <th @onclick="@(() => Sort("SLG"))" class="sortable-header">SLG<span class="sort-icon">@(GetSortIcon("SLG"))</span></th>
+                                    <th @onclick="@(() => Sort("OPS"))" class="sortable-header">OPS<span class="sort-icon">@(GetSortIcon("OPS"))</span></th>
                                 }
                                 else if (activeView == "Outcomes")
                                 {
-                                    <th @onclick="@(() => Sort("BB"))" style="cursor:pointer">BB @(GetSortIcon("BB"))</th>
-                                    <th @onclick="@(() => Sort("K"))" style="cursor:pointer">K @(GetSortIcon("K"))</th>
-                                    <th @onclick="@(() => Sort("KF"))" style="cursor:pointer">KF @(GetSortIcon("KF"))</th>
-                                    <th @onclick="@(() => Sort("SF"))" style="cursor:pointer">SF @(GetSortIcon("SF"))</th>
-                                    <th @onclick="@(() => Sort("FC"))" style="cursor:pointer">FC @(GetSortIcon("FC"))</th>
-                                    <th @onclick="@(() => Sort("GO"))" style="cursor:pointer">GO @(GetSortIcon("GO"))</th>
-                                    <th @onclick="@(() => Sort("FO"))" style="cursor:pointer">FO @(GetSortIcon("FO"))</th>
-                                    <th @onclick="@(() => Sort("OBP"))" style="cursor:pointer">OBP @(GetSortIcon("OBP"))</th>
+                                    <th @onclick="@(() => Sort("BB"))" class="sortable-header">BB<span class="sort-icon">@(GetSortIcon("BB"))</span></th>
+                                    <th @onclick="@(() => Sort("K"))" class="sortable-header">K<span class="sort-icon">@(GetSortIcon("K"))</span></th>
+                                    <th @onclick="@(() => Sort("KF"))" class="sortable-header">KF<span class="sort-icon">@(GetSortIcon("KF"))</span></th>
+                                    <th @onclick="@(() => Sort("SF"))" class="sortable-header">SF<span class="sort-icon">@(GetSortIcon("SF"))</span></th>
+                                    <th @onclick="@(() => Sort("FC"))" class="sortable-header">FC<span class="sort-icon">@(GetSortIcon("FC"))</span></th>
+                                    <th @onclick="@(() => Sort("GO"))" class="sortable-header">GO<span class="sort-icon">@(GetSortIcon("GO"))</span></th>
+                                    <th @onclick="@(() => Sort("FO"))" class="sortable-header">FO<span class="sort-icon">@(GetSortIcon("FO"))</span></th>
+                                    <th @onclick="@(() => Sort("OBP"))" class="sortable-header">OBP<span class="sort-icon">@(GetSortIcon("OBP"))</span></th>
                                 }
                             </tr>
                         </thead>
@@ -262,10 +262,10 @@ else if (!isLoading)
                                 {
                                     <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick="@(() => Sort("AB"))"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
                                     <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick="@(() => Sort("H"))"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
-                                    <div class="m-stat @(currentSortColumn == "H1B" ? "active" : "")" @onclick="@(() => Sort("H1B"))"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
-                                    <div class="m-stat @(currentSortColumn == "H2B" ? "active" : "")" @onclick="@(() => Sort("H2B"))"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
-                                    <div class="m-stat @(currentSortColumn == "H3B" ? "active" : "")" @onclick="@(() => Sort("H3B"))"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
-                                    <div class="m-stat @(currentSortColumn == "H4B" ? "active" : "")" @onclick="@(() => Sort("H4B"))"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
+                                    <div class="m-stat @(currentSortColumn == "1B" ? "active" : "")" @onclick="@(() => Sort("1B"))"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
+                                    <div class="m-stat @(currentSortColumn == "2B" ? "active" : "")" @onclick="@(() => Sort("2B"))"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
+                                    <div class="m-stat @(currentSortColumn == "3B" ? "active" : "")" @onclick="@(() => Sort("3B"))"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
+                                    <div class="m-stat @(currentSortColumn == "4B" ? "active" : "")" @onclick="@(() => Sort("4B"))"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
                                     <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick="@(() => Sort("HR"))"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
                                 }
                                 else if (activeView == "Outcomes")
@@ -526,6 +526,6 @@ else if (!isLoading)
     private string GetSortIcon(string column)
     {
         if (currentSortColumn != column) return "";
-        return isAscending ? " ▴" : " ▾";
+        return isAscending ? "▴" : "▾";
     }
 }

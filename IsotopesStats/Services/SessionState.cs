@@ -39,23 +39,33 @@ public class PlayerStatsState
     };
 }
 
+public class GameUIState
+{
+    [JsonInclude]
+    public int GameId { get; set; }
+    [JsonInclude]
+    public bool IsExpanded { get; set; }
+    [JsonInclude]
+    public string SortColumn { get; set; } = "BO";
+    [JsonInclude]
+    public bool IsAscending { get; set; } = true;
+}
+
 public class GameStatsState
 {
     [JsonInclude]
-    public HashSet<int> ExpandedGames { get; set; } = new();
-    [JsonInclude]
     public string FilterText { get; set; } = string.Empty;
+    
     [JsonInclude]
-    public Dictionary<int, string> SortColumns { get; set; } = new();
-    [JsonInclude]
-    public Dictionary<int, bool> SortDirections { get; set; } = new();
+    public Dictionary<int, GameUIState> GameUIStates { get; set; } = new();
 
-    public string GetSortColumn(int gameId) => SortColumns.TryGetValue(gameId, out var col) ? col : "BO";
-    public bool GetIsAscending(int gameId) => SortDirections.TryGetValue(gameId, out var asc) ? asc : true;
-
-    public void SetSort(int gameId, string column, bool isAscending)
+    public GameUIState GetState(int gameId)
     {
-        SortColumns[gameId] = column;
-        SortDirections[gameId] = isAscending;
+        if (!GameUIStates.TryGetValue(gameId, out GameUIState? state))
+        {
+            state = new GameUIState { GameId = gameId };
+            GameUIStates[gameId] = state;
+        }
+        return state!;
     }
 }
