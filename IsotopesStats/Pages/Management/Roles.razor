@@ -1,0 +1,189 @@
+@page "/management/roles"
+@using IsotopesStats.Services
+@using IsotopesStats.Models
+@attribute [Authorize(Policy = "ManageRoles")]
+@inject AuthService AuthService
+
+<PageTitle>Isotopes - Manage User Roles</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">User Role Management</h3>
+    <button class="view-btn active" @onclick="() => StartEdit(new UserRole())">Add New Role</button>
+</div>
+
+@if (isEditing)
+{
+    <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
+        <h4 style="margin-top:0">@(editingRole.Id == 0 ? "Add" : "Edit") User Role</h4>
+        <div class="form-group">
+            <label>Role Name</label>
+            <input type="text" class="form-control" @bind="editingRole.Name" placeholder="e.g. Moderator" />
+        </div>
+        
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Permissions</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                @foreach (Permission permission in allPermissions)
+                {
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="p-@permission.Id" 
+                               checked="@IsPermissionSelected(permission.Id)"
+                               @onchange="(e) => TogglePermission(permission, e)"
+                               style="width: 18px; height: 18px;" />
+                        <label for="p-@permission.Id" style="margin:0; cursor: pointer;">@permission.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <button class="view-btn active" @onclick="SaveRole">Save Role</button>
+            <button class="view-btn" @onclick="CancelEdit">Cancel</button>
+        </div>
+    </div>
+}
+
+<div class="desktop-only">
+    <div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Role Name</th>
+                        <th style="text-align: left;">Permissions</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (UserRole role in roles)
+                    {
+                        <tr>
+                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@role.Name</td>
+                            <td style="text-align: left;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                                    @foreach (Permission p in role.Permissions)
+                                    {
+                                        <span class="badge bg-light text-dark" style="border: 1px solid #ddd;">@p.Name</span>
+                                    }
+                                    @if (!role.Permissions.Any())
+                                    {
+                                        <span class="text-muted" style="font-size: 0.8rem; font-style: italic;">No permissions</span>
+                                    }
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <button class="view-btn" @onclick="() => StartEdit(role)">Edit</button>
+                                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteRole(role.Id)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-only">
+    <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
+        @foreach (UserRole role in roles)
+        {
+            <div class="mobile-player-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-name">@role.Name</div>
+                </div>
+                <div style="margin-bottom: 1rem; font-size: 0.85rem;">
+                    <div style="color: #888; font-weight: bold; margin-bottom: 0.3rem;">Permissions:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                        @foreach (Permission p in role.Permissions)
+                        {
+                            <span class="badge bg-light text-dark" style="border: 1px solid #ddd; font-size: 0.7rem;">@p.Name</span>
+                        }
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(role)">Edit</button>
+                    <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteRole(role.Id)">Delete</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<UserRole> roles = new();
+    private List<Permission> allPermissions = new();
+    private UserRole editingRole = new();
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        roles = await AuthService.GetUserRolesAsync();
+        allPermissions = await AuthService.GetPermissionsAsync();
+    }
+
+    private void StartEdit(UserRole role)
+    {
+        editingRole = new UserRole 
+        { 
+            Id = role.Id, 
+            Name = role.Name,
+            Permissions = new List<Permission>(role.Permissions)
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        editingRole = new UserRole();
+    }
+
+    private bool IsPermissionSelected(int permissionId)
+    {
+        return editingRole.Permissions.Any(p => p.Id == permissionId);
+    }
+
+    private void TogglePermission(Permission permission, ChangeEventArgs e)
+    {
+        bool isChecked = (bool)(e.Value ?? false);
+        if (isChecked)
+        {
+            if (!editingRole.Permissions.Any(p => p.Id == permission.Id))
+            {
+                editingRole.Permissions.Add(permission);
+            }
+        }
+        else
+        {
+            editingRole.Permissions.RemoveAll(p => p.Id == permission.Id);
+        }
+    }
+
+    private async Task SaveRole()
+    {
+        if (string.IsNullOrEmpty(editingRole.Name)) return;
+
+        if (editingRole.Id == 0)
+        {
+            await AuthService.AddUserRoleAsync(editingRole);
+        }
+        else
+        {
+            await AuthService.UpdateUserRoleAsync(editingRole);
+        }
+
+        isEditing = false;
+        await LoadData();
+    }
+
+    private async Task DeleteRole(int id)
+    {
+        await AuthService.DeleteUserRoleAsync(id);
+        await LoadData();
+    }
+}

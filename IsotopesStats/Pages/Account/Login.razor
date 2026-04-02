@@ -1,6 +1,7 @@
 @page "/account/login"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
+@using IsotopesStats.Shared
 @inject AuthService AuthService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
@@ -12,8 +13,8 @@
     <div class="stat-card view-fade-in" style="padding: 2.5rem;">
         <div style="text-align: center; margin-bottom: 2rem;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
-            <h3 style="margin:0; color: var(--isotopes-dark); font-weight: 800; letter-spacing: 1px;">MANAGEMENT LOGIN</h3>
-            <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Enter your credentials to access the dashboard</p>
+            <h3 style="margin:0; color: var(--isotopes-dark); font-weight: 800; letter-spacing: 1px;">ISOTOPES LOGIN</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Sign in to your account</p>
         </div>
         
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -28,12 +29,17 @@
             <input type="email" class="form-control" @bind="email" placeholder="email@isotopes.com" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s;" />
         </div>
 
-        <div class="form-group" style="margin-top: 1.5rem;">
+        <div class="form-group" style="margin-top: 1.5rem; position: relative;">
             <label style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #888;">Password</label>
-            <input type="password" class="form-control" @bind="password" placeholder="••••••••" @onkeyup="HandleKeyUp" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s;" />
+            <div style="position: relative;">
+                <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" placeholder="••••••••" @onkeyup="HandleKeyUp" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s; padding-right: 3rem;" />
+                <button type="button" @onclick="() => showPassword = !showPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                    <PasswordToggleIcon IsVisible="@showPassword" />
+                </button>
+            </div>
         </div>
 
-        <button class="view-btn active" @onclick="HandleLogin" style="margin-top: 2rem; width: 100%; padding: 1rem; font-size: 1.1rem; background-color: var(--isotopes-accent); border-color: var(--isotopes-accent);">Login to Management</button>
+        <button class="view-btn active" @onclick="HandleLogin" style="margin-top: 2rem; width: 100%; padding: 1rem; font-size: 1.1rem; background-color: var(--isotopes-accent); border-color: var(--isotopes-accent);">Sign In</button>
         
         <div style="text-align: center; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
             <a href="/account/forgot-password" style="font-size: 0.9rem; color: #888; text-decoration: none; font-weight: 600;">Forgot your password?</a>
@@ -49,6 +55,7 @@
     private string email = "";
     private string password = "";
     private string errorMessage = "";
+    private bool showPassword = false;
 
     private async Task HandleLogin()
     {

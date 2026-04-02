@@ -14,7 +14,13 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Email, PasswordHash, Role, CreatedAt FROM Users WHERE Email = $email";
+            command.CommandText = 
+            @"
+                SELECT u.Id, u.Email, u.PasswordHash, u.RoleId, u.CreatedAt, r.Name
+                FROM Users u
+                LEFT JOIN UserRoles r ON u.RoleId = r.Id
+                WHERE u.Email = $email
+            ";
             command.Parameters.AddWithValue("$email", email);
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
@@ -24,14 +30,24 @@ public class AuthService
                     string storedHash = reader.GetString(2);
                     if (BCrypt.Net.BCrypt.Verify(password, storedHash))
                     {
-                        return new User
+                        int roleId = reader.GetInt32(3);
+                        User user = new User
                         {
                             Id = reader.GetInt32(0),
                             Email = reader.GetString(1),
                             PasswordHash = storedHash,
-                            Role = (UserRole)reader.GetInt32(3),
-                            CreatedAt = DateTime.Parse(reader.GetString(4))
+                            RoleId = roleId,
+                            CreatedAt = DateTime.Parse(reader.GetString(4)),
+                            Role = new UserRole
+                            {
+                                Id = roleId,
+                                Name = reader.IsDBNull(5) ? "Unknown" : reader.GetString(5)
+                            }
                         };
+
+                        // Fetch Permissions
+                        user.Role.Permissions = await GetRolePermissionsAsync(roleId);
+                        return user;
                     }
                 }
             }
@@ -39,7 +55,38 @@ public class AuthService
         return null;
     }
 
-    public async Task<bool> RegisterAsync(string email, string password, UserRole role = UserRole.Player)
+    private async Task<List<Permission>> GetRolePermissionsAsync(int roleId)
+    {
+        List<Permission> permissions = new List<Permission>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT p.Id, p.Name
+                FROM Permissions p
+                JOIN RolePermissions rp ON p.Id = rp.PermissionId
+                WHERE rp.RoleId = $roleId
+            ";
+            command.Parameters.AddWithValue("$roleId", roleId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    permissions.Add(new Permission
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+            }
+        }
+        return permissions;
+    }
+
+    public async Task<bool> RegisterAsync(string email, string password, int roleId)
     {
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
@@ -48,12 +95,12 @@ public class AuthService
             SqliteCommand command = connection.CreateCommand();
             command.CommandText = 
             @"
-                INSERT INTO Users (Email, PasswordHash, Role, CreatedAt)
-                VALUES ($email, $hash, $role, $createdAt)
+                INSERT INTO Users (Email, PasswordHash, RoleId, CreatedAt)
+                VALUES ($email, $hash, $roleId, $createdAt)
             ";
             command.Parameters.AddWithValue("$email", email);
             command.Parameters.AddWithValue("$hash", passwordHash);
-            command.Parameters.AddWithValue("$role", (int)role);
+            command.Parameters.AddWithValue("$roleId", roleId);
             command.Parameters.AddWithValue("$createdAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
             try 
@@ -65,6 +112,213 @@ public class AuthService
             {
                 return false;
             }
+        }
+    }
+
+    public async Task<List<Permission>> GetPermissionsAsync()
+    {
+        List<Permission> permissions = new List<Permission>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, Name FROM Permissions ORDER BY Name";
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    permissions.Add(new Permission
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+            }
+        }
+        return permissions;
+    }
+
+    public async Task<List<UserRole>> GetUserRolesAsync()
+    {
+        List<UserRole> roles = new List<UserRole>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, Name FROM UserRoles ORDER BY Name";
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    UserRole role = new UserRole
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1)
+                    };
+                    roles.Add(role);
+                }
+            }
+        }
+
+        foreach (UserRole role in roles)
+        {
+            role.Permissions = await GetRolePermissionsAsync(role.Id);
+        }
+
+        return roles;
+    }
+
+    public async Task AddUserRoleAsync(UserRole role)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "INSERT INTO UserRoles (Name) VALUES ($name); SELECT last_insert_rowid();";
+                cmd.Parameters.AddWithValue("$name", role.Name);
+                int roleId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+                foreach (Permission p in role.Permissions)
+                {
+                    SqliteCommand pCmd = connection.CreateCommand();
+                    pCmd.Transaction = transaction;
+                    pCmd.CommandText = "INSERT INTO RolePermissions (RoleId, PermissionId) VALUES ($roleId, $pId)";
+                    pCmd.Parameters.AddWithValue("$roleId", roleId);
+                    pCmd.Parameters.AddWithValue("$pId", p.Id);
+                    await pCmd.ExecuteNonQueryAsync();
+                }
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task UpdateUserRoleAsync(UserRole role)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "UPDATE UserRoles SET Name = $name WHERE Id = $id";
+                cmd.Parameters.AddWithValue("$name", role.Name);
+                cmd.Parameters.AddWithValue("$id", role.Id);
+                await cmd.ExecuteNonQueryAsync();
+
+                SqliteCommand delCmd = connection.CreateCommand();
+                delCmd.Transaction = transaction;
+                delCmd.CommandText = "DELETE FROM RolePermissions WHERE RoleId = $roleId";
+                delCmd.Parameters.AddWithValue("$roleId", role.Id);
+                await delCmd.ExecuteNonQueryAsync();
+
+                foreach (Permission p in role.Permissions)
+                {
+                    SqliteCommand pCmd = connection.CreateCommand();
+                    pCmd.Transaction = transaction;
+                    pCmd.CommandText = "INSERT INTO RolePermissions (RoleId, PermissionId) VALUES ($roleId, $pId)";
+                    pCmd.Parameters.AddWithValue("$roleId", role.Id);
+                    pCmd.Parameters.AddWithValue("$pId", p.Id);
+                    await pCmd.ExecuteNonQueryAsync();
+                }
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task DeleteUserRoleAsync(int roleId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand delPCmd = connection.CreateCommand();
+                delPCmd.Transaction = transaction;
+                delPCmd.CommandText = "DELETE FROM RolePermissions WHERE RoleId = $roleId";
+                delPCmd.Parameters.AddWithValue("$roleId", roleId);
+                await delPCmd.ExecuteNonQueryAsync();
+
+                SqliteCommand delRCmd = connection.CreateCommand();
+                delRCmd.Transaction = transaction;
+                delRCmd.CommandText = "DELETE FROM UserRoles WHERE Id = $roleId";
+                delRCmd.Parameters.AddWithValue("$roleId", roleId);
+                await delRCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task<List<User>> GetUsersAsync()
+    {
+        List<User> users = new List<User>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT u.Id, u.Email, u.RoleId, u.CreatedAt, r.Name
+                FROM Users u
+                LEFT JOIN UserRoles r ON u.RoleId = r.Id
+                ORDER BY u.Email
+            ";
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    users.Add(new User
+                    {
+                        Id = reader.GetInt32(0),
+                        Email = reader.GetString(1),
+                        RoleId = reader.GetInt32(2),
+                        CreatedAt = DateTime.Parse(reader.GetString(3)),
+                        Role = new UserRole
+                        {
+                            Id = reader.GetInt32(2),
+                            Name = reader.IsDBNull(4) ? "Unknown" : reader.GetString(4)
+                        }
+                    });
+                }
+            }
+        }
+        return users;
+    }
+
+    public async Task DeleteUserAsync(int userId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Users WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", userId);
+            await command.ExecuteNonQueryAsync();
         }
     }
 
@@ -137,43 +391,5 @@ public class AuthService
             }
         }
         return false;
-    }
-
-    public async Task<List<User>> GetUsersAsync()
-    {
-        List<User> users = new List<User>();
-        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
-        {
-            await connection.OpenAsync();
-            SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Email, Role, CreatedAt FROM Users ORDER BY Email";
-
-            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
-            {
-                while (await reader.ReadAsync())
-                {
-                    users.Add(new User
-                    {
-                        Id = reader.GetInt32(0),
-                        Email = reader.GetString(1),
-                        Role = (UserRole)reader.GetInt32(2),
-                        CreatedAt = DateTime.Parse(reader.GetString(3))
-                    });
-                }
-            }
-        }
-        return users;
-    }
-
-    public async Task DeleteUserAsync(int userId)
-    {
-        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
-        {
-            await connection.OpenAsync();
-            SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Users WHERE Id = $id";
-            command.Parameters.AddWithValue("$id", userId);
-            await command.ExecuteNonQueryAsync();
-        }
     }
 }

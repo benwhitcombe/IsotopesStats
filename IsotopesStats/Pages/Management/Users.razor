@@ -1,7 +1,7 @@
 @page "/management/users"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
-@attribute [Authorize(Roles = "Administrator")]
+@attribute [Authorize(Policy = "ManageUsers")]
 @inject AuthService AuthService
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
@@ -21,14 +21,20 @@
         </div>
         <div class="form-group">
             <label>Password</label>
-            <input type="password" class="form-control" @bind="newUserPassword" placeholder="••••••••" autocomplete="new-password" />
+            <div style="position: relative;">
+                <input type="@(showNewUserPassword ? "text" : "password")" class="form-control" @bind="newUserPassword" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                <button type="button" @onclick="() => showNewUserPassword = !showNewUserPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                    <PasswordToggleIcon IsVisible="@showNewUserPassword" />
+                </button>
+            </div>
         </div>
         <div class="form-group">
             <label>Role</label>
-            <select class="form-control" @bind="newUserRole">
-                @foreach (UserRole role in Enum.GetValues<UserRole>())
+            <select class="form-control" @bind="newUserRoleId">
+                <option value="0">-- Select Role --</option>
+                @foreach (UserRole role in availableRoles)
                 {
-                    <option value="@role">@role</option>
+                    <option value="@role.Id">@role.Name</option>
                 }
             </select>
         </div>
@@ -65,8 +71,8 @@
                         <tr>
                             <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@user.Email</td>
                             <td>
-                                <span class="badge @GetRoleBadgeClass(user.Role)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                    @user.Role
+                                <span class="badge @GetRoleBadgeClass(user.Role?.Name)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                    @(user.Role?.Name ?? "Unknown")
                                 </span>
                             </td>
                             <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
@@ -88,8 +94,8 @@
             <div class="mobile-player-card">
                 <div class="mobile-card-header">
                     <div class="mobile-card-name">@user.Email</div>
-                    <span class="badge @GetRoleBadgeClass(user.Role)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
-                        @user.Role
+                    <span class="badge @GetRoleBadgeClass(user.Role?.Name)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                        @(user.Role?.Name ?? "Unknown")
                     </span>
                 </div>
                 <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
@@ -105,48 +111,51 @@
 
 @code {
     private List<User> users = new();
+    private List<UserRole> availableRoles = new();
     private bool isAdding = false;
     private string newUserEmail = "";
     private string newUserPassword = "";
-    private UserRole newUserRole = UserRole.Player;
+    private bool showNewUserPassword = false;
+    private int newUserRoleId = 0;
     private string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUsers();
+        await LoadData();
     }
 
-    private async Task LoadUsers()
+    private async Task LoadData()
     {
         users = await AuthService.GetUsersAsync();
+        availableRoles = await AuthService.GetUserRolesAsync();
     }
 
-    private string GetRoleBadgeClass(UserRole role) => role switch
+    private string GetRoleBadgeClass(string? roleName) => roleName switch
     {
-        UserRole.Administrator => "bg-dark",
-        UserRole.TeamRep => "bg-primary",
-        UserRole.Scorekeeper => "bg-warning",
-        UserRole.Player => "bg-info",
+        "Administrator" => "bg-dark",
+        "Team Rep" => "bg-primary",
+        "Scorekeeper" => "bg-warning",
+        "Player" => "bg-info",
         _ => "bg-secondary"
     };
 
     private async Task AddUser()
     {
         errorMessage = "";
-        if (string.IsNullOrEmpty(newUserEmail) || string.IsNullOrEmpty(newUserPassword))
+        if (string.IsNullOrEmpty(newUserEmail) || string.IsNullOrEmpty(newUserPassword) || newUserRoleId == 0)
         {
-            errorMessage = "Email and password are required.";
+            errorMessage = "Email, password, and role are required.";
             return;
         }
 
-        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserRole);
+        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserRoleId);
         if (result)
         {
             isAdding = false;
             newUserEmail = "";
             newUserPassword = "";
-            newUserRole = UserRole.Player;
-            await LoadUsers();
+            newUserRoleId = 0;
+            await LoadData();
         }
         else
         {
@@ -157,6 +166,6 @@
     private async Task DeleteUser(int id)
     {
         await AuthService.DeleteUserAsync(id);
-        await LoadUsers();
+        await LoadData();
     }
 }

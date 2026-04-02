@@ -1,7 +1,7 @@
 @page "/management/players"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
-@attribute [Authorize(Roles = "Administrator,TeamRep")]
+@attribute [Authorize(Policy = "ManagePlayers")]
 @inject StatsService StatsService
 
 <PageTitle>Isotopes - Manage Players</PageTitle>

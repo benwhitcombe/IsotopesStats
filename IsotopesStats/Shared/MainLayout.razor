@@ -29,10 +29,10 @@
             </div>
             
             <div class="header-auth">
-                <AuthorizeView>
+                <AuthorizeView Context="authContext">
                     <Authorized>
                         <div style="display: flex; align-items: center; gap: 0.5rem;" class="desktop-only">
-                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@context.User.Identity?.Name (@context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@authContext.User.Identity?.Name (@authContext.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)</span>
                             <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; text-decoration: none; font-weight: bold; border-radius: 20px;">
                                 <span>Logout</span>
                             </a>
@@ -62,44 +62,48 @@
                     <span>⚾</span> Games
                 </NavLink>
                 <NavLink href="players" class="drawer-item" @onclick="ToggleMenu">
-                    <svg viewBox="0 0 24 24" width="24" height="24" style="display:inline-block; vertical-align:middle; margin-right: 4px; fill:none; stroke:#ED1C24; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;">
-                        <path d="M2,8 L6,6 L8,8 L16,8 L18,6 L22,8 L20,12 L16,12 L17,20 L7,20 L8,12 L4,12 Z" />
-                        <path d="M10,8 L12,11 L14,8" />
-                    </svg> Players
+                    <JerseyIcon /> Players
                 </NavLink>
 
-                @* Management Links - Only for logged in users *@
-                <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep},{UserRole.Scorekeeper}")">
+                @* Management Links - Conditional by Policy *@
+                <AuthorizeView Context="mgmtContext">
                     <Authorized>
                         <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; border-top: 1px solid #eee; margin-top: 0.5rem;">
                             Management
                         </div>
-                        <NavLink href="management/games" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
-                            <span>🏟️</span> Manage Games
-                        </NavLink>
-                        
-                        <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep}")" Context="innerContext">
+                        <AuthorizeView Policy="ManageGames" Context="pContext">
+                            <NavLink href="management/games" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                                <span>🏟️</span> Manage Games
+                            </NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManagePlayers" Context="pContext">
                             <NavLink href="management/players" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
                                 <span>👥</span> Manage Players
                             </NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageSeasons" Context="pContext">
                             <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
                                 <span>🗓️</span> Manage Seasons
                             </NavLink>
                         </AuthorizeView>
-
-                        <AuthorizeView Roles="@UserRole.Administrator.ToString()" Context="adminContext">
+                        <AuthorizeView Policy="ManageUsers" Context="pContext">
                             <NavLink href="management/users" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
                                 <span>🔐</span> Manage Users
+                            </NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageRoles" Context="pContext">
+                            <NavLink href="management/roles" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                                <span>🛠️</span> Manage Roles
                             </NavLink>
                         </AuthorizeView>
                     </Authorized>
                 </AuthorizeView>
             </div>
             <div class="drawer-footer">
-                <AuthorizeView>
+                <AuthorizeView Context="footerContext">
                     <Authorized>
                         <div style="padding: 0 1.5rem 0.5rem 1.5rem; font-size: 0.8rem; color: #888; word-break: break-all; font-weight: 600;">
-                            @context.User.Identity?.Name
+                            @footerContext.User.Identity?.Name
                         </div>
                         <a href="account/logout" class="drawer-item" style="border:none; color: var(--isotopes-red); padding-top: 0;" @onclick="ToggleMenu">
                             <span>🚪</span> Logout
@@ -115,24 +119,31 @@
         </div>
     }
 
-    <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep},{UserRole.Scorekeeper}")">
-        <Authorized>
-            <div class="desktop-only management-sub-nav">
-                <div class="sub-nav-content">
-                    <NavLink href="management/games">Games</NavLink>
-                    
-                    <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep}")" Context="innerContext">
-                        <NavLink href="management/players">Players</NavLink>
-                        <NavLink href="management/seasons">Seasons</NavLink>
-                    </AuthorizeView>
-
-                    <AuthorizeView Roles="@UserRole.Administrator.ToString()" Context="adminContext">
-                        <NavLink href="management/users">Users</NavLink>
-                    </AuthorizeView>
+    <div class="desktop-only">
+        <AuthorizeView Context="subnavContext">
+            <Authorized>
+                <div class="management-sub-nav">
+                    <div class="sub-nav-content">
+                        <AuthorizeView Policy="ManageGames" Context="pContext">
+                            <NavLink href="management/games">Games</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManagePlayers" Context="pContext">
+                            <NavLink href="management/players">Players</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageSeasons" Context="pContext">
+                            <NavLink href="management/seasons">Seasons</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageUsers" Context="pContext">
+                            <NavLink href="management/users">Users</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageRoles" Context="pContext">
+                            <NavLink href="management/roles">Roles</NavLink>
+                        </AuthorizeView>
+                    </div>
                 </div>
-            </div>
-        </Authorized>
-    </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+    </div>
 
     <main>
         <article class="content">

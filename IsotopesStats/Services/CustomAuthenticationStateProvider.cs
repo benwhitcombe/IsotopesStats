@@ -25,14 +25,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             if (userSession == null)
                 return await Task.FromResult(new AuthenticationState(_anonymous));
 
-            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, userSession.Email),
-                new Claim(ClaimTypes.Email, userSession.Email),
-                new Claim(ClaimTypes.Role, userSession.Role.ToString())
-            }, "CustomAuth"));
-
-            return await Task.FromResult(new AuthenticationState(claimsPrincipal));
+            return await Task.FromResult(new AuthenticationState(CreateClaimsPrincipal(userSession)));
         }
         catch
         {
@@ -47,12 +40,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         if (userSession != null)
         {
             await _sessionStorage.SetAsync("UserSession", userSession);
-            claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, userSession.Email),
-                new Claim(ClaimTypes.Email, userSession.Email),
-                new Claim(ClaimTypes.Role, userSession.Role.ToString())
-            }, "CustomAuth"));
+            claimsPrincipal = CreateClaimsPrincipal(userSession);
         }
         else
         {
@@ -61,5 +49,25 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
 
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+    }
+
+    private ClaimsPrincipal CreateClaimsPrincipal(User user)
+    {
+        List<Claim> claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Email),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
+        };
+
+        if (user.Role?.Permissions != null)
+        {
+            foreach (Permission permission in user.Role.Permissions)
+            {
+                claims.Add(new Claim("Permission", permission.Name));
+            }
+        }
+
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
     }
 }
