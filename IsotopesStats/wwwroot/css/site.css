@@ -1012,7 +1012,6 @@ tr:last-child td {
 
 .drawer-item.active {
     color: var(--isotopes-red);
-    background: #fff5f5;
 }
 
 .drawer-footer {
