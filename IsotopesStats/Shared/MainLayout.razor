@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @using IsotopesStats.Services
+@using IsotopesStats.Models
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
 @inject IJSRuntime JSRuntime
@@ -31,7 +32,7 @@
                 <AuthorizeView>
                     <Authorized>
                         <div style="display: flex; align-items: center; gap: 0.5rem;" class="desktop-only">
-                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@context.User.Identity?.Name</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@context.User.Identity?.Name (@context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)</span>
                             <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; text-decoration: none; font-weight: bold; border-radius: 20px;">
                                 <span>Logout</span>
                             </a>
@@ -68,7 +69,7 @@
                 </NavLink>
 
                 @* Management Links - Only for logged in users *@
-                <AuthorizeView>
+                <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep},{UserRole.Scorekeeper}")">
                     <Authorized>
                         <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; border-top: 1px solid #eee; margin-top: 0.5rem;">
                             Management
@@ -76,13 +77,17 @@
                         <NavLink href="management/games" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
                             <span>🏟️</span> Manage Games
                         </NavLink>
-                        <NavLink href="management/players" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
-                            <span>👥</span> Manage Players
-                        </NavLink>
-                        <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
-                            <span>🗓️</span> Manage Seasons
-                        </NavLink>
-                        <AuthorizeView Roles="Admin" Context="innerContext">
+                        
+                        <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep}")" Context="innerContext">
+                            <NavLink href="management/players" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                                <span>👥</span> Manage Players
+                            </NavLink>
+                            <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
+                                <span>🗓️</span> Manage Seasons
+                            </NavLink>
+                        </AuthorizeView>
+
+                        <AuthorizeView Roles="@UserRole.Administrator.ToString()" Context="adminContext">
                             <NavLink href="management/users" class="drawer-item" style="border-bottom: none;" @onclick="ToggleMenu">
                                 <span>🔐</span> Manage Users
                             </NavLink>
@@ -110,14 +115,18 @@
         </div>
     }
 
-    <AuthorizeView>
+    <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep},{UserRole.Scorekeeper}")">
         <Authorized>
             <div class="desktop-only management-sub-nav">
                 <div class="sub-nav-content">
                     <NavLink href="management/games">Games</NavLink>
-                    <NavLink href="management/players">Players</NavLink>
-                    <NavLink href="management/seasons">Seasons</NavLink>
-                    <AuthorizeView Roles="Admin" Context="adminContext">
+                    
+                    <AuthorizeView Roles="@($"{UserRole.Administrator},{UserRole.TeamRep}")" Context="innerContext">
+                        <NavLink href="management/players">Players</NavLink>
+                        <NavLink href="management/seasons">Seasons</NavLink>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="@UserRole.Administrator.ToString()" Context="adminContext">
                         <NavLink href="management/users">Users</NavLink>
                     </AuthorizeView>
                 </div>

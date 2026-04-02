@@ -65,7 +65,7 @@ public static class DatabaseInitializer
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Email TEXT NOT NULL UNIQUE,
                 PasswordHash TEXT NOT NULL,
-                IsAdmin INTEGER NOT NULL DEFAULT 0,
+                Role INTEGER NOT NULL DEFAULT 3,
                 CreatedAt TEXT NOT NULL
             );
 

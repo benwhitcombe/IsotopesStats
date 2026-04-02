@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.Authorization;
 using IsotopesStats.Data;
 using IsotopesStats.Services;
+using IsotopesStats.Models;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +38,7 @@ try
         List<IsotopesStats.Models.User> users = await authService.GetUsersAsync();
         if (!users.Any())
         {
-            await authService.RegisterAsync("admin@isotopes.com", "Admin123!", true);
+            await authService.RegisterAsync("admin@isotopes.com", "Admin123!", UserRole.Administrator);
             Console.WriteLine("Initial admin user created: admin@isotopes.com / Admin123!");
         }
     }

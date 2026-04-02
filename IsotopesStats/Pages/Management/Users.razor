@@ -1,7 +1,7 @@
 @page "/management/users"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Administrator")]
 @inject AuthService AuthService
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
@@ -17,15 +17,20 @@
         <h4 style="margin-top:0">Add User</h4>
         <div class="form-group">
             <label>Email</label>
-            <input type="email" class="form-control" @bind="newUserEmail" placeholder="user@isotopes.com" />
+            <input type="email" class="form-control" @bind="newUserEmail" placeholder="user@isotopes.com" autocomplete="off" />
         </div>
         <div class="form-group">
             <label>Password</label>
-            <input type="password" class="form-control" @bind="newUserPassword" placeholder="••••••••" />
+            <input type="password" class="form-control" @bind="newUserPassword" placeholder="••••••••" autocomplete="new-password" />
         </div>
-        <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center; margin: 1.5rem 0;">
-            <input type="checkbox" @bind="newUserIsAdmin" id="isAdmin" style="width: 20px; height: 20px;" />
-            <label for="isAdmin" style="margin:0; font-weight: bold;">Is Administrator</label>
+        <div class="form-group">
+            <label>Role</label>
+            <select class="form-control" @bind="newUserRole">
+                @foreach (UserRole role in Enum.GetValues<UserRole>())
+                {
+                    <option value="@role">@role</option>
+                }
+            </select>
         </div>
         
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -60,8 +65,8 @@
                         <tr>
                             <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@user.Email</td>
                             <td>
-                                <span class="badge @(user.IsAdmin ? "bg-dark" : "bg-info")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                    @(user.IsAdmin ? "Admin" : "User")
+                                <span class="badge @GetRoleBadgeClass(user.Role)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                    @user.Role
                                 </span>
                             </td>
                             <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
@@ -83,8 +88,8 @@
             <div class="mobile-player-card">
                 <div class="mobile-card-header">
                     <div class="mobile-card-name">@user.Email</div>
-                    <span class="badge @(user.IsAdmin ? "bg-dark" : "bg-info")" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
-                        @(user.IsAdmin ? "Admin" : "User")
+                    <span class="badge @GetRoleBadgeClass(user.Role)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                        @user.Role
                     </span>
                 </div>
                 <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
@@ -103,7 +108,7 @@
     private bool isAdding = false;
     private string newUserEmail = "";
     private string newUserPassword = "";
-    private bool newUserIsAdmin = false;
+    private UserRole newUserRole = UserRole.Player;
     private string errorMessage = "";
 
     protected override async Task OnInitializedAsync()
@@ -116,6 +121,15 @@
         users = await AuthService.GetUsersAsync();
     }
 
+    private string GetRoleBadgeClass(UserRole role) => role switch
+    {
+        UserRole.Administrator => "bg-dark",
+        UserRole.TeamRep => "bg-primary",
+        UserRole.Scorekeeper => "bg-warning",
+        UserRole.Player => "bg-info",
+        _ => "bg-secondary"
+    };
+
     private async Task AddUser()
     {
         errorMessage = "";
@@ -125,13 +139,13 @@
             return;
         }
 
-        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserIsAdmin);
+        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserRole);
         if (result)
         {
             isAdding = false;
             newUserEmail = "";
             newUserPassword = "";
-            newUserIsAdmin = false;
+            newUserRole = UserRole.Player;
             await LoadUsers();
         }
         else

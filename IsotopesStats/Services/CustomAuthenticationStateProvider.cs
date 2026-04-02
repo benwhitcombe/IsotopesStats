@@ -29,7 +29,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             {
                 new Claim(ClaimTypes.Name, userSession.Email),
                 new Claim(ClaimTypes.Email, userSession.Email),
-                new Claim(ClaimTypes.Role, userSession.IsAdmin ? "Admin" : "User")
+                new Claim(ClaimTypes.Role, userSession.Role.ToString())
             }, "CustomAuth"));
 
             return await Task.FromResult(new AuthenticationState(claimsPrincipal));
@@ -51,7 +51,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             {
                 new Claim(ClaimTypes.Name, userSession.Email),
                 new Claim(ClaimTypes.Email, userSession.Email),
-                new Claim(ClaimTypes.Role, userSession.IsAdmin ? "Admin" : "User")
+                new Claim(ClaimTypes.Role, userSession.Role.ToString())
             }, "CustomAuth"));
         }
         else

@@ -14,7 +14,7 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Email, PasswordHash, IsAdmin, CreatedAt FROM Users WHERE Email = $email";
+            command.CommandText = "SELECT Id, Email, PasswordHash, Role, CreatedAt FROM Users WHERE Email = $email";
             command.Parameters.AddWithValue("$email", email);
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
@@ -29,7 +29,7 @@ public class AuthService
                             Id = reader.GetInt32(0),
                             Email = reader.GetString(1),
                             PasswordHash = storedHash,
-                            IsAdmin = reader.GetInt32(3) == 1,
+                            Role = (UserRole)reader.GetInt32(3),
                             CreatedAt = DateTime.Parse(reader.GetString(4))
                         };
                     }
@@ -39,7 +39,7 @@ public class AuthService
         return null;
     }
 
-    public async Task<bool> RegisterAsync(string email, string password, bool isAdmin = false)
+    public async Task<bool> RegisterAsync(string email, string password, UserRole role = UserRole.Player)
     {
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
@@ -48,12 +48,12 @@ public class AuthService
             SqliteCommand command = connection.CreateCommand();
             command.CommandText = 
             @"
-                INSERT INTO Users (Email, PasswordHash, IsAdmin, CreatedAt)
-                VALUES ($email, $hash, $isAdmin, $createdAt)
+                INSERT INTO Users (Email, PasswordHash, Role, CreatedAt)
+                VALUES ($email, $hash, $role, $createdAt)
             ";
             command.Parameters.AddWithValue("$email", email);
             command.Parameters.AddWithValue("$hash", passwordHash);
-            command.Parameters.AddWithValue("$isAdmin", isAdmin ? 1 : 0);
+            command.Parameters.AddWithValue("$role", (int)role);
             command.Parameters.AddWithValue("$createdAt", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
             try 
@@ -146,7 +146,7 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Email, IsAdmin, CreatedAt FROM Users ORDER BY Email";
+            command.CommandText = "SELECT Id, Email, Role, CreatedAt FROM Users ORDER BY Email";
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
             {
@@ -156,7 +156,7 @@ public class AuthService
                     {
                         Id = reader.GetInt32(0),
                         Email = reader.GetString(1),
-                        IsAdmin = reader.GetInt32(2) == 1,
+                        Role = (UserRole)reader.GetInt32(2),
                         CreatedAt = DateTime.Parse(reader.GetString(3))
                     });
                 }
