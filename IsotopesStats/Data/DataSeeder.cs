@@ -120,13 +120,21 @@ public static class DataSeeder
                     {
                         SqliteCommand playerCommand = connection.CreateCommand();
                         playerCommand.Transaction = transaction;
-                        playerCommand.CommandText = "INSERT INTO Players (SeasonId, Name) VALUES ($seasonId, $name); SELECT last_insert_rowid();";
-                        playerCommand.Parameters.AddWithValue("$seasonId", seasonId);
+                        playerCommand.CommandText = "INSERT INTO Players (Name) VALUES ($name); SELECT last_insert_rowid();";
                         playerCommand.Parameters.AddWithValue("$name", row.Player);
-                        playerIds[row.Player] = Convert.ToInt32(await playerCommand.ExecuteScalarAsync());
+                        int playerId = Convert.ToInt32(await playerCommand.ExecuteScalarAsync());
+                        playerIds[row.Player] = playerId;
+
+                        // Add to SeasonPlayers
+                        SqliteCommand spCommand = connection.CreateCommand();
+                        spCommand.Transaction = transaction;
+                        spCommand.CommandText = "INSERT INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+                        spCommand.Parameters.AddWithValue("$seasonId", seasonId);
+                        spCommand.Parameters.AddWithValue("$playerId", playerId);
+                        await spCommand.ExecuteNonQueryAsync();
                     }
 
-                    int playerId = playerIds[row.Player];
+                    int curPlayerId = playerIds[row.Player];
 
                     SqliteCommand statCommand = connection.CreateCommand();
                     statCommand.Transaction = transaction;
@@ -135,7 +143,7 @@ public static class DataSeeder
                         INSERT INTO Stats (PlayerId, GameId, BO, H1B, H2B, H3B, H4B, HR, FC, BB, SF, K, KF, GO, FO, R, RBI) 
                         VALUES ($playerId, $gameId, $bo, $h1b, $h2b, $h3b, $h4b, $hr, $fc, $bb, $sf, $k, $kf, $go, $fo, $r, $rbi)
                     ";
-                    statCommand.Parameters.AddWithValue("$playerId", playerId);
+                    statCommand.Parameters.AddWithValue("$playerId", curPlayerId);
                     statCommand.Parameters.AddWithValue("$gameId", gameId);
                     statCommand.Parameters.AddWithValue("$bo", row.BO);
                     statCommand.Parameters.AddWithValue("$h1b", row.H1B);

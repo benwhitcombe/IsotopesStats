@@ -158,7 +158,14 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT DISTINCT p.Id, p.Name FROM Players p JOIN Stats s ON p.Id = s.PlayerId JOIN Games g ON s.GameId = g.Id WHERE g.SeasonId = $seasonId ORDER BY p.Name";
+            command.CommandText = 
+            @"
+                SELECT p.Id, p.Name, p.IsActive 
+                FROM Players p 
+                JOIN SeasonPlayers sp ON p.Id = sp.PlayerId 
+                WHERE sp.SeasonId = $seasonId 
+                ORDER BY p.Name
+            ";
             command.Parameters.AddWithValue("$seasonId", seasonId);
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
@@ -168,7 +175,8 @@ public class StatsRepository
                     players.Add(new Player
                     {
                         Id = reader.GetInt32(0),
-                        Name = reader.GetString(1)
+                        Name = reader.GetString(1),
+                        IsActive = reader.GetInt32(2) == 1
                     });
                 }
             }
@@ -340,7 +348,7 @@ public class StatsRepository
             command.CommandText = 
             @"
                 SELECT s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
-                       p.Name, p.SeasonId
+                       p.Name
                 FROM Stats s
                 JOIN Players p ON s.PlayerId = p.Id
                 WHERE s.GameId = $gameId
@@ -374,8 +382,7 @@ public class StatsRepository
                         Player = new Player
                         {
                             Id = reader.GetInt32(1),
-                            Name = reader.GetString(18),
-                            SeasonId = reader.GetInt32(19)
+                            Name = reader.GetString(18)
                         }
                     });
                 }
@@ -450,6 +457,14 @@ public class StatsRepository
                     statCommand.Parameters.AddWithValue("$r", stat.R);
                     statCommand.Parameters.AddWithValue("$rbi", stat.RBI);
                     await statCommand.ExecuteNonQueryAsync();
+
+                    // Ensure link in SeasonPlayers
+                    SqliteCommand rosterCmd = connection.CreateCommand();
+                    rosterCmd.Transaction = transaction;
+                    rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+                    rosterCmd.Parameters.AddWithValue("$seasonId", game.SeasonId);
+                    rosterCmd.Parameters.AddWithValue("$playerId", stat.PlayerId);
+                    await rosterCmd.ExecuteNonQueryAsync();
                 }
 
                 await transaction.CommitAsync();
@@ -490,12 +505,11 @@ public class StatsRepository
 
                 foreach (StatEntry stat in stats)
                 {
-                    // Get or Create Player
+                    // Get or Create Player (Global)
                     SqliteCommand playerCommand = connection.CreateCommand();
                     playerCommand.Transaction = transaction;
-                    playerCommand.CommandText = "SELECT Id FROM Players WHERE Name = $name AND SeasonId = $seasonId";
+                    playerCommand.CommandText = "SELECT Id FROM Players WHERE Name = $name";
                     playerCommand.Parameters.AddWithValue("$name", stat.Player?.Name ?? "Unknown");
-                    playerCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
                     
                     object? playerIdObj = await playerCommand.ExecuteScalarAsync();
                     int playerId;
@@ -504,9 +518,8 @@ public class StatsRepository
                     {
                         SqliteCommand insertPlayer = connection.CreateCommand();
                         insertPlayer.Transaction = transaction;
-                        insertPlayer.CommandText = "INSERT INTO Players (Name, SeasonId) VALUES ($name, $seasonId); SELECT last_insert_rowid();";
+                        insertPlayer.CommandText = "INSERT INTO Players (Name) VALUES ($name); SELECT last_insert_rowid();";
                         insertPlayer.Parameters.AddWithValue("$name", stat.Player?.Name ?? "Unknown");
-                        insertPlayer.Parameters.AddWithValue("$seasonId", game.SeasonId);
                         playerId = Convert.ToInt32(await insertPlayer.ExecuteScalarAsync());
                     }
                     else
@@ -540,6 +553,14 @@ public class StatsRepository
                     statCommand.Parameters.AddWithValue("$r", stat.R);
                     statCommand.Parameters.AddWithValue("$rbi", stat.RBI);
                     await statCommand.ExecuteNonQueryAsync();
+
+                    // Ensure link in SeasonPlayers
+                    SqliteCommand rosterCmd = connection.CreateCommand();
+                    rosterCmd.Transaction = transaction;
+                    rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+                    rosterCmd.Parameters.AddWithValue("$seasonId", game.SeasonId);
+                    rosterCmd.Parameters.AddWithValue("$playerId", playerId);
+                    await rosterCmd.ExecuteNonQueryAsync();
                 }
 
                 await transaction.CommitAsync();
@@ -647,17 +668,58 @@ public class StatsRepository
         }
     }
 
-    public async Task AddPlayerAsync(Player player)
+    public async Task AddPlayerAsync(Player player, int seasonId)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
             await connection.OpenAsync();
-            SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Players (SeasonId, Name, IsActive) VALUES ($seasonId, $name, $isActive)";
-            command.Parameters.AddWithValue("$seasonId", player.SeasonId);
-            command.Parameters.AddWithValue("$name", player.Name);
-            command.Parameters.AddWithValue("$isActive", player.IsActive ? 1 : 0);
-            await command.ExecuteNonQueryAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                // 1. Get or Create Player
+                SqliteCommand checkCmd = connection.CreateCommand();
+                checkCmd.Transaction = transaction;
+                checkCmd.CommandText = "SELECT Id FROM Players WHERE Name = $name";
+                checkCmd.Parameters.AddWithValue("$name", player.Name);
+                object? id = await checkCmd.ExecuteScalarAsync();
+                int playerId;
+
+                if (id == null)
+                {
+                    SqliteCommand insertCmd = connection.CreateCommand();
+                    insertCmd.Transaction = transaction;
+                    insertCmd.CommandText = "INSERT INTO Players (Name, IsActive) VALUES ($name, $isActive); SELECT last_insert_rowid();";
+                    insertCmd.Parameters.AddWithValue("$name", player.Name);
+                    insertCmd.Parameters.AddWithValue("$isActive", player.IsActive ? 1 : 0);
+                    playerId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync());
+                }
+                else
+                {
+                    playerId = Convert.ToInt32(id);
+                    // Update active status if needed?
+                    SqliteCommand updateCmd = connection.CreateCommand();
+                    updateCmd.Transaction = transaction;
+                    updateCmd.CommandText = "UPDATE Players SET IsActive = $isActive WHERE Id = $id";
+                    updateCmd.Parameters.AddWithValue("$isActive", player.IsActive ? 1 : 0);
+                    updateCmd.Parameters.AddWithValue("$id", playerId);
+                    await updateCmd.ExecuteNonQueryAsync();
+                }
+
+                // 2. Add to Season roster
+                SqliteCommand rosterCmd = connection.CreateCommand();
+                rosterCmd.Transaction = transaction;
+                rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+                rosterCmd.Parameters.AddWithValue("$seasonId", seasonId);
+                rosterCmd.Parameters.AddWithValue("$playerId", playerId);
+                await rosterCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 
@@ -680,9 +742,43 @@ public class StatsRepository
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
             await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                // Delete from junction table
+                SqliteCommand spCmd = connection.CreateCommand();
+                spCmd.Transaction = transaction;
+                spCmd.CommandText = "DELETE FROM SeasonPlayers WHERE PlayerId = $id";
+                spCmd.Parameters.AddWithValue("$id", playerId);
+                await spCmd.ExecuteNonQueryAsync();
+
+                // Delete stats (optional - depends on if you want to keep history)
+                // For now just deleting from main table
+                SqliteCommand cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "DELETE FROM Players WHERE Id = $id";
+                cmd.Parameters.AddWithValue("$id", playerId);
+                await cmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task DeletePlayerFromSeasonAsync(int playerId, int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Players WHERE Id = $id";
-            command.Parameters.AddWithValue("$id", playerId);
+            command.CommandText = "DELETE FROM SeasonPlayers WHERE PlayerId = $playerId AND SeasonId = $seasonId";
+            command.Parameters.AddWithValue("$playerId", playerId);
+            command.Parameters.AddWithValue("$seasonId", seasonId);
             await command.ExecuteNonQueryAsync();
         }
     }
@@ -694,7 +790,7 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, SeasonId, Name, IsActive FROM Players ORDER BY Name";
+            command.CommandText = "SELECT Id, Name, IsActive FROM Players ORDER BY Name";
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
             {
@@ -703,9 +799,8 @@ public class StatsRepository
                     players.Add(new Player
                     {
                         Id = reader.GetInt32(0),
-                        SeasonId = reader.GetInt32(1),
-                        Name = reader.GetString(2),
-                        IsActive = reader.GetInt32(3) == 1
+                        Name = reader.GetString(1),
+                        IsActive = reader.GetInt32(2) == 1
                     });
                 }
             }
