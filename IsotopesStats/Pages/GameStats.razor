@@ -10,23 +10,35 @@
 
 <PageTitle>Isotopes - Game Stats</PageTitle>
 
-<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">Game Stats</h3>
-    <div style="display: flex; gap: 1rem; align-items: center;">
-        <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
-            <label style="margin:0; font-weight: bold;">Season:</label>
-            <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
-                @foreach (Season season in seasons)
-                {
-                    <option value="@season.Id">@season.Name</option>
-                }
-            </select>
+<div class="header-with-filter">
+    <div class="filter-container">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control search-input" placeholder="Filter by player name..." 
+                   @bind-value="filterText" @bind-value:event="oninput" @onkeyup="UpdateFilterState" />
+            @if (!string.IsNullOrEmpty(filterText))
+            {
+                <button class="clear-button" @onclick="ClearFilter">✕</button>
+            }
         </div>
-        <div class="mobile-only">
-             <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal">
-                🗓️ @seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name
-            </button>
-        </div>
+    </div>
+
+    <div class="desktop-only" style="display: flex; gap: 10px;">
+        <button class="view-btn @(SessionState.GameUIStates.All(s => s.Value.IsExpanded) ? "active" : "")" @onclick="ExpandAll">Expand All</button>
+        <button class="view-btn @(SessionState.GameUIStates.All(s => !s.Value.IsExpanded) ? "active" : "")" @onclick="CollapseAll">Collapse All</button>
+        <select class="form-control" style="width: auto; min-width: 120px;" @onchange="OnSeasonChange">
+            @foreach (Season season in seasons)
+            {
+                <option value="@season.Id" selected="@(SharedState.SelectedSeasonId == season.Id)">@season.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="mobile-only" style="width: 100%; display: flex; gap: 10px; margin-top: 10px;">
+        <button class="view-btn" style="flex: 1;" @onclick="ToggleSeasonModal">
+            📅 Season: @(seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name ?? "Select")
+        </button>
+        <button class="view-btn" style="flex: 1;" @onclick="ExpandAll">Expand All</button>
     </div>
 </div>
 
@@ -50,303 +62,187 @@
     </div>
 }
 
-<div class="stat-card" style="margin-bottom: 1.5rem;">
-    <div class="filter-container" style="max-width: 100%;">
-        <div class="search-container">
-            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
-            @if (!string.IsNullOrEmpty(filterText))
-            {
-                <button class="clear-button" @onclick="ClearFilter">✕</button>
-            }
-        </div>
-    </div>
-</div>
-
-@if (isLoading && showSkeleton)
-{
-    <div class="game-cards-list">
+<div class="game-list">
+    @if (isLoading && !showSkeleton)
+    {
+        @* Initial quiet load *@
+    }
+    else if (showSkeleton)
+    {
         @for (int i = 0; i < 3; i++)
         {
-            <div class="game-card" style="padding: 1rem;">
-                <div class="skeleton" style="height: 100px; margin-bottom: 1rem; width: 100%;"></div>
-                <div class="skeleton" style="height: 40px; width: 100%;"></div>
+            <div class="stat-card skeleton-card">
+                <div class="skeleton-header"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
             </div>
         }
-    </div>
-}
-else if (!isLoading)
-{
-    @if (!GroupedStats.Any())
+    }
+    else if (!allStats.Any())
     {
-        <div class="empty-state">
-            <span class="empty-icon">⚾</span>
-            <h4>No Games Found</h4>
-            <p>Try a different search or season.</p>
+        <div class="stat-card" style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚾</div>
+            <p style="color: #666;">No games found for this season.</p>
         </div>
     }
     else
     {
-        <div class="game-cards-list">
-            @{ int index = 0; }
-            @foreach (IGrouping<int, StatEntry> group in GroupedStats)
-            {
-                Game? gameInfo = group.First().Game;
-                int gameId = gameInfo?.Id ?? 0;
-                GameUIState uiState = SessionState.GetState(gameId);
-                
-                int teamRuns = group.Sum(s => s.R);
-                int teamHits = group.Sum(s => s.H);
-                int teamHRs = group.Sum(s => s.HR);
-                int teamBBs = group.Sum(s => s.BB);
-                int teamAB = group.Sum(s => s.AB);
-                int teamPA = group.Sum(s => s.PA);
-                int teamRBI = group.Sum(s => s.RBI);
-                double teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
-                double currentDelay = index * 0.1;
-                index++;
-
-                // Apply inner sorting for each game group
-                IEnumerable<StatEntry> sortedStats = ApplyInnerSorting(uiState, group);
-
-                <div class="game-card" style="animation-delay: @(currentDelay)s">
-                    <div class="game-card-header" @onclick="() => ToggleGame(gameId)">
-                        <div class="game-info-left">
-                            <div class="game-number-badge">GAME #@gameInfo?.GameNumber</div>
-                            <div class="game-date">@gameInfo?.Date.ToString("MMM dd, yyyy @ HH:mm")</div>
+        @foreach (IGrouping<int, StatEntry> group in GroupedStats)
+        {
+            int gameId = group.Key;
+            GameUIState uiState = SessionState.GetState(gameId);
+            StatEntry first = group.First();
+            Game game = first.Game!;
+            
+            <div class="stat-card view-fade-in" @key="gameId">
+                <div class="game-card-header" @onclick="() => ToggleGame(gameId)">
+                    <div class="game-main-info">
+                        <div class="game-primary">
+                            <span class="game-number">#@game.GameNumber</span>
+                            <span class="game-opponent">vs @game.Opponent</span>
                         </div>
-                        
-                        <div class="game-matchup">
-                            <div class="opponent-name">vs @gameInfo?.Opponent</div>
-                            <div class="diamond-name">📍 @gameInfo?.Diamond</div>
-                        </div>
-
-                        <div class="game-score-summary">
-                            <div class="score-item">
-                                <span class="score-value">@teamRuns</span>
-                                <span class="score-label">Runs</span>
-                            </div>
-                            <div class="score-item">
-                                <span class="score-value">@teamHits</span>
-                                <span class="score-label">Hits</span>
-                            </div>
-                            <div class="expand-icon" style="margin-left: 1rem; color: #ccc;">
-                                @(uiState.IsExpanded ? "▲" : "▼")
-                            </div>
+                        <div class="game-meta">
+                            <span>@game.Date.ToString("MMM dd, yyyy")</span>
+                            <span class="meta-dot">•</span>
+                            <span>@game.Diamond</span>
+                            <span class="meta-dot">•</span>
+                            <span class="game-type-tag">@game.Type</span>
                         </div>
                     </div>
-
-                    <div class="game-card-footer">
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">Players:</span> @group.Count()
-                        </div>
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">HR:</span> @teamHRs
-                        </div>
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">AVG:</span> @teamAVG.ToString(".000")
-                        </div>
-                    </div>
-
-                    <div class="game-card-detail @(uiState.IsExpanded ? "expanded" : "")">
-                        <div class="box-score-table-wrapper">
-                            <table class="box-score-table table-sm">
-                            <thead>
-                                <tr>
-                                    <th @onclick="@(() => Sort(gameId, "BO"))" class="sortable-header" style="width: 40px;">BO<span class="sort-icon">@(GetSortIcon(gameId, "BO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "Player"))" class="sortable-header sticky-col">Player<span class="sort-icon">@(GetSortIcon(gameId, "Player"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "PA"))" class="sortable-header group-divider">PA<span class="sort-icon">@(GetSortIcon(gameId, "PA"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "AB"))" class="sortable-header">AB<span class="sort-icon">@(GetSortIcon(gameId, "AB"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "R"))" class="sortable-header group-divider">R<span class="sort-icon">@(GetSortIcon(gameId, "R"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "H"))" class="sortable-header">H<span class="sort-icon">@(GetSortIcon(gameId, "H"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "2B"))" class="sortable-header">2B<span class="sort-icon">@(GetSortIcon(gameId, "2B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "3B"))" class="sortable-header">3B<span class="sort-icon">@(GetSortIcon(gameId, "3B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "4B"))" class="sortable-header">4B<span class="sort-icon">@(GetSortIcon(gameId, "4B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "HR"))" class="sortable-header">HR<span class="sort-icon">@(GetSortIcon(gameId, "HR"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "RBI"))" class="sortable-header">RBI<span class="sort-icon">@(GetSortIcon(gameId, "RBI"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "BB"))" class="sortable-header group-divider">BB<span class="sort-icon">@(GetSortIcon(gameId, "BB"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "K"))" class="sortable-header">K<span class="sort-icon">@(GetSortIcon(gameId, "K"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "KF"))" class="sortable-header">KF<span class="sort-icon">@(GetSortIcon(gameId, "KF"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "SF"))" class="sortable-header group-divider">SF<span class="sort-icon">@(GetSortIcon(gameId, "SF"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "FC"))" class="sortable-header">FC<span class="sort-icon">@(GetSortIcon(gameId, "FC"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "GO"))" class="sortable-header">GO<span class="sort-icon">@(GetSortIcon(gameId, "GO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "FO"))" class="sortable-header">FO<span class="sort-icon">@(GetSortIcon(gameId, "FO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "AVG"))" class="sortable-header group-divider">AVG<span class="sort-icon">@(GetSortIcon(gameId, "AVG"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "OBP"))" class="sortable-header">OBP<span class="sort-icon">@(GetSortIcon(gameId, "OBP"))</span></th>
-                                </tr>
-                            </thead>                                <tbody>
-                                    @{
-                                        string currentSortCol = SessionState.GetState(gameId).SortColumn;
-                                        IEnumerable<StatEntry> filteredSortedStats = sortedStats.Where(s => 
-                                            string.IsNullOrEmpty(filterText) || 
-                                            (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)
-                                        );
-                                    }
-                                    @foreach (StatEntry stat in filteredSortedStats)
-                                    {
-                                        double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
-                                        double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
-                                            ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
-                                            : 0;
-                                        <tr>
-                                            <td>@stat.BO</td>
-                                            <td class="player-name sticky-col">
-                                                <a href="/player/@stat.Player?.Name/@SharedState.SelectedSeasonId" style="text-decoration: none; color: inherit;">
-                                                    @stat.Player?.Name
-                                                </a>
-                                            </td>
-                                            <td class="group-divider @(currentSortCol == "PA" ? "active-sort-col" : "")">@stat.PA</td>
-                                            <td class="@(currentSortCol == "AB" ? "active-sort-col" : "")">@stat.AB</td>
-                                            <td class="group-divider @(currentSortCol == "R" ? "active-sort-col" : "")">@stat.R</td>
-                                            <td class="@(currentSortCol == "H" ? "active-sort-col" : "")">@stat.H</td>
-                                            <td class="@(currentSortCol == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
-                                            <td class="@(currentSortCol == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
-                                            <td class="@(currentSortCol == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
-                                            <td class="@(currentSortCol == "HR" ? "active-sort-col" : "")">@stat.HR</td>
-                                            <td class="@(currentSortCol == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
-                                            <td class="group-divider @(currentSortCol == "BB" ? "active-sort-col" : "")">@stat.BB</td>
-                                            <td class="@(currentSortCol == "K" ? "active-sort-col" : "")">@stat.K</td>
-                                            <td class="@(currentSortCol == "KF" ? "active-sort-col" : "")">@stat.KF</td>
-                                            <td class="group-divider @(currentSortCol == "SF" ? "active-sort-col" : "")">@stat.SF</td>
-                                            <td class="@(currentSortCol == "FC" ? "active-sort-col" : "")">@stat.FC</td>
-                                            <td class="@(currentSortCol == "GO" ? "active-sort-col" : "")">@stat.GO</td>
-                                            <td class="@(currentSortCol == "FO" ? "active-sort-col" : "")">@stat.FO</td>
-                                            <td class="group-divider @(currentSortCol == "AVG" ? "active-sort-col" : "")">@playerAVG.ToString(".000")</td>
-                                            <td class="@(currentSortCol == "OBP" ? "active-sort-col" : "")">@playerOBP.ToString(".000")</td>
-                                        </tr>
-                                    }
-                                    <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
-                                        <td colspan="2" class="sticky-col">TOTALS</td>
-                                        <td class="group-divider">@teamPA</td>
-                                        <td>@teamAB</td>
-                                        <td class="group-divider">@teamRuns</td>
-                                        <td>@teamHits</td>
-                                        <td>@group.Sum(s => s.H2B)</td>
-                                        <td>@group.Sum(s => s.H3B)</td>
-                                        <td>@group.Sum(s => s.H4B)</td>
-                                        <td>@teamHRs</td>
-                                        <td>@teamRBI</td>
-                                        <td class="group-divider">@teamBBs</td>
-                                        <td>@group.Sum(s => s.K)</td>
-                                        <td>@group.Sum(s => s.KF)</td>
-                                        <td class="group-divider">@group.Sum(s => s.SF)</td>
-                                        <td>@group.Sum(s => s.FC)</td>
-                                        <td>@group.Sum(s => s.GO)</td>
-                                        <td>@group.Sum(s => s.FO)</td>
-                                        <td class="group-divider">@teamAVG.ToString(".000")</td>
-                                        @{
-                                            int teamSF = group.Sum(s => s.SF);
-                                            double teamOBP = (teamAB + teamBBs + teamSF) > 0 
-                                                ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + teamSF) 
-                                                : 0;
-                                        }
-                                        <td>@teamOBP.ToString(".000")</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="mobile-player-grid">
-                            @foreach (StatEntry stat in sortedStats)
-                            {
-                                double playerAVG = stat.AB > 0 ? (double)stat.H / stat.AB : 0;
-                                double playerOBP = (stat.AB + stat.BB + stat.SF) > 0 
-                                    ? (double)(stat.H + stat.BB) / (stat.AB + stat.BB + stat.SF) 
-                                    : 0;
-                                <div class="mobile-player-card">
-                                    <div class="mobile-card-header">
-                                        <span class="mobile-card-name">@stat.BO. @stat.Player?.Name</span>
-                                        <span class="badge bg-light text-dark">AVG: @playerAVG.ToString(".000") | OBP: @playerOBP.ToString(".000")</span>
-                                    </div>
-                                    <div class="mobile-card-stats">
-                                        @if (stat.AB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.AB</span><span class="m-stat-label">AB</span></div> }
-                                        @if (stat.R > 0) { <div class="m-stat"><span class="m-stat-val">@stat.R</span><span class="m-stat-label">R</span></div> }
-                                        @if (stat.H > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H</span><span class="m-stat-label">H</span></div> }
-                                        @if (stat.H2B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H2B</span><span class="m-stat-label">2B</span></div> }
-                                        @if (stat.H3B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H3B</span><span class="m-stat-label">3B</span></div> }
-                                        @if (stat.H4B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H4B</span><span class="m-stat-label">4B</span></div> }
-                                        @if (stat.HR > 0) { <div class="m-stat"><span class="m-stat-val">@stat.HR</span><span class="m-stat-label">HR</span></div> }
-                                        @if (stat.RBI > 0) { <div class="m-stat"><span class="m-stat-val">@stat.RBI</span><span class="m-stat-label">RBI</span></div> }
-                                        @if (stat.BB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.BB</span><span class="m-stat-label">BB</span></div> }
-                                        @if (stat.K > 0) { <div class="m-stat"><span class="m-stat-val">@stat.K</span><span class="m-stat-label">K</span></div> }
-                                        @if (stat.KF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.KF</span><span class="m-stat-label">KF</span></div> }
-                                        @if (stat.SF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.SF</span><span class="m-stat-label">SF</span></div> }
-                                        @if (stat.FC > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FC</span><span class="m-stat-label">FC</span></div> }
-                                        @if (stat.GO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.GO</span><span class="m-stat-label">GO</span></div> }
-                                        @if (stat.FO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FO</span><span class="m-stat-label">FO</span></div> }
-                                    </div>
-                                </div>
-                            }
-                            @{
-                                int tSF = group.Sum(s => s.SF);
-                                double tOBP = (teamAB + teamBBs + tSF) > 0 ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + tSF) : 0;
-                            }
-                            <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
-                                <div class="mobile-card-header">
-                                    <span class="mobile-card-name">TEAM TOTALS</span>
-                                    <span class="badge bg-primary">AVG: @teamAVG.ToString(".000") | OBP: @tOBP.ToString(".000")</span>
-                                </div>
-                                <div class="mobile-card-stats">
-                                    <div class="m-stat"><span class="m-stat-val">@teamAB</span><span class="m-stat-label">AB</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamRuns</span><span class="m-stat-label">R</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamHits</span><span class="m-stat-label">H</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamHRs</span><span class="m-stat-label">HR</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamRBI</span><span class="m-stat-label">RBI</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamBBs</span><span class="m-stat-label">BB</span></div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="game-expand-icon @(uiState.IsExpanded ? "expanded" : "")">
+                        ▼
                     </div>
                 </div>
-            }
-        </div>
+
+                <div class="game-card-detail @(uiState.IsExpanded ? "expanded" : "")">
+                    @if (uiState.IsExpanded)
+                    {
+                        <div class="box-score-container">
+                            @* Desktop Table *@
+                            <div class="desktop-only">
+                                <table class="box-score-table">
+                                    <thead>
+                                        <tr>
+                                            <th @onclick='() => Sort(gameId, "BO")'>BO @GetSortIcon(gameId, "BO")</th>
+                                            <th @onclick='() => Sort(gameId, "Player")' style="text-align:left">Player @GetSortIcon(gameId, "Player")</th>
+                                            <th @onclick='() => Sort(gameId, "PA")' title="Plate Appearances">PA @GetSortIcon(gameId, "PA")</th>
+                                            <th @onclick='() => Sort(gameId, "AB")' title="At Bats">AB @GetSortIcon(gameId, "AB")</th>
+                                            <th @onclick='() => Sort(gameId, "R")' title="Runs">R @GetSortIcon(gameId, "R")</th>
+                                            <th @onclick='() => Sort(gameId, "H")' title="Hits">H @GetSortIcon(gameId, "H")</th>
+                                            <th @onclick='() => Sort(gameId, "2B")' title="Doubles">2B @GetSortIcon(gameId, "2B")</th>
+                                            <th @onclick='() => Sort(gameId, "3B")' title="Triples">3B @GetSortIcon(gameId, "3B")</th>
+                                            <th @onclick='() => Sort(gameId, "HR")' title="Home Runs">HR @GetSortIcon(gameId, "HR")</th>
+                                            <th @onclick='() => Sort(gameId, "RBI")' title="Runs Batted In">RBI @GetSortIcon(gameId, "RBI")</th>
+                                            <th @onclick='() => Sort(gameId, "BB")' title="Walks">BB @GetSortIcon(gameId, "BB")</th>
+                                            <th @onclick='() => Sort(gameId, "K")' title="Strikeouts">K @GetSortIcon(gameId, "K")</th>
+                                            <th @onclick='() => Sort(gameId, "AVG")' title="Batting Average">AVG @GetSortIcon(gameId, "AVG")</th>
+                                            <th @onclick='() => Sort(gameId, "OBP")' title="On Base Percentage">OBP @GetSortIcon(gameId, "OBP")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (StatEntry stat in ApplyInnerSorting(uiState, group))
+                                        {
+                                            <tr>
+                                                <td>@stat.BO</td>
+                                                <td style="text-align:left; font-weight: 600;">@stat.Player?.Name</td>
+                                                <td>@stat.PA</td>
+                                                <td>@stat.AB</td>
+                                                <td style="color: var(--isotopes-red); font-weight: bold;">@stat.R</td>
+                                                <td style="font-weight: 600;">@stat.H</td>
+                                                <td>@stat.H2B</td>
+                                                <td>@stat.H3B</td>
+                                                <td>@stat.HR</td>
+                                                <td style="color: var(--isotopes-red); font-weight: bold;">@stat.RBI</td>
+                                                <td>@stat.BB</td>
+                                                <td>@stat.K</td>
+                                                <td style="font-weight: bold;">@stat.AVG.ToString(".000")</td>
+                                                <td>@stat.OBP.ToString(".000")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @* Mobile Grid *@
+                            <div class="mobile-only">
+                                <div class="mobile-player-grid">
+                                    @foreach (StatEntry stat in ApplyInnerSorting(uiState, group))
+                                    {
+                                        <div class="mobile-player-card">
+                                            <div class="mobile-card-header">
+                                                <div class="mobile-card-name">@stat.Player?.Name</div>
+                                                <div class="rank-badge">BO: @stat.BO</div>
+                                            </div>
+                                            <div class="mobile-card-stats">
+                                                <div class="m-stat"><span class="m-stat-label">AVG</span><span class="m-stat-val">@stat.AVG.ToString(".000")</span></div>
+                                                <div class="m-stat"><span class="m-stat-label">H</span><span class="m-stat-val">@stat.H</span></div>
+                                                <div class="m-stat"><span class="m-stat-label">R</span><span class="m-stat-val">@stat.R</span></div>
+                                                <div class="m-stat"><span class="m-stat-label">RBI</span><span class="m-stat-val">@stat.RBI</span></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="game-card-footer">
+                    @{
+                        int teamRuns = group.Sum(s => s.R);
+                        int teamHits = group.Sum(s => s.H);
+                        int teamHRs = group.Sum(s => s.HR);
+                        int teamBBs = group.Sum(s => s.BB);
+                    }
+                    <div class="team-total-item">
+                        <span class="total-label">Runs</span>
+                        <span class="total-value">@teamRuns</span>
+                    </div>
+                    <div class="team-total-item">
+                        <span class="total-label">Hits</span>
+                        <span class="total-value">@teamHits</span>
+                    </div>
+                    <div class="team-total-item">
+                        <span class="total-label">HR</span>
+                        <span class="total-value">@teamHRs</span>
+                    </div>
+                    <div class="team-total-item">
+                        <span class="total-label">BB</span>
+                        <span class="total-value">@teamBBs</span>
+                    </div>
+                </div>
+            </div>
+        }
     }
-}
+</div>
 
 @code {
-    private List<StatEntry> allStats = new();
     private List<Season> seasons = new();
+    private List<StatEntry> allStats = new();
     private string filterText = "";
-    private bool showSeasonModal = false;
     private bool isLoading = true;
     private bool showSkeleton = false;
+    private bool showSeasonModal = false;
 
     private IEnumerable<IGrouping<int, StatEntry>> GroupedStats => 
-        allStats.GroupBy(s => s.GameId)
-        .Where(g => 
-            string.IsNullOrEmpty(filterText) || 
-            g.Any(s => s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-            (g.First().Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)
-        )
-        .OrderByDescending(g => g.First().Game?.Date);
+        allStats.Where(s => string.IsNullOrEmpty(filterText) || 
+                           (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false))
+                .GroupBy(s => s.GameId);
 
     protected override async Task OnInitializedAsync()
     {
-        SharedState.ReturnUrl = ""; // Root is Game Stats
-        seasons = await StatsService.GetSeasonsAsync();
-
-        if (SharedState.SelectedSeasonId == 0 && seasons.Any())
-        {
-            SharedState.SelectedSeasonId = seasons.First().Id;
-        }
-
-        await LoadData();
-        isLoading = true; // Stay in loading state for the interactive transition
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await HydrateState();
-        }
-    }
-
-    private async Task HydrateState()
-    {
         try 
         {
+            List<Season> allSeasons = await StatsService.GetSeasonsAsync();
+            seasons = allSeasons.Where(s => s.IsActive).ToList();
+
+            if (SharedState.SelectedSeasonId == 0 && seasons.Any())
+            {
+                SharedState.SelectedSeasonId = seasons.First().Id;
+            }
+
             ProtectedBrowserStorageResult<int> seasonResult = await ProtectedSessionStore.GetAsync<int>("SelectedSeasonId");
-            if (seasonResult.Success && seasonResult.Value != 0)
+            if (seasonResult.Success && seasons.Any(s => s.Id == seasonResult.Value))
             {
                 SharedState.SelectedSeasonId = seasonResult.Value;
             }

@@ -3,6 +3,7 @@
 @using IsotopesStats.Models
 @attribute [Authorize(Policy = "ManageRoles")]
 @inject AuthService AuthService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage User Roles</PageTitle>
 
@@ -188,7 +189,11 @@ else
 
     private async Task DeleteRole(int id)
     {
-        await AuthService.DeleteUserRoleAsync(id);
-        await LoadData();
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this role?");
+        if (confirmed)
+        {
+            await AuthService.DeleteUserRoleAsync(id);
+            await LoadData();
+        }
     }
 }

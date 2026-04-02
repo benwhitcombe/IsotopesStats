@@ -34,6 +34,12 @@
         window.getWindowWidth = function () {
             return window.innerWidth;
         };
+        // Ensure dragover allows drop for reorderable rows
+        document.addEventListener('dragover', function (e) {
+            if (e.target.closest('.reorderable-row')) {
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>

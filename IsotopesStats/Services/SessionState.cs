@@ -11,6 +11,7 @@ public class SharedSessionState
 
 public class PlayerStatsState
 {
+    public string FilterText { get; set; } = string.Empty;
     public string ActiveView { get; set; } = "Standard";
     
     // Standard View State

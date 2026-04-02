@@ -17,7 +17,8 @@ public static class DatabaseInitializer
             @"
                 CREATE TABLE IF NOT EXISTS Seasons (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL
+                    Name TEXT NOT NULL,
+                    IsActive INTEGER NOT NULL DEFAULT 1
                 );
 
                 CREATE TABLE IF NOT EXISTS Players (

@@ -38,4 +38,7 @@ public class StatEntry
     // Run Stats
     public int R { get; set; }
     public int RBI { get; set; }
+
+    public double AVG => AB > 0 ? (double)H / AB : 0;
+    public double OBP => PA > 0 ? (double)(H + BB) / PA : 0;
 }

@@ -87,6 +87,16 @@ public class StatsService
         await _repository.DeleteSeasonAsync(seasonId);
     }
 
+    public async Task AddPlayerToSeasonAsync(int playerId, int seasonId)
+    {
+        await _repository.AddPlayerToSeasonAsync(playerId, seasonId);
+    }
+
+    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    {
+        return await _repository.GetSeasonsForPlayerAsync(playerId);
+    }
+
     public async Task AddPlayerAsync(Player player, int seasonId)
     {
         await _repository.AddPlayerAsync(player, seasonId);

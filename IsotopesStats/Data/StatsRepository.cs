@@ -14,7 +14,7 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Name FROM Seasons ORDER BY Name DESC";
+            command.CommandText = "SELECT Id, Name, IsActive FROM Seasons ORDER BY Name DESC";
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
             {
@@ -23,7 +23,8 @@ public class StatsRepository
                     seasons.Add(new Season
                     {
                         Id = reader.GetInt32(0),
-                        Name = reader.GetString(1)
+                        Name = reader.GetString(1),
+                        IsActive = reader.GetInt32(2) == 1
                     });
                 }
             }
@@ -637,8 +638,9 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Seasons (Name) VALUES ($name)";
+            command.CommandText = "INSERT INTO Seasons (Name, IsActive) VALUES ($name, $isActive)";
             command.Parameters.AddWithValue("$name", season.Name);
+            command.Parameters.AddWithValue("$isActive", season.IsActive ? 1 : 0);
             await command.ExecuteNonQueryAsync();
         }
     }
@@ -649,8 +651,9 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "UPDATE Seasons SET Name = $name WHERE Id = $id";
+            command.CommandText = "UPDATE Seasons SET Name = $name, IsActive = $isActive WHERE Id = $id";
             command.Parameters.AddWithValue("$name", season.Name);
+            command.Parameters.AddWithValue("$isActive", season.IsActive ? 1 : 0);
             command.Parameters.AddWithValue("$id", season.Id);
             await command.ExecuteNonQueryAsync();
         }
@@ -661,11 +664,91 @@ public class StatsRepository
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
             await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                // 1. Delete Stats for all games in this season
+                SqliteCommand statsCmd = connection.CreateCommand();
+                statsCmd.Transaction = transaction;
+                statsCmd.CommandText = "DELETE FROM Stats WHERE GameId IN (SELECT Id FROM Games WHERE SeasonId = $id)";
+                statsCmd.Parameters.AddWithValue("$id", seasonId);
+                await statsCmd.ExecuteNonQueryAsync();
+
+                // 2. Delete Games in this season
+                SqliteCommand gamesCmd = connection.CreateCommand();
+                gamesCmd.Transaction = transaction;
+                gamesCmd.CommandText = "DELETE FROM Games WHERE SeasonId = $id";
+                gamesCmd.Parameters.AddWithValue("$id", seasonId);
+                await gamesCmd.ExecuteNonQueryAsync();
+
+                // 3. Delete from SeasonPlayers junction
+                SqliteCommand spCmd = connection.CreateCommand();
+                spCmd.Transaction = transaction;
+                spCmd.CommandText = "DELETE FROM SeasonPlayers WHERE SeasonId = $id";
+                spCmd.Parameters.AddWithValue("$id", seasonId);
+                await spCmd.ExecuteNonQueryAsync();
+
+                // 4. Finally delete the season
+                SqliteCommand cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+                cmd.CommandText = "DELETE FROM Seasons WHERE Id = $id";
+                cmd.Parameters.AddWithValue("$id", seasonId);
+                await cmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task AddPlayerToSeasonAsync(int playerId, int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Seasons WHERE Id = $id";
-            command.Parameters.AddWithValue("$id", seasonId);
+            command.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+            command.Parameters.AddWithValue("$seasonId", seasonId);
+            command.Parameters.AddWithValue("$playerId", playerId);
             await command.ExecuteNonQueryAsync();
         }
+    }
+
+    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    {
+        List<Season> seasons = new List<Season>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT s.Id, s.Name, s.IsActive 
+                FROM Seasons s
+                JOIN SeasonPlayers sp ON s.Id = sp.SeasonId
+                WHERE sp.PlayerId = $playerId
+                ORDER BY s.Name DESC
+            ";
+            command.Parameters.AddWithValue("$playerId", playerId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    seasons.Add(new Season
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        IsActive = reader.GetInt32(2) == 1
+                    });
+                }
+            }
+        }
+        return seasons;
     }
 
     public async Task AddPlayerAsync(Player player, int seasonId)
