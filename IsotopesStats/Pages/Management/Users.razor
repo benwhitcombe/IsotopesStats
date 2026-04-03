@@ -83,7 +83,7 @@ else
                                 </td>
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeleteUser(user.Id)">Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -108,13 +108,20 @@ else
                         <strong>Created:</strong> @user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
                     </div>
                     <div style="text-align: right;">
-                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); width: 100%;" @onclick="() => DeleteUser(user.Id)">Delete User</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); width: 100%;" @onclick="() => ShowDeleteConfirm(user.Id)">Delete User</button>
                     </div>
                 </div>
             }
         </div>
     </div>
 }
+
+<ConfirmDialog 
+    IsVisible="showConfirm" 
+    Title="Delete User" 
+    Message="Are you sure you want to delete this user? They will no longer be able to log in."
+    OnConfirm="DeleteUser"
+    OnCancel="() => showConfirm = false" />
 
 @code {
     private List<User> users = new();
@@ -125,6 +132,8 @@ else
     private bool showNewUserPassword = false;
     private int newUserRoleId = 0;
     private string errorMessage = "";
+    private bool showConfirm = false;
+    private int userIdToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,13 +179,16 @@ else
         }
     }
 
-    private async Task DeleteUser(int id)
+    private void ShowDeleteConfirm(int id)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this user?");
-        if (confirmed)
-        {
-            await AuthService.DeleteUserAsync(id);
-            await LoadData();
-        }
+        userIdToDelete = id;
+        showConfirm = true;
+    }
+
+    private async Task DeleteUser()
+    {
+        showConfirm = false;
+        await AuthService.DeleteUserAsync(userIdToDelete);
+        await LoadData();
     }
 }

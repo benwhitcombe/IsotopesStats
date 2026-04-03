@@ -1,9 +1,9 @@
 @page "/management/players"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
+@using IsotopesStats.Shared
 @attribute [Authorize(Policy = "ManagePlayers")]
 @inject StatsService StatsService
-@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage Players</PageTitle>
 
@@ -65,7 +65,7 @@ else
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick="() => StartEdit(player)">Edit / Seasons</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -85,13 +85,20 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(player)">Edit</button>
-                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => DeletePlayer(player.Id)">Delete</button>
+                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
                     </div>
                 </div>
             }
         </div>
     </div>
 }
+
+<ConfirmDialog 
+    IsVisible="showConfirm" 
+    Title="Delete Player" 
+    Message="Are you sure you want to delete this player? This will hide them from all lists."
+    OnConfirm="DeletePlayer"
+    OnCancel="() => showConfirm = false" />
 
 @code {
     private List<Player> players = new();
@@ -100,6 +107,8 @@ else
     private HashSet<int> originalSeasonIds = new();
     private Player editingPlayer = new();
     private bool isEditing = false;
+    private bool showConfirm = false;
+    private int playerIdToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -190,13 +199,16 @@ else
         await LoadPlayers();
     }
 
-    private async Task DeletePlayer(int id)
+    private void ShowDeleteConfirm(int id)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this player? This will hide them from all lists.");
-        if (confirmed)
-        {
-            await StatsService.DeletePlayerAsync(id);
-            await LoadPlayers();
-        }
+        playerIdToDelete = id;
+        showConfirm = true;
+    }
+
+    private async Task DeletePlayer()
+    {
+        showConfirm = false;
+        await StatsService.DeletePlayerAsync(playerIdToDelete);
+        await LoadPlayers();
     }
 }

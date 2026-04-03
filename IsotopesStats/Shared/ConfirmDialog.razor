@@ -1,0 +1,129 @@
+<div class="confirm-overlay @(IsVisible ? "visible" : "")" @onclick="Cancel">
+    <div class="confirm-modal @(IsVisible ? "show" : "")" @onclick:stopPropagation="true">
+        <div class="confirm-header">
+            <h4>@Title</h4>
+        </div>
+        <div class="confirm-body">
+            <p>@Message</p>
+        </div>
+        <div class="confirm-footer">
+            <button class="confirm-btn cancel" @onclick="Cancel">Cancel</button>
+            <button class="confirm-btn delete" @onclick="Confirm">Delete</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .confirm-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease-in-out;
+        backdrop-filter: blur(4px);
+    }
+
+    .confirm-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .confirm-modal {
+        background: white;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        transform: scale(0.9);
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+    }
+
+    .confirm-modal.show {
+        transform: scale(1);
+    }
+
+    .confirm-header {
+        padding: 1.5rem 1.5rem 0.5rem;
+        text-align: center;
+    }
+
+    .confirm-header h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 700;
+    }
+
+    .confirm-body {
+        padding: 0.5rem 1.5rem 1.5rem;
+        text-align: center;
+        color: #666;
+        line-height: 1.5;
+    }
+
+    .confirm-footer {
+        display: flex;
+        border-top: 1px solid #eee;
+    }
+
+    .confirm-btn {
+        flex: 1;
+        padding: 1rem;
+        border: none;
+        background: none;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .confirm-btn.cancel {
+        color: #666;
+        border-right: 1px solid #eee;
+    }
+
+    .confirm-btn.cancel:hover {
+        background: #f9f9f9;
+    }
+
+    .confirm-btn.delete {
+        color: var(--isotopes-red);
+    }
+
+    .confirm-btn.delete:hover {
+        background: #fff5f5;
+    }
+
+    /* Mobile adjustments */
+    @@media (max-width: 480px) {
+        .confirm-modal {
+            width: 85%;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirm Delete";
+    [Parameter] public string Message { get; set; } = "Are you sure you want to delete this item?";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task Confirm()
+    {
+        await OnConfirm.InvokeAsync();
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+}
