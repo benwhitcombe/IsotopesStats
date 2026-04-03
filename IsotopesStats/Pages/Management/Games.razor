@@ -28,7 +28,7 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
                 <label>Season</label>
-                <select class="form-control" @bind="editingGame.SeasonId">
+                <select class="form-control" value="@editingGame.SeasonId" @onchange="OnEditingSeasonChange">
                     @foreach (Season season in activeSeasons)
                     {
                         <option value="@season.Id">@season.Name</option>
@@ -54,7 +54,22 @@
             </div>
         </div>
 
-        <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats (Drag rows to reorder lineup)</h5>
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Select Game Lineup</label>
+            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.75rem; border-radius: 12px; border: 1px solid #eee;">
+                @foreach (Player player in seasonRoster)
+                {
+                    <div class="selectable-item">
+                        <input type="checkbox" id="gl-@player.Id" 
+                               checked="@IsPlayerInLineup(player.Id)"
+                               @onchange="(e) => TogglePlayerInLineup(player, e)" />
+                        <label class="selectable-label" for="gl-@player.Id">@player.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats</h5>
         
         <div class="desktop-only">
             <div class="table-container">
@@ -291,6 +306,7 @@ else
     private List<Season> activeSeasons => allSeasons.Where(s => !s.IsDeleted).ToList();
     private List<Game> games = new();
     private List<StatEntry> playerStats = new();
+    private List<Player> seasonRoster = new();
     private Game editingGame = new() { Date = DateTime.Today };
     private int selectedSeasonId;
     private bool isEditing = false;
@@ -331,6 +347,24 @@ else
         }
     }
 
+    private async Task OnEditingSeasonChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            editingGame.SeasonId = id;
+            await LoadSeasonRoster();
+            
+            // Filter current playerStats to only those still in the new season roster
+            playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
+            ReassignBO();
+        }
+    }
+
+    private async Task LoadSeasonRoster()
+    {
+        seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
+    }
+
     private void ToggleSeasonModal()
     {
         showSeasonModal = !showSeasonModal;
@@ -346,9 +380,10 @@ else
     private async Task StartNewGame()
     {
         editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId };
-        List<Player> players = await StatsService.GetPlayersAsync(selectedSeasonId);
+        await LoadSeasonRoster();
+        // Start with everyone selected by default for ease of entry
         int order = 1;
-        playerStats = players.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
+        playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
         isEditing = true;
     }
 
@@ -366,8 +401,9 @@ else
             IsDeleted = game.IsDeleted
         };
         
-        List<StatEntry> stats = await StatsService.GetGameStatsAsync(game.Id);
-        playerStats = stats.OrderBy(s => s.BO).ToList();
+        await LoadSeasonRoster();
+        playerStats = await StatsService.GetGameStatsAsync(game.Id);
+        playerStats = playerStats.OrderBy(s => s.BO).ToList();
         isEditing = true;
         Navigation.NavigateTo("/management/games#top");
     }
@@ -377,6 +413,39 @@ else
         isEditing = false;
         editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId };
         playerStats.Clear();
+        seasonRoster.Clear();
+    }
+
+    private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
+
+    private void TogglePlayerInLineup(Player player, ChangeEventArgs e)
+    {
+        bool isChecked = (bool)(e.Value ?? false);
+        if (isChecked)
+        {
+            if (!playerStats.Any(ps => ps.PlayerId == player.Id))
+            {
+                playerStats.Add(new StatEntry 
+                { 
+                    PlayerId = player.Id, 
+                    Player = player, 
+                    BO = playerStats.Count + 1 
+                });
+            }
+        }
+        else
+        {
+            playerStats.RemoveAll(ps => ps.PlayerId == player.Id);
+            ReassignBO();
+        }
+    }
+
+    private void ReassignBO()
+    {
+        for (int i = 0; i < playerStats.Count; i++)
+        {
+            playerStats[i].BO = i + 1;
+        }
     }
 
     private void HandleDragStart(StatEntry stat)
@@ -404,12 +473,7 @@ else
         {
             playerStats.RemoveAt(oldIndex);
             playerStats.Insert(newIndex, draggedStat);
-
-            // Re-assign BO values based on the new list order
-            for (int i = 0; i < playerStats.Count; i++)
-            {
-                playerStats[i].BO = i + 1;
-            }
+            ReassignBO();
         }
         
         draggedStat = null;
