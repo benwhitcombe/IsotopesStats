@@ -72,11 +72,14 @@
         <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats</h5>
         
         <div class="desktop-only">
-            <div class="table-container">
-                <table class="table table-sm">
+            <div class="table-container" style="padding: 0; overflow: hidden;">
+                <table class="table table-sm admin-stats-table" style="margin-bottom: 0;">
                     <thead>
                         <tr>
-                            <th style="width: 200px;">Player</th>
+                            <th style="width: 200px; border-right: 2px solid #ddd;">Player</th>
+                            <th>PA</th>
+                            <th>AB</th>
+                            <th style="border-right: 2px solid #ddd;">H</th>
                             <th>1B</th>
                             <th>2B</th>
                             <th>3B</th>
@@ -105,26 +108,50 @@
                                 @ondragover:preventdefault="true"
                                 @ondragenter:preventdefault="true"
                                 @ondrop="() => HandleDrop(stat)"
-                                class="reorderable-row @(stat == targetStat ? "drag-over" : "")"
-                                style="cursor: grab; user-select: none; transition: background 0.2s;">
-                                <td style="font-weight: bold; vertical-align: middle;">@(index + 1). @stat.Player?.Name</td>
-                                <td><input type="number" @bind="stat.H1B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.H2B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.H3B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.H4B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.HR" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.BB" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.SF" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.FC" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.K" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.KF" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.GO" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.FO" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind="stat.R" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                                <td><input type="number" @bind="stat.RBI" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
+                                <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.Player?.Name</td>
+                                <td>@stat.PA</td>
+                                <td>@stat.AB</td>
+                                <td style="border-right: 2px solid #ddd; color: var(--isotopes-accent); font-weight: bold;">@stat.H</td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                             </tr>
                         }
                     </tbody>
+                    <tfoot style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
+                        <tr>
+                            <td style="border-right: 2px solid #ddd;">TEAM TOTALS</td>
+                            <td>@playerStats.Sum(s => s.PA)</td>
+                            <td>@playerStats.Sum(s => s.AB)</td>
+                            <td style="border-right: 2px solid #ddd; color: var(--isotopes-accent);">@playerStats.Sum(s => s.H)</td>
+                            <td>@playerStats.Sum(s => s.H1B)</td>
+                            <td>@playerStats.Sum(s => s.H2B)</td>
+                            <td>@playerStats.Sum(s => s.H3B)</td>
+                            <td>@playerStats.Sum(s => s.H4B)</td>
+                            <td>@playerStats.Sum(s => s.HR)</td>
+                            <td>@playerStats.Sum(s => s.BB)</td>
+                            <td>@playerStats.Sum(s => s.SF)</td>
+                            <td>@playerStats.Sum(s => s.FC)</td>
+                            <td>@playerStats.Sum(s => s.K)</td>
+                            <td>@playerStats.Sum(s => s.KF)</td>
+                            <td>@playerStats.Sum(s => s.GO)</td>
+                            <td>@playerStats.Sum(s => s.FO)</td>
+                            <td style="color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</td>
+                            <td style="color: var(--isotopes-red);">@playerStats.Sum(s => s.RBI)</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -138,25 +165,58 @@
                     <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 1px solid #eee;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
                             <div style="color: var(--isotopes-accent); font-weight: bold;">@(index + 1). @stat.Player?.Name</div>
+                            <div style="font-size: 0.8rem; display: flex; gap: 8px;">
+                                <span class="badge bg-light text-dark">PA: @stat.PA</span>
+                                <span class="badge bg-light text-dark">AB: @stat.AB</span>
+                                <span class="badge bg-primary">H: @stat.H</span>
+                            </div>
                         </div>
                         <div class="admin-stats-grid">
-                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind="stat.H1B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind="stat.H2B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind="stat.H3B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind="stat.H4B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind="stat.HR" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind="stat.BB" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind="stat.SF" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind="stat.FC" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>K</label><input type="number" @bind="stat.K" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind="stat.KF" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind="stat.GO" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind="stat.FO" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>R</label><input type="number" @bind="stat.R" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind="stat.RBI" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
                         </div>
                     </div>
                 }
+
+                @* Mobile Team Totals *@
+                <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--isotopes-accent); margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
+                        <div style="color: var(--isotopes-accent); font-weight: 900;">TEAM TOTALS</div>
+                        <div style="font-size: 0.8rem; display: flex; gap: 8px;">
+                            <span class="badge bg-light text-dark">PA: @playerStats.Sum(s => s.PA)</span>
+                            <span class="badge bg-light text-dark">AB: @playerStats.Sum(s => s.AB)</span>
+                            <span class="badge bg-primary">H: @playerStats.Sum(s => s.H)</span>
+                        </div>
+                    </div>
+                    <div class="admin-stats-grid">
+                        <div class="admin-stat-input"><label>1B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H1B)</div></div>
+                        <div class="admin-stat-input"><label>2B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H2B)</div></div>
+                        <div class="admin-stat-input"><label>3B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H3B)</div></div>
+                        <div class="admin-stat-input"><label>4B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H4B)</div></div>
+                        <div class="admin-stat-input"><label>HR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.HR)</div></div>
+                        <div class="admin-stat-input"><label>BB</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.BB)</div></div>
+                        <div class="admin-stat-input"><label>SF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.SF)</div></div>
+                        <div class="admin-stat-input"><label>FC</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FC)</div></div>
+                        <div class="admin-stat-input"><label>K</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.K)</div></div>
+                        <div class="admin-stat-input"><label>KF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.KF)</div></div>
+                        <div class="admin-stat-input"><label>GO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.GO)</div></div>
+                        <div class="admin-stat-input"><label>FO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FO)</div></div>
+                        <div class="admin-stat-input"><label>R</label><div class="form-control" style="background: white; font-weight: bold; color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</div></div>
+                        <div class="admin-stat-input"><label>RBI</label><div class="form-control" style="background: white; font-weight: bold; color: var(--isotopes-red);">@playerStats.Sum(s => s.RBI)</div></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -298,6 +358,33 @@ else
     .drag-over {
         background-color: #f0f7ff !important;
         border-top: 2px solid var(--isotopes-accent) !important;
+    }
+
+    .admin-stats-table th, 
+    .admin-stats-table td {
+        text-align: center !important;
+        vertical-align: middle !important;
+        height: 45px !important;
+        padding: 4px !important;
+    }
+
+    .admin-stats-table th:not(.player-col),
+    .admin-stats-table td:not(.player-col) {
+        width: 45px !important;
+        min-width: 45px !important;
+    }
+
+    .admin-stats-table .player-col {
+        text-align: left !important;
+        font-weight: bold;
+        white-space: nowrap;
+        padding-left: 12px !important;
+    }
+
+    /* table-sm padding override */
+    .admin-stats-table .form-control-sm {
+        padding: 2px !important;
+        height: 32px !important;
     }
 </style>
 
