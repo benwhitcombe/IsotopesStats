@@ -5,6 +5,12 @@
         </div>
         <div class="confirm-body">
             <p>@Message</p>
+            @if (!string.IsNullOrEmpty(Warning))
+            {
+                <div class="confirm-warning">
+                    @Warning
+                </div>
+            }
         </div>
         <div class="confirm-footer">
             <button class="confirm-btn cancel" @onclick="Cancel">Cancel</button>
@@ -69,6 +75,17 @@
         line-height: 1.5;
     }
 
+    .confirm-warning {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: #fff5f5;
+        color: var(--isotopes-red);
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: 1px solid #ffebeb;
+    }
+
     .confirm-footer {
         display: flex;
         border-top: 1px solid #eee;
@@ -114,6 +131,7 @@
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public string Title { get; set; } = "Confirm Delete";
     [Parameter] public string Message { get; set; } = "Are you sure you want to delete this item?";
+    [Parameter] public string Warning { get; set; } = "";
     [Parameter] public EventCallback OnConfirm { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
