@@ -43,6 +43,7 @@ public static class DatabaseInitializer
                     Diamond TEXT NOT NULL DEFAULT '',
                     Opponent TEXT NOT NULL,
                     Type INTEGER NOT NULL DEFAULT 0,
+                    IsActive INTEGER NOT NULL DEFAULT 1,
                     FOREIGN KEY (SeasonId) REFERENCES Seasons(Id)
                 );
 
@@ -76,7 +77,8 @@ public static class DatabaseInitializer
 
                 CREATE TABLE IF NOT EXISTS UserRoles (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL UNIQUE
+                    Name TEXT NOT NULL UNIQUE,
+                    IsActive INTEGER NOT NULL DEFAULT 1
                 );
 
                 CREATE TABLE IF NOT EXISTS RolePermissions (
@@ -93,6 +95,7 @@ public static class DatabaseInitializer
                     PasswordHash TEXT NOT NULL,
                     RoleId INTEGER NOT NULL DEFAULT 0,
                     CreatedAt TEXT NOT NULL,
+                    IsActive INTEGER NOT NULL DEFAULT 1,
                     FOREIGN KEY (RoleId) REFERENCES UserRoles(Id)
                 );
 

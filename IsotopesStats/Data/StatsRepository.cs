@@ -61,7 +61,7 @@ public class StatsRepository
                 FROM Stats s
                 JOIN Players p ON s.PlayerId = p.Id
                 JOIN Games g ON s.GameId = g.Id
-                WHERE g.SeasonId = $seasonId AND p.Name NOT LIKE 'spare'
+                WHERE g.SeasonId = $seasonId AND p.Name NOT LIKE 'spare' AND g.IsActive = 1
                 GROUP BY p.Id, p.Name
             ";
             command.Parameters.AddWithValue("$seasonId", seasonId);
@@ -120,7 +120,7 @@ public class StatsRepository
                     SUM(s.FO) as FO
                 FROM Stats s
                 JOIN Games g ON s.GameId = g.Id
-                WHERE g.SeasonId = $seasonId
+                WHERE g.SeasonId = $seasonId AND g.IsActive = 1
             ";
             command.Parameters.AddWithValue("$seasonId", seasonId);
 
@@ -196,11 +196,11 @@ public class StatsRepository
             @"
                 SELECT 
                     s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
-                    p.Name, g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type
+                    p.Name, g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type, g.IsActive
                 FROM Stats s
                 JOIN Players p ON s.PlayerId = p.Id
                 JOIN Games g ON s.GameId = g.Id
-                WHERE g.SeasonId = $seasonId
+                WHERE g.SeasonId = $seasonId AND g.IsActive = 1
                 ORDER BY g.Date DESC, s.BO ASC
             ";
             command.Parameters.AddWithValue("$seasonId", seasonId);
@@ -238,7 +238,8 @@ public class StatsRepository
                             Date = DateTime.Parse(reader.GetString(20)),
                             Diamond = reader.GetString(21),
                             Opponent = reader.GetString(22),
-                            Type = (GameType)reader.GetInt32(23)
+                            Type = (GameType)reader.GetInt32(23),
+                            IsActive = reader.GetInt32(24) == 1
                         }
                     });
                 }
@@ -259,11 +260,11 @@ public class StatsRepository
             @"
                 SELECT 
                     s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
-                    g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type
+                    g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type, g.IsActive
                 FROM Stats s
                 JOIN Games g ON s.GameId = g.Id
                 JOIN Players p ON s.PlayerId = p.Id
-                WHERE p.Name = $playerName AND g.SeasonId = $seasonId
+                WHERE p.Name = $playerName AND g.SeasonId = $seasonId AND g.IsActive = 1
                 ORDER BY g.Date DESC
             ";
             command.Parameters.AddWithValue("$playerName", playerName);
@@ -301,7 +302,8 @@ public class StatsRepository
                             Date = DateTime.Parse(reader.GetString(19)),
                             Diamond = reader.GetString(20),
                             Opponent = reader.GetString(21),
-                            Type = (GameType)reader.GetInt32(22)
+                            Type = (GameType)reader.GetInt32(22),
+                            IsActive = reader.GetInt32(23) == 1
                         }
                     });
                 }
@@ -316,7 +318,7 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, SeasonId, GameNumber, Date, Diamond, Opponent, Type FROM Games WHERE Id = $id";
+            command.CommandText = "SELECT Id, SeasonId, GameNumber, Date, Diamond, Opponent, Type, IsActive FROM Games WHERE Id = $id";
             command.Parameters.AddWithValue("$id", gameId);
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
@@ -331,7 +333,8 @@ public class StatsRepository
                         Date = DateTime.Parse(reader.GetString(3)),
                         Diamond = reader.GetString(4),
                         Opponent = reader.GetString(5),
-                        Type = (GameType)reader.GetInt32(6)
+                        Type = (GameType)reader.GetInt32(6),
+                        IsActive = reader.GetInt32(7) == 1
                     };
                 }
             }
@@ -412,7 +415,8 @@ public class StatsRepository
                         Date = $date, 
                         Diamond = $diamond, 
                         Opponent = $opponent, 
-                        Type = $type 
+                        Type = $type,
+                        IsActive = $isActive
                     WHERE Id = $id
                 ";
                 gameCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
@@ -421,6 +425,7 @@ public class StatsRepository
                 gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);
                 gameCommand.Parameters.AddWithValue("$opponent", game.Opponent);
                 gameCommand.Parameters.AddWithValue("$type", (int)game.Type);
+                gameCommand.Parameters.AddWithValue("$isActive", game.IsActive ? 1 : 0);
                 gameCommand.Parameters.AddWithValue("$id", game.Id);
                 await gameCommand.ExecuteNonQueryAsync();
 
@@ -491,8 +496,8 @@ public class StatsRepository
                 gameCommand.Transaction = transaction;
                 gameCommand.CommandText = 
                 @"
-                    INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, Opponent, Type)
-                    VALUES ($seasonId, $gameNumber, $date, $diamond, $opponent, $type);
+                    INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, Opponent, Type, IsActive)
+                    VALUES ($seasonId, $gameNumber, $date, $diamond, $opponent, $type, 1);
                     SELECT last_insert_rowid();
                 ";
                 gameCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
@@ -519,7 +524,7 @@ public class StatsRepository
                     {
                         SqliteCommand insertPlayer = connection.CreateCommand();
                         insertPlayer.Transaction = transaction;
-                        insertPlayer.CommandText = "INSERT INTO Players (Name) VALUES ($name); SELECT last_insert_rowid();";
+                        insertPlayer.CommandText = "INSERT INTO Players (Name, IsActive) VALUES ($name, 1); SELECT last_insert_rowid();";
                         insertPlayer.Parameters.AddWithValue("$name", stat.Player?.Name ?? "Unknown");
                         playerId = Convert.ToInt32(await insertPlayer.ExecuteScalarAsync());
                     }
@@ -588,7 +593,8 @@ public class StatsRepository
                     Date = $date, 
                     Diamond = $diamond, 
                     Opponent = $opponent, 
-                    Type = $type 
+                    Type = $type,
+                    IsActive = $isActive
                 WHERE Id = $id
             ";
             command.Parameters.AddWithValue("$seasonId", game.SeasonId);
@@ -597,6 +603,7 @@ public class StatsRepository
             command.Parameters.AddWithValue("$diamond", game.Diamond);
             command.Parameters.AddWithValue("$opponent", game.Opponent);
             command.Parameters.AddWithValue("$type", (int)game.Type);
+            command.Parameters.AddWithValue("$isActive", game.IsActive ? 1 : 0);
             command.Parameters.AddWithValue("$id", game.Id);
             await command.ExecuteNonQueryAsync();
         }

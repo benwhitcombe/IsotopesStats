@@ -16,4 +16,5 @@ public class Game
     public string Diamond { get; set; } = string.Empty;
     public string Opponent { get; set; } = string.Empty;
     public GameType Type { get; set; } = GameType.RegularSeason;
+    public bool IsActive { get; set; } = true;
 }
