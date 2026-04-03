@@ -263,7 +263,8 @@ else
 <ConfirmDialog 
     IsVisible="showConfirm" 
     Title="Delete Game" 
-    Message="Are you sure you want to delete this game? This will hide all associated player stats."
+    Message="Are you sure you want to delete this game?"
+    Warning="This will delete all associated player stats from this game."
     OnConfirm="DeleteGame"
     OnCancel="() => showConfirm = false" />
 
