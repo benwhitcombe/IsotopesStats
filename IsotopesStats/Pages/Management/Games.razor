@@ -80,7 +80,7 @@
                             <th>RBI</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody @ondragover:preventdefault="true" @ondrop:preventdefault="true">
                         @for (int i = 0; i < playerStats.Count; i++)
                         {
                             StatEntry stat = playerStats[i];
@@ -92,7 +92,7 @@
                                 @ondragover:preventdefault="true"
                                 @ondragenter:preventdefault="true"
                                 @ondrop="() => HandleDrop(stat)"
-                                class="@(stat == targetStat ? "drag-over" : "")"
+                                class="reorderable-row @(stat == targetStat ? "drag-over" : "")"
                                 style="cursor: grab; user-select: none; transition: background 0.2s;">
                                 <td style="font-weight: bold; vertical-align: middle;">@(index + 1). @stat.Player?.Name</td>
                                 <td><input type="number" @bind="stat.H1B" class="form-control form-control-sm" /></td>
