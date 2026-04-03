@@ -28,15 +28,14 @@
         {
             <div class="form-group" style="margin-top: 1.5rem;">
                 <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Season Roster</label>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; background: #f9f9f9; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                <div class="selectable-grid" style="max-height: 400px; overflow-y: auto; padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
                     @foreach (Player player in allPlayers)
                     {
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="selectable-item">
                             <input type="checkbox" id="p-@player.Id" 
                                    checked="@assignedPlayerIds.Contains(player.Id)"
-                                   @onchange="(e) => TogglePlayer(player.Id, e)"
-                                   style="width: 18px; height: 18px;" />
-                            <label for="p-@player.Id" style="margin:0; cursor: pointer;">@player.Name</label>
+                                   @onchange="(e) => TogglePlayer(player.Id, e)" />
+                            <label class="selectable-label" for="p-@player.Id">@player.Name</label>
                         </div>
                     }
                 </div>

@@ -5,6 +5,7 @@
 @attribute [Authorize(Policy = "ManageGames")]
 @inject StatsService StatsService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
@@ -64,6 +65,7 @@
                             <th>1B</th>
                             <th>2B</th>
                             <th>3B</th>
+                            <th>4B</th>
                             <th>HR</th>
                             <th>BB</th>
                             <th>SF</th>
@@ -94,6 +96,7 @@
                                 <td><input type="number" @bind="stat.H1B" class="form-control form-control-sm" /></td>
                                 <td><input type="number" @bind="stat.H2B" class="form-control form-control-sm" /></td>
                                 <td><input type="number" @bind="stat.H3B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind="stat.H4B" class="form-control form-control-sm" /></td>
                                 <td><input type="number" @bind="stat.HR" class="form-control form-control-sm" /></td>
                                 <td><input type="number" @bind="stat.BB" class="form-control form-control-sm" /></td>
                                 <td><input type="number" @bind="stat.SF" class="form-control form-control-sm" /></td>
@@ -125,6 +128,7 @@
                             <div class="admin-stat-input"><label>1B</label><input type="number" @bind="stat.H1B" class="form-control" /></div>
                             <div class="admin-stat-input"><label>2B</label><input type="number" @bind="stat.H2B" class="form-control" /></div>
                             <div class="admin-stat-input"><label>3B</label><input type="number" @bind="stat.H3B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind="stat.H4B" class="form-control" /></div>
                             <div class="admin-stat-input"><label>HR</label><input type="number" @bind="stat.HR" class="form-control" /></div>
                             <div class="admin-stat-input"><label>BB</label><input type="number" @bind="stat.BB" class="form-control" /></div>
                             <div class="admin-stat-input"><label>SF</label><input type="number" @bind="stat.SF" class="form-control" /></div>

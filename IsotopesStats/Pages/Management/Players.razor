@@ -4,6 +4,7 @@
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "ManagePlayers")]
 @inject StatsService StatsService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage Players</PageTitle>
 
@@ -26,15 +27,14 @@
         
         <div class="form-group" style="margin-top: 1.5rem;">
             <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Seasons Participation</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
+            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (Season season in allSeasons)
                 {
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="selectable-item">
                         <input type="checkbox" id="s-@season.Id" 
                                checked="@assignedSeasonIds.Contains(season.Id)"
-                               @onchange="(e) => ToggleSeason(season.Id, e)"
-                               style="width: 18px; height: 18px;" />
-                        <label for="s-@season.Id" style="margin:0; cursor: pointer;">@season.Name</label>
+                               @onchange="(e) => ToggleSeason(season.Id, e)" />
+                        <label class="selectable-label" for="s-@season.Id">@season.Name</label>
                     </div>
                 }
             </div>
