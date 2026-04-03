@@ -16,10 +16,10 @@ public class AuthService
             SqliteCommand command = connection.CreateCommand();
             command.CommandText = 
             @"
-                SELECT u.Id, u.Email, u.PasswordHash, u.RoleId, u.CreatedAt, u.IsActive, r.Name, r.IsActive
+                SELECT u.Id, u.Email, u.PasswordHash, u.RoleId, u.CreatedAt, u.IsDeleted, r.Name, r.IsDeleted
                 FROM Users u
                 LEFT JOIN UserRoles r ON u.RoleId = r.Id
-                WHERE u.Email = $email AND u.IsActive = 1
+                WHERE u.Email = $email AND u.IsDeleted = 0
             ";
             command.Parameters.AddWithValue("$email", email);
 
@@ -38,12 +38,12 @@ public class AuthService
                             PasswordHash = storedHash,
                             RoleId = roleId,
                             CreatedAt = DateTime.Parse(reader.GetString(4)),
-                            IsActive = reader.GetInt32(5) == 1,
+                            IsDeleted = reader.GetInt32(5) == 1,
                             Role = new UserRole
                             {
                                 Id = roleId,
                                 Name = reader.IsDBNull(6) ? "Unknown" : reader.GetString(6),
-                                IsActive = reader.IsDBNull(7) || reader.GetInt32(7) == 1
+                                IsDeleted = reader.IsDBNull(7) || reader.GetInt32(7) == 1
                             }
                         };
 
@@ -97,8 +97,8 @@ public class AuthService
             SqliteCommand command = connection.CreateCommand();
             command.CommandText = 
             @"
-                INSERT INTO Users (Email, PasswordHash, RoleId, CreatedAt, IsActive)
-                VALUES ($email, $hash, $roleId, $createdAt, 1)
+                INSERT INTO Users (Email, PasswordHash, RoleId, CreatedAt, IsDeleted)
+                VALUES ($email, $hash, $roleId, $createdAt, 0)
             ";
             command.Parameters.AddWithValue("$email", email);
             command.Parameters.AddWithValue("$hash", passwordHash);
@@ -123,10 +123,9 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "UPDATE Users SET Email = $email, RoleId = $roleId, IsActive = $isActive WHERE Id = $id";
+            command.CommandText = "UPDATE Users SET Email = $email, RoleId = $roleId WHERE Id = $id";
             command.Parameters.AddWithValue("$email", user.Email);
             command.Parameters.AddWithValue("$roleId", user.RoleId);
-            command.Parameters.AddWithValue("$isActive", user.IsActive ? 1 : 0);
             command.Parameters.AddWithValue("$id", user.Id);
             await command.ExecuteNonQueryAsync();
         }
@@ -163,7 +162,8 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, Name, IsActive FROM UserRoles " + (onlyActive ? "WHERE IsActive = 1 " : "") + "ORDER BY Name";
+            // Invert logic for SQL: onlyActive means IsDeleted = 0
+            command.CommandText = "SELECT Id, Name, IsDeleted FROM UserRoles " + (onlyActive ? "WHERE IsDeleted = 0 " : "WHERE IsDeleted = 0") + " ORDER BY Name";
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
             {
@@ -173,7 +173,7 @@ public class AuthService
                     {
                         Id = reader.GetInt32(0),
                         Name = reader.GetString(1),
-                        IsActive = reader.GetInt32(2) == 1
+                        IsDeleted = reader.GetInt32(2) == 1
                     };
                     roles.Add(role);
                 }
@@ -198,9 +198,8 @@ public class AuthService
             {
                 SqliteCommand cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
-                cmd.CommandText = "INSERT INTO UserRoles (Name, IsActive) VALUES ($name, $isActive); SELECT last_insert_rowid();";
+                cmd.CommandText = "INSERT INTO UserRoles (Name, IsDeleted) VALUES ($name, 0); SELECT last_insert_rowid();";
                 cmd.Parameters.AddWithValue("$name", role.Name);
-                cmd.Parameters.AddWithValue("$isActive", role.IsActive ? 1 : 0);
                 int roleId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
                 foreach (Permission p in role.Permissions)
@@ -232,9 +231,8 @@ public class AuthService
             {
                 SqliteCommand cmd = connection.CreateCommand();
                 cmd.Transaction = transaction;
-                cmd.CommandText = "UPDATE UserRoles SET Name = $name, IsActive = $isActive WHERE Id = $id";
+                cmd.CommandText = "UPDATE UserRoles SET Name = $name WHERE Id = $id";
                 cmd.Parameters.AddWithValue("$name", role.Name);
-                cmd.Parameters.AddWithValue("$isActive", role.IsActive ? 1 : 0);
                 cmd.Parameters.AddWithValue("$id", role.Id);
                 await cmd.ExecuteNonQueryAsync();
 
@@ -268,28 +266,10 @@ public class AuthService
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
             await connection.OpenAsync();
-            using SqliteTransaction transaction = connection.BeginTransaction();
-            try
-            {
-                SqliteCommand delPCmd = connection.CreateCommand();
-                delPCmd.Transaction = transaction;
-                delPCmd.CommandText = "DELETE FROM RolePermissions WHERE RoleId = $roleId";
-                delPCmd.Parameters.AddWithValue("$roleId", roleId);
-                await delPCmd.ExecuteNonQueryAsync();
-
-                SqliteCommand delRCmd = connection.CreateCommand();
-                delRCmd.Transaction = transaction;
-                delRCmd.CommandText = "DELETE FROM UserRoles WHERE Id = $roleId";
-                delRCmd.Parameters.AddWithValue("$roleId", roleId);
-                await delRCmd.ExecuteNonQueryAsync();
-
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE UserRoles SET IsDeleted = 1 WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", roleId);
+            await command.ExecuteNonQueryAsync();
         }
     }
 
@@ -302,9 +282,10 @@ public class AuthService
             SqliteCommand command = connection.CreateCommand();
             command.CommandText = 
             @"
-                SELECT u.Id, u.Email, u.RoleId, u.CreatedAt, u.IsActive, r.Name
+                SELECT u.Id, u.Email, u.RoleId, u.CreatedAt, u.IsDeleted, r.Name
                 FROM Users u
                 LEFT JOIN UserRoles r ON u.RoleId = r.Id
+                WHERE u.IsDeleted = 0
                 ORDER BY u.Email
             ";
 
@@ -318,7 +299,7 @@ public class AuthService
                         Email = reader.GetString(1),
                         RoleId = reader.GetInt32(2),
                         CreatedAt = DateTime.Parse(reader.GetString(3)),
-                        IsActive = reader.GetInt32(4) == 1,
+                        IsDeleted = reader.GetInt32(4) == 1,
                         Role = new UserRole
                         {
                             Id = reader.GetInt32(2),
@@ -337,7 +318,7 @@ public class AuthService
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Users WHERE Id = $id";
+            command.CommandText = "UPDATE Users SET IsDeleted = 1 WHERE Id = $id";
             command.Parameters.AddWithValue("$id", userId);
             await command.ExecuteNonQueryAsync();
         }
@@ -349,9 +330,9 @@ public class AuthService
         {
             await connection.OpenAsync();
             
-            // Check if user exists
+            // Check if user exists and is not deleted
             SqliteCommand userCmd = connection.CreateCommand();
-            userCmd.CommandText = "SELECT Id FROM Users WHERE Email = $email AND IsActive = 1";
+            userCmd.CommandText = "SELECT Id FROM Users WHERE Email = $email AND IsDeleted = 0";
             userCmd.Parameters.AddWithValue("$email", email);
             object? userId = await userCmd.ExecuteScalarAsync();
             

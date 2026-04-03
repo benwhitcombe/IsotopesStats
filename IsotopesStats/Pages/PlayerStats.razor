@@ -313,7 +313,7 @@ else if (!isLoading)
     {
         SharedState.ReturnUrl = "players";
         List<Season> allSeasons = await StatsService.GetSeasonsAsync();
-        seasons = allSeasons.Where(s => s.IsActive).ToList();
+        seasons = allSeasons.Where(s => !s.IsDeleted).ToList();
 
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {

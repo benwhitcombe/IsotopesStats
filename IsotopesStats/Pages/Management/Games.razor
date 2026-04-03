@@ -51,10 +51,6 @@
                     }
                 </select>
             </div>
-            <div class="form-group" style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="checkbox" @bind="editingGame.IsActive" id="isGameActive" style="width: 20px; height: 20px;" />
-                <label for="isGameActive" style="margin:0; font-weight: bold;">Active Game</label>
-            </div>
         </div>
 
         <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats (Drag rows to reorder lineup)</h5>
@@ -202,14 +198,13 @@ else
                             <th style="text-align: left;">Opponent</th>
                             <th style="text-align: left;">Diamond</th>
                             <th>Type</th>
-                            <th>Status</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (Game game in games)
                         {
-                            <tr style="@(!game.IsActive ? "opacity: 0.6;" : "")">
+                            <tr>
                                 <td style="text-align: left;">@game.GameNumber</td>
                                 <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@game.Opponent</td>
@@ -217,11 +212,6 @@ else
                                 <td>
                                     <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
                                         @game.Type
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge @(game.IsActive ? "bg-success" : "bg-secondary")">
-                                        @(game.IsActive ? "Active" : "Inactive")
                                     </span>
                                 </td>
                                 <td style="text-align: right;">
@@ -240,15 +230,10 @@ else
         <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
             @foreach (Game game in games)
             {
-                <div class="mobile-player-card" style="@(!game.IsActive ? "opacity: 0.6;" : "")">
+                <div class="mobile-player-card">
                     <div class="mobile-card-header">
                         <div class="mobile-card-name">vs @game.Opponent</div>
                         <div class="rank-badge">#@game.GameNumber</div>
-                    </div>
-                    <div style="margin-bottom: 0.5rem;">
-                        <span class="badge @(game.IsActive ? "bg-success" : "bg-secondary")" style="font-size: 0.7rem;">
-                            @(game.IsActive ? "Active" : "Inactive")
-                        </span>
                     </div>
                     <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
                         <div class="m-stat" style="align-items: flex-start;">
@@ -291,7 +276,7 @@ else
 
 @code {
     private List<Season> allSeasons = new();
-    private List<Season> activeSeasons => allSeasons.Where(s => s.IsActive).ToList();
+    private List<Season> activeSeasons => allSeasons.Where(s => !s.IsDeleted).ToList();
     private List<Game> games = new();
     private List<StatEntry> playerStats = new();
     private Game editingGame = new() { Date = DateTime.Today };
@@ -316,11 +301,7 @@ else
 
     private async Task LoadGames()
     {
-        // For management, we might want to see inactive games too, but public pages hide them
-        // Let's retrieve all games for management
         List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
-        // Note: GetAllGameStatsAsync currently filters for IsActive=1 in repository
-        // I will update repository to allow management to see all, or add a separate method
         games = stats.GroupBy(s => s.GameId)
                     .Select(g => g.First().Game!)
                     .OrderByDescending(g => g.Date)
@@ -350,7 +331,7 @@ else
 
     private async Task StartNewGame()
     {
-        editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId, IsActive = true };
+        editingGame = new Game { Date = DateTime.Today, SeasonId = selectedSeasonId };
         List<Player> players = await StatsService.GetPlayersAsync(selectedSeasonId);
         int order = 1;
         playerStats = players.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
@@ -368,7 +349,7 @@ else
             Diamond = game.Diamond, 
             Opponent = game.Opponent, 
             Type = game.Type,
-            IsActive = game.IsActive
+            IsDeleted = game.IsDeleted
         };
         
         List<StatEntry> stats = await StatsService.GetGameStatsAsync(game.Id);
@@ -453,7 +434,7 @@ else
 
     private async Task DeleteGame(int id)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this game? This will also delete all associated player stats!");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this game? This will hide all associated player stats.");
         if (confirmed)
         {
             await StatsService.DeleteGameAsync(id);

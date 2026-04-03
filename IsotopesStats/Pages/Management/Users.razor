@@ -134,7 +134,7 @@ else
     private async Task LoadData()
     {
         users = await AuthService.GetUsersAsync();
-        availableRoles = await AuthService.GetUserRolesAsync();
+        availableRoles = await AuthService.GetUserRolesAsync(true);
     }
 
     private string GetRoleBadgeClass(string? roleName) => roleName switch

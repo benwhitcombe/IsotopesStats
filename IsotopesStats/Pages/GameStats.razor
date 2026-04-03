@@ -316,7 +316,7 @@ else if (!isLoading)
     {
         SharedState.ReturnUrl = ""; // Root is Game Stats
         List<Season> allSeasons = await StatsService.GetSeasonsAsync();
-        seasons = allSeasons.Where(s => s.IsActive).ToList();
+        seasons = allSeasons.Where(s => !s.IsDeleted).ToList();
 
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {
