@@ -2,9 +2,11 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "ManageRoles")]
 @inject AuthService AuthService
 @inject IJSRuntime JSRuntime
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage User Roles</PageTitle>
 
@@ -22,7 +24,7 @@
         <h4 style="margin-top:0">@(editingRole.Id == 0 ? "Add" : "Edit") User Role</h4>
         <div class="form-group">
             <label>Role Name</label>
-            <input type="text" class="form-control" @bind="editingRole.Name" placeholder="e.g. Moderator" />
+            <input type="text" class="form-control" @bind="editingRole.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. Moderator" />
         </div>
         
         <div class="form-group" style="margin-top: 1.5rem;">
@@ -40,9 +42,9 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
-            <button class="view-btn active" @onclick="SaveRole">Save Role</button>
-            <button class="view-btn" @onclick="CancelEdit">Cancel</button>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center;">
+            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="SaveRole">Save Role</button>
+            <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
         </div>
     </div>
 }
@@ -118,17 +120,89 @@ else
     OnConfirm="DeleteRole"
     OnCancel="() => showConfirm = false" />
 
+<ConfirmDialog 
+    IsVisible="showDiscardConfirm" 
+    Title="Discard Changes" 
+    Message="You have unsaved changes. Are you sure you want to discard them?"
+    OnConfirm="DiscardChanges"
+    OnCancel="() => showDiscardConfirm = false" />
+
 @code {
     private List<UserRole> roles = new();
     private List<Permission> allPermissions = new();
     private UserRole editingRole = new();
     private bool isEditing = false;
     private bool showConfirm = false;
+    private bool showDiscardConfirm = false;
     private int roleIdToDelete;
+    private bool hasChanges = false;
+
+    private class RoleEditState
+    {
+        public UserRole Role { get; set; } = new();
+        public bool IsEditing { get; set; }
+        public bool HasChanges { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HydrateTempState();
+        }
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            var result = await ProtectedSessionStore.GetAsync<RoleEditState>("RoleEditState");
+            if (result.Success && result.Value != null && result.Value.IsEditing)
+            {
+                editingRole = result.Value.Role;
+                isEditing = result.Value.IsEditing;
+                hasChanges = result.Value.HasChanges;
+                StateHasChanged();
+            }
+        }
+        catch (Exception) { }
+    }
+
+    private async Task SaveTempState()
+    {
+        try
+        {
+            var state = new RoleEditState
+            {
+                Role = editingRole,
+                IsEditing = isEditing,
+                HasChanges = hasChanges
+            };
+            await ProtectedSessionStore.SetAsync("RoleEditState", state);
+        }
+        catch (Exception) { }
+    }
+
+    private async Task HandleInput()
+    {
+        hasChanges = true;
+        await SaveTempState();
+    }
+
+    private async Task ClearTempState()
+    {
+        hasChanges = false;
+        isEditing = false;
+        try
+        {
+            await ProtectedSessionStore.DeleteAsync("RoleEditState");
+        }
+        catch (Exception) { }
     }
 
     private async Task LoadData()
@@ -137,7 +211,7 @@ else
         allPermissions = await AuthService.GetPermissionsAsync();
     }
 
-    private void StartEdit(UserRole role)
+    private async Task StartEdit(UserRole role)
     {
         editingRole = new UserRole 
         { 
@@ -147,49 +221,54 @@ else
             Permissions = new List<Permission>(role.Permissions)
         };
         isEditing = true;
+        hasChanges = false;
+        await SaveTempState();
     }
 
-    private void CancelEdit()
+    private async Task HandleCancel()
     {
-        isEditing = false;
+        if (hasChanges) showDiscardConfirm = true;
+        else await DiscardChanges();
+    }
+
+    private async Task DiscardChanges()
+    {
+        showDiscardConfirm = false;
+        await ClearTempState();
         editingRole = new UserRole();
     }
+
+    private void CancelEdit() => HandleCancel();
 
     private bool IsPermissionSelected(int permissionId)
     {
         return editingRole.Permissions.Any(p => p.Id == permissionId);
     }
 
-    private void TogglePermission(Permission permission, ChangeEventArgs e)
+    private async Task TogglePermission(Permission permission, ChangeEventArgs e)
     {
+        hasChanges = true;
         bool isChecked = (bool)(e.Value ?? false);
         if (isChecked)
         {
             if (!editingRole.Permissions.Any(p => p.Id == permission.Id))
-            {
                 editingRole.Permissions.Add(permission);
-            }
         }
         else
         {
             editingRole.Permissions.RemoveAll(p => p.Id == permission.Id);
         }
+        await SaveTempState();
     }
 
     private async Task SaveRole()
     {
         if (string.IsNullOrEmpty(editingRole.Name)) return;
 
-        if (editingRole.Id == 0)
-        {
-            await AuthService.AddUserRoleAsync(editingRole);
-        }
-        else
-        {
-            await AuthService.UpdateUserRoleAsync(editingRole);
-        }
+        if (editingRole.Id == 0) await AuthService.AddUserRoleAsync(editingRole);
+        else await AuthService.UpdateUserRoleAsync(editingRole);
 
-        isEditing = false;
+        await ClearTempState();
         await LoadData();
     }
 

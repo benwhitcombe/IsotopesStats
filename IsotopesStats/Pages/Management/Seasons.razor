@@ -2,8 +2,11 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "ManageSeasons")]
 @inject StatsService StatsService
+@inject IJSRuntime JSRuntime
+@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Seasons</PageTitle>
 
@@ -21,7 +24,7 @@
         <h4 style="margin-top:0">@(editingSeason.Id == 0 ? "Add" : "Edit") Season</h4>
         <div class="form-group">
             <label>Season Name</label>
-            <input type="text" class="form-control" @bind="editingSeason.Name" placeholder="e.g. 2026" />
+            <input type="text" class="form-control" @bind="editingSeason.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. 2026" />
         </div>
 
         @if (editingSeason.Id != 0)
@@ -42,9 +45,9 @@
             </div>
         }
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
-            <button class="view-btn active" @onclick="SaveSeason">Save Season</button>
-            <button class="view-btn" @onclick="CancelEdit">Cancel</button>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center;">
+            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="SaveSeason">Save Season</button>
+            <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
         </div>
     </div>
 }
@@ -106,6 +109,13 @@ else
     OnConfirm="DeleteSeason"
     OnCancel="() => showConfirm = false" />
 
+<ConfirmDialog 
+    IsVisible="showDiscardConfirm" 
+    Title="Discard Changes" 
+    Message="You have unsaved changes. Are you sure you want to discard them?"
+    OnConfirm="DiscardChanges"
+    OnCancel="() => showDiscardConfirm = false" />
+
 @code {
     private List<Season> seasons = new();
     private List<Player> allPlayers = new();
@@ -114,12 +124,83 @@ else
     private Season editingSeason = new();
     private bool isEditing = false;
     private bool showConfirm = false;
+    private bool showDiscardConfirm = false;
     private int seasonIdToDelete;
+    private bool hasChanges = false;
+
+    private class SeasonEditState
+    {
+        public Season Season { get; set; } = new();
+        public HashSet<int> AssignedPlayerIds { get; set; } = new();
+        public HashSet<int> OriginalPlayerIds { get; set; } = new();
+        public bool IsEditing { get; set; }
+        public bool HasChanges { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSeasons();
         allPlayers = await StatsService.GetAllPlayersAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HydrateTempState();
+        }
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            var result = await ProtectedSessionStore.GetAsync<SeasonEditState>("SeasonEditState");
+            if (result.Success && result.Value != null && result.Value.IsEditing)
+            {
+                editingSeason = result.Value.Season;
+                assignedPlayerIds = result.Value.AssignedPlayerIds;
+                originalPlayerIds = result.Value.OriginalPlayerIds;
+                isEditing = result.Value.IsEditing;
+                hasChanges = result.Value.HasChanges;
+                StateHasChanged();
+            }
+        }
+        catch (Exception) { }
+    }
+
+    private async Task SaveTempState()
+    {
+        try
+        {
+            var state = new SeasonEditState
+            {
+                Season = editingSeason,
+                AssignedPlayerIds = assignedPlayerIds,
+                OriginalPlayerIds = originalPlayerIds,
+                IsEditing = isEditing,
+                HasChanges = hasChanges
+            };
+            await ProtectedSessionStore.SetAsync("SeasonEditState", state);
+        }
+        catch (Exception) { }
+    }
+
+    private async Task HandleInput()
+    {
+        hasChanges = true;
+        await SaveTempState();
+    }
+
+    private async Task ClearTempState()
+    {
+        hasChanges = false;
+        isEditing = false;
+        try
+        {
+            await ProtectedSessionStore.DeleteAsync("SeasonEditState");
+        }
+        catch (Exception) { }
     }
 
     private async Task LoadSeasons()
@@ -129,13 +210,7 @@ else
 
     private async Task StartEdit(Season season)
     {
-        editingSeason = new Season 
-        { 
-            Id = season.Id, 
-            Name = season.Name,
-            IsDeleted = season.IsDeleted
-        };
-        
+        editingSeason = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
         assignedPlayerIds.Clear();
         originalPlayerIds.Clear();
 
@@ -150,20 +225,33 @@ else
         }
 
         isEditing = true;
+        hasChanges = false;
+        await SaveTempState();
     }
 
-    private void CancelEdit()
+    private async Task HandleCancel()
     {
-        isEditing = false;
+        if (hasChanges) showDiscardConfirm = true;
+        else await DiscardChanges();
+    }
+
+    private async Task DiscardChanges()
+    {
+        showDiscardConfirm = false;
+        await ClearTempState();
         editingSeason = new Season();
         assignedPlayerIds.Clear();
     }
 
-    private void TogglePlayer(int playerId, ChangeEventArgs e)
+    private void CancelEdit() => HandleCancel();
+
+    private async Task TogglePlayer(int playerId, ChangeEventArgs e)
     {
+        hasChanges = true;
         bool isChecked = (bool)(e.Value ?? false);
         if (isChecked) assignedPlayerIds.Add(playerId);
         else assignedPlayerIds.Remove(playerId);
+        await SaveTempState();
     }
 
     private async Task SaveSeason()
@@ -177,21 +265,13 @@ else
         else
         {
             await StatsService.UpdateSeasonAsync(editingSeason);
-
-            // Handle additions
             foreach (int playerId in assignedPlayerIds.Except(originalPlayerIds))
-            {
                 await StatsService.AddPlayerToSeasonAsync(playerId, editingSeason.Id);
-            }
-
-            // Handle removals
             foreach (int playerId in originalPlayerIds.Except(assignedPlayerIds))
-            {
                 await StatsService.DeletePlayerFromSeasonAsync(playerId, editingSeason.Id);
-            }
         }
 
-        isEditing = false;
+        await ClearTempState();
         await LoadSeasons();
     }
 

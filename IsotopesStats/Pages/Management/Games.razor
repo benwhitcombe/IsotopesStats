@@ -42,7 +42,7 @@
             </div>
             <div class="form-group">
                 <label>Opponent</label>
-                <input type="text" class="form-control" placeholder="Opponent Name" @bind="editingGame.Opponent" @bind:event="oninput" @onkeyup="SaveTempState" />
+                <input type="text" class="form-control" placeholder="Opponent Name" @bind="editingGame.Opponent" @bind:event="oninput" @onkeyup="HandleInput" />
             </div>
             <div class="form-group">
                 <label>Game Type</label>
@@ -116,20 +116,20 @@
                                 <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
                                 <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
                                 <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="SaveTempState" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="SaveTempState" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="SaveTempState" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="HandleInput" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="HandleInput" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                             </tr>
                         }
                     </tbody>
@@ -177,20 +177,20 @@
                             </div>
                         </div>
                         <div class="admin-stats-grid">
-                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="SaveTempState" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="SaveTempState" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="SaveTempState" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="HandleInput" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="HandleInput" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="HandleInput" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
                         </div>
                     </div>
                 }
@@ -469,7 +469,6 @@ else
 
     private async Task SaveTempState()
     {
-        hasChanges = true;
         try
         {
             var state = new GameEditState
@@ -483,6 +482,12 @@ else
             await ProtectedSessionStore.SetAsync("GameEditState", state);
         }
         catch (Exception) { }
+    }
+
+    private async Task HandleInput()
+    {
+        hasChanges = true;
+        await SaveTempState();
     }
 
     private async Task ClearTempState()
@@ -518,6 +523,7 @@ else
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
+            hasChanges = true;
             editingGame.SeasonId = id;
             await LoadSeasonRoster();
             playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
@@ -530,6 +536,7 @@ else
     {
         if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
         {
+            hasChanges = true;
             editingGame.Date = date;
             await SaveTempState();
         }
@@ -539,6 +546,7 @@ else
     {
         if (Enum.TryParse(e.Value?.ToString(), out GameType type))
         {
+            hasChanges = true;
             editingGame.Type = type;
             await SaveTempState();
         }
@@ -622,6 +630,7 @@ else
 
     private async Task TogglePlayerInLineup(Player player, ChangeEventArgs e)
     {
+        hasChanges = true;
         bool isChecked = (bool)(e.Value ?? false);
         if (isChecked)
         {
@@ -674,6 +683,7 @@ else
 
         if (oldIndex != -1 && newIndex != -1)
         {
+            hasChanges = true;
             playerStats.RemoveAt(oldIndex);
             playerStats.Insert(newIndex, draggedStat);
             ReassignBO();
