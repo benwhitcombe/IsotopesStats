@@ -24,12 +24,12 @@
         <h4 style="margin-top:0">Add User</h4>
         <div class="form-group">
             <label>Email</label>
-            <input type="email" class="form-control" @bind="newUserEmail" @bind:event="oninput" @onkeyup="SaveTempState" placeholder="user@isotopes.com" autocomplete="off" />
+            <input type="email" class="form-control" @bind="newUserEmail" @bind:event="oninput" @onkeyup="HandleInput" placeholder="user@isotopes.com" autocomplete="off" />
         </div>
         <div class="form-group">
             <label>Password</label>
             <div style="position: relative;">
-                <input type="@(showNewUserPassword ? "text" : "password")" class="form-control" @bind="newUserPassword" @bind:event="oninput" @onkeyup="SaveTempState" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                <input type="@(showNewUserPassword ? "text" : "password")" class="form-control" @bind="newUserPassword" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
                 <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                     <PasswordToggleIcon IsVisible="@showNewUserPassword" />
                 </button>
@@ -188,7 +188,6 @@ else
 
     private async Task SaveTempState()
     {
-        hasChanges = true;
         try
         {
             var state = new UserEditState
@@ -202,6 +201,12 @@ else
             await ProtectedSessionStore.SetAsync("UserEditState", state);
         }
         catch (Exception) { }
+    }
+
+    private async Task HandleInput()
+    {
+        hasChanges = true;
+        await SaveTempState();
     }
 
     private async Task ClearTempState()
@@ -232,6 +237,9 @@ else
 
     private async Task StartAdd()
     {
+        newUserEmail = "";
+        newUserPassword = "";
+        newUserRoleId = 0;
         isAdding = true;
         hasChanges = false;
         await SaveTempState();
@@ -256,12 +264,13 @@ else
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
+            hasChanges = true;
             newUserRoleId = id;
             await SaveTempState();
         }
     }
 
-    private async Task TogglePassword()
+    private void TogglePassword()
     {
         showNewUserPassword = !showNewUserPassword;
     }

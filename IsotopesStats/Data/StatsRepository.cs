@@ -196,10 +196,12 @@ public class StatsRepository
             @"
                 SELECT 
                     s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
-                    p.Name, g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type, g.IsDeleted
+                    p.Name, g.GameNumber, g.Date, g.Diamond, g.OpponentId, g.Type, g.IsDeleted,
+                    o.Name as OpponentName
                 FROM Stats s
                 JOIN Players p ON s.PlayerId = p.Id
                 JOIN Games g ON s.GameId = g.Id
+                LEFT JOIN Opponents o ON g.OpponentId = o.Id
                 WHERE g.SeasonId = $seasonId AND g.IsDeleted = 0
                 ORDER BY g.Date DESC, s.BO ASC
             ";
@@ -237,9 +239,10 @@ public class StatsRepository
                             GameNumber = reader.GetInt32(19),
                             Date = DateTime.Parse(reader.GetString(20)),
                             Diamond = reader.GetString(21),
-                            Opponent = reader.GetString(22),
+                            OpponentId = reader.GetInt32(22),
                             Type = (GameType)reader.GetInt32(23),
-                            IsDeleted = reader.GetInt32(24) == 1
+                            IsDeleted = reader.GetInt32(24) == 1,
+                            Opponent = new Opponent { Id = reader.GetInt32(22), Name = reader.IsDBNull(25) ? "Unknown" : reader.GetString(25) }
                         }
                     });
                 }
@@ -260,10 +263,12 @@ public class StatsRepository
             @"
                 SELECT 
                     s.Id, s.PlayerId, s.GameId, s.BO, s.H1B, s.H2B, s.H3B, s.H4B, s.HR, s.FC, s.BB, s.SF, s.K, s.KF, s.GO, s.FO, s.R, s.RBI,
-                    g.GameNumber, g.Date, g.Diamond, g.Opponent, g.Type, g.IsDeleted
+                    g.GameNumber, g.Date, g.Diamond, g.OpponentId, g.Type, g.IsDeleted,
+                    o.Name as OpponentName
                 FROM Stats s
                 JOIN Games g ON s.GameId = g.Id
                 JOIN Players p ON s.PlayerId = p.Id
+                LEFT JOIN Opponents o ON g.OpponentId = o.Id
                 WHERE p.Name = $playerName AND g.SeasonId = $seasonId AND g.IsDeleted = 0
                 ORDER BY g.Date DESC
             ";
@@ -301,9 +306,10 @@ public class StatsRepository
                             GameNumber = reader.GetInt32(18),
                             Date = DateTime.Parse(reader.GetString(19)),
                             Diamond = reader.GetString(20),
-                            Opponent = reader.GetString(21),
+                            OpponentId = reader.GetInt32(21),
                             Type = (GameType)reader.GetInt32(22),
-                            IsDeleted = reader.GetInt32(23) == 1
+                            IsDeleted = reader.GetInt32(23) == 1,
+                            Opponent = new Opponent { Id = reader.GetInt32(21), Name = reader.IsDBNull(24) ? "Unknown" : reader.GetString(24) }
                         }
                     });
                 }
@@ -318,7 +324,14 @@ public class StatsRepository
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT Id, SeasonId, GameNumber, Date, Diamond, Opponent, Type, IsDeleted FROM Games WHERE Id = $id AND IsDeleted = 0";
+            command.CommandText = 
+            @"
+                SELECT g.Id, g.SeasonId, g.GameNumber, g.Date, g.Diamond, g.OpponentId, g.Type, g.IsDeleted,
+                       o.Name as OpponentName
+                FROM Games g 
+                LEFT JOIN Opponents o ON g.OpponentId = o.Id
+                WHERE g.Id = $id AND g.IsDeleted = 0
+            ";
             command.Parameters.AddWithValue("$id", gameId);
 
             using (SqliteDataReader reader = await command.ExecuteReaderAsync())
@@ -332,9 +345,10 @@ public class StatsRepository
                         GameNumber = reader.GetInt32(2),
                         Date = DateTime.Parse(reader.GetString(3)),
                         Diamond = reader.GetString(4),
-                        Opponent = reader.GetString(5),
+                        OpponentId = reader.GetInt32(5),
                         Type = (GameType)reader.GetInt32(6),
-                        IsDeleted = reader.GetInt32(7) == 1
+                        IsDeleted = reader.GetInt32(7) == 1,
+                        Opponent = new Opponent { Id = reader.GetInt32(5), Name = reader.IsDBNull(8) ? "Unknown" : reader.GetString(8) }
                     };
                 }
             }
@@ -414,7 +428,7 @@ public class StatsRepository
                         GameNumber = $gameNumber, 
                         Date = $date, 
                         Diamond = $diamond, 
-                        Opponent = $opponent, 
+                        OpponentId = $opponentId, 
                         Type = $type
                     WHERE Id = $id
                 ";
@@ -422,7 +436,7 @@ public class StatsRepository
                 gameCommand.Parameters.AddWithValue("$gameNumber", game.GameNumber);
                 gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm:ss"));
                 gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);
-                gameCommand.Parameters.AddWithValue("$opponent", game.Opponent);
+                gameCommand.Parameters.AddWithValue("$opponentId", game.OpponentId);
                 gameCommand.Parameters.AddWithValue("$type", (int)game.Type);
                 gameCommand.Parameters.AddWithValue("$id", game.Id);
                 await gameCommand.ExecuteNonQueryAsync();
@@ -494,15 +508,15 @@ public class StatsRepository
                 gameCommand.Transaction = transaction;
                 gameCommand.CommandText = 
                 @"
-                    INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, Opponent, Type, IsDeleted)
-                    VALUES ($seasonId, $gameNumber, $date, $diamond, $opponent, $type, 0);
+                    INSERT INTO Games (SeasonId, GameNumber, Date, Diamond, OpponentId, Type, IsDeleted)
+                    VALUES ($seasonId, $gameNumber, $date, $diamond, $opponentId, $type, 0);
                     SELECT last_insert_rowid();
                 ";
                 gameCommand.Parameters.AddWithValue("$seasonId", game.SeasonId);
                 gameCommand.Parameters.AddWithValue("$gameNumber", game.GameNumber);
                 gameCommand.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm:ss"));
                 gameCommand.Parameters.AddWithValue("$diamond", game.Diamond);
-                gameCommand.Parameters.AddWithValue("$opponent", game.Opponent);
+                gameCommand.Parameters.AddWithValue("$opponentId", game.OpponentId);
                 gameCommand.Parameters.AddWithValue("$type", (int)game.Type);
 
                 int gameId = Convert.ToInt32(await gameCommand.ExecuteScalarAsync());
@@ -590,7 +604,7 @@ public class StatsRepository
                     GameNumber = $gameNumber, 
                     Date = $date, 
                     Diamond = $diamond, 
-                    Opponent = $opponent, 
+                    OpponentId = $opponentId, 
                     Type = $type
                 WHERE Id = $id
             ";
@@ -598,7 +612,7 @@ public class StatsRepository
             command.Parameters.AddWithValue("$gameNumber", game.GameNumber);
             command.Parameters.AddWithValue("$date", game.Date.ToString("yyyy-MM-dd HH:mm:ss"));
             command.Parameters.AddWithValue("$diamond", game.Diamond);
-            command.Parameters.AddWithValue("$opponent", game.Opponent);
+            command.Parameters.AddWithValue("$opponentId", game.OpponentId);
             command.Parameters.AddWithValue("$type", (int)game.Type);
             command.Parameters.AddWithValue("$id", game.Id);
             await command.ExecuteNonQueryAsync();
@@ -808,5 +822,195 @@ public class StatsRepository
             }
         }
         return players;
+    }
+
+    public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
+    {
+        List<Opponent> opponents = new List<Opponent>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT o.Id, o.Name, o.IsDeleted
+                FROM Opponents o 
+                JOIN SeasonOpponents so ON o.Id = so.OpponentId 
+                WHERE so.SeasonId = $seasonId AND o.IsDeleted = 0
+                ORDER BY o.Name
+            ";
+            command.Parameters.AddWithValue("$seasonId", seasonId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    opponents.Add(new Opponent
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        IsDeleted = reader.GetInt32(2) == 1
+                    });
+                }
+            }
+        }
+        return opponents;
+    }
+
+    public async Task<List<Opponent>> GetAllOpponentsAsync()
+    {
+        List<Opponent> opponents = new List<Opponent>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, Name, IsDeleted FROM Opponents WHERE IsDeleted = 0 ORDER BY Name";
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    opponents.Add(new Opponent
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        IsDeleted = reader.GetInt32(2) == 1
+                    });
+                }
+            }
+        }
+        return opponents;
+    }
+
+    public async Task AddOpponentAsync(Opponent opponent, int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand checkCmd = connection.CreateCommand();
+                checkCmd.Transaction = transaction;
+                checkCmd.CommandText = "SELECT Id FROM Opponents WHERE Name = $name AND IsDeleted = 0";
+                checkCmd.Parameters.AddWithValue("$name", opponent.Name);
+                object? id = await checkCmd.ExecuteScalarAsync();
+                int opponentId;
+
+                if (id == null)
+                {
+                    SqliteCommand insertCmd = connection.CreateCommand();
+                    insertCmd.Transaction = transaction;
+                    insertCmd.CommandText = "INSERT INTO Opponents (Name, IsDeleted) VALUES ($name, 0); SELECT last_insert_rowid();";
+                    insertCmd.Parameters.AddWithValue("$name", opponent.Name);
+                    opponentId = Convert.ToInt32(await insertCmd.ExecuteScalarAsync());
+                }
+                else
+                {
+                    opponentId = Convert.ToInt32(id);
+                }
+
+                if (seasonId != 0)
+                {
+                    SqliteCommand rosterCmd = connection.CreateCommand();
+                    rosterCmd.Transaction = transaction;
+                    rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonOpponents (SeasonId, OpponentId) VALUES ($seasonId, $opponentId)";
+                    rosterCmd.Parameters.AddWithValue("$seasonId", seasonId);
+                    rosterCmd.Parameters.AddWithValue("$opponentId", opponentId);
+                    await rosterCmd.ExecuteNonQueryAsync();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+    }
+
+    public async Task UpdateOpponentAsync(Opponent opponent)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE Opponents SET Name = $name WHERE Id = $id";
+            command.Parameters.AddWithValue("$name", opponent.Name);
+            command.Parameters.AddWithValue("$id", opponent.Id);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task DeleteOpponentAsync(int opponentId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE Opponents SET IsDeleted = 1 WHERE Id = $id";
+            command.Parameters.AddWithValue("$id", opponentId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "INSERT OR IGNORE INTO SeasonOpponents (SeasonId, OpponentId) VALUES ($seasonId, $opponentId)";
+            command.Parameters.AddWithValue("$seasonId", seasonId);
+            command.Parameters.AddWithValue("$opponentId", opponentId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM SeasonOpponents WHERE OpponentId = $opponentId AND SeasonId = $seasonId";
+            command.Parameters.AddWithValue("$opponentId", opponentId);
+            command.Parameters.AddWithValue("$seasonId", seasonId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
+    {
+        List<Season> seasons = new List<Season>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                SELECT s.Id, s.Name, s.IsDeleted
+                FROM Seasons s
+                JOIN SeasonOpponents so ON s.Id = so.SeasonId
+                WHERE so.OpponentId = $opponentId AND s.IsDeleted = 0
+                ORDER BY s.Name DESC
+            ";
+            command.Parameters.AddWithValue("$opponentId", opponentId);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    seasons.Add(new Season
+                    {
+                        Id = reader.GetInt32(0),
+                        Name = reader.GetString(1),
+                        IsDeleted = reader.GetInt32(2) == 1
+                    });
+                }
+            }
+        }
+        return seasons;
     }
 }

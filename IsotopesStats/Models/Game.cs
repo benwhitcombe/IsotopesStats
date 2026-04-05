@@ -14,7 +14,8 @@ public class Game
     public int GameNumber { get; set; }
     public DateTime Date { get; set; }
     public string Diamond { get; set; } = string.Empty;
-    public string Opponent { get; set; } = string.Empty;
+    public int OpponentId { get; set; }
+    public Opponent? Opponent { get; set; }
     public GameType Type { get; set; } = GameType.RegularSeason;
     public bool IsDeleted { get; set; } = false;
 }

@@ -42,7 +42,13 @@
             </div>
             <div class="form-group">
                 <label>Opponent</label>
-                <input type="text" class="form-control" placeholder="Opponent Name" @bind="editingGame.Opponent" @bind:event="oninput" @onkeyup="HandleInput" />
+                <select class="form-control" value="@editingGame.OpponentId" @onchange="OnOpponentChange">
+                    <option value="0">-- Select Opponent --</option>
+                    @foreach (Opponent opponent in availableOpponents)
+                    {
+                        <option value="@opponent.Id">@opponent.Name</option>
+                    }
+                </select>
             </div>
             <div class="form-group">
                 <label>Game Type</label>
@@ -292,7 +298,7 @@ else
                             <tr>
                                 <td style="text-align: left;">@game.GameNumber</td>
                                 <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@game.Opponent</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@game.Opponent?.Name</td>
                                 <td style="text-align: left;">@game.Diamond</td>
                                 <td>
                                     <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
@@ -317,7 +323,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name">vs @game.Opponent</div>
+                        <div class="mobile-card-name">vs @game.Opponent?.Name</div>
                         <div class="rank-badge">#@game.GameNumber</div>
                     </div>
                     <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
@@ -407,6 +413,7 @@ else
     private List<Game> games = new();
     private List<StatEntry> playerStats = new();
     private List<Player> seasonRoster = new();
+    private List<Opponent> availableOpponents = new();
     private Game editingGame = new() { Date = DateTime.Now };
     private int selectedSeasonId;
     private bool isEditing = false;
@@ -461,6 +468,8 @@ else
                 seasonRoster = result.Value.Roster;
                 isEditing = result.Value.IsEditing;
                 hasChanges = result.Value.HasChanges;
+                
+                await LoadAvailableOpponents();
                 StateHasChanged();
             }
         }
@@ -526,8 +535,19 @@ else
             hasChanges = true;
             editingGame.SeasonId = id;
             await LoadSeasonRoster();
+            await LoadAvailableOpponents();
             playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
             ReassignBO();
+            await SaveTempState();
+        }
+    }
+
+    private async Task OnOpponentChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            hasChanges = true;
+            editingGame.OpponentId = id;
             await SaveTempState();
         }
     }
@@ -557,6 +577,11 @@ else
         seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
     }
 
+    private async Task LoadAvailableOpponents()
+    {
+        availableOpponents = await StatsService.GetOpponentsAsync(editingGame.SeasonId);
+    }
+
     private void ToggleSeasonModal()
     {
         showSeasonModal = !showSeasonModal;
@@ -573,6 +598,7 @@ else
     {
         editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
         await LoadSeasonRoster();
+        await LoadAvailableOpponents();
         int order = 1;
         playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
         isEditing = true;
@@ -589,12 +615,13 @@ else
             GameNumber = game.GameNumber, 
             Date = game.Date, 
             Diamond = game.Diamond, 
-            Opponent = game.Opponent, 
+            OpponentId = game.OpponentId, 
             Type = game.Type,
             IsDeleted = game.IsDeleted
         };
         
         await LoadSeasonRoster();
+        await LoadAvailableOpponents();
         playerStats = await StatsService.GetGameStatsAsync(game.Id);
         playerStats = playerStats.OrderBy(s => s.BO).ToList();
         isEditing = true;
@@ -624,7 +651,7 @@ else
         seasonRoster.Clear();
     }
 
-    private void CancelEdit() => HandleCancel();
+    private async Task CancelEdit() => await HandleCancel();
 
     private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
 

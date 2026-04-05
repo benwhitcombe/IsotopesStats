@@ -121,4 +121,44 @@ public class StatsService
     {
         return await _repository.GetAllPlayersAsync();
     }
+
+    public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
+    {
+        return await _repository.GetOpponentsAsync(seasonId);
+    }
+
+    public async Task<List<Opponent>> GetAllOpponentsAsync()
+    {
+        return await _repository.GetAllOpponentsAsync();
+    }
+
+    public async Task AddOpponentAsync(Opponent opponent, int seasonId)
+    {
+        await _repository.AddOpponentAsync(opponent, seasonId);
+    }
+
+    public async Task UpdateOpponentAsync(Opponent opponent)
+    {
+        await _repository.UpdateOpponentAsync(opponent);
+    }
+
+    public async Task DeleteOpponentAsync(int opponentId)
+    {
+        await _repository.DeleteOpponentAsync(opponentId);
+    }
+
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId)
+    {
+        await _repository.AddOpponentToSeasonAsync(opponentId, seasonId);
+    }
+
+    public async Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId)
+    {
+        await _repository.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
+    }
+
+    public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
+    {
+        return await _repository.GetSeasonsForOpponentAsync(opponentId);
+    }
 }

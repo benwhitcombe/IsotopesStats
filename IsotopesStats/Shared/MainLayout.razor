@@ -88,6 +88,11 @@
                                         <span>👥</span> Players
                                     </NavLink>
                                 </AuthorizeView>
+                                <AuthorizeView Policy="ManageOpponents" Context="pContext">
+                                    <NavLink href="management/opponents" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                        <span>🛡️</span> Opponents
+                                    </NavLink>
+                                </AuthorizeView>
                                 <AuthorizeView Policy="ManageSeasons" Context="pContext">
                                     <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🗓️</span> Seasons
@@ -143,6 +148,9 @@
                             </AuthorizeView>
                             <AuthorizeView Policy="ManagePlayers" Context="pContext">
                                 <NavLink href="management/players">Players</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="ManageOpponents" Context="pContext">
+                                <NavLink href="management/opponents">Opponents</NavLink>
                             </AuthorizeView>
                             <AuthorizeView Policy="ManageSeasons" Context="pContext">
                                 <NavLink href="management/seasons">Seasons</NavLink>
@@ -204,6 +212,7 @@
         return user.HasClaim(c => c.Type == "Permission" && 
             (c.Value == "ManageGames" || 
              c.Value == "ManagePlayers" || 
+             c.Value == "ManageOpponents" || 
              c.Value == "ManageSeasons" || 
              c.Value == "ManageUsers" || 
              c.Value == "ManageRoles"));

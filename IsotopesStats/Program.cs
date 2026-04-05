@@ -19,6 +19,7 @@ builder.Services.AddAuthorizationCore(options =>
 {
     options.AddPolicy("ManageGames", policy => policy.RequireClaim("Permission", "ManageGames"));
     options.AddPolicy("ManagePlayers", policy => policy.RequireClaim("Permission", "ManagePlayers"));
+    options.AddPolicy("ManageOpponents", policy => policy.RequireClaim("Permission", "ManageOpponents"));
     options.AddPolicy("ManageSeasons", policy => policy.RequireClaim("Permission", "ManageSeasons"));
     options.AddPolicy("ManageUsers", policy => policy.RequireClaim("Permission", "ManageUsers"));
     options.AddPolicy("ManageRoles", policy => policy.RequireClaim("Permission", "ManageRoles"));
@@ -46,7 +47,7 @@ try
         
         // 1. Seed Permissions
         List<Permission> existingPermissions = await authService.GetPermissionsAsync();
-        string[] permissionNames = { "ManageGames", "ManagePlayers", "ManageSeasons", "ManageUsers", "ManageRoles" };
+        string[] permissionNames = { "ManageGames", "ManagePlayers", "ManageOpponents", "ManageSeasons", "ManageUsers", "ManageRoles" };
         
         using (SqliteConnection connection = new SqliteConnection("Data Source=Data/IsotopesStats.db"))
         {
@@ -67,6 +68,7 @@ try
         List<Permission> allPermissions = await authService.GetPermissionsAsync();
         Permission pGames = allPermissions.First(p => p.Name == "ManageGames");
         Permission pPlayers = allPermissions.First(p => p.Name == "ManagePlayers");
+        Permission pOpponents = allPermissions.First(p => p.Name == "ManageOpponents");
         Permission pSeasons = allPermissions.First(p => p.Name == "ManageSeasons");
         Permission pUsers = allPermissions.First(p => p.Name == "ManageUsers");
         Permission pRoles = allPermissions.First(p => p.Name == "ManageRoles");
@@ -80,7 +82,7 @@ try
         }
         if (!existingRoles.Any(r => r.Name == "Team Rep"))
         {
-            await authService.AddUserRoleAsync(new UserRole { Name = "Team Rep", Permissions = new List<Permission> { pGames, pPlayers, pSeasons } });
+            await authService.AddUserRoleAsync(new UserRole { Name = "Team Rep", Permissions = new List<Permission> { pGames, pPlayers, pOpponents, pSeasons } });
         }
         if (!existingRoles.Any(r => r.Name == "Scorekeeper"))
         {

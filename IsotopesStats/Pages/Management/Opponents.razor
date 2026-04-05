@@ -1,34 +1,34 @@
-@page "/management/players"
+@page "/management/opponents"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@attribute [Authorize(Policy = "ManagePlayers")]
+@attribute [Authorize(Policy = "ManageOpponents")]
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject ProtectedSessionStorage ProtectedSessionStore
 
-<PageTitle>Isotopes - Manage Players</PageTitle>
+<PageTitle>Isotopes - Manage Opponents</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">Manage Players</h3>
+    <h3 style="margin:0">Manage Opponents</h3>
     @if (!isEditing)
     {
-        <button class="view-btn active" @onclick="() => StartEdit(new Player())">Add New Player</button>
+        <button class="view-btn active" @onclick="() => StartEdit(new Opponent())">Add New Opponent</button>
     }
 </div>
 
 @if (isEditing)
 {
     <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
-        <h4 style="margin-top:0">@(editingPlayer.Id == 0 ? "Add" : "Edit") Player</h4>
+        <h4 style="margin-top:0">@(editingOpponent.Id == 0 ? "Add" : "Edit") Opponent</h4>
         <div class="form-group">
-            <label>Player Name</label>
-            <input type="text" class="form-control" @bind="editingPlayer.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. John Doe" />
+            <label>Opponent Name</label>
+            <input type="text" class="form-control" @bind="editingOpponent.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. Springfield Atoms" />
         </div>
         
         <div class="form-group" style="margin-top: 1.5rem;">
-            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Seasons Participation</label>
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Seasons Faced</label>
             <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (Season season in allSeasons)
                 {
@@ -43,7 +43,7 @@
         </div>
 
         <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center;">
-            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="SavePlayer">Save Player</button>
+            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="SaveOpponent">Save Opponent</button>
             <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
         </div>
     </div>
@@ -61,13 +61,13 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (Player player in players)
+                        @foreach (Opponent opponent in opponents)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@opponent.Name</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" @onclick="() => StartEdit(player)">Edit / Seasons</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
+                                    <button class="view-btn" @onclick="() => StartEdit(opponent)">Edit / Seasons</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -79,15 +79,15 @@ else
 
     <div class="mobile-only">
         <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
-            @foreach (Player player in players)
+            @foreach (Opponent opponent in opponents)
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name">@player.Name</div>
+                        <div class="mobile-card-name">@opponent.Name</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(player)">Edit</button>
-                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
+                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(opponent)">Edit</button>
+                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
                     </div>
                 </div>
             }
@@ -97,9 +97,9 @@ else
 
 <ConfirmDialog 
     IsVisible="showConfirm" 
-    Title="Delete Player" 
-    Message="Are you sure you want to delete this player?"
-    OnConfirm="DeletePlayer"
+    Title="Delete Opponent" 
+    Message="Are you sure you want to delete this opponent?"
+    OnConfirm="DeleteOpponent"
     OnCancel="() => showConfirm = false" />
 
 <ConfirmDialog 
@@ -110,20 +110,20 @@ else
     OnCancel="() => showDiscardConfirm = false" />
 
 @code {
-    private List<Player> players = new();
+    private List<Opponent> opponents = new();
     private List<Season> allSeasons = new();
     private HashSet<int> assignedSeasonIds = new();
     private HashSet<int> originalSeasonIds = new();
-    private Player editingPlayer = new();
+    private Opponent editingOpponent = new();
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
-    private int playerIdToDelete;
+    private int opponentIdToDelete;
     private bool hasChanges = false;
 
-    private class PlayerEditState
+    private class OpponentEditState
     {
-        public Player Player { get; set; } = new();
+        public Opponent Opponent { get; set; } = new();
         public HashSet<int> AssignedSeasonIds { get; set; } = new();
         public HashSet<int> OriginalSeasonIds { get; set; } = new();
         public bool IsEditing { get; set; }
@@ -133,7 +133,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         allSeasons = await StatsService.GetSeasonsAsync();
-        await LoadPlayers();
+        await LoadOpponents();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -148,10 +148,10 @@ else
     {
         try
         {
-            var result = await ProtectedSessionStore.GetAsync<PlayerEditState>("PlayerEditState");
+            var result = await ProtectedSessionStore.GetAsync<OpponentEditState>("OpponentEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
-                editingPlayer = result.Value.Player;
+                editingOpponent = result.Value.Opponent;
                 assignedSeasonIds = result.Value.AssignedSeasonIds;
                 originalSeasonIds = result.Value.OriginalSeasonIds;
                 isEditing = result.Value.IsEditing;
@@ -166,15 +166,15 @@ else
     {
         try
         {
-            var state = new PlayerEditState
+            var state = new OpponentEditState
             {
-                Player = editingPlayer,
+                Opponent = editingOpponent,
                 AssignedSeasonIds = assignedSeasonIds,
                 OriginalSeasonIds = originalSeasonIds,
                 IsEditing = isEditing,
                 HasChanges = hasChanges
             };
-            await ProtectedSessionStore.SetAsync("PlayerEditState", state);
+            await ProtectedSessionStore.SetAsync("OpponentEditState", state);
         }
         catch (Exception) { }
     }
@@ -191,26 +191,26 @@ else
         isEditing = false;
         try
         {
-            await ProtectedSessionStore.DeleteAsync("PlayerEditState");
+            await ProtectedSessionStore.DeleteAsync("OpponentEditState");
         }
         catch (Exception) { }
     }
 
-    private async Task LoadPlayers()
+    private async Task LoadOpponents()
     {
-        players = await StatsService.GetAllPlayersAsync();
+        opponents = await StatsService.GetAllOpponentsAsync();
     }
 
-    private async Task StartEdit(Player player)
+    private async Task StartEdit(Opponent opponent)
     {
-        editingPlayer = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
+        editingOpponent = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
         assignedSeasonIds.Clear();
         originalSeasonIds.Clear();
 
-        if (player.Id != 0)
+        if (opponent.Id != 0)
         {
-            List<Season> playerSeasons = await StatsService.GetSeasonsForPlayerAsync(player.Id);
-            foreach (Season s in playerSeasons)
+            List<Season> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
+            foreach (Season s in opponentSeasons)
             {
                 assignedSeasonIds.Add(s.Id);
                 originalSeasonIds.Add(s.Id);
@@ -232,7 +232,7 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        editingPlayer = new Player();
+        editingOpponent = new Opponent();
         assignedSeasonIds.Clear();
     }
 
@@ -247,45 +247,45 @@ else
         await SaveTempState();
     }
 
-    private async Task SavePlayer()
+    private async Task SaveOpponent()
     {
-        if (string.IsNullOrEmpty(editingPlayer.Name)) return;
+        if (string.IsNullOrEmpty(editingOpponent.Name)) return;
 
-        if (editingPlayer.Id == 0)
+        if (editingOpponent.Id == 0)
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();
-            await StatsService.AddPlayerAsync(editingPlayer, firstSeasonId);
-            List<Player> all = await StatsService.GetAllPlayersAsync();
-            Player? newP = all.FirstOrDefault(p => p.Name == editingPlayer.Name);
-            if (newP != null)
+            await StatsService.AddOpponentAsync(editingOpponent, firstSeasonId);
+            List<Opponent> all = await StatsService.GetAllOpponentsAsync();
+            Opponent? newO = all.FirstOrDefault(o => o.Name == editingOpponent.Name);
+            if (newO != null)
             {
                 foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
-                    await StatsService.AddPlayerToSeasonAsync(newP.Id, sid);
+                    await StatsService.AddOpponentToSeasonAsync(newO.Id, sid);
             }
         }
         else
         {
-            await StatsService.UpdatePlayerAsync(editingPlayer);
+            await StatsService.UpdateOpponentAsync(editingOpponent);
             foreach (int sid in assignedSeasonIds.Except(originalSeasonIds))
-                await StatsService.AddPlayerToSeasonAsync(editingPlayer.Id, sid);
+                await StatsService.AddOpponentToSeasonAsync(editingOpponent.Id, sid);
             foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
-                await StatsService.DeletePlayerFromSeasonAsync(editingPlayer.Id, sid);
+                await StatsService.DeleteOpponentFromSeasonAsync(editingOpponent.Id, sid);
         }
 
         await ClearTempState();
-        await LoadPlayers();
+        await LoadOpponents();
     }
 
     private void ShowDeleteConfirm(int id)
     {
-        playerIdToDelete = id;
+        opponentIdToDelete = id;
         showConfirm = true;
     }
 
-    private async Task DeletePlayer()
+    private async Task DeleteOpponent()
     {
         showConfirm = false;
-        await StatsService.DeletePlayerAsync(playerIdToDelete);
-        await LoadPlayers();
+        await StatsService.DeleteOpponentAsync(opponentIdToDelete);
+        await LoadOpponents();
     }
 }

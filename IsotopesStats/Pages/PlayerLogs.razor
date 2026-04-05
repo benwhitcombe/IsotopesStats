@@ -81,7 +81,7 @@ else if (!isLoading)
                         {
                             <tr>
                                 <td style="color: #666;">@log.Game?.Date.ToString("MMM dd")</td>
-                                <td style="font-weight: bold; text-align: left;">@log.Game?.Opponent</td>
+                                <td style="font-weight: bold; text-align: left;">@log.Game?.Opponent?.Name</td>
                                 <td>@log.PA</td>
                                 <td>@log.AB</td>
                                 <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>

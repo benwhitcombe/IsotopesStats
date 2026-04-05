@@ -21,6 +21,20 @@ public static class DatabaseInitializer
                     IsDeleted INTEGER NOT NULL DEFAULT 0
                 );
 
+                CREATE TABLE IF NOT EXISTS Opponents (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Name TEXT NOT NULL,
+                    IsDeleted INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE TABLE IF NOT EXISTS SeasonOpponents (
+                    SeasonId INTEGER NOT NULL,
+                    OpponentId INTEGER NOT NULL,
+                    PRIMARY KEY (SeasonId, OpponentId),
+                    FOREIGN KEY (SeasonId) REFERENCES Seasons(Id),
+                    FOREIGN KEY (OpponentId) REFERENCES Opponents(Id)
+                );
+
                 CREATE TABLE IF NOT EXISTS Players (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Name TEXT NOT NULL,
@@ -41,10 +55,11 @@ public static class DatabaseInitializer
                     GameNumber INTEGER NOT NULL DEFAULT 0,
                     Date TEXT NOT NULL,
                     Diamond TEXT NOT NULL DEFAULT '',
-                    Opponent TEXT NOT NULL,
+                    OpponentId INTEGER NOT NULL DEFAULT 0,
                     Type INTEGER NOT NULL DEFAULT 0,
                     IsDeleted INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (SeasonId) REFERENCES Seasons(Id)
+                    FOREIGN KEY (SeasonId) REFERENCES Seasons(Id),
+                    FOREIGN KEY (OpponentId) REFERENCES Opponents(Id)
                 );
 
                 CREATE TABLE IF NOT EXISTS Stats (

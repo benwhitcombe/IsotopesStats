@@ -238,7 +238,7 @@ else
         editingRole = new UserRole();
     }
 
-    private void CancelEdit() => HandleCancel();
+    private async Task CancelEdit() => await HandleCancel();
 
     private bool IsPermissionSelected(int permissionId)
     {

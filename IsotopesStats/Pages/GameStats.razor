@@ -116,7 +116,7 @@ else if (!isLoading)
                         </div>
 
                         <div class="game-matchup">
-                            <div class="opponent-name">vs @gameInfo?.Opponent</div>
+                            <div class="opponent-name">vs @gameInfo?.Opponent?.Name</div>
                             <div class="diamond-name">📍 @gameInfo?.Diamond</div>
                         </div>
 
@@ -308,7 +308,7 @@ else if (!isLoading)
         .Where(g =>
             string.IsNullOrEmpty(filterText) ||
             g.Any(s => s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) ||    
-            (g.First().Game?.Opponent?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)       
+            (g.First().Game?.Opponent?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)       
         )
         .OrderByDescending(g => g.First().Game?.Date);
 
