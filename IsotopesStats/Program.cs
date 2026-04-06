@@ -99,7 +99,7 @@ try
         {
             List<UserRole> roles = await authService.GetUserRolesAsync();
             UserRole adminRole = roles.First(r => r.Name == "Administrator");
-            await authService.RegisterAsync("admin@isotopes.com", "Admin123!", adminRole.Id);
+            await authService.RegisterAsync("admin@isotopes.com", "Admin123!", new List<int> { adminRole.Id });
             Console.WriteLine("Initial admin user created: admin@isotopes.com / Admin123!");
         }
     }

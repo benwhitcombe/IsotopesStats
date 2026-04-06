@@ -73,15 +73,19 @@
             </div>
         }
 
-        <div class="form-group">
-            <label>Role</label>
-            <select class="form-control" value="@roleId" @onchange="OnRoleChange">
-                <option value="0">-- Select Role --</option>
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Roles</label>
+            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (UserRole role in availableRoles)
                 {
-                    <option value="@role.Id">@role.Name</option>
+                    <div class="selectable-item">
+                        <input type="checkbox" id="r-@role.Id" 
+                               checked="@selectedRoleIds.Contains(role.Id)"
+                               @onchange="(e) => ToggleRole(role.Id, e)" />
+                        <label class="selectable-label" for="r-@role.Id">@role.Name</label>
+                    </div>
                 }
-            </select>
+            </div>
         </div>
         
         @if (!string.IsNullOrEmpty(errorMessage))
@@ -106,7 +110,7 @@ else
                     <thead>
                         <tr>
                             <th style="text-align: left;">Email</th>
-                            <th>Role</th>
+                            <th>Roles</th>
                             <th style="text-align: left;">Created</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
@@ -117,9 +121,21 @@ else
                             <tr>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@user.Email</td>
                                 <td>
-                                    <span class="badge @GetRoleBadgeClass(user.Role?.Name)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                        @(user.Role?.Name ?? "Unknown")
-                                    </span>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;">
+                                        @if (user.Roles.Any())
+                                        {
+                                            @foreach (UserRole role in user.Roles)
+                                            {
+                                                <span class="badge @GetRoleBadgeClass(role.Name)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                                    @role.Name
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary" style="padding: 0.4rem 0.8rem; border-radius: 20px;">None</span>
+                                        }
+                                    </div>
                                 </td>
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
@@ -141,9 +157,21 @@ else
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
                         <div class="mobile-card-name">@user.Email</div>
-                        <span class="badge @GetRoleBadgeClass(user.Role?.Name)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
-                            @(user.Role?.Name ?? "Unknown")
-                        </span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                            @if (user.Roles.Any())
+                            {
+                                @foreach (UserRole role in user.Roles)
+                                {
+                                    <span class="badge @GetRoleBadgeClass(role.Name)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                                        @role.Name
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">None</span>
+                            }
+                        </div>
                     </div>
                     <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
                         <strong>Created:</strong> @user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
@@ -182,7 +210,7 @@ else
     private string userEmail = "";
     private string password = "";
     private string confirmPassword = "";
-    private int roleId = 0;
+    private HashSet<int> selectedRoleIds = new();
     
     private bool showPassword = false;
     private bool showPasswordFields = false;
@@ -199,7 +227,7 @@ else
         public string Email { get; set; } = "";
         public string Password { get; set; } = "";
         public string ConfirmPassword { get; set; } = "";
-        public int RoleId { get; set; }
+        public HashSet<int> SelectedRoleIds { get; set; } = new();
         public bool IsAdding { get; set; }
         public bool IsEditing { get; set; }
         public bool HasChanges { get; set; }
@@ -230,7 +258,7 @@ else
                 userEmail = result.Value.Email;
                 password = result.Value.Password;
                 confirmPassword = result.Value.ConfirmPassword;
-                roleId = result.Value.RoleId;
+                selectedRoleIds = result.Value.SelectedRoleIds;
                 isAdding = result.Value.IsAdding;
                 isEditing = result.Value.IsEditing;
                 hasChanges = result.Value.HasChanges;
@@ -251,7 +279,7 @@ else
                 Email = userEmail,
                 Password = password,
                 ConfirmPassword = confirmPassword,
-                RoleId = roleId,
+                SelectedRoleIds = selectedRoleIds,
                 IsAdding = isAdding,
                 IsEditing = isEditing,
                 HasChanges = hasChanges,
@@ -300,7 +328,7 @@ else
         userEmail = "";
         password = "";
         confirmPassword = "";
-        roleId = 0;
+        selectedRoleIds.Clear();
         isAdding = true;
         isEditing = false;
         hasChanges = false;
@@ -314,7 +342,11 @@ else
         userEmail = user.Email;
         password = "";
         confirmPassword = "";
-        roleId = user.RoleId;
+        selectedRoleIds.Clear();
+        foreach (UserRole r in user.Roles)
+        {
+            selectedRoleIds.Add(r.Id);
+        }
         isEditing = true;
         isAdding = false;
         hasChanges = false;
@@ -335,17 +367,16 @@ else
         userEmail = "";
         password = "";
         confirmPassword = "";
-        roleId = 0;
+        selectedRoleIds.Clear();
     }
 
-    private async Task OnRoleChange(ChangeEventArgs e)
+    private async Task ToggleRole(int roleId, ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            hasChanges = true;
-            roleId = id;
-            await SaveTempState();
-        }
+        hasChanges = true;
+        bool isChecked = (bool)(e.Value ?? false);
+        if (isChecked) selectedRoleIds.Add(roleId);
+        else selectedRoleIds.Remove(roleId);
+        await SaveTempState();
     }
 
     private void TogglePassword() => showPassword = !showPassword;
@@ -368,7 +399,7 @@ else
         // 1. Basic Validation
         if (string.IsNullOrWhiteSpace(userEmail)) { errorMessage = "Email is required."; return; }
         if (!IsValidEmail(userEmail)) { errorMessage = "Invalid email format."; return; }
-        if (roleId == 0) { errorMessage = "Role is required."; return; }
+        if (!selectedRoleIds.Any()) { errorMessage = "At least one role is required."; return; }
 
         // 2. Password Validation (if adding or explicit update)
         if (isAdding || (isEditing && showPasswordFields))
@@ -386,13 +417,13 @@ else
         // 3. Save
         if (isAdding)
         {
-            bool result = await AuthService.RegisterAsync(userEmail, password, roleId);
+            bool result = await AuthService.RegisterAsync(userEmail, password, selectedRoleIds.ToList());
             if (!result) { errorMessage = "Error creating user. Email might already exist."; return; }
         }
         else
         {
             // Update User Info
-            await AuthService.UpdateUserAsync(new User { Id = editingUserId, Email = userEmail, RoleId = roleId });
+            await AuthService.UpdateUserAsync(new User { Id = editingUserId, Email = userEmail }, selectedRoleIds.ToList());
             
             // Update Password if fields are shown
             if (showPasswordFields && !string.IsNullOrEmpty(password))

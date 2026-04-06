@@ -108,9 +108,15 @@ public static class DatabaseInitializer
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Email TEXT NOT NULL UNIQUE,
                     PasswordHash TEXT NOT NULL,
-                    RoleId INTEGER NOT NULL DEFAULT 0,
                     CreatedAt TEXT NOT NULL,
-                    IsDeleted INTEGER NOT NULL DEFAULT 0,
+                    IsDeleted INTEGER NOT NULL DEFAULT 0
+                );
+
+                CREATE TABLE IF NOT EXISTS UserUserRoles (
+                    UserId INTEGER NOT NULL,
+                    RoleId INTEGER NOT NULL,
+                    PRIMARY KEY (UserId, RoleId),
+                    FOREIGN KEY (UserId) REFERENCES Users(Id),
                     FOREIGN KEY (RoleId) REFERENCES UserRoles(Id)
                 );
 

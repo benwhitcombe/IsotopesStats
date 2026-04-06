@@ -56,16 +56,26 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         List<Claim> claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
+            new Claim(ClaimTypes.Email, user.Email)
         };
 
-        if (user.Role?.Permissions != null)
+        if (user.Roles != null && user.Roles.Any())
         {
-            foreach (Permission permission in user.Role.Permissions)
+            foreach (UserRole role in user.Roles)
             {
-                claims.Add(new Claim("Permission", permission.Name));
+                claims.Add(new Claim(ClaimTypes.Role, role.Name ?? "User"));
+                if (role.Permissions != null)
+                {
+                    foreach (Permission permission in role.Permissions)
+                    {
+                        claims.Add(new Claim("Permission", permission.Name));
+                    }
+                }
             }
+        }
+        else
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "User"));
         }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
