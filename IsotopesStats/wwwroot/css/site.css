@@ -1027,13 +1027,15 @@ tr:last-child td {
 .selectable-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    grid-auto-rows: 1fr !important;
     gap: 0.75rem !important;
     width: 100% !important;
 }
 
 .selectable-item {
     position: relative !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .selectable-item input[type="checkbox"] {
@@ -1049,7 +1051,7 @@ tr:last-child td {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0.75rem 0.5rem !important;
+    padding: 0.75rem 50px !important;
     background: #fff !important;
     border: 2px solid #eee !important;
     border-radius: 12px !important;
@@ -1061,12 +1063,14 @@ tr:last-child td {
     font-size: 0.85rem !important;
     margin: 0 !important;
     min-height: 50px !important;
+    height: 100% !important;
+    width: 100% !important;
     position: relative !important;
 }
 
 .selectable-label::before {
     position: absolute !important;
-    left: 12px !important;
+    left: 8px !important;
     content: '\2610' !important;
     font-size: 1.2rem !important;
     color: #ccc !important;
