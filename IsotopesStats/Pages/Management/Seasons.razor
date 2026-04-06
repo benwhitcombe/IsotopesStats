@@ -34,12 +34,11 @@
                 <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
                     @foreach (Player player in allPlayers)
                     {
-                        <div class="selectable-item">
-                            <input type="checkbox" id="p-@player.Id" 
-                                   checked="@assignedPlayerIds.Contains(player.Id)"
-                                   @onchange="(e) => TogglePlayer(player.Id, e)" />
-                            <label class="selectable-label" for="p-@player.Id">@player.Name</label>
-                        </div>
+                        <CheckboxButton 
+                            Id="@($"p-{player.Id}")" 
+                            Text="@player.Name" 
+                            Checked="@assignedPlayerIds.Contains(player.Id)" 
+                            CheckedChanged="@((bool val) => TogglePlayer(player.Id, val))" />
                     }
                 </div>
             </div>
@@ -49,12 +48,11 @@
                 <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
                     @foreach (Opponent opponent in allOpponents)
                     {
-                        <div class="selectable-item">
-                            <input type="checkbox" id="o-@opponent.Id" 
-                                   checked="@assignedOpponentIds.Contains(opponent.Id)"
-                                   @onchange="(e) => ToggleOpponent(opponent.Id, e)" />
-                            <label class="selectable-label" for="o-@opponent.Id">@opponent.Name</label>
-                        </div>
+                        <CheckboxButton 
+                            Id="@($"o-{opponent.Id}")" 
+                            Text="@opponent.Name" 
+                            Checked="@assignedOpponentIds.Contains(opponent.Id)" 
+                            CheckedChanged="@((bool val) => ToggleOpponent(opponent.Id, val))" />
                     }
                 </div>
             </div>
@@ -292,19 +290,17 @@ else
 
     private async Task CancelEdit() => await HandleCancel();
 
-    private async Task TogglePlayer(int playerId, ChangeEventArgs e)
+    private async Task TogglePlayer(int playerId, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked) assignedPlayerIds.Add(playerId);
         else assignedPlayerIds.Remove(playerId);
         await SaveTempState();
     }
 
-    private async Task ToggleOpponent(int opponentId, ChangeEventArgs e)
+    private async Task ToggleOpponent(int opponentId, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked) assignedOpponentIds.Add(opponentId);
         else assignedOpponentIds.Remove(opponentId);
         await SaveTempState();

@@ -32,12 +32,11 @@
             <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (Permission permission in allPermissions)
                 {
-                    <div class="selectable-item">
-                        <input type="checkbox" id="p-@permission.Id" 
-                               checked="@IsPermissionSelected(permission.Id)"
-                               @onchange="(e) => TogglePermission(permission, e)" />
-                        <label class="selectable-label" for="p-@permission.Id">@permission.Name</label>
-                    </div>
+                    <CheckboxButton 
+                        Id="@($"p-{permission.Id}")" 
+                        Text="@permission.Name" 
+                        Checked="@IsPermissionSelected(permission.Id)" 
+                        CheckedChanged="@((bool val) => OnPermissionToggled(permission, val))" />
                 }
             </div>
         </div>
@@ -245,10 +244,9 @@ else
         return editingRole.Permissions.Any(p => p.Id == permissionId);
     }
 
-    private async Task TogglePermission(Permission permission, ChangeEventArgs e)
+    private async Task OnPermissionToggled(Permission permission, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked)
         {
             if (!editingRole.Permissions.Any(p => p.Id == permission.Id))

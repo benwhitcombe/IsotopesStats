@@ -66,12 +66,11 @@
             <div class="selectable-grid" style="background: #f9f9f9; padding: 0.75rem; border-radius: 12px; border: 1px solid #eee;">
                 @foreach (Player player in seasonRoster)
                 {
-                    <div class="selectable-item">
-                        <input type="checkbox" id="gl-@player.Id" 
-                               checked="@IsPlayerInLineup(player.Id)"
-                               @onchange="(e) => TogglePlayerInLineup(player, e)" />
-                        <label class="selectable-label" for="gl-@player.Id">@player.Name</label>
-                    </div>
+                    <CheckboxButton 
+                        Id="@($"gl-{player.Id}")" 
+                        Text="@player.Name" 
+                        Checked="@IsPlayerInLineup(player.Id)" 
+                        CheckedChanged="@((bool val) => TogglePlayerInLineup(player, val))" />
                 }
             </div>
         </div>
@@ -655,10 +654,9 @@ else
 
     private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
 
-    private async Task TogglePlayerInLineup(Player player, ChangeEventArgs e)
+    private async Task TogglePlayerInLineup(Player player, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked)
         {
             if (!playerStats.Any(ps => ps.PlayerId == player.Id))

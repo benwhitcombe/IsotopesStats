@@ -32,12 +32,11 @@
             <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (Season season in allSeasons)
                 {
-                    <div class="selectable-item">
-                        <input type="checkbox" id="s-@season.Id" 
-                               checked="@assignedSeasonIds.Contains(season.Id)"
-                               @onchange="(e) => ToggleSeason(season.Id, e)" />
-                        <label class="selectable-label" for="s-@season.Id">@season.Name</label>
-                    </div>
+                    <CheckboxButton 
+                        Id="@($"s-{season.Id}")" 
+                        Text="@season.Name" 
+                        Checked="@assignedSeasonIds.Contains(season.Id)" 
+                        CheckedChanged="@((bool val) => ToggleSeason(season.Id, val))" />
                 }
             </div>
         </div>
@@ -238,10 +237,9 @@ else
 
     private async Task CancelEdit() => await HandleCancel();
 
-    private async Task ToggleSeason(int seasonId, ChangeEventArgs e)
+    private async Task ToggleSeason(int seasonId, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked) assignedSeasonIds.Add(seasonId);
         else assignedSeasonIds.Remove(seasonId);
         await SaveTempState();

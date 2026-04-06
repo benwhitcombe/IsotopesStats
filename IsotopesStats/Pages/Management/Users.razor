@@ -78,12 +78,11 @@
             <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
                 @foreach (UserRole role in availableRoles)
                 {
-                    <div class="selectable-item">
-                        <input type="checkbox" id="r-@role.Id" 
-                               checked="@selectedRoleIds.Contains(role.Id)"
-                               @onchange="(e) => ToggleRole(role.Id, e)" />
-                        <label class="selectable-label" for="r-@role.Id">@role.Name</label>
-                    </div>
+                    <CheckboxButton 
+                        Id="@($"r-{role.Id}")" 
+                        Text="@role.Name" 
+                        Checked="@selectedRoleIds.Contains(role.Id)" 
+                        CheckedChanged="@((bool val) => OnRoleToggled(role.Id, val))" />
                 }
             </div>
         </div>
@@ -370,10 +369,9 @@ else
         selectedRoleIds.Clear();
     }
 
-    private async Task ToggleRole(int roleId, ChangeEventArgs e)
+    private async Task OnRoleToggled(int roleId, bool isChecked)
     {
         hasChanges = true;
-        bool isChecked = (bool)(e.Value ?? false);
         if (isChecked) selectedRoleIds.Add(roleId);
         else selectedRoleIds.Remove(roleId);
         await SaveTempState();
