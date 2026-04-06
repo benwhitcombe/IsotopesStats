@@ -125,7 +125,7 @@ else
                                         {
                                             @foreach (UserRole role in user.Roles)
                                             {
-                                                <span class="badge @GetRoleBadgeClass(role.Name)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                                <span class="badge bg-primary" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
                                                     @role.Name
                                                 </span>
                                             }
@@ -161,7 +161,7 @@ else
                             {
                                 @foreach (UserRole role in user.Roles)
                                 {
-                                    <span class="badge @GetRoleBadgeClass(role.Name)" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                                    <span class="badge bg-primary" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
                                         @role.Name
                                     </span>
                                 }
@@ -312,15 +312,6 @@ else
         users = await AuthService.GetUsersAsync();
         availableRoles = await AuthService.GetUserRolesAsync(true);
     }
-
-    private string GetRoleBadgeClass(string? roleName) => roleName switch
-    {
-        "Administrator" => "bg-dark",
-        "Team Rep" => "bg-primary",
-        "Scorekeeper" => "bg-warning",
-        "Player" => "bg-info",
-        _ => "bg-secondary"
-    };
 
     private async Task StartAdd()
     {
