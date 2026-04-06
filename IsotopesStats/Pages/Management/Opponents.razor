@@ -203,6 +203,7 @@ else
 
     private async Task StartEdit(Opponent opponent)
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingOpponent = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
         assignedSeasonIds.Clear();
         originalSeasonIds.Clear();

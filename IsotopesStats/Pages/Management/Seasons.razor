@@ -234,6 +234,7 @@ else
 
     private async Task StartAdd()
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingSeason = new Season();
         assignedPlayerIds.Clear();
         originalPlayerIds.Clear();
@@ -246,6 +247,7 @@ else
 
     private async Task StartEdit(Season season)
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingSeason = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
         assignedPlayerIds.Clear();
         originalPlayerIds.Clear();

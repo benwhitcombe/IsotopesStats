@@ -213,6 +213,7 @@ else
 
     private async Task StartEdit(UserRole role)
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingRole = new UserRole 
         { 
             Id = role.Id, 

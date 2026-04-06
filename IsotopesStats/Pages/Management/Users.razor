@@ -316,6 +316,7 @@ else
 
     private async Task StartAdd()
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         userEmail = "";
         password = "";
         confirmPassword = "";
@@ -329,6 +330,7 @@ else
 
     private async Task StartEdit(User user)
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingUserId = user.Id;
         userEmail = user.Email;
         password = "";

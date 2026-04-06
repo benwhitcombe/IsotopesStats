@@ -22,7 +22,6 @@
 @if (isEditing)
 {
     <ManagementEditCard 
-        Id="top"
         Title="@($"{(editingGame.Id == 0 ? "Add New" : "Edit")} Game")"
         IsEdit="@(editingGame.Id != 0)"
         SaveText="Save Game & Stats"
@@ -594,6 +593,7 @@ else
 
     private async Task StartNewGame()
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
         await LoadSeasonRoster();
         await LoadAvailableOpponents();
@@ -606,6 +606,7 @@ else
 
     private async Task StartEdit(Game game)
     {
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
         editingGame = new Game 
         { 
             Id = game.Id, 
@@ -625,7 +626,6 @@ else
         isEditing = true;
         hasChanges = false;
         await SaveTempState();
-        Navigation.NavigateTo("/management/games#top");
     }
 
     private async Task HandleCancel()
