@@ -21,19 +21,14 @@
 
 @if (isEditing)
 {
-    <div id="top" class="stat-card view-fade-in" style="margin-bottom: 2rem; position: relative;">
-        <button type="button" @onclick="HandleCancel" 
-                style="position: absolute; top: 0.25rem; right: 0.5rem; background: none; border: none; font-size: 3.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; height: 60px; width: 60px;" 
-                title="Cancel changes">&times;</button>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-right: 4.5rem;">
-            <h4 style="margin: 0;">@(editingGame.Id == 0 ? "Add New" : "Edit") Game</h4>
-            @if (editingGame.Id != 0)
-            {
-                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.4rem 1rem; font-size: 0.85rem;" 
-                        @onclick="() => ShowDeleteConfirm(editingGame.Id)">Delete</button>
-            }
-        </div>
+    <ManagementEditCard 
+        Id="top"
+        Title="@($"{(editingGame.Id == 0 ? "Add New" : "Edit")} Game")"
+        IsEdit="@(editingGame.Id != 0)"
+        SaveText="Save Game & Stats"
+        OnSave="SaveGame"
+        OnCancel="HandleCancel"
+        OnDelete="@(() => ShowDeleteConfirm(editingGame.Id))">
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
@@ -238,12 +233,7 @@
                 </div>
             </div>
         </div>
-
-        <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
-            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="SaveGame">Save Game & Stats</button>
-            <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
-        </div>
-    </div>
+    </ManagementEditCard>
 }
 else
 {
