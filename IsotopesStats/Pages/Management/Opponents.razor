@@ -1,4 +1,6 @@
 @page "/management/opponents"
+@page "/management/opponents/{Action}"
+@page "/management/opponents/{Action}/{Id:int}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
@@ -6,6 +8,7 @@
 @attribute [Authorize(Policy = "ManageOpponents")]
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Opponents</PageTitle>
@@ -14,7 +17,7 @@
     <h3 style="margin:0">Manage Opponents</h3>
     @if (!isEditing)
     {
-        <button class="view-btn active" @onclick="() => StartEdit(new Opponent())">Add New Opponent</button>
+        <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Opponent</button>
     }
 </div>
 
@@ -64,9 +67,9 @@ else
                         @foreach (Opponent opponent in opponents)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(opponent)">@opponent.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" @onclick="() => StartEdit(opponent)">Edit</button>
+                                    <button class="view-btn" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -83,10 +86,10 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(opponent)">@opponent.Name</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(opponent)">Edit</button>
+                        <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
                         <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
                     </div>
                 </div>
@@ -110,6 +113,9 @@ else
     OnCancel="() => showDiscardConfirm = false" />
 
 @code {
+    [Parameter] public string? Action { get; set; }
+    [Parameter] public int? Id { get; set; }
+
     private List<Opponent> opponents = new();
     private List<Season> allSeasons = new();
     private HashSet<int> assignedSeasonIds = new();
@@ -136,9 +142,67 @@ else
         await LoadOpponents();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        bool wasEditing = isEditing;
+        isEditing = Action == "add" || Action == "edit";
+
+        if (isEditing)
+        {
+            if (!wasEditing || (Id.HasValue && Id != editingOpponent.Id))
+            {
+                await LoadEditingOpponent();
+            }
+        }
+        else
+        {
+            editingOpponent = new Opponent();
+            assignedSeasonIds.Clear();
+            originalSeasonIds.Clear();
+            hasChanges = false;
+        }
+    }
+
+    private async Task LoadEditingOpponent()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        
+        if (Action == "edit" && Id.HasValue && Id != 0)
+        {
+            Opponent? opponent = opponents.FirstOrDefault(o => o.Id == Id);
+            if (opponent == null)
+            {
+                opponent = (await StatsService.GetAllOpponentsAsync()).FirstOrDefault(o => o.Id == Id);
+            }
+
+            if (opponent != null)
+            {
+                editingOpponent = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
+                assignedSeasonIds.Clear();
+                originalSeasonIds.Clear();
+
+                List<Season> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
+                foreach (Season s in opponentSeasons)
+                {
+                    assignedSeasonIds.Add(s.Id);
+                    originalSeasonIds.Add(s.Id);
+                }
+            }
+        }
+        else
+        {
+            editingOpponent = new Opponent();
+            assignedSeasonIds.Clear();
+            originalSeasonIds.Clear();
+        }
+
+        hasChanges = false;
+        await HydrateTempState();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && isEditing)
         {
             await HydrateTempState();
         }
@@ -151,12 +215,14 @@ else
             ProtectedBrowserStorageResult<OpponentEditState> result = await ProtectedSessionStore.GetAsync<OpponentEditState>("OpponentEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
-                editingOpponent = result.Value.Opponent;
-                assignedSeasonIds = result.Value.AssignedSeasonIds;
-                originalSeasonIds = result.Value.OriginalSeasonIds;
-                isEditing = result.Value.IsEditing;
-                hasChanges = result.Value.HasChanges;
-                StateHasChanged();
+                if (result.Value.Opponent.Id == (Id ?? 0))
+                {
+                    editingOpponent = result.Value.Opponent;
+                    assignedSeasonIds = result.Value.AssignedSeasonIds;
+                    originalSeasonIds = result.Value.OriginalSeasonIds;
+                    hasChanges = result.Value.HasChanges;
+                    StateHasChanged();
+                }
             }
         }
         catch (Exception) { }
@@ -188,7 +254,6 @@ else
     private async Task ClearTempState()
     {
         hasChanges = false;
-        isEditing = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("OpponentEditState");
@@ -201,26 +266,10 @@ else
         opponents = await StatsService.GetAllOpponentsAsync();
     }
 
-    private async Task StartEdit(Opponent opponent)
+    private void StartEdit(string action, int id)
     {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        editingOpponent = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
-        assignedSeasonIds.Clear();
-        originalSeasonIds.Clear();
-
-        if (opponent.Id != 0)
-        {
-            List<Season> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
-            foreach (Season s in opponentSeasons)
-            {
-                assignedSeasonIds.Add(s.Id);
-                originalSeasonIds.Add(s.Id);
-            }
-        }
-
-        isEditing = true;
-        hasChanges = false;
-        await SaveTempState();
+        if (action == "add") Navigation.NavigateTo("/management/opponents/add");
+        else Navigation.NavigateTo($"/management/opponents/edit/{id}");
     }
 
     private async Task HandleCancel()
@@ -233,8 +282,7 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        editingOpponent = new Opponent();
-        assignedSeasonIds.Clear();
+        Navigation.NavigateTo("/management/opponents");
     }
 
     private async Task CancelEdit() => await HandleCancel();
@@ -273,6 +321,7 @@ else
         }
 
         await ClearTempState();
+        Navigation.NavigateTo("/management/opponents");
         await LoadOpponents();
     }
 

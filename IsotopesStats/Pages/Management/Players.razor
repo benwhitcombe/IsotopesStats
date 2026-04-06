@@ -1,4 +1,6 @@
 @page "/management/players"
+@page "/management/players/{Action}"
+@page "/management/players/{Action}/{Id:int}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
@@ -6,6 +8,7 @@
 @attribute [Authorize(Policy = "ManagePlayers")]
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Players</PageTitle>
@@ -14,7 +17,7 @@
     <h3 style="margin:0">Manage Players</h3>
     @if (!isEditing)
     {
-        <button class="view-btn active" @onclick="() => StartEdit(new Player())">Add New Player</button>
+        <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Player</button>
     }
 </div>
 
@@ -64,9 +67,9 @@ else
                         @foreach (Player player in players)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(player)">@player.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", player.Id)'>@player.Name</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" @onclick="() => StartEdit(player)">Edit</button>
+                                    <button class="view-btn" @onclick='() => StartEdit("edit", player.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -83,10 +86,10 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(player)">@player.Name</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", player.Id)'>@player.Name</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(player)">Edit</button>
+                        <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", player.Id)'>Edit</button>
                         <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
                     </div>
                 </div>
@@ -110,6 +113,9 @@ else
     OnCancel="() => showDiscardConfirm = false" />
 
 @code {
+    [Parameter] public string? Action { get; set; }
+    [Parameter] public int? Id { get; set; }
+
     private List<Player> players = new();
     private List<Season> allSeasons = new();
     private HashSet<int> assignedSeasonIds = new();
@@ -136,9 +142,67 @@ else
         await LoadPlayers();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        bool wasEditing = isEditing;
+        isEditing = Action == "add" || Action == "edit";
+
+        if (isEditing)
+        {
+            if (!wasEditing || (Id.HasValue && Id != editingPlayer.Id))
+            {
+                await LoadEditingPlayer();
+            }
+        }
+        else
+        {
+            editingPlayer = new Player();
+            assignedSeasonIds.Clear();
+            originalSeasonIds.Clear();
+            hasChanges = false;
+        }
+    }
+
+    private async Task LoadEditingPlayer()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        
+        if (Action == "edit" && Id.HasValue && Id != 0)
+        {
+            Player? player = players.FirstOrDefault(p => p.Id == Id);
+            if (player == null)
+            {
+                player = (await StatsService.GetAllPlayersAsync()).FirstOrDefault(p => p.Id == Id);
+            }
+
+            if (player != null)
+            {
+                editingPlayer = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
+                assignedSeasonIds.Clear();
+                originalSeasonIds.Clear();
+
+                List<Season> playerSeasons = await StatsService.GetSeasonsForPlayerAsync(player.Id);
+                foreach (Season s in playerSeasons)
+                {
+                    assignedSeasonIds.Add(s.Id);
+                    originalSeasonIds.Add(s.Id);
+                }
+            }
+        }
+        else
+        {
+            editingPlayer = new Player();
+            assignedSeasonIds.Clear();
+            originalSeasonIds.Clear();
+        }
+
+        hasChanges = false;
+        await HydrateTempState();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && isEditing)
         {
             await HydrateTempState();
         }
@@ -151,12 +215,14 @@ else
             ProtectedBrowserStorageResult<PlayerEditState> result = await ProtectedSessionStore.GetAsync<PlayerEditState>("PlayerEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
-                editingPlayer = result.Value.Player;
-                assignedSeasonIds = result.Value.AssignedSeasonIds;
-                originalSeasonIds = result.Value.OriginalSeasonIds;
-                isEditing = result.Value.IsEditing;
-                hasChanges = result.Value.HasChanges;
-                StateHasChanged();
+                if (result.Value.Player.Id == (Id ?? 0))
+                {
+                    editingPlayer = result.Value.Player;
+                    assignedSeasonIds = result.Value.AssignedSeasonIds;
+                    originalSeasonIds = result.Value.OriginalSeasonIds;
+                    hasChanges = result.Value.HasChanges;
+                    StateHasChanged();
+                }
             }
         }
         catch (Exception) { }
@@ -188,7 +254,6 @@ else
     private async Task ClearTempState()
     {
         hasChanges = false;
-        isEditing = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("PlayerEditState");
@@ -201,26 +266,10 @@ else
         players = await StatsService.GetAllPlayersAsync();
     }
 
-    private async Task StartEdit(Player player)
+    private void StartEdit(string action, int id)
     {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        editingPlayer = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
-        assignedSeasonIds.Clear();
-        originalSeasonIds.Clear();
-
-        if (player.Id != 0)
-        {
-            List<Season> playerSeasons = await StatsService.GetSeasonsForPlayerAsync(player.Id);
-            foreach (Season s in playerSeasons)
-            {
-                assignedSeasonIds.Add(s.Id);
-                originalSeasonIds.Add(s.Id);
-            }
-        }
-
-        isEditing = true;
-        hasChanges = false;
-        await SaveTempState();
+        if (action == "add") Navigation.NavigateTo("/management/players/add");
+        else Navigation.NavigateTo($"/management/players/edit/{id}");
     }
 
     private async Task HandleCancel()
@@ -233,8 +282,7 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        editingPlayer = new Player();
-        assignedSeasonIds.Clear();
+        Navigation.NavigateTo("/management/players");
     }
 
     private async Task CancelEdit() => await HandleCancel();
@@ -273,6 +321,7 @@ else
         }
 
         await ClearTempState();
+        Navigation.NavigateTo("/management/players");
         await LoadPlayers();
     }
 

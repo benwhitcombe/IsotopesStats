@@ -1,4 +1,6 @@
 @page "/management/games"
+@page "/management/games/{Action}"
+@page "/management/games/{Action}/{Id:int}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
@@ -15,7 +17,7 @@
     <h3 style="margin:0">Manage Games</h3>
     @if (!isEditing)
     {
-        <button class="view-btn active" @onclick="StartNewGame">Add New Game</button>
+        <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Game</button>
     }
 </div>
 
@@ -295,7 +297,7 @@ else
                             <tr>
                                 <td style="text-align: left;">@game.GameNumber</td>
                                 <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(game)">@game.Opponent?.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>@game.Opponent?.Name</td>
                                 <td style="text-align: left;">@game.Diamond</td>
                                 <td>
                                     <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
@@ -303,7 +305,7 @@ else
                                     </span>
                                 </td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" @onclick="() => StartEdit(game)">Edit</button>
+                                    <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(game.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -320,7 +322,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(game)">vs @game.Opponent?.Name</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>vs @game.Opponent?.Name</div>
                         <div class="rank-badge">#@game.GameNumber</div>
                     </div>
                     <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
@@ -338,7 +340,7 @@ else
                             @game.Type
                         </span>
                         <div style="display: flex; gap: 0.5rem;">
-                            <button class="view-btn" @onclick="() => StartEdit(game)">Edit</button>
+                            <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
                             <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => ShowDeleteConfirm(game.Id)">Delete</button>
                         </div>
                     </div>
@@ -405,6 +407,9 @@ else
 </style>
 
 @code {
+    [Parameter] public string? Action { get; set; }
+    [Parameter] public int? Id { get; set; }
+
     private List<Season> allSeasons = new();
     private List<Season> activeSeasons => allSeasons.Where(s => !s.IsDeleted).ToList();
     private List<Game> games = new();
@@ -445,9 +450,76 @@ else
         }
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        bool wasEditing = isEditing;
+        isEditing = Action == "add" || Action == "edit";
+
+        if (isEditing)
+        {
+            if (!wasEditing || (Id.HasValue && Id != editingGame.Id))
+            {
+                await LoadEditingGame();
+            }
+        }
+        else
+        {
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            playerStats.Clear();
+            seasonRoster.Clear();
+            hasChanges = false;
+        }
+    }
+
+    private async Task LoadEditingGame()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        
+        if (Action == "edit" && Id.HasValue && Id != 0)
+        {
+            Game? game = games.FirstOrDefault(g => g.Id == Id);
+            if (game == null)
+            {
+                List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
+                game = stats.FirstOrDefault(s => s.GameId == Id)?.Game;
+            }
+
+            if (game != null)
+            {
+                editingGame = new Game 
+                { 
+                    Id = game.Id, 
+                    SeasonId = game.SeasonId, 
+                    GameNumber = game.GameNumber, 
+                    Date = game.Date, 
+                    Diamond = game.Diamond, 
+                    OpponentId = game.OpponentId, 
+                    Type = game.Type,
+                    IsDeleted = game.IsDeleted
+                };
+                
+                await LoadSeasonRoster();
+                await LoadAvailableOpponents();
+                playerStats = await StatsService.GetGameStatsAsync(game.Id);
+                playerStats = playerStats.OrderBy(s => s.BO).ToList();
+            }
+        }
+        else
+        {
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            await LoadSeasonRoster();
+            await LoadAvailableOpponents();
+            int order = 1;
+            playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
+        }
+
+        hasChanges = false;
+        await HydrateTempState();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && isEditing)
         {
             await HydrateTempState();
         }
@@ -460,14 +532,16 @@ else
             ProtectedBrowserStorageResult<GameEditState> result = await ProtectedSessionStore.GetAsync<GameEditState>("GameEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
-                editingGame = result.Value.Game;
-                playerStats = result.Value.Stats;
-                seasonRoster = result.Value.Roster;
-                isEditing = result.Value.IsEditing;
-                hasChanges = result.Value.HasChanges;
-                
-                await LoadAvailableOpponents();
-                StateHasChanged();
+                if (result.Value.Game.Id == (Id ?? 0))
+                {
+                    editingGame = result.Value.Game;
+                    playerStats = result.Value.Stats;
+                    seasonRoster = result.Value.Roster;
+                    hasChanges = result.Value.HasChanges;
+                    
+                    await LoadAvailableOpponents();
+                    StateHasChanged();
+                }
             }
         }
         catch (Exception) { }
@@ -499,7 +573,6 @@ else
     private async Task ClearTempState()
     {
         hasChanges = false;
-        isEditing = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("GameEditState");
@@ -591,41 +664,10 @@ else
         await LoadGames();
     }
 
-    private async Task StartNewGame()
+    private void StartEdit(string action, int id)
     {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
-        await LoadSeasonRoster();
-        await LoadAvailableOpponents();
-        int order = 1;
-        playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
-        isEditing = true;
-        hasChanges = false;
-        await SaveTempState();
-    }
-
-    private async Task StartEdit(Game game)
-    {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        editingGame = new Game 
-        { 
-            Id = game.Id, 
-            SeasonId = game.SeasonId, 
-            GameNumber = game.GameNumber, 
-            Date = game.Date, 
-            Diamond = game.Diamond, 
-            OpponentId = game.OpponentId, 
-            Type = game.Type,
-            IsDeleted = game.IsDeleted
-        };
-        
-        await LoadSeasonRoster();
-        await LoadAvailableOpponents();
-        playerStats = await StatsService.GetGameStatsAsync(game.Id);
-        playerStats = playerStats.OrderBy(s => s.BO).ToList();
-        isEditing = true;
-        hasChanges = false;
-        await SaveTempState();
+        if (action == "add") Navigation.NavigateTo("/management/games/add");
+        else Navigation.NavigateTo($"/management/games/edit/{id}");
     }
 
     private async Task HandleCancel()
@@ -644,9 +686,7 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
-        playerStats.Clear();
-        seasonRoster.Clear();
+        Navigation.NavigateTo("/management/games");
     }
 
     private async Task CancelEdit() => await HandleCancel();
@@ -734,6 +774,7 @@ else
             
             showSuccess = true;
             await ClearTempState();
+            Navigation.NavigateTo("/management/games");
             await LoadGames();
             
             _ = Task.Run(async () => {

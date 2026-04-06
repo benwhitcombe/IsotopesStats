@@ -1,4 +1,6 @@
 @page "/management/users"
+@page "/management/users/{Action}"
+@page "/management/users/{Action}/{Id:int}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
@@ -7,6 +9,7 @@
 @attribute [Authorize(Policy = "ManageUsers")]
 @inject AuthService AuthService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
@@ -15,7 +18,7 @@
     <h3 style="margin:0">User Management</h3>
     @if (!isAdding && !isEditing)
     {
-        <button class="view-btn active" @onclick="() => StartAdd()">Add New User</button>
+        <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New User</button>
     }
 </div>
 
@@ -119,7 +122,7 @@ else
                         @foreach (User user in users)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(user)">@user.Email</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
                                 <td>
                                     <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;">
                                         @if (user.Roles.Any())
@@ -139,7 +142,7 @@ else
                                 </td>
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" style="margin-right: 0.5rem;" @onclick="() => StartEdit(user)">Edit</button>
+                                    <button class="view-btn" style="margin-right: 0.5rem;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -156,7 +159,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(user)">@user.Email</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
                             @if (user.Roles.Any())
                             {
@@ -177,7 +180,7 @@ else
                         <strong>Created:</strong> @user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(user)">Edit</button>
+                        <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
                         <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
                     </div>
                 </div>
@@ -201,6 +204,9 @@ else
     OnCancel="() => showDiscardConfirm = false" />
 
 @code {
+    [Parameter] public string? Action { get; set; }
+    [Parameter] public int? Id { get; set; }
+
     private List<User> users = new();
     private List<UserRole> availableRoles = new();
     private bool isAdding = false;
@@ -239,9 +245,82 @@ else
         await LoadData();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        bool wasAdding = isAdding;
+        bool wasEditing = isEditing;
+        
+        isAdding = Action == "add";
+        isEditing = Action == "edit";
+
+        if (isAdding || isEditing)
+        {
+            if (isAdding && !wasAdding)
+            {
+                await LoadNewUser();
+            }
+            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingUserId)))
+            {
+                await LoadEditingUser();
+            }
+        }
+        else
+        {
+            ResetState();
+        }
+    }
+
+    private void ResetState()
+    {
+        editingUserId = 0;
+        userEmail = "";
+        password = "";
+        confirmPassword = "";
+        selectedRoleIds.Clear();
+        hasChanges = false;
+        showPasswordFields = false;
+        errorMessage = "";
+    }
+
+    private async Task LoadNewUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        ResetState();
+        showPasswordFields = true;
+        await HydrateTempState();
+    }
+
+    private async Task LoadEditingUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        ResetState();
+        
+        if (Id.HasValue && Id != 0)
+        {
+            User? user = users.FirstOrDefault(u => u.Id == Id);
+            if (user == null)
+            {
+                user = (await AuthService.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
+            }
+
+            if (user != null)
+            {
+                editingUserId = user.Id;
+                userEmail = user.Email;
+                selectedRoleIds.Clear();
+                foreach (UserRole r in user.Roles)
+                {
+                    selectedRoleIds.Add(r.Id);
+                }
+            }
+        }
+
+        await HydrateTempState();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && (isAdding || isEditing))
         {
             await HydrateTempState();
         }
@@ -254,16 +333,17 @@ else
             ProtectedBrowserStorageResult<UserEditState> result = await ProtectedSessionStore.GetAsync<UserEditState>("UserEditState");
             if (result.Success && result.Value != null && (result.Value.IsAdding || result.Value.IsEditing))
             {
-                editingUserId = result.Value.UserId;
-                userEmail = result.Value.Email;
-                password = result.Value.Password;
-                confirmPassword = result.Value.ConfirmPassword;
-                selectedRoleIds = result.Value.SelectedRoleIds;
-                isAdding = result.Value.IsAdding;
-                isEditing = result.Value.IsEditing;
-                hasChanges = result.Value.HasChanges;
-                showPasswordFields = result.Value.ShowPasswordFields;
-                StateHasChanged();
+                if (result.Value.UserId == (Id ?? 0))
+                {
+                    editingUserId = result.Value.UserId;
+                    userEmail = result.Value.Email;
+                    password = result.Value.Password;
+                    confirmPassword = result.Value.ConfirmPassword;
+                    selectedRoleIds = result.Value.SelectedRoleIds;
+                    hasChanges = result.Value.HasChanges;
+                    showPasswordFields = result.Value.ShowPasswordFields;
+                    StateHasChanged();
+                }
             }
         }
         catch (Exception) { }
@@ -299,8 +379,6 @@ else
     private async Task ClearTempState()
     {
         hasChanges = false;
-        isAdding = false;
-        isEditing = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("UserEditState");
@@ -314,37 +392,10 @@ else
         availableRoles = await AuthService.GetUserRolesAsync(true);
     }
 
-    private async Task StartAdd()
+    private void StartEdit(string action, int id)
     {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        userEmail = "";
-        password = "";
-        confirmPassword = "";
-        selectedRoleIds.Clear();
-        isAdding = true;
-        isEditing = false;
-        hasChanges = false;
-        showPasswordFields = true;
-        await SaveTempState();
-    }
-
-    private async Task StartEdit(User user)
-    {
-        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
-        editingUserId = user.Id;
-        userEmail = user.Email;
-        password = "";
-        confirmPassword = "";
-        selectedRoleIds.Clear();
-        foreach (UserRole r in user.Roles)
-        {
-            selectedRoleIds.Add(r.Id);
-        }
-        isEditing = true;
-        isAdding = false;
-        hasChanges = false;
-        showPasswordFields = false;
-        await SaveTempState();
+        if (action == "add") Navigation.NavigateTo("/management/users/add");
+        else Navigation.NavigateTo($"/management/users/edit/{id}");
     }
 
     private async Task HandleCancel()
@@ -357,10 +408,7 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        userEmail = "";
-        password = "";
-        confirmPassword = "";
-        selectedRoleIds.Clear();
+        Navigation.NavigateTo("/management/users");
     }
 
     private async Task OnRoleToggled(int roleId, bool isChecked)
@@ -425,6 +473,7 @@ else
         }
 
         await ClearTempState();
+        Navigation.NavigateTo("/management/users");
         await LoadData();
     }
 
