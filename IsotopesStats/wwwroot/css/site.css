@@ -907,6 +907,9 @@ tr:last-child td {
     background-color: #f1f1f1;
     border-bottom: 1px solid #ddd;
     padding: 0.5rem 0;
+    position: sticky;
+    top: 70px; /* Exactly matches header height */
+    z-index: 999;
 }
 
 .sub-nav-content {

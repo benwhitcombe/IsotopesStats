@@ -135,40 +135,38 @@
         </div>
     }
 
-    <div class="desktop-only">
-        <AuthorizeView Context="subnavContext">
-            <Authorized>
-                @if (HasAnyManagementPermission(subnavContext.User))
-                {
-                    <div class="management-sub-nav">
-                        <div class="sub-nav-content">
-                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
-                                Management
-                            </div>
-                            <AuthorizeView Policy="ManageGames" Context="pContext">
-                                <NavLink href="management/games">Games</NavLink>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="ManagePlayers" Context="pContext">
-                                <NavLink href="management/players">Players</NavLink>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="ManageOpponents" Context="pContext">
-                                <NavLink href="management/opponents">Opponents</NavLink>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="ManageSeasons" Context="pContext">
-                                <NavLink href="management/seasons">Seasons</NavLink>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="ManageUsers" Context="pContext">
-                                <NavLink href="management/users">Users</NavLink>
-                            </AuthorizeView>
-                            <AuthorizeView Policy="ManageRoles" Context="pContext">
-                                <NavLink href="management/roles">Roles</NavLink>
-                            </AuthorizeView>
+    <AuthorizeView Context="subnavContext">
+        <Authorized>
+            @if (HasAnyManagementPermission(subnavContext.User))
+            {
+                <div class="management-sub-nav desktop-only">
+                    <div class="sub-nav-content">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
+                            Management
                         </div>
+                        <AuthorizeView Policy="ManageGames" Context="pContext">
+                            <NavLink href="management/games">Games</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManagePlayers" Context="pContext">
+                            <NavLink href="management/players">Players</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageOpponents" Context="pContext">
+                            <NavLink href="management/opponents">Opponents</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageSeasons" Context="pContext">
+                            <NavLink href="management/seasons">Seasons</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageUsers" Context="pContext">
+                            <NavLink href="management/users">Users</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="ManageRoles" Context="pContext">
+                            <NavLink href="management/roles">Roles</NavLink>
+                        </AuthorizeView>
                     </div>
-                }
-            </Authorized>
-        </AuthorizeView>
-    </div>
+                </div>
+            }
+        </Authorized>
+    </AuthorizeView>
 
     <main>
         <article class="content">
