@@ -131,6 +131,20 @@ public class AuthService
         }
     }
 
+    public async Task UpdateUserPasswordAsync(int userId, string newPassword)
+    {
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "UPDATE Users SET PasswordHash = $hash WHERE Id = $id";
+            command.Parameters.AddWithValue("$hash", passwordHash);
+            command.Parameters.AddWithValue("$id", userId);
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
     public async Task<List<Permission>> GetPermissionsAsync()
     {
         List<Permission> permissions = new List<Permission>();

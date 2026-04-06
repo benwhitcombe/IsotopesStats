@@ -148,7 +148,7 @@ else
     {
         try
         {
-            var result = await ProtectedSessionStore.GetAsync<OpponentEditState>("OpponentEditState");
+            ProtectedBrowserStorageResult<OpponentEditState> result = await ProtectedSessionStore.GetAsync<OpponentEditState>("OpponentEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
                 editingOpponent = result.Value.Opponent;
@@ -166,7 +166,7 @@ else
     {
         try
         {
-            var state = new OpponentEditState
+            OpponentEditState state = new OpponentEditState
             {
                 Opponent = editingOpponent,
                 AssignedSeasonIds = assignedSeasonIds,

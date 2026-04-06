@@ -2,6 +2,7 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
+@using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "ManageUsers")]
 @inject AuthService AuthService
@@ -12,32 +13,69 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">User Management</h3>
-    @if (!isAdding)
+    @if (!isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick="() => StartAdd()">Add New User</button>
     }
 </div>
 
-@if (isAdding)
+@if (isAdding || isEditing)
 {
     <div class="stat-card view-fade-in" style="margin-bottom: 2rem;">
-        <h4 style="margin-top:0">Add User</h4>
+        <h4 style="margin-top:0">@(isAdding ? "Add" : "Edit") User</h4>
         <div class="form-group">
             <label>Email</label>
-            <input type="email" class="form-control" @bind="newUserEmail" @bind:event="oninput" @onkeyup="HandleInput" placeholder="user@isotopes.com" autocomplete="off" />
+            <input type="email" class="form-control" @bind="userEmail" @bind:event="oninput" @onkeyup="HandleInput" placeholder="user@isotopes.com" autocomplete="off" />
         </div>
-        <div class="form-group">
-            <label>Password</label>
-            <div style="position: relative;">
-                <input type="@(showNewUserPassword ? "text" : "password")" class="form-control" @bind="newUserPassword" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
-                <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                    <PasswordToggleIcon IsVisible="@showNewUserPassword" />
-                </button>
+
+        @if (isAdding)
+        {
+            <div class="form-group">
+                <label>Password</label>
+                <div style="position: relative;">
+                    <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                    <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                        <PasswordToggleIcon IsVisible="@showPassword" />
+                    </button>
+                </div>
             </div>
-        </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" class="form-control" @bind="confirmPassword" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" />
+            </div>
+        }
+        else
+        {
+            <div style="background: #f9f9f9; padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: @(showPasswordFields ? "1rem" : "0")">
+                    <label style="margin:0; font-weight: bold;">Change Password?</label>
+                    <button class="view-btn" @onclick="TogglePasswordFields">@(showPasswordFields ? "Cancel Password Change" : "Update Password")</button>
+                </div>
+
+                @if (showPasswordFields)
+                {
+                    <div class="view-fade-in">
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <div style="position: relative;">
+                                <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                                <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                                    <PasswordToggleIcon IsVisible="@showPassword" />
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" class="form-control" @bind="confirmPassword" @bind:event="oninput" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" />
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
         <div class="form-group">
             <label>Role</label>
-            <select class="form-control" value="@newUserRoleId" @onchange="OnRoleChange">
+            <select class="form-control" value="@roleId" @onchange="OnRoleChange">
                 <option value="0">-- Select Role --</option>
                 @foreach (UserRole role in availableRoles)
                 {
@@ -54,7 +92,7 @@
         }
 
         <div style="display: flex; gap: 1rem; margin-top: 1rem; justify-content: center;">
-            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="AddUser">Create User</button>
+            <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="HandleSave">@(isAdding ? "Create User" : "Save Changes")</button>
             <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
         </div>
     </div>
@@ -85,6 +123,7 @@ else
                                 </td>
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
+                                    <button class="view-btn" style="margin-right: 0.5rem;" @onclick="() => StartEdit(user)">Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -109,8 +148,9 @@ else
                     <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
                         <strong>Created:</strong> @user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
                     </div>
-                    <div style="text-align: right;">
-                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); width: 100%;" @onclick="() => ShowDeleteConfirm(user.Id)">Delete User</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(user)">Edit</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
                     </div>
                 </div>
             }
@@ -136,11 +176,18 @@ else
     private List<User> users = new();
     private List<UserRole> availableRoles = new();
     private bool isAdding = false;
-    private string newUserEmail = "";
-    private string newUserPassword = "";
-    private bool showNewUserPassword = false;
-    private int newUserRoleId = 0;
+    private bool isEditing = false;
+    private int editingUserId = 0;
+    
+    private string userEmail = "";
+    private string password = "";
+    private string confirmPassword = "";
+    private int roleId = 0;
+    
+    private bool showPassword = false;
+    private bool showPasswordFields = false;
     private string errorMessage = "";
+    
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int userIdToDelete;
@@ -148,11 +195,15 @@ else
 
     private class UserEditState
     {
+        public int UserId { get; set; }
         public string Email { get; set; } = "";
         public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
         public int RoleId { get; set; }
         public bool IsAdding { get; set; }
+        public bool IsEditing { get; set; }
         public bool HasChanges { get; set; }
+        public bool ShowPasswordFields { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -172,14 +223,18 @@ else
     {
         try
         {
-            var result = await ProtectedSessionStore.GetAsync<UserEditState>("UserEditState");
-            if (result.Success && result.Value != null && result.Value.IsAdding)
+            ProtectedBrowserStorageResult<UserEditState> result = await ProtectedSessionStore.GetAsync<UserEditState>("UserEditState");
+            if (result.Success && result.Value != null && (result.Value.IsAdding || result.Value.IsEditing))
             {
-                newUserEmail = result.Value.Email;
-                newUserPassword = result.Value.Password;
-                newUserRoleId = result.Value.RoleId;
+                editingUserId = result.Value.UserId;
+                userEmail = result.Value.Email;
+                password = result.Value.Password;
+                confirmPassword = result.Value.ConfirmPassword;
+                roleId = result.Value.RoleId;
                 isAdding = result.Value.IsAdding;
+                isEditing = result.Value.IsEditing;
                 hasChanges = result.Value.HasChanges;
+                showPasswordFields = result.Value.ShowPasswordFields;
                 StateHasChanged();
             }
         }
@@ -190,13 +245,17 @@ else
     {
         try
         {
-            var state = new UserEditState
+            UserEditState state = new UserEditState
             {
-                Email = newUserEmail,
-                Password = newUserPassword,
-                RoleId = newUserRoleId,
+                UserId = editingUserId,
+                Email = userEmail,
+                Password = password,
+                ConfirmPassword = confirmPassword,
+                RoleId = roleId,
                 IsAdding = isAdding,
-                HasChanges = hasChanges
+                IsEditing = isEditing,
+                HasChanges = hasChanges,
+                ShowPasswordFields = showPasswordFields
             };
             await ProtectedSessionStore.SetAsync("UserEditState", state);
         }
@@ -213,6 +272,7 @@ else
     {
         hasChanges = false;
         isAdding = false;
+        isEditing = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("UserEditState");
@@ -237,11 +297,28 @@ else
 
     private async Task StartAdd()
     {
-        newUserEmail = "";
-        newUserPassword = "";
-        newUserRoleId = 0;
+        userEmail = "";
+        password = "";
+        confirmPassword = "";
+        roleId = 0;
         isAdding = true;
+        isEditing = false;
         hasChanges = false;
+        showPasswordFields = true;
+        await SaveTempState();
+    }
+
+    private async Task StartEdit(User user)
+    {
+        editingUserId = user.Id;
+        userEmail = user.Email;
+        password = "";
+        confirmPassword = "";
+        roleId = user.RoleId;
+        isEditing = true;
+        isAdding = false;
+        hasChanges = false;
+        showPasswordFields = false;
         await SaveTempState();
     }
 
@@ -255,9 +332,10 @@ else
     {
         showDiscardConfirm = false;
         await ClearTempState();
-        newUserEmail = "";
-        newUserPassword = "";
-        newUserRoleId = 0;
+        userEmail = "";
+        password = "";
+        confirmPassword = "";
+        roleId = 0;
     }
 
     private async Task OnRoleChange(ChangeEventArgs e)
@@ -265,38 +343,72 @@ else
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             hasChanges = true;
-            newUserRoleId = id;
+            roleId = id;
             await SaveTempState();
         }
     }
 
-    private void TogglePassword()
+    private void TogglePassword() => showPassword = !showPassword;
+
+    private async Task TogglePasswordFields()
     {
-        showNewUserPassword = !showNewUserPassword;
+        showPasswordFields = !showPasswordFields;
+        if (!showPasswordFields)
+        {
+            password = "";
+            confirmPassword = "";
+        }
+        await SaveTempState();
     }
 
-    private async Task AddUser()
+    private async Task HandleSave()
     {
         errorMessage = "";
-        if (string.IsNullOrEmpty(newUserEmail) || string.IsNullOrEmpty(newUserPassword) || newUserRoleId == 0)
+
+        // 1. Basic Validation
+        if (string.IsNullOrWhiteSpace(userEmail)) { errorMessage = "Email is required."; return; }
+        if (!IsValidEmail(userEmail)) { errorMessage = "Invalid email format."; return; }
+        if (roleId == 0) { errorMessage = "Role is required."; return; }
+
+        // 2. Password Validation (if adding or explicit update)
+        if (isAdding || (isEditing && showPasswordFields))
         {
-            errorMessage = "Email, password, and role are required.";
-            return;
+            if (string.IsNullOrEmpty(password)) { errorMessage = "Password is required."; return; }
+            if (password != confirmPassword) { errorMessage = "Passwords do not match."; return; }
+            if (password.Length < 8) { errorMessage = "Password must be at least 8 characters."; return; }
+            if (!Regex.IsMatch(password, @"[A-Z]") || !Regex.IsMatch(password, @"[0-9]")) 
+            { 
+                errorMessage = "Password must contain at least one uppercase letter and one number."; 
+                return; 
+            }
         }
 
-        bool result = await AuthService.RegisterAsync(newUserEmail, newUserPassword, newUserRoleId);
-        if (result)
+        // 3. Save
+        if (isAdding)
         {
-            await ClearTempState();
-            newUserEmail = "";
-            newUserPassword = "";
-            newUserRoleId = 0;
-            await LoadData();
+            bool result = await AuthService.RegisterAsync(userEmail, password, roleId);
+            if (!result) { errorMessage = "Error creating user. Email might already exist."; return; }
         }
         else
         {
-            errorMessage = "Error creating user. Email might already exist.";
+            // Update User Info
+            await AuthService.UpdateUserAsync(new User { Id = editingUserId, Email = userEmail, RoleId = roleId });
+            
+            // Update Password if fields are shown
+            if (showPasswordFields && !string.IsNullOrEmpty(password))
+            {
+                await AuthService.UpdateUserPasswordAsync(editingUserId, password);
+            }
         }
+
+        await ClearTempState();
+        await LoadData();
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try { return Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"); }
+        catch { return false; }
     }
 
     private void ShowDeleteConfirm(int id)

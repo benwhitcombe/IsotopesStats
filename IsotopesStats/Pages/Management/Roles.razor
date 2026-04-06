@@ -161,7 +161,7 @@ else
     {
         try
         {
-            var result = await ProtectedSessionStore.GetAsync<RoleEditState>("RoleEditState");
+            ProtectedBrowserStorageResult<RoleEditState> result = await ProtectedSessionStore.GetAsync<RoleEditState>("RoleEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
                 editingRole = result.Value.Role;
@@ -177,7 +177,7 @@ else
     {
         try
         {
-            var state = new RoleEditState
+            RoleEditState state = new RoleEditState
             {
                 Role = editingRole,
                 IsEditing = isEditing,

@@ -460,7 +460,7 @@ else
     {
         try
         {
-            var result = await ProtectedSessionStore.GetAsync<GameEditState>("GameEditState");
+            ProtectedBrowserStorageResult<GameEditState> result = await ProtectedSessionStore.GetAsync<GameEditState>("GameEditState");
             if (result.Success && result.Value != null && result.Value.IsEditing)
             {
                 editingGame = result.Value.Game;
@@ -480,7 +480,7 @@ else
     {
         try
         {
-            var state = new GameEditState
+            GameEditState state = new GameEditState
             {
                 Game = editingGame,
                 Stats = playerStats,
