@@ -63,9 +63,9 @@ else
                         @foreach (Player player in players)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@player.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(player)">@player.Name</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" @onclick="() => StartEdit(player)">Edit / Seasons</button>
+                                    <button class="view-btn" @onclick="() => StartEdit(player)">Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(player.Id)">Delete</button>
                                 </td>
                             </tr>
@@ -82,7 +82,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name">@player.Name</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(player)">@player.Name</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick="() => StartEdit(player)">Edit</button>

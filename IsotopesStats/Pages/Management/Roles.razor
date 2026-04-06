@@ -64,7 +64,7 @@ else
                         @foreach (UserRole role in roles)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@role.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(role)">@role.Name</td>
                                 <td style="text-align: left;">
                                     <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
                                         @foreach (Permission p in role.Permissions)
@@ -91,7 +91,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name">@role.Name</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(role)">@role.Name</div>
                     </div>
                     <div style="margin-bottom: 1rem; font-size: 0.85rem;">
                         <div style="color: #888; font-weight: bold; margin-bottom: 0.3rem;">Permissions:</div>

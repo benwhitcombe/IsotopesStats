@@ -118,7 +118,7 @@ else
                         @foreach (User user in users)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent);">@user.Email</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick="() => StartEdit(user)">@user.Email</td>
                                 <td>
                                     <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;">
                                         @if (user.Roles.Any())
@@ -155,7 +155,7 @@ else
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name">@user.Email</div>
+                        <div class="mobile-card-name" style="cursor: pointer;" @onclick="() => StartEdit(user)">@user.Email</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
                             @if (user.Roles.Any())
                             {
