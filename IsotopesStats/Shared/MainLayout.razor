@@ -112,6 +112,11 @@
                                         <span>🛠️</span> Roles
                                     </NavLink>
                                 </AuthorizeView>
+                                <AuthorizeView Policy="Manage Logs" Context="pContext">
+                                    <NavLink href="management/logs" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                        <span>📜</span> User Logs
+                                    </NavLink>
+                                </AuthorizeView>
                             </div>
                         }
                     </Authorized>
@@ -166,6 +171,9 @@
                         <AuthorizeView Policy="Manage Roles" Context="pContext">
                             <NavLink href="management/roles">Roles</NavLink>
                         </AuthorizeView>
+                        <AuthorizeView Policy="Manage Logs" Context="pContext">
+                            <NavLink href="management/logs">Logs</NavLink>
+                        </AuthorizeView>
                     </div>
                 </div>
             }
@@ -219,6 +227,7 @@
              c.Value == "Manage Opponents" || 
              c.Value == "Manage Seasons" || 
              c.Value == "Manage Users" || 
-             c.Value == "Manage Roles"));
+             c.Value == "Manage Roles" ||
+             c.Value == "Manage Logs"));
     }
 }

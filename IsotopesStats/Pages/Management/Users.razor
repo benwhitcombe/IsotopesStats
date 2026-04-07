@@ -15,6 +15,8 @@
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
 
+<DeleteManager TItem="User" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="AuthService.DeleteUserAsync" />
+
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Users</h3>
     @if (!isAdding && !isEditing)
@@ -36,6 +38,7 @@
         HasCustomChanges="@(() => !selectedRoleIds.SetEquals(originalRoleIds))">
 
         <div class="form-group">
+
             <label>Email</label>
             <InputText class="form-control" @bind-Value="editViewModel.Email" placeholder="user@isotopes.com" autocomplete="off" />
             <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
@@ -151,7 +154,7 @@ else
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", user.Id)'>Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -189,7 +192,7 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Delete</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
                     </div>
                 </div>
             }
@@ -201,6 +204,7 @@ else
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
 
+    private DeleteManager<User> deleteManager = null!;
     private List<User> users = new();
     private List<UserRole> availableRoles = new();
     private bool isAdding = false;
@@ -285,7 +289,7 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
         
-        if (Id.HasValue && Id != 0)
+        if (Action == "edit" && Id.HasValue && Id != 0)
         {
             User? user = users.FirstOrDefault(u => u.Id == Id);
             if (user == null)

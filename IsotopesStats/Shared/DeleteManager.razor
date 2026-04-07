@@ -1,0 +1,88 @@
+@using IsotopesStats.Models
+@using IsotopesStats.Services
+@using System.Security.Claims
+@typeparam TItem where TItem : class, IEntity
+@inject AuthService AuthService
+
+<ConfirmDialog 
+    IsVisible="isVisible" 
+    Title="@($"Delete {TypeName}")" 
+    Message="@($"Are you sure you want to delete this {TypeName.ToLower()}?")"
+    Warning="@Warning"
+    OnConfirm="HandleConfirm"
+    OnCancel="() => isVisible = false" />
+
+@code {
+    [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+    [Parameter] public string? Warning { get; set; }
+    [Parameter] public EventCallback OnDeleted { get; set; }
+    [Parameter] public Func<int, Task> DeleteAction { get; set; } = null!;
+
+    private bool isVisible = false;
+    private TItem? itemToDelete;
+    private string TypeName => typeof(TItem).Name.Replace("ViewModel", "");
+
+    public void ConfirmDelete(TItem item)
+    {
+        itemToDelete = item;
+        isVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleConfirm()
+    {
+        if (itemToDelete == null) return;
+
+        isVisible = false;
+        
+        // 1. Delete from DB
+        await DeleteAction(itemToDelete.Id);
+
+        // 2. Log the action
+        await CreateLog(itemToDelete);
+
+        // 3. Notify parent
+        await OnDeleted.InvokeAsync();
+        
+        itemToDelete = null;
+    }
+
+    private async Task CreateLog(TItem item)
+    {
+        var authState = await AuthStateTask;
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            string? userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            
+            if (int.TryParse(userIdStr, out int userId))
+            {
+                string identifier = GetItemIdentifier(item);
+
+                await AuthService.AddLogAsync(new UserLog
+                {
+                    UserId = userId,
+                    UserEmail = userEmail ?? "unknown",
+                    Action = UserLogAction.Deleted,
+                    EntityType = TypeName,
+                    EntityId = item.Id.ToString(),
+                    Description = $"Deleted {TypeName}: {identifier}",
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+        }
+    }
+
+    private string GetItemIdentifier(TItem item)
+    {
+        var nameProp = typeof(TItem).GetProperty("Name");
+        var emailProp = typeof(TItem).GetProperty("Email");
+        
+        if (nameProp != null) return nameProp.GetValue(item)?.ToString() ?? "";
+        if (emailProp != null) return emailProp.GetValue(item)?.ToString() ?? "";
+        
+        return $"ID: {item.Id}";
+    }
+}

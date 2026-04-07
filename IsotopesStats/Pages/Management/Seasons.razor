@@ -13,6 +13,8 @@
 
 <PageTitle>Isotopes - Manage Seasons</PageTitle>
 
+<DeleteManager TItem="Season" @ref="deleteManager" OnDeleted="LoadSeasons" DeleteAction="StatsService.DeleteSeasonAsync" />
+
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Seasons</h3>
     @if (!isAdding && !isEditing)
@@ -39,6 +41,7 @@
             <InputText class="form-control" @bind-Value="editingSeason.Name" placeholder="e.g. 2026" />
             <ValidationMessage For="@(() => editingSeason.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
+
 
         <div class="form-group" style="margin-top: 1.5rem;">
             <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Season Roster</label>
@@ -90,7 +93,7 @@ else
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", season.Id)'>@season.Name</td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", season.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", season.Id)'>Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(season)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -111,7 +114,7 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", season.Id)'>Edit</button>
-                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", season.Id)'>Delete</button>
+                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(season)">Delete</button>
                     </div>
                 </div>
             }
@@ -123,6 +126,7 @@ else
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
 
+    private DeleteManager<Season> deleteManager = null!;
     private List<Season> seasons = new();
     private List<Player> allPlayers = new();
     private List<Opponent> allOpponents = new();

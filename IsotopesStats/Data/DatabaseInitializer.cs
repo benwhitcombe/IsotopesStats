@@ -127,6 +127,18 @@ public static class DatabaseInitializer
                     ExpiryDate TEXT NOT NULL,
                     FOREIGN KEY (UserId) REFERENCES Users(Id)
                 );
+
+                CREATE TABLE IF NOT EXISTS UserLogs (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    UserId INTEGER NOT NULL,
+                    UserEmail TEXT NOT NULL,
+                    Action INTEGER NOT NULL,
+                    EntityType TEXT NOT NULL,
+                    EntityId TEXT NOT NULL,
+                    Description TEXT NOT NULL,
+                    Timestamp TEXT NOT NULL,
+                    FOREIGN KEY (UserId) REFERENCES Users(Id)
+                );
             ";
             await command.ExecuteNonQueryAsync();
         }

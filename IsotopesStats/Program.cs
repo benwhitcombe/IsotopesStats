@@ -24,6 +24,7 @@ builder.Services.AddAuthorizationCore(options =>
     options.AddPolicy("Manage Seasons", policy => policy.RequireClaim("Permission", "Manage Seasons"));
     options.AddPolicy("Manage Users", policy => policy.RequireClaim("Permission", "Manage Users"));
     options.AddPolicy("Manage Roles", policy => policy.RequireClaim("Permission", "Manage Roles"));
+    options.AddPolicy("Manage Logs", policy => policy.RequireClaim("Permission", "Manage Logs"));
 });
 
 builder.Services.AddScoped<SharedSessionState>();
@@ -48,7 +49,7 @@ try
         
         // 1. Seed Permissions
         List<Permission> existingPermissions = await authService.GetPermissionsAsync();
-        string[] permissionNames = { "Manage Games", "Manage Players", "Manage Opponents", "Manage Seasons", "Manage Users", "Manage Roles" };
+        string[] permissionNames = { "Manage Games", "Manage Players", "Manage Opponents", "Manage Seasons", "Manage Users", "Manage Roles", "Manage Logs" };
         
         using (SqliteConnection connection = new SqliteConnection("Data Source=Data/IsotopesStats.db"))
         {

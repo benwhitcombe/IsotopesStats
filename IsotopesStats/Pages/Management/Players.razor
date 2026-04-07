@@ -21,6 +21,8 @@
     }
 </div>
 
+<DeleteManager TItem="Player" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsService.DeletePlayerAsync" />
+
 @if (isAdding || isEditing)
 {
     <ModelEditor 
@@ -73,7 +75,7 @@ else
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", player.Id)'>@player.Name</td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", player.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", player.Id)'>Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(player)">Delete</button>
                                 </td>
                             </tr>
                         }
@@ -93,7 +95,7 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", player.Id)'>Edit</button>
-                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", player.Id)'>Delete</button>
+                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(player)">Delete</button>
                     </div>
                 </div>
             }
@@ -113,6 +115,7 @@ else
     private Player originalPlayer = new();
     private bool isAdding = false;
     private bool isEditing = false;
+    private DeleteManager<Player> deleteManager = null!;
 
     protected override async Task OnInitializedAsync()
     {

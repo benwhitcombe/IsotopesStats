@@ -479,4 +479,60 @@ public class AuthService
         }
         return false;
     }
+
+    public async Task AddLogAsync(UserLog log)
+    {
+        if (log.UserId <= 0) return; // Don't log if we can't identify the user
+
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                INSERT INTO UserLogs (UserId, UserEmail, Action, EntityType, EntityId, Description, Timestamp)
+                VALUES ($userId, $userEmail, $action, $entityType, $entityId, $description, $timestamp)
+            ";
+            command.Parameters.AddWithValue("$userId", log.UserId);
+            command.Parameters.AddWithValue("$userEmail", log.UserEmail ?? "unknown");
+            command.Parameters.AddWithValue("$action", (int)log.Action);
+            command.Parameters.AddWithValue("$entityType", log.EntityType ?? "Unknown");
+            command.Parameters.AddWithValue("$entityId", log.EntityId ?? "0");
+            command.Parameters.AddWithValue("$description", log.Description ?? "");
+            command.Parameters.AddWithValue("$timestamp", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+            
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task<List<UserLog>> GetUserLogsAsync(int limit = 100)
+    {
+        List<UserLog> logs = new List<UserLog>();
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, UserId, UserEmail, Action, EntityType, EntityId, Description, Timestamp FROM UserLogs ORDER BY Timestamp DESC LIMIT $limit";
+            command.Parameters.AddWithValue("$limit", limit);
+
+            using (SqliteDataReader reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    logs.Add(new UserLog
+                    {
+                        Id = reader.GetInt32(0),
+                        UserId = reader.GetInt32(1),
+                        UserEmail = reader.GetString(2),
+                        Action = (UserLogAction)reader.GetInt32(3),
+                        EntityType = reader.GetString(4),
+                        EntityId = reader.GetString(5),
+                        Description = reader.GetString(6),
+                        Timestamp = DateTime.Parse(reader.GetString(7))
+                    });
+                }
+            }
+        }
+        return logs;
+    }
 }
