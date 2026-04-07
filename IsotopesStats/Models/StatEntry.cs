@@ -1,6 +1,6 @@
 namespace IsotopesStats.Models;
 
-public class StatEntry
+public record class StatEntry
 {
     public int Id { get; set; }
     public int PlayerId { get; set; }

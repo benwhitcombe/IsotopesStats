@@ -7,7 +7,7 @@ public enum GameType
     Exhibition
 }
 
-public class Game
+public record class Game
 {
     public int Id { get; set; }
     public int SeasonId { get; set; }

@@ -137,17 +137,22 @@ else
     private List<UserRole> roles = new();
     private List<Permission> allPermissions = new();
     private UserRole editingRole = new();
+    private UserRole originalRole = new();
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int roleIdToDelete;
-    private bool hasChanges = false;
+
+    private bool HasChanges => 
+        editingRole.Name != originalRole.Name || 
+        editingRole.IsDeleted != originalRole.IsDeleted ||
+        !editingRole.Permissions.OrderBy(p => p.Id).SequenceEqual(originalRole.Permissions.OrderBy(p => p.Id));
 
     private class RoleEditState
     {
         public UserRole Role { get; set; } = new();
+        public UserRole OriginalRole { get; set; } = new();
         public bool IsEditing { get; set; }
-        public bool HasChanges { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -170,7 +175,7 @@ else
         else
         {
             editingRole = new UserRole();
-            hasChanges = false;
+            originalRole = new UserRole();
         }
     }
 
@@ -188,21 +193,16 @@ else
 
             if (role != null)
             {
-                editingRole = new UserRole 
-                { 
-                    Id = role.Id, 
-                    Name = role.Name,
-                    IsDeleted = role.IsDeleted,
-                    Permissions = new List<Permission>(role.Permissions)
-                };
+                editingRole = role with { Permissions = new List<Permission>(role.Permissions) };
+                originalRole = role with { Permissions = new List<Permission>(role.Permissions) };
             }
         }
         else
         {
             editingRole = new UserRole();
+            originalRole = new UserRole();
         }
 
-        hasChanges = false;
         await HydrateTempState();
     }
 
@@ -224,7 +224,7 @@ else
                 if (result.Value.Role.Id == (Id ?? 0))
                 {
                     editingRole = result.Value.Role;
-                    hasChanges = result.Value.HasChanges;
+                    originalRole = result.Value.OriginalRole;
                     StateHasChanged();
                 }
             }
@@ -239,8 +239,8 @@ else
             RoleEditState state = new RoleEditState
             {
                 Role = editingRole,
-                IsEditing = isEditing,
-                HasChanges = hasChanges
+                OriginalRole = originalRole,
+                IsEditing = isEditing
             };
             await ProtectedSessionStore.SetAsync("RoleEditState", state);
         }
@@ -249,13 +249,11 @@ else
 
     private async Task HandleInput()
     {
-        hasChanges = true;
         await SaveTempState();
     }
 
     private async Task ClearTempState()
     {
-        hasChanges = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("RoleEditState");
@@ -277,7 +275,7 @@ else
 
     private async Task HandleCancel()
     {
-        if (hasChanges) showDiscardConfirm = true;
+        if (HasChanges) showDiscardConfirm = true;
         else await DiscardChanges();
     }
 
@@ -297,7 +295,6 @@ else
 
     private async Task OnPermissionToggled(Permission permission, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked)
         {
             if (!editingRole.Permissions.Any(p => p.Id == permission.Id))

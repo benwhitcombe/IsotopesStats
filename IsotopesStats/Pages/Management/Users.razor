@@ -214,30 +214,41 @@ else
     private int editingUserId = 0;
     
     private string userEmail = "";
+    private string originalEmail = "";
     private string password = "";
     private string confirmPassword = "";
     private HashSet<int> selectedRoleIds = new();
+    private HashSet<int> originalRoleIds = new();
     
     private bool showPassword = false;
     private bool showPasswordFields = false;
+    private bool originalShowPasswordFields = false;
     private string errorMessage = "";
     
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int userIdToDelete;
-    private bool hasChanges = false;
+
+    private bool HasChanges => 
+        userEmail != originalEmail || 
+        !string.IsNullOrEmpty(password) || 
+        !string.IsNullOrEmpty(confirmPassword) || 
+        !selectedRoleIds.SetEquals(originalRoleIds) ||
+        showPasswordFields != originalShowPasswordFields;
 
     private class UserEditState
     {
         public int UserId { get; set; }
         public string Email { get; set; } = "";
+        public string OriginalEmail { get; set; } = "";
         public string Password { get; set; } = "";
         public string ConfirmPassword { get; set; } = "";
         public HashSet<int> SelectedRoleIds { get; set; } = new();
+        public HashSet<int> OriginalRoleIds { get; set; } = new();
         public bool IsAdding { get; set; }
         public bool IsEditing { get; set; }
-        public bool HasChanges { get; set; }
         public bool ShowPasswordFields { get; set; }
+        public bool OriginalShowPasswordFields { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -274,11 +285,13 @@ else
     {
         editingUserId = 0;
         userEmail = "";
+        originalEmail = "";
         password = "";
         confirmPassword = "";
         selectedRoleIds.Clear();
-        hasChanges = false;
+        originalRoleIds.Clear();
         showPasswordFields = false;
+        originalShowPasswordFields = false;
         errorMessage = "";
     }
 
@@ -287,6 +300,7 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
         showPasswordFields = true;
+        originalShowPasswordFields = true;
         await HydrateTempState();
     }
 
@@ -307,10 +321,13 @@ else
             {
                 editingUserId = user.Id;
                 userEmail = user.Email;
+                originalEmail = user.Email;
                 selectedRoleIds.Clear();
+                originalRoleIds.Clear();
                 foreach (UserRole r in user.Roles)
                 {
                     selectedRoleIds.Add(r.Id);
+                    originalRoleIds.Add(r.Id);
                 }
             }
         }
@@ -337,11 +354,13 @@ else
                 {
                     editingUserId = result.Value.UserId;
                     userEmail = result.Value.Email;
+                    originalEmail = result.Value.OriginalEmail;
                     password = result.Value.Password;
                     confirmPassword = result.Value.ConfirmPassword;
                     selectedRoleIds = result.Value.SelectedRoleIds;
-                    hasChanges = result.Value.HasChanges;
+                    originalRoleIds = result.Value.OriginalRoleIds;
                     showPasswordFields = result.Value.ShowPasswordFields;
+                    originalShowPasswordFields = result.Value.OriginalShowPasswordFields;
                     StateHasChanged();
                 }
             }
@@ -357,13 +376,15 @@ else
             {
                 UserId = editingUserId,
                 Email = userEmail,
+                OriginalEmail = originalEmail,
                 Password = password,
                 ConfirmPassword = confirmPassword,
                 SelectedRoleIds = selectedRoleIds,
+                OriginalRoleIds = originalRoleIds,
                 IsAdding = isAdding,
                 IsEditing = isEditing,
-                HasChanges = hasChanges,
-                ShowPasswordFields = showPasswordFields
+                ShowPasswordFields = showPasswordFields,
+                OriginalShowPasswordFields = originalShowPasswordFields
             };
             await ProtectedSessionStore.SetAsync("UserEditState", state);
         }
@@ -372,13 +393,11 @@ else
 
     private async Task HandleInput()
     {
-        hasChanges = true;
         await SaveTempState();
     }
 
     private async Task ClearTempState()
     {
-        hasChanges = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("UserEditState");
@@ -400,7 +419,7 @@ else
 
     private async Task HandleCancel()
     {
-        if (hasChanges) showDiscardConfirm = true;
+        if (HasChanges) showDiscardConfirm = true;
         else await DiscardChanges();
     }
 
@@ -413,7 +432,6 @@ else
 
     private async Task OnRoleToggled(int roleId, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked) selectedRoleIds.Add(roleId);
         else selectedRoleIds.Remove(roleId);
         await SaveTempState();

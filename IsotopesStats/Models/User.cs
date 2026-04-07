@@ -1,6 +1,6 @@
 namespace IsotopesStats.Models;
 
-public class User
+public record class User
 {
     public int Id { get; set; }
     public string Email { get; set; } = string.Empty;

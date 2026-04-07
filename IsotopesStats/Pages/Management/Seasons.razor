@@ -145,21 +145,26 @@ else
     private HashSet<int> assignedOpponentIds = new();
     private HashSet<int> originalOpponentIds = new();
     private Season editingSeason = new();
+    private Season originalSeason = new();
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int seasonIdToDelete;
-    private bool hasChanges = false;
+
+    private bool HasChanges => 
+        editingSeason != originalSeason || 
+        !assignedPlayerIds.SetEquals(originalPlayerIds) || 
+        !assignedOpponentIds.SetEquals(originalOpponentIds);
 
     private class SeasonEditState
     {
         public Season Season { get; set; } = new();
+        public Season OriginalSeason { get; set; } = new();
         public HashSet<int> AssignedPlayerIds { get; set; } = new();
         public HashSet<int> OriginalPlayerIds { get; set; } = new();
         public HashSet<int> AssignedOpponentIds { get; set; } = new();
         public HashSet<int> OriginalOpponentIds { get; set; } = new();
         public bool IsEditing { get; set; }
-        public bool HasChanges { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -184,11 +189,11 @@ else
         else
         {
             editingSeason = new Season();
+            originalSeason = new Season();
             assignedPlayerIds.Clear();
             originalPlayerIds.Clear();
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
-            hasChanges = false;
         }
     }
 
@@ -206,7 +211,8 @@ else
 
             if (season != null)
             {
-                editingSeason = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
+                editingSeason = season with { }; // Clone
+                originalSeason = season with { }; // Clone for comparison
                 assignedPlayerIds.Clear();
                 originalPlayerIds.Clear();
                 assignedOpponentIds.Clear();
@@ -230,13 +236,13 @@ else
         else
         {
             editingSeason = new Season();
+            originalSeason = new Season();
             assignedPlayerIds.Clear();
             originalPlayerIds.Clear();
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
         }
 
-        hasChanges = false;
         await HydrateTempState();
     }
 
@@ -258,11 +264,11 @@ else
                 if (result.Value.Season.Id == (Id ?? 0))
                 {
                     editingSeason = result.Value.Season;
+                    originalSeason = result.Value.OriginalSeason;
                     assignedPlayerIds = result.Value.AssignedPlayerIds;
                     originalPlayerIds = result.Value.OriginalPlayerIds;
                     assignedOpponentIds = result.Value.AssignedOpponentIds;
                     originalOpponentIds = result.Value.OriginalOpponentIds;
-                    hasChanges = result.Value.HasChanges;
                     StateHasChanged();
                 }
             }
@@ -277,12 +283,12 @@ else
             SeasonEditState state = new SeasonEditState
             {
                 Season = editingSeason,
+                OriginalSeason = originalSeason,
                 AssignedPlayerIds = assignedPlayerIds,
                 OriginalPlayerIds = originalPlayerIds,
                 AssignedOpponentIds = assignedOpponentIds,
                 OriginalOpponentIds = originalOpponentIds,
-                IsEditing = isEditing,
-                HasChanges = hasChanges
+                IsEditing = isEditing
             };
             await ProtectedSessionStore.SetAsync("SeasonEditState", state);
         }
@@ -291,13 +297,11 @@ else
 
     private async Task HandleInput()
     {
-        hasChanges = true;
         await SaveTempState();
     }
 
     private async Task ClearTempState()
     {
-        hasChanges = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("SeasonEditState");
@@ -318,7 +322,7 @@ else
 
     private async Task HandleCancel()
     {
-        if (hasChanges) showDiscardConfirm = true;
+        if (HasChanges) showDiscardConfirm = true;
         else await DiscardChanges();
     }
 
@@ -333,7 +337,6 @@ else
 
     private async Task TogglePlayer(int playerId, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked) assignedPlayerIds.Add(playerId);
         else assignedPlayerIds.Remove(playerId);
         await SaveTempState();
@@ -341,7 +344,6 @@ else
 
     private async Task ToggleOpponent(int opponentId, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked) assignedOpponentIds.Add(opponentId);
         else assignedOpponentIds.Remove(opponentId);
         await SaveTempState();

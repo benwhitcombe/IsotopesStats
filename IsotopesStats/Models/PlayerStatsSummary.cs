@@ -1,6 +1,6 @@
 namespace IsotopesStats.Models;
 
-public class PlayerStatsSummary
+public record class PlayerStatsSummary
 {
     public string PlayerName { get; set; } = string.Empty;
     public int GamesPlayed { get; set; }

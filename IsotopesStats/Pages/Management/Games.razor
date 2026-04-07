@@ -414,9 +414,11 @@ else
     private List<Season> activeSeasons => allSeasons.Where(s => !s.IsDeleted).ToList();
     private List<Game> games = new();
     private List<StatEntry> playerStats = new();
+    private List<StatEntry> originalStats = new();
     private List<Player> seasonRoster = new();
     private List<Opponent> availableOpponents = new();
     private Game editingGame = new() { Date = DateTime.Now };
+    private Game originalGame = new() { Date = DateTime.Now };
     private int selectedSeasonId;
     private bool isEditing = false;
     private bool showSeasonModal = false;
@@ -424,19 +426,21 @@ else
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int gameIdToDelete;
-    private bool hasChanges = false;
 
     private StatEntry? draggedStat;
     private StatEntry? targetStat;
+
+    private bool HasChanges => editingGame != originalGame || !playerStats.SequenceEqual(originalStats);
 
     // Session persistence model
     private class GameEditState
     {
         public Game Game { get; set; } = new();
+        public Game OriginalGame { get; set; } = new();
         public List<StatEntry> Stats { get; set; } = new();
+        public List<StatEntry> OriginalStats { get; set; } = new();
         public List<Player> Roster { get; set; } = new();
         public bool IsEditing { get; set; }
-        public bool HasChanges { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -465,9 +469,10 @@ else
         else
         {
             editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            originalGame = editingGame with { };
             playerStats.Clear();
+            originalStats.Clear();
             seasonRoster.Clear();
-            hasChanges = false;
         }
     }
 
@@ -486,34 +491,27 @@ else
 
             if (game != null)
             {
-                editingGame = new Game 
-                { 
-                    Id = game.Id, 
-                    SeasonId = game.SeasonId, 
-                    GameNumber = game.GameNumber, 
-                    Date = game.Date, 
-                    Diamond = game.Diamond, 
-                    OpponentId = game.OpponentId, 
-                    Type = game.Type,
-                    IsDeleted = game.IsDeleted
-                };
+                editingGame = game with { };
+                originalGame = game with { };
                 
                 await LoadSeasonRoster();
                 await LoadAvailableOpponents();
                 playerStats = await StatsService.GetGameStatsAsync(game.Id);
                 playerStats = playerStats.OrderBy(s => s.BO).ToList();
+                originalStats = playerStats.Select(s => s with { }).ToList();
             }
         }
         else
         {
             editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            originalGame = editingGame with { };
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
             int order = 1;
             playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
+            originalStats = playerStats.Select(s => s with { }).ToList();
         }
 
-        hasChanges = false;
         await HydrateTempState();
     }
 
@@ -535,9 +533,10 @@ else
                 if (result.Value.Game.Id == (Id ?? 0))
                 {
                     editingGame = result.Value.Game;
+                    originalGame = result.Value.OriginalGame;
                     playerStats = result.Value.Stats;
+                    originalStats = result.Value.OriginalStats;
                     seasonRoster = result.Value.Roster;
-                    hasChanges = result.Value.HasChanges;
                     
                     await LoadAvailableOpponents();
                     StateHasChanged();
@@ -554,10 +553,11 @@ else
             GameEditState state = new GameEditState
             {
                 Game = editingGame,
+                OriginalGame = originalGame,
                 Stats = playerStats,
+                OriginalStats = originalStats,
                 Roster = seasonRoster,
-                IsEditing = isEditing,
-                HasChanges = hasChanges
+                IsEditing = isEditing
             };
             await ProtectedSessionStore.SetAsync("GameEditState", state);
         }
@@ -566,13 +566,11 @@ else
 
     private async Task HandleInput()
     {
-        hasChanges = true;
         await SaveTempState();
     }
 
     private async Task ClearTempState()
     {
-        hasChanges = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("GameEditState");
@@ -602,7 +600,6 @@ else
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
-            hasChanges = true;
             editingGame.SeasonId = id;
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
@@ -616,7 +613,6 @@ else
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
-            hasChanges = true;
             editingGame.OpponentId = id;
             await SaveTempState();
         }
@@ -626,7 +622,6 @@ else
     {
         if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
         {
-            hasChanges = true;
             editingGame.Date = date;
             await SaveTempState();
         }
@@ -636,7 +631,6 @@ else
     {
         if (Enum.TryParse(e.Value?.ToString(), out GameType type))
         {
-            hasChanges = true;
             editingGame.Type = type;
             await SaveTempState();
         }
@@ -672,7 +666,7 @@ else
 
     private async Task HandleCancel()
     {
-        if (hasChanges)
+        if (HasChanges)
         {
             showDiscardConfirm = true;
         }
@@ -695,7 +689,6 @@ else
 
     private async Task TogglePlayerInLineup(Player player, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked)
         {
             if (!playerStats.Any(ps => ps.PlayerId == player.Id))
@@ -747,7 +740,6 @@ else
 
         if (oldIndex != -1 && newIndex != -1)
         {
-            hasChanges = true;
             playerStats.RemoveAt(oldIndex);
             playerStats.Insert(newIndex, draggedStat);
             ReassignBO();

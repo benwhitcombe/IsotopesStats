@@ -121,19 +121,21 @@ else
     private HashSet<int> assignedSeasonIds = new();
     private HashSet<int> originalSeasonIds = new();
     private Player editingPlayer = new();
+    private Player originalPlayer = new();
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
     private int playerIdToDelete;
-    private bool hasChanges = false;
+
+    private bool HasChanges => editingPlayer != originalPlayer || !assignedSeasonIds.SetEquals(originalSeasonIds);
 
     private class PlayerEditState
     {
         public Player Player { get; set; } = new();
+        public Player OriginalPlayer { get; set; } = new();
         public HashSet<int> AssignedSeasonIds { get; set; } = new();
         public HashSet<int> OriginalSeasonIds { get; set; } = new();
         public bool IsEditing { get; set; }
-        public bool HasChanges { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -157,9 +159,9 @@ else
         else
         {
             editingPlayer = new Player();
+            originalPlayer = new Player();
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
-            hasChanges = false;
         }
     }
 
@@ -177,7 +179,8 @@ else
 
             if (player != null)
             {
-                editingPlayer = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
+                editingPlayer = player with { }; // Clone
+                originalPlayer = player with { }; // Clone for comparison
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
 
@@ -192,11 +195,11 @@ else
         else
         {
             editingPlayer = new Player();
+            originalPlayer = new Player();
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
 
-        hasChanges = false;
         await HydrateTempState();
     }
 
@@ -218,9 +221,9 @@ else
                 if (result.Value.Player.Id == (Id ?? 0))
                 {
                     editingPlayer = result.Value.Player;
+                    originalPlayer = result.Value.OriginalPlayer;
                     assignedSeasonIds = result.Value.AssignedSeasonIds;
                     originalSeasonIds = result.Value.OriginalSeasonIds;
-                    hasChanges = result.Value.HasChanges;
                     StateHasChanged();
                 }
             }
@@ -235,10 +238,10 @@ else
             PlayerEditState state = new PlayerEditState
             {
                 Player = editingPlayer,
+                OriginalPlayer = originalPlayer,
                 AssignedSeasonIds = assignedSeasonIds,
                 OriginalSeasonIds = originalSeasonIds,
-                IsEditing = isEditing,
-                HasChanges = hasChanges
+                IsEditing = isEditing
             };
             await ProtectedSessionStore.SetAsync("PlayerEditState", state);
         }
@@ -247,13 +250,11 @@ else
 
     private async Task HandleInput()
     {
-        hasChanges = true;
         await SaveTempState();
     }
 
     private async Task ClearTempState()
     {
-        hasChanges = false;
         try
         {
             await ProtectedSessionStore.DeleteAsync("PlayerEditState");
@@ -274,7 +275,7 @@ else
 
     private async Task HandleCancel()
     {
-        if (hasChanges) showDiscardConfirm = true;
+        if (HasChanges) showDiscardConfirm = true;
         else await DiscardChanges();
     }
 
@@ -289,7 +290,6 @@ else
 
     private async Task ToggleSeason(int seasonId, bool isChecked)
     {
-        hasChanges = true;
         if (isChecked) assignedSeasonIds.Add(seasonId);
         else assignedSeasonIds.Remove(seasonId);
         await SaveTempState();
