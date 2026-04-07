@@ -17,12 +17,12 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddAuthorizationCore(options =>
 {
-    options.AddPolicy("ManageGames", policy => policy.RequireClaim("Permission", "ManageGames"));
-    options.AddPolicy("ManagePlayers", policy => policy.RequireClaim("Permission", "ManagePlayers"));
-    options.AddPolicy("ManageOpponents", policy => policy.RequireClaim("Permission", "ManageOpponents"));
-    options.AddPolicy("ManageSeasons", policy => policy.RequireClaim("Permission", "ManageSeasons"));
-    options.AddPolicy("ManageUsers", policy => policy.RequireClaim("Permission", "ManageUsers"));
-    options.AddPolicy("ManageRoles", policy => policy.RequireClaim("Permission", "ManageRoles"));
+    options.AddPolicy("Manage Games", policy => policy.RequireClaim("Permission", "Manage Games"));
+    options.AddPolicy("Manage Players", policy => policy.RequireClaim("Permission", "Manage Players"));
+    options.AddPolicy("Manage Opponents", policy => policy.RequireClaim("Permission", "Manage Opponents"));
+    options.AddPolicy("Manage Seasons", policy => policy.RequireClaim("Permission", "Manage Seasons"));
+    options.AddPolicy("Manage Users", policy => policy.RequireClaim("Permission", "Manage Users"));
+    options.AddPolicy("Manage Roles", policy => policy.RequireClaim("Permission", "Manage Roles"));
 });
 
 builder.Services.AddScoped<SharedSessionState>();
@@ -47,7 +47,7 @@ try
         
         // 1. Seed Permissions
         List<Permission> existingPermissions = await authService.GetPermissionsAsync();
-        string[] permissionNames = { "ManageGames", "ManagePlayers", "ManageOpponents", "ManageSeasons", "ManageUsers", "ManageRoles" };
+        string[] permissionNames = { "Manage Games", "Manage Players", "Manage Opponents", "Manage Seasons", "Manage Users", "Manage Roles" };
         
         using (SqliteConnection connection = new SqliteConnection("Data Source=Data/IsotopesStats.db"))
         {
@@ -66,12 +66,12 @@ try
         
         // Refresh permissions
         List<Permission> allPermissions = await authService.GetPermissionsAsync();
-        Permission pGames = allPermissions.First(p => p.Name == "ManageGames");
-        Permission pPlayers = allPermissions.First(p => p.Name == "ManagePlayers");
-        Permission pOpponents = allPermissions.First(p => p.Name == "ManageOpponents");
-        Permission pSeasons = allPermissions.First(p => p.Name == "ManageSeasons");
-        Permission pUsers = allPermissions.First(p => p.Name == "ManageUsers");
-        Permission pRoles = allPermissions.First(p => p.Name == "ManageRoles");
+        Permission pGames = allPermissions.First(p => p.Name == "Manage Games");
+        Permission pPlayers = allPermissions.First(p => p.Name == "Manage Players");
+        Permission pOpponents = allPermissions.First(p => p.Name == "Manage Opponents");
+        Permission pSeasons = allPermissions.First(p => p.Name == "Manage Seasons");
+        Permission pUsers = allPermissions.First(p => p.Name == "Manage Users");
+        Permission pRoles = allPermissions.First(p => p.Name == "Manage Roles");
 
         // 2. Seed Roles
         List<UserRole> existingRoles = await authService.GetUserRolesAsync();

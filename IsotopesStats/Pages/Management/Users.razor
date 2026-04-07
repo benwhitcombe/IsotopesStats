@@ -6,7 +6,7 @@
 @using IsotopesStats.Shared
 @using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@attribute [Authorize(Policy = "ManageUsers")]
+@attribute [Authorize(Policy = "Manage Users")]
 @inject AuthService AuthService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -15,7 +15,7 @@
 <PageTitle>Isotopes - Manage Users</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">User Management</h3>
+    <h3 style="margin:0">Manage Users</h3>
     @if (!isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New User</button>
@@ -27,7 +27,7 @@
     <ManagementEditCard 
         Title="@($"{(isAdding ? "Add" : "Edit")} User")"
         IsEdit="@isEditing"
-        SaveText="@(isAdding ? "Create User" : "Save Changes")"
+        SaveText="Save User"
         OnSave="HandleSave"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingUserId))">

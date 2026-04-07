@@ -78,34 +78,34 @@
                                 <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold;">
                                     Management
                                 </div>
-                                <AuthorizeView Policy="ManageGames" Context="pContext">
+                                <AuthorizeView Policy="Manage Games" Context="pContext">
                                     <NavLink href="management/games" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🏟️</span> Games
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="ManagePlayers" Context="pContext">
+                                <AuthorizeView Policy="Manage Players" Context="pContext">
                                     <NavLink href="management/players" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>👥</span> Players
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="ManageOpponents" Context="pContext">
+                                <AuthorizeView Policy="Manage Opponents" Context="pContext">
                                     <NavLink href="management/opponents" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                         </svg> Opponents
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="ManageSeasons" Context="pContext">
+                                <AuthorizeView Policy="Manage Seasons" Context="pContext">
                                     <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🗓️</span> Seasons
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="ManageUsers" Context="pContext">
+                                <AuthorizeView Policy="Manage Users" Context="pContext">
                                     <NavLink href="management/users" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🔐</span> Users
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="ManageRoles" Context="pContext">
+                                <AuthorizeView Policy="Manage Roles" Context="pContext">
                                     <NavLink href="management/roles" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🛠️</span> Roles
                                     </NavLink>
@@ -144,22 +144,22 @@
                         <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
                             Management
                         </div>
-                        <AuthorizeView Policy="ManageGames" Context="pContext">
+                        <AuthorizeView Policy="Manage Games" Context="pContext">
                             <NavLink href="management/games">Games</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="ManagePlayers" Context="pContext">
+                        <AuthorizeView Policy="Manage Players" Context="pContext">
                             <NavLink href="management/players">Players</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="ManageOpponents" Context="pContext">
+                        <AuthorizeView Policy="Manage Opponents" Context="pContext">
                             <NavLink href="management/opponents">Opponents</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="ManageSeasons" Context="pContext">
+                        <AuthorizeView Policy="Manage Seasons" Context="pContext">
                             <NavLink href="management/seasons">Seasons</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="ManageUsers" Context="pContext">
+                        <AuthorizeView Policy="Manage Users" Context="pContext">
                             <NavLink href="management/users">Users</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="ManageRoles" Context="pContext">
+                        <AuthorizeView Policy="Manage Roles" Context="pContext">
                             <NavLink href="management/roles">Roles</NavLink>
                         </AuthorizeView>
                     </div>
@@ -210,11 +210,11 @@
     private bool HasAnyManagementPermission(ClaimsPrincipal user)
     {
         return user.HasClaim(c => c.Type == "Permission" && 
-            (c.Value == "ManageGames" || 
-             c.Value == "ManagePlayers" || 
-             c.Value == "ManageOpponents" || 
-             c.Value == "ManageSeasons" || 
-             c.Value == "ManageUsers" || 
-             c.Value == "ManageRoles"));
+            (c.Value == "Manage Games" || 
+             c.Value == "Manage Players" || 
+             c.Value == "Manage Opponents" || 
+             c.Value == "Manage Seasons" || 
+             c.Value == "Manage Users" || 
+             c.Value == "Manage Roles"));
     }
 }
