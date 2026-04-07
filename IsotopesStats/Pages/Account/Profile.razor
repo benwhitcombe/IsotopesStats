@@ -26,7 +26,9 @@
         Item="profileModel"
         OriginalItem="originalViewModel"
         BasePath="/"
-        OnSave="HandleSave">
+        DeleteWarning="This will permanently disable your account and log you out."
+        OnSave="HandleSave"
+        OnDelete="HandleDelete">
 
         <div class="form-group">
             <label>Email Address</label>
@@ -83,7 +85,7 @@
     private bool showPassword = false;
     private string errorMessage = "";
 
-    public class ProfileViewModel : IEntity
+    public record class ProfileViewModel : IEntity
     {
         public int Id { get; set; } = 1; // Dummy Id for IEntity
 
@@ -189,6 +191,15 @@
             errorMessage = "An error occurred while saving: " + ex.Message;
             throw; // Let the card handle or show error
         }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (currentUser == null) return;
+        
+        await AuthService.DeleteUserAsync(currentUser.Id);
+        await AuthStateProvider.UpdateAuthenticationState(null);
+        Navigation.NavigateTo("/");
     }
 
     public void Dispose() { }

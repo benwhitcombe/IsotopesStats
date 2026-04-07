@@ -92,7 +92,7 @@ public static class DatabaseInitializer
 
                 CREATE TABLE IF NOT EXISTS UserRoles (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL UNIQUE,
+                    Name TEXT NOT NULL,
                     IsDeleted INTEGER NOT NULL DEFAULT 0
                 );
 
@@ -106,7 +106,7 @@ public static class DatabaseInitializer
 
                 CREATE TABLE IF NOT EXISTS Users (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Email TEXT NOT NULL UNIQUE,
+                    Email TEXT NOT NULL,
                     PasswordHash TEXT NOT NULL,
                     CreatedAt TEXT NOT NULL,
                     IsDeleted INTEGER NOT NULL DEFAULT 0
@@ -139,6 +139,13 @@ public static class DatabaseInitializer
                     Timestamp TEXT NOT NULL,
                     FOREIGN KEY (UserId) REFERENCES Users(Id)
                 );
+
+                -- Partial Unique Indexes to enforce uniqueness only for non-deleted records
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_seasons_name_active ON Seasons(Name) WHERE IsDeleted = 0;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_opponents_name_active ON Opponents(Name) WHERE IsDeleted = 0;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_players_name_active ON Players(Name) WHERE IsDeleted = 0;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_userroles_name_active ON UserRoles(Name) WHERE IsDeleted = 0;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_active ON Users(Email) WHERE IsDeleted = 0;
             ";
             await command.ExecuteNonQueryAsync();
         }

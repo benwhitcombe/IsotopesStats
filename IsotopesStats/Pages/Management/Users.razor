@@ -218,7 +218,7 @@ else
     private bool showPassword = false;
     private string errorMessage = "";
 
-    public class UserEditViewModel : IEntity
+    public record class UserEditViewModel : IEntity
     {
         public int Id { get; set; }
 
