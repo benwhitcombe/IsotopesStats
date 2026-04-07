@@ -25,18 +25,19 @@
 
 @if (isAdding || isEditing)
 {
-    <ManagementEditCard 
+    <ModelEditor 
+        TItem="UserEditViewModel"
         Title="@($"{(isAdding ? "Add" : "Edit")} User")"
-        IsEdit="@isEditing"
-        SaveText="Save User"
-        Model="editViewModel"
+        Item="editViewModel"
+        OriginalItem="originalViewModel"
+        BasePath="/management/users"
         OnSave="HandleSave"
-        OnCancel="HandleCancel"
-        OnDelete="@(() => ShowDeleteConfirm(editingUserId))">
+        OnDelete="DeleteUser"
+        HasCustomChanges="@(() => !selectedRoleIds.SetEquals(originalRoleIds))">
 
         <div class="form-group">
             <label>Email</label>
-            <InputText class="form-control" @bind-Value="editViewModel.Email" @onkeyup="HandleInput" placeholder="user@isotopes.com" autocomplete="off" />
+            <InputText class="form-control" @bind-Value="editViewModel.Email" placeholder="user@isotopes.com" autocomplete="off" />
             <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 
@@ -45,7 +46,7 @@
             <div class="form-group">
                 <label>Password</label>
                 <div style="position: relative;">
-                    <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" autocomplete="new-password" style="padding-right: 3rem;" />
+                    <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" autocomplete="new-password" style="padding-right: 3rem;" />
                     <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                         <PasswordToggleIcon IsVisible="@showPassword" />
                     </button>
@@ -54,7 +55,7 @@
             </div>
             <div class="form-group">
                 <label>Confirm Password</label>
-                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" autocomplete="new-password" />
+                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" autocomplete="new-password" />
                 <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
         }
@@ -72,7 +73,7 @@
                         <div class="form-group">
                             <label>New Password</label>
                             <div style="position: relative;">
-                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" autocomplete="new-password" style="padding-right: 3rem;" />
+                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" placeholder="" autocomplete="new-password" style="padding-right: 3rem;" />
                                 <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                                     <PasswordToggleIcon IsVisible="@showPassword" />
                                 </button>
@@ -81,7 +82,7 @@
                         </div>
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" autocomplete="new-password" />
+                            <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" placeholder="" autocomplete="new-password" />
                             <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                         </div>
                     </div>
@@ -109,7 +110,7 @@
                 @errorMessage
             </div>
         }
-    </ManagementEditCard>
+    </ModelEditor>
 }
 else
 {
@@ -149,8 +150,8 @@ else
                                 </td>
                                 <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: right;">
-                                    <button class="view-btn" style="margin-right: 0.5rem;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
+                                    <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", user.Id)'>Delete</button>
                                 </td>
                             </tr>
                         }
@@ -188,27 +189,13 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick="() => ShowDeleteConfirm(user.Id)">Delete</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Delete</button>
                     </div>
                 </div>
             }
         </div>
     </div>
 }
-
-<ConfirmDialog 
-    IsVisible="showConfirm" 
-    Title="Delete User" 
-    Message="Are you sure you want to delete this user? They will no longer be able to log in."
-    OnConfirm="DeleteUser"
-    OnCancel="() => showConfirm = false" />
-
-<ConfirmDialog 
-    IsVisible="showDiscardConfirm" 
-    Title="Discard Changes" 
-    Message="You have unsaved changes. Are you sure you want to discard them?"
-    OnConfirm="DiscardChanges"
-    OnCancel="() => showDiscardConfirm = false" />
 
 @code {
     [Parameter] public string? Action { get; set; }
@@ -218,29 +205,19 @@ else
     private List<UserRole> availableRoles = new();
     private bool isAdding = false;
     private bool isEditing = false;
-    private int editingUserId = 0;
     
     private UserEditViewModel editViewModel = new();
-    private string originalEmail = "";
+    private UserEditViewModel originalViewModel = new();
     private HashSet<int> selectedRoleIds = new();
     private HashSet<int> originalRoleIds = new();
-    private bool originalShowPasswordFields = false;
     
     private bool showPassword = false;
     private string errorMessage = "";
-    
-    private bool showConfirm = false;
-    private bool showDiscardConfirm = false;
-    private int userIdToDelete;
 
-    private bool HasChanges => 
-        editViewModel.Email != originalEmail || 
-        !string.IsNullOrEmpty(editViewModel.Password) || 
-        !selectedRoleIds.SetEquals(originalRoleIds) ||
-        editViewModel.ShowPasswordFields != originalShowPasswordFields;
-
-    private class UserEditViewModel
+    public class UserEditViewModel : IEntity
     {
+        public int Id { get; set; }
+
         [Required(ErrorMessage = "Email address is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; } = "";
@@ -253,17 +230,6 @@ else
         public string? ConfirmPassword { get; set; }
         
         public bool ShowPasswordFields { get; set; }
-    }
-
-    private class UserEditState
-    {
-        public int UserId { get; set; }
-        public UserEditViewModel ViewModel { get; set; } = new();
-        public string OriginalEmail { get; set; } = "";
-        public HashSet<int> SelectedRoleIds { get; set; } = new();
-        public HashSet<int> OriginalRoleIds { get; set; } = new();
-        public bool IsAdding { get; set; }
-        public bool IsEditing { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -285,7 +251,7 @@ else
             {
                 await LoadNewUser();
             }
-            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingUserId)))
+            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editViewModel.Id)))
             {
                 await LoadEditingUser();
             }
@@ -298,12 +264,10 @@ else
 
     private void ResetState()
     {
-        editingUserId = 0;
         editViewModel = new UserEditViewModel();
-        originalEmail = "";
+        originalViewModel = new UserEditViewModel();
         selectedRoleIds.Clear();
         originalRoleIds.Clear();
-        originalShowPasswordFields = false;
         errorMessage = "";
     }
 
@@ -312,7 +276,7 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
         editViewModel.ShowPasswordFields = true;
-        originalShowPasswordFields = true;
+        originalViewModel.ShowPasswordFields = true;
         await HydrateTempState();
     }
 
@@ -320,7 +284,6 @@ else
     {
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
-        originalShowPasswordFields = false;
         
         if (Id.HasValue && Id != 0)
         {
@@ -332,9 +295,10 @@ else
 
             if (user != null)
             {
-                editingUserId = user.Id;
+                editViewModel.Id = user.Id;
                 editViewModel.Email = user.Email;
-                originalEmail = user.Email;
+                originalViewModel.Id = user.Id;
+                originalViewModel.Email = user.Email;
                 selectedRoleIds.Clear();
                 originalRoleIds.Clear();
                 foreach (UserRole r in user.Roles)
@@ -348,64 +312,16 @@ else
         await HydrateTempState();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && (isAdding || isEditing))
-        {
-            await HydrateTempState();
-        }
-    }
-
     private async Task HydrateTempState()
     {
         try
         {
-            ProtectedBrowserStorageResult<UserEditState> result = await ProtectedSessionStore.GetAsync<UserEditState>("UserEditState");
-            if (result.Success && result.Value != null && (result.Value.IsAdding || result.Value.IsEditing))
+            ProtectedBrowserStorageResult<UserEditViewModel> result = await ProtectedSessionStore.GetAsync<UserEditViewModel>($"EditState_UserEditViewModel_{Id ?? 0}");
+            if (result.Success && result.Value != null)
             {
-                if (result.Value.UserId == (Id ?? 0))
-                {
-                    editingUserId = result.Value.UserId;
-                    editViewModel = result.Value.ViewModel;
-                    originalEmail = result.Value.OriginalEmail;
-                    selectedRoleIds = result.Value.SelectedRoleIds;
-                    originalRoleIds = result.Value.OriginalRoleIds;
-                    StateHasChanged();
-                }
+                editViewModel = result.Value;
+                StateHasChanged();
             }
-        }
-        catch (Exception) { }
-    }
-
-    private async Task SaveTempState()
-    {
-        try
-        {
-            UserEditState state = new UserEditState
-            {
-                UserId = editingUserId,
-                ViewModel = editViewModel,
-                OriginalEmail = originalEmail,
-                SelectedRoleIds = selectedRoleIds,
-                OriginalRoleIds = originalRoleIds,
-                IsAdding = isAdding,
-                IsEditing = isEditing
-            };
-            await ProtectedSessionStore.SetAsync("UserEditState", state);
-        }
-        catch (Exception) { }
-    }
-
-    private async Task HandleInput()
-    {
-        await SaveTempState();
-    }
-
-    private async Task ClearTempState()
-    {
-        try
-        {
-            await ProtectedSessionStore.DeleteAsync("UserEditState");
         }
         catch (Exception) { }
     }
@@ -422,29 +338,15 @@ else
         else Navigation.NavigateTo($"/management/users/edit/{id}");
     }
 
-    private async Task HandleCancel()
-    {
-        if (HasChanges) showDiscardConfirm = true;
-        else await DiscardChanges();
-    }
-
-    private async Task DiscardChanges()
-    {
-        showDiscardConfirm = false;
-        await ClearTempState();
-        Navigation.NavigateTo("/management/users");
-    }
-
-    private async Task OnRoleToggled(int roleId, bool isChecked)
+    private void OnRoleToggled(int roleId, bool isChecked)
     {
         if (isChecked) selectedRoleIds.Add(roleId);
         else selectedRoleIds.Remove(roleId);
-        await SaveTempState();
     }
 
     private void TogglePassword() => showPassword = !showPassword;
 
-    private async Task TogglePasswordFields()
+    private void TogglePasswordFields()
     {
         editViewModel.ShowPasswordFields = !editViewModel.ShowPasswordFields;
         if (!editViewModel.ShowPasswordFields)
@@ -452,7 +354,6 @@ else
             editViewModel.Password = null;
             editViewModel.ConfirmPassword = null;
         }
-        await SaveTempState();
     }
 
     private async Task HandleSave()
@@ -463,7 +364,6 @@ else
 
         if (isAdding && string.IsNullOrEmpty(editViewModel.Password)) { errorMessage = "Password is required."; return; }
 
-        // 3. Save
         if (isAdding)
         {
             bool result = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password!, selectedRoleIds.ToList());
@@ -471,31 +371,20 @@ else
         }
         else
         {
-            // Update User Info
-            await AuthService.UpdateUserAsync(new User { Id = editingUserId, Email = editViewModel.Email }, selectedRoleIds.ToList());
+            await AuthService.UpdateUserAsync(new User { Id = editViewModel.Id, Email = editViewModel.Email }, selectedRoleIds.ToList());
             
-            // Update Password if fields are shown
             if (editViewModel.ShowPasswordFields && !string.IsNullOrEmpty(editViewModel.Password))
             {
-                await AuthService.UpdateUserPasswordAsync(editingUserId, editViewModel.Password);
+                await AuthService.UpdateUserPasswordAsync(editViewModel.Id, editViewModel.Password);
             }
         }
 
-        await ClearTempState();
-        Navigation.NavigateTo("/management/users");
         await LoadData();
-    }
-
-    private void ShowDeleteConfirm(int id)
-    {
-        userIdToDelete = id;
-        showConfirm = true;
     }
 
     private async Task DeleteUser()
     {
-        showConfirm = false;
-        await AuthService.DeleteUserAsync(userIdToDelete);
+        await AuthService.DeleteUserAsync(editViewModel.Id);
         await LoadData();
     }
 }

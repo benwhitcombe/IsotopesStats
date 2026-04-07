@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace IsotopesStats.Models;
 
-public record class Opponent
+public record class Opponent : IEntity
 {
     public int Id { get; set; }
     

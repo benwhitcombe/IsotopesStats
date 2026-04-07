@@ -9,7 +9,7 @@ public enum GameType
     Exhibition
 }
 
-public record class Game
+public record class Game : IEntity
 {
     public int Id { get; set; }
     

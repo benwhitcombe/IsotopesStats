@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace IsotopesStats.Models;
 
-public record class Season
+public record class Season : IEntity
 {
     public int Id { get; set; }
     

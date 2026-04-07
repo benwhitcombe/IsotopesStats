@@ -24,14 +24,16 @@
 
 @if (isEditing)
 {
-    <ManagementEditCard 
+    <ModelEditor 
+        TItem="Game"
         Title="@($"{(editingGame.Id == 0 ? "Add New" : "Edit")} Game")"
-        IsEdit="@(editingGame.Id != 0)"
-        SaveText="Save Game"
-        Model="editingGame"
+        Item="editingGame"
+        OriginalItem="originalGame"
+        BasePath="/management/games"
+        DeleteWarning="This will delete all associated player stats from this game."
         OnSave="SaveGame"
-        OnCancel="HandleCancel"
-        OnDelete="@(() => ShowDeleteConfirm(editingGame.Id))">
+        OnDelete="DeleteGame"
+        HasCustomChanges="@(() => !playerStats.SequenceEqual(originalStats))">
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
@@ -141,20 +143,20 @@
                                 <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
                                 <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
                                 <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="HandleInput" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="HandleInput" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="HandleInput" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control form-control-sm" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                             </tr>
                         }
                     </tbody>
@@ -202,25 +204,24 @@
                             </div>
                         </div>
                         <div class="admin-stats-grid">
-                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" @onkeyup="HandleInput" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" @onkeyup="HandleInput" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" @onkeyup="HandleInput" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
                         </div>
                     </div>
                 }
 
-                @* Mobile Team Totals *@
                 <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--isotopes-accent); margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
                         <div style="color: var(--isotopes-accent); font-weight: 900;">TEAM TOTALS</div>
@@ -249,7 +250,7 @@
                 </div>
             </div>
         </div>
-    </ManagementEditCard>
+    </ModelEditor>
 }
 else
 {
@@ -321,7 +322,7 @@ else
                                 </td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(game.Id)">Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", game.Id)'>Delete</button>
                                 </td>
                             </tr>
                         }
@@ -356,7 +357,7 @@ else
                         </span>
                         <div style="display: flex; gap: 0.5rem;">
                             <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
-                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => ShowDeleteConfirm(game.Id)">Delete</button>
+                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick='() => StartEdit("edit", game.Id)'>Delete</button>
                         </div>
                     </div>
                 </div>
@@ -365,60 +366,12 @@ else
     </div>
 }
 
-<ConfirmDialog 
-    IsVisible="showConfirm" 
-    Title="Delete Game" 
-    Message="Are you sure you want to delete this game?"
-    Warning="This will delete all associated player stats from this game."
-    OnConfirm="DeleteGame"
-    OnCancel="() => showConfirm = false" />
-
-<ConfirmDialog 
-    IsVisible="showDiscardConfirm" 
-    Title="Discard Changes" 
-    Message="You have unsaved changes. Are you sure you want to discard them?"
-    OnConfirm="DiscardChanges"
-    OnCancel="() => showDiscardConfirm = false" />
-
-@if (showSuccess)
-{
-    <div class="view-fade-in" style="position: fixed; bottom: 2rem; right: 2rem; background: #155724; color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 3000;">
-        ✨ Game saved successfully!
-    </div>
-}
-
 <style>
-    .drag-over {
-        background-color: #f0f7ff !important;
-        border-top: 2px solid var(--isotopes-accent) !important;
-    }
-
-    .admin-stats-table th, 
-    .admin-stats-table td {
-        text-align: center !important;
-        vertical-align: middle !important;
-        height: 45px !important;
-        padding: 4px !important;
-    }
-
-    .admin-stats-table th:not(.player-col),
-    .admin-stats-table td:not(.player-col) {
-        width: 45px !important;
-        min-width: 45px !important;
-    }
-
-    .admin-stats-table .player-col {
-        text-align: left !important;
-        font-weight: bold;
-        white-space: nowrap;
-        padding-left: 12px !important;
-    }
-
-    /* table-sm padding override */
-    .admin-stats-table .form-control-sm {
-        padding: 2px !important;
-        height: 32px !important;
-    }
+    .drag-over { background-color: #f0f7ff !important; border-top: 2px solid var(--isotopes-accent) !important; }
+    .admin-stats-table th, .admin-stats-table td { text-align: center !important; vertical-align: middle !important; height: 45px !important; padding: 4px !important; }
+    .admin-stats-table th:not(.player-col), .admin-stats-table td:not(.player-col) { width: 45px !important; min-width: 45px !important; }
+    .admin-stats-table .player-col { text-align: left !important; font-weight: bold; white-space: nowrap; padding-left: 12px !important; }
+    .admin-stats-table .form-control-sm { padding: 2px !important; height: 32px !important; }
 </style>
 
 @code {
@@ -437,26 +390,9 @@ else
     private int selectedSeasonId;
     private bool isEditing = false;
     private bool showSeasonModal = false;
-    private bool showSuccess = false;
-    private bool showConfirm = false;
-    private bool showDiscardConfirm = false;
-    private int gameIdToDelete;
 
     private StatEntry? draggedStat;
     private StatEntry? targetStat;
-
-    private bool HasChanges => editingGame != originalGame || !playerStats.SequenceEqual(originalStats);
-
-    // Session persistence model
-    private class GameEditState
-    {
-        public Game Game { get; set; } = new();
-        public Game OriginalGame { get; set; } = new();
-        public List<StatEntry> Stats { get; set; } = new();
-        public List<StatEntry> OriginalStats { get; set; } = new();
-        public List<Player> Roster { get; set; } = new();
-        public bool IsEditing { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -483,7 +419,7 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
             originalGame = editingGame with { };
             playerStats.Clear();
             originalStats.Clear();
@@ -508,7 +444,6 @@ else
             {
                 editingGame = game with { };
                 originalGame = game with { };
-                
                 await LoadSeasonRoster();
                 await LoadAvailableOpponents();
                 playerStats = await StatsService.GetGameStatsAsync(game.Id);
@@ -518,11 +453,11 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
             originalGame = editingGame with { };
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
-            int order = 1;
+            int order =  order = 1;
             playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
             originalStats = playerStats.Select(s => s with { }).ToList();
         }
@@ -530,65 +465,16 @@ else
         await HydrateTempState();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && isEditing)
-        {
-            await HydrateTempState();
-        }
-    }
-
     private async Task HydrateTempState()
     {
         try
         {
-            ProtectedBrowserStorageResult<GameEditState> result = await ProtectedSessionStore.GetAsync<GameEditState>("GameEditState");
-            if (result.Success && result.Value != null && result.Value.IsEditing)
+            ProtectedBrowserStorageResult<Game> result = await ProtectedSessionStore.GetAsync<Game>($"EditState_Game_{Id ?? 0}");
+            if (result.Success && result.Value != null)
             {
-                if (result.Value.Game.Id == (Id ?? 0))
-                {
-                    editingGame = result.Value.Game;
-                    originalGame = result.Value.OriginalGame;
-                    playerStats = result.Value.Stats;
-                    originalStats = result.Value.OriginalStats;
-                    seasonRoster = result.Value.Roster;
-                    
-                    await LoadAvailableOpponents();
-                    StateHasChanged();
-                }
+                editingGame = result.Value;
+                StateHasChanged();
             }
-        }
-        catch (Exception) { }
-    }
-
-    private async Task SaveTempState()
-    {
-        try
-        {
-            GameEditState state = new GameEditState
-            {
-                Game = editingGame,
-                OriginalGame = originalGame,
-                Stats = playerStats,
-                OriginalStats = originalStats,
-                Roster = seasonRoster,
-                IsEditing = isEditing
-            };
-            await ProtectedSessionStore.SetAsync("GameEditState", state);
-        }
-        catch (Exception) { }
-    }
-
-    private async Task HandleInput()
-    {
-        await SaveTempState();
-    }
-
-    private async Task ClearTempState()
-    {
-        try
-        {
-            await ProtectedSessionStore.DeleteAsync("GameEditState");
         }
         catch (Exception) { }
     }
@@ -596,10 +482,7 @@ else
     private async Task LoadGames()
     {
         List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
-        games = stats.GroupBy(s => s.GameId)
-                    .Select(g => g.First().Game!)
-                    .OrderByDescending(g => g.Date)
-                    .ToList();
+        games = stats.GroupBy(s => s.GameId).Select(g => g.First().Game!).OrderByDescending(g => g.Date).ToList();
     }
 
     private async Task OnSeasonChange(ChangeEventArgs e)
@@ -617,23 +500,11 @@ else
         await LoadAvailableOpponents();
         playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
         ReassignBO();
-        await SaveTempState();
     }
 
-    private async Task LoadSeasonRoster()
-    {
-        seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
-    }
-
-    private async Task LoadAvailableOpponents()
-    {
-        availableOpponents = await StatsService.GetOpponentsAsync(editingGame.SeasonId);
-    }
-
-    private void ToggleSeasonModal()
-    {
-        showSeasonModal = !showSeasonModal;
-    }
+    private async Task LoadSeasonRoster() => seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
+    private async Task LoadAvailableOpponents() => availableOpponents = await StatsService.GetOpponentsAsync(editingGame.SeasonId);
+    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
 
     private async Task SelectMobileSeason(int id)
     {
@@ -648,133 +519,55 @@ else
         else Navigation.NavigateTo($"/management/games/edit/{id}");
     }
 
-    private async Task HandleCancel()
-    {
-        if (HasChanges)
-        {
-            showDiscardConfirm = true;
-        }
-        else
-        {
-            await DiscardChanges();
-        }
-    }
-
-    private async Task DiscardChanges()
-    {
-        showDiscardConfirm = false;
-        await ClearTempState();
-        Navigation.NavigateTo("/management/games");
-    }
-
-    private async Task CancelEdit() => await HandleCancel();
-
     private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
 
-    private async Task TogglePlayerInLineup(Player player, bool isChecked)
+    private void TogglePlayerInLineup(Player player, bool isChecked)
     {
         if (isChecked)
         {
             if (!playerStats.Any(ps => ps.PlayerId == player.Id))
-            {
-                playerStats.Add(new StatEntry 
-                { 
-                    PlayerId = player.Id, 
-                    Player = player, 
-                    BO = playerStats.Count + 1 
-                });
-            }
+                playerStats.Add(new StatEntry { PlayerId = player.Id, Player = player, BO = playerStats.Count + 1 });
         }
         else
         {
             playerStats.RemoveAll(ps => ps.PlayerId == player.Id);
             ReassignBO();
         }
-        await SaveTempState();
     }
 
     private void ReassignBO()
     {
-        for (int i = 0; i < playerStats.Count; i++)
-        {
-            playerStats[i].BO = i + 1;
-        }
+        for (int i = 0; i < playerStats.Count; i++) playerStats[i].BO = i + 1;
     }
 
-    private void HandleDragStart(StatEntry stat)
-    {
-        draggedStat = stat;
-    }
+    private void HandleDragStart(StatEntry stat) => draggedStat = stat;
+    private void HandleDragOver(StatEntry stat) => targetStat = stat;
 
-    private void HandleDragOver(StatEntry stat)
+    private void HandleDrop(StatEntry dropTargetStat)
     {
-        targetStat = stat;
-    }
-
-    private async Task HandleDrop(StatEntry dropTargetStat)
-    {
-        if (draggedStat == null || draggedStat == dropTargetStat) 
-        {
-            targetStat = null;
-            return;
-        }
-
+        if (draggedStat == null || draggedStat == dropTargetStat) { targetStat = null; return; }
         int oldIndex = playerStats.IndexOf(draggedStat);
         int newIndex = playerStats.IndexOf(dropTargetStat);
-
         if (oldIndex != -1 && newIndex != -1)
         {
             playerStats.RemoveAt(oldIndex);
             playerStats.Insert(newIndex, draggedStat);
             ReassignBO();
-            await SaveTempState();
         }
-        
         draggedStat = null;
         targetStat = null;
-        StateHasChanged();
     }
 
     private async Task SaveGame()
     {
-        try
-        {
-            if (editingGame.Id == 0)
-            {
-                await StatsService.AddGameWithStatsAsync(editingGame, playerStats);
-            }
-            else
-            {
-                await StatsService.UpdateGameWithStatsAsync(editingGame, playerStats);
-            }
-            
-            showSuccess = true;
-            await ClearTempState();
-            Navigation.NavigateTo("/management/games");
-            await LoadGames();
-            
-            _ = Task.Run(async () => {
-                await Task.Delay(3000);
-                showSuccess = false;
-                await InvokeAsync(StateHasChanged);
-            });
-        }
-        catch (Exception)
-        {
-            // Error handling
-        }
-    }
-
-    private void ShowDeleteConfirm(int id)
-    {
-        gameIdToDelete = id;
-        showConfirm = true;
+        if (editingGame.Id == 0) await StatsService.AddGameWithStatsAsync(editingGame, playerStats);
+        else await StatsService.UpdateGameWithStatsAsync(editingGame, playerStats);
+        await LoadGames();
     }
 
     private async Task DeleteGame()
     {
-        showConfirm = false;
-        await StatsService.DeleteGameAsync(gameIdToDelete);
+        await StatsService.DeleteGameAsync(editingGame.Id);
         await LoadGames();
     }
 }

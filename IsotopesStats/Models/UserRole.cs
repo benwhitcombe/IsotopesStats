@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace IsotopesStats.Models;
 
-public record class UserRole
+public record class UserRole : IEntity
 {
     public int Id { get; set; }
     

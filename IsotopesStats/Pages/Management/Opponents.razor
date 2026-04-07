@@ -23,14 +23,15 @@
 
 @if (isAdding || isEditing)
 {
-    <ManagementEditCard 
+    <ModelEditor 
+        TItem="Opponent"
         Title="@($"{(isAdding ? "Add" : "Edit")} Opponent")"
-        IsEdit="@(editingOpponent.Id != 0)"
-        SaveText="Save Opponent"
-        Model="editingOpponent"
+        Item="editingOpponent"
+        OriginalItem="originalOpponent"
+        BasePath="/management/opponents"
         OnSave="SaveOpponent"
-        OnCancel="HandleCancel"
-        OnDelete="@(() => ShowDeleteConfirm(editingOpponent.Id))">
+        OnDelete="DeleteOpponent"
+        HasCustomChanges="@(() => !assignedSeasonIds.SetEquals(originalSeasonIds))">
 
         <div class="form-group">
             <label>Opponent Name</label>
@@ -51,7 +52,7 @@
                 }
             </div>
         </div>
-    </ManagementEditCard>
+    </ModelEditor>
 }
 else
 {
@@ -72,7 +73,7 @@ else
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
+                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", opponent.Id)'>Delete</button>
                                 </td>
                             </tr>
                         }
@@ -92,27 +93,13 @@ else
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
-                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => ShowDeleteConfirm(opponent.Id)">Delete</button>
+                        <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => StartEdit("edit", opponent.Id)'>Delete</button>
                     </div>
                 </div>
             }
         </div>
     </div>
 }
-
-<ConfirmDialog 
-    IsVisible="showConfirm" 
-    Title="Delete Opponent" 
-    Message="Are you sure you want to delete this opponent?"
-    OnConfirm="DeleteOpponent"
-    OnCancel="() => showConfirm = false" />
-
-<ConfirmDialog 
-    IsVisible="showDiscardConfirm" 
-    Title="Discard Changes" 
-    Message="You have unsaved changes. Are you sure you want to discard them?"
-    OnConfirm="DiscardChanges"
-    OnCancel="() => showDiscardConfirm = false" />
 
 @code {
     [Parameter] public string? Action { get; set; }
@@ -126,20 +113,6 @@ else
     private Opponent originalOpponent = new();
     private bool isAdding = false;
     private bool isEditing = false;
-    private bool showConfirm = false;
-    private bool showDiscardConfirm = false;
-    private int opponentIdToDelete;
-
-    private bool HasChanges => editingOpponent != originalOpponent || !assignedSeasonIds.SetEquals(originalSeasonIds);
-
-    private class OpponentEditState
-    {
-        public Opponent Opponent { get; set; } = new();
-        public Opponent OriginalOpponent { get; set; } = new();
-        public HashSet<int> AssignedSeasonIds { get; set; } = new();
-        public HashSet<int> OriginalSeasonIds { get; set; } = new();
-        public bool IsEditing { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -199,8 +172,8 @@ else
 
             if (opponent != null)
             {
-                editingOpponent = opponent with { }; // Clone
-                originalOpponent = opponent with { }; // Clone for comparison
+                editingOpponent = opponent with { };
+                originalOpponent = opponent with { };
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
 
@@ -223,61 +196,16 @@ else
         await HydrateTempState();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && (isAdding || isEditing))
-        {
-            await HydrateTempState();
-        }
-    }
-
     private async Task HydrateTempState()
     {
         try
         {
-            ProtectedBrowserStorageResult<OpponentEditState> result = await ProtectedSessionStore.GetAsync<OpponentEditState>("OpponentEditState");
-            if (result.Success && result.Value != null && result.Value.IsEditing)
+            ProtectedBrowserStorageResult<Opponent> result = await ProtectedSessionStore.GetAsync<Opponent>($"EditState_Opponent_{Id ?? 0}");
+            if (result.Success && result.Value != null)
             {
-                if (result.Value.Opponent.Id == (Id ?? 0))
-                {
-                    editingOpponent = result.Value.Opponent;
-                    originalOpponent = result.Value.OriginalOpponent;
-                    assignedSeasonIds = result.Value.AssignedSeasonIds;
-                    originalSeasonIds = result.Value.OriginalSeasonIds;
-                    StateHasChanged();
-                }
+                editingOpponent = result.Value;
+                StateHasChanged();
             }
-        }
-        catch (Exception) { }
-    }
-
-    private async Task SaveTempState()
-    {
-        try
-        {
-            OpponentEditState state = new OpponentEditState
-            {
-                Opponent = editingOpponent,
-                OriginalOpponent = originalOpponent,
-                AssignedSeasonIds = assignedSeasonIds,
-                OriginalSeasonIds = originalSeasonIds,
-                IsEditing = isEditing
-            };
-            await ProtectedSessionStore.SetAsync("OpponentEditState", state);
-        }
-        catch (Exception) { }
-    }
-
-    private async Task HandleInput()
-    {
-        await SaveTempState();
-    }
-
-    private async Task ClearTempState()
-    {
-        try
-        {
-            await ProtectedSessionStore.DeleteAsync("OpponentEditState");
         }
         catch (Exception) { }
     }
@@ -293,26 +221,10 @@ else
         else Navigation.NavigateTo($"/management/opponents/edit/{id}");
     }
 
-    private async Task HandleCancel()
-    {
-        if (HasChanges) showDiscardConfirm = true;
-        else await DiscardChanges();
-    }
-
-    private async Task DiscardChanges()
-    {
-        showDiscardConfirm = false;
-        await ClearTempState();
-        Navigation.NavigateTo("/management/opponents");
-    }
-
-    private async Task CancelEdit() => await HandleCancel();
-
-    private async Task ToggleSeason(int seasonId, bool isChecked)
+    private void ToggleSeason(int seasonId, bool isChecked)
     {
         if (isChecked) assignedSeasonIds.Add(seasonId);
         else assignedSeasonIds.Remove(seasonId);
-        await SaveTempState();
     }
 
     private async Task SaveOpponent()
@@ -322,8 +234,6 @@ else
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();
             opponentId = await StatsService.AddOpponentAsync(editingOpponent, firstSeasonId);
-            
-            // Add to all other selected seasons
             foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
                 await StatsService.AddOpponentToSeasonAsync(opponentId, sid);
         }
@@ -336,22 +246,12 @@ else
             foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
                 await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
         }
-
-        await ClearTempState();
-        Navigation.NavigateTo("/management/opponents");
         await LoadOpponents();
-    }
-
-    private void ShowDeleteConfirm(int id)
-    {
-        opponentIdToDelete = id;
-        showConfirm = true;
     }
 
     private async Task DeleteOpponent()
     {
-        showConfirm = false;
-        await StatsService.DeleteOpponentAsync(opponentIdToDelete);
+        await StatsService.DeleteOpponentAsync(editingOpponent.Id);
         await LoadOpponents();
     }
 }
