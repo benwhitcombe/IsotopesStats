@@ -77,17 +77,13 @@
                         @if (HasAnyManagementPermission(mgmtContext.User))
                         {
                             <div style="background: #f9f9f9; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+                                @* Management Section *@
                                 <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold;">
                                     Management
                                 </div>
                                 <AuthorizeView Policy="Manage Games" Context="pContext">
                                     <NavLink href="management/games" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🏟️</span> Games
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Players" Context="pContext">
-                                    <NavLink href="management/players" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>👥</span> Players
                                     </NavLink>
                                 </AuthorizeView>
                                 <AuthorizeView Policy="Manage Opponents" Context="pContext">
@@ -97,14 +93,24 @@
                                         </svg> Opponents
                                     </NavLink>
                                 </AuthorizeView>
+                                <AuthorizeView Policy="Manage Players" Context="pContext">
+                                    <NavLink href="management/players" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                        <span>👥</span> Players
+                                    </NavLink>
+                                </AuthorizeView>
                                 <AuthorizeView Policy="Manage Seasons" Context="pContext">
                                     <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                         <span>🗓️</span> Seasons
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="Manage Users" Context="pContext">
-                                    <NavLink href="management/users" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>🔐</span> Users
+
+                                @* Administration Section *@
+                                <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; border-top: 1px solid #eee; margin-top: 0.5rem;">
+                                    Administration
+                                </div>
+                                <AuthorizeView Policy="Manage Logs" Context="pContext">
+                                    <NavLink href="management/logs" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                        <span>📜</span> Logs
                                     </NavLink>
                                 </AuthorizeView>
                                 <AuthorizeView Policy="Manage Roles" Context="pContext">
@@ -112,9 +118,9 @@
                                         <span>🛠️</span> Roles
                                     </NavLink>
                                 </AuthorizeView>
-                                <AuthorizeView Policy="Manage Logs" Context="pContext">
-                                    <NavLink href="management/logs" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>📜</span> User Logs
+                                <AuthorizeView Policy="Manage Users" Context="pContext">
+                                    <NavLink href="management/users" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                        <span>🔐</span> Users
                                     </NavLink>
                                 </AuthorizeView>
                             </div>
@@ -156,23 +162,27 @@
                         <AuthorizeView Policy="Manage Games" Context="pContext">
                             <NavLink href="management/games">Games</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="Manage Players" Context="pContext">
-                            <NavLink href="management/players">Players</NavLink>
-                        </AuthorizeView>
                         <AuthorizeView Policy="Manage Opponents" Context="pContext">
                             <NavLink href="management/opponents">Opponents</NavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="Manage Players" Context="pContext">
+                            <NavLink href="management/players">Players</NavLink>
                         </AuthorizeView>
                         <AuthorizeView Policy="Manage Seasons" Context="pContext">
                             <NavLink href="management/seasons">Seasons</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="Manage Users" Context="pContext">
-                            <NavLink href="management/users">Users</NavLink>
+
+                        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin: 0 1rem 0 2rem; border-right: 1px solid #ddd; padding-right: 1.5rem; border-left: 1px solid #ddd; padding-left: 2rem;">
+                            Administration
+                        </div>
+                        <AuthorizeView Policy="Manage Logs" Context="pContext">
+                            <NavLink href="management/logs">Logs</NavLink>
                         </AuthorizeView>
                         <AuthorizeView Policy="Manage Roles" Context="pContext">
                             <NavLink href="management/roles">Roles</NavLink>
                         </AuthorizeView>
-                        <AuthorizeView Policy="Manage Logs" Context="pContext">
-                            <NavLink href="management/logs">Logs</NavLink>
+                        <AuthorizeView Policy="Manage Users" Context="pContext">
+                            <NavLink href="management/users">Users</NavLink>
                         </AuthorizeView>
                     </div>
                 </div>
