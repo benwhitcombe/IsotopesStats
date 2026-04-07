@@ -45,7 +45,7 @@
             <div class="form-group">
                 <label>Password</label>
                 <div style="position: relative;">
-                    <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                    <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" autocomplete="new-password" style="padding-right: 3rem;" />
                     <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                         <PasswordToggleIcon IsVisible="@showPassword" />
                     </button>
@@ -54,7 +54,7 @@
             </div>
             <div class="form-group">
                 <label>Confirm Password</label>
-                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" />
+                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" autocomplete="new-password" />
                 <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
         }
@@ -72,7 +72,7 @@
                         <div class="form-group">
                             <label>New Password</label>
                             <div style="position: relative;">
-                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" style="padding-right: 3rem;" />
+                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" @onkeyup="HandleInput" autocomplete="new-password" style="padding-right: 3rem;" />
                                 <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                                     <PasswordToggleIcon IsVisible="@showPassword" />
                                 </button>
@@ -81,7 +81,7 @@
                         </div>
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" placeholder="••••••••" autocomplete="new-password" />
+                            <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" @onkeyup="HandleInput" autocomplete="new-password" />
                             <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                         </div>
                     </div>
@@ -224,6 +224,7 @@ else
     private string originalEmail = "";
     private HashSet<int> selectedRoleIds = new();
     private HashSet<int> originalRoleIds = new();
+    private bool originalShowPasswordFields = false;
     
     private bool showPassword = false;
     private string errorMessage = "";
@@ -236,7 +237,7 @@ else
         editViewModel.Email != originalEmail || 
         !string.IsNullOrEmpty(editViewModel.Password) || 
         !selectedRoleIds.SetEquals(originalRoleIds) ||
-        editViewModel.ShowPasswordFields != (editingUserId != 0 && originalEmail != "");
+        editViewModel.ShowPasswordFields != originalShowPasswordFields;
 
     private class UserEditViewModel
     {
@@ -302,6 +303,7 @@ else
         originalEmail = "";
         selectedRoleIds.Clear();
         originalRoleIds.Clear();
+        originalShowPasswordFields = false;
         errorMessage = "";
     }
 
@@ -310,6 +312,7 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
         editViewModel.ShowPasswordFields = true;
+        originalShowPasswordFields = true;
         await HydrateTempState();
     }
 
@@ -317,6 +320,7 @@ else
     {
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         ResetState();
+        originalShowPasswordFields = false;
         
         if (Id.HasValue && Id != 0)
         {

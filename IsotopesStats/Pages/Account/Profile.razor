@@ -49,7 +49,7 @@
                         <div class="form-group">
                             <label>New Password</label>
                             <div style="position: relative;">
-                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.Password" placeholder="••••••••" style="padding-right: 3rem;" />
+                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.Password" style="padding-right: 3rem;" />
                                 <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                                     <PasswordToggleIcon IsVisible="@showPassword" />
                                 </button>
@@ -58,7 +58,7 @@
                         </div>
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="profileModel.ConfirmPassword" placeholder="••••••••" />
+                            <InputText type="password" class="form-control" @bind-Value="profileModel.ConfirmPassword" />
                             <ValidationMessage For="@(() => profileModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                         </div>
                     </div>

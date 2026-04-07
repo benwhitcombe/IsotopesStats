@@ -15,7 +15,7 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Seasons</h3>
-    @if (!isEditing)
+    @if (!isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Season</button>
     }
@@ -148,6 +148,7 @@ else
     private HashSet<int> originalOpponentIds = new();
     private Season editingSeason = new();
     private Season originalSeason = new();
+    private bool isAdding = false;
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
@@ -166,6 +167,7 @@ else
         public HashSet<int> OriginalPlayerIds { get; set; } = new();
         public HashSet<int> AssignedOpponentIds { get; set; } = new();
         public HashSet<int> OriginalOpponentIds { get; set; } = new();
+        public bool IsAdding { get; set; }
         public bool IsEditing { get; set; }
     }
 
@@ -178,12 +180,19 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        bool wasAdding = isAdding;
         bool wasEditing = isEditing;
-        isEditing = Action == "add" || Action == "edit";
+        
+        isAdding = Action == "add";
+        isEditing = Action == "edit";
 
-        if (isEditing)
+        if (isAdding || isEditing)
         {
-            if (!wasEditing || (Id.HasValue && Id != editingSeason.Id))
+            if (isAdding && !wasAdding)
+            {
+                await LoadNewSeason();
+            }
+            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingSeason.Id)))
             {
                 await LoadEditingSeason();
             }
@@ -197,6 +206,18 @@ else
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
         }
+    }
+
+    private async Task LoadNewSeason()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        editingSeason = new Season();
+        originalSeason = new Season();
+        assignedPlayerIds.Clear();
+        originalPlayerIds.Clear();
+        assignedOpponentIds.Clear();
+        originalOpponentIds.Clear();
+        await HydrateTempState();
     }
 
     private async Task LoadEditingSeason()
@@ -383,15 +404,6 @@ else
     {
         seasonIdToDelete = id;
         showConfirm = true;
-    }
-
-    private async Task DeleteSeason()
-    {
-        showConfirm = false;
-        await StatsService.DeleteSeasonAsync(seasonIdToDelete);
-        await LoadSeasons();
-    }
-}rue;
     }
 
     private async Task DeleteSeason()

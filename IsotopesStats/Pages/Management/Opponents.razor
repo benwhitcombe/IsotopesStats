@@ -15,7 +15,7 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Opponents</h3>
-    @if (!isEditing)
+    @if (!isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Opponent</button>
     }
@@ -124,6 +124,7 @@ else
     private HashSet<int> originalSeasonIds = new();
     private Opponent editingOpponent = new();
     private Opponent originalOpponent = new();
+    private bool isAdding = false;
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
@@ -148,12 +149,19 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        bool wasAdding = isAdding;
         bool wasEditing = isEditing;
-        isEditing = Action == "add" || Action == "edit";
+        
+        isAdding = Action == "add";
+        isEditing = Action == "edit";
 
-        if (isEditing)
+        if (isAdding || isEditing)
         {
-            if (!wasEditing || (Id.HasValue && Id != editingOpponent.Id))
+            if (isAdding && !wasAdding)
+            {
+                await LoadNewOpponent();
+            }
+            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingOpponent.Id)))
             {
                 await LoadEditingOpponent();
             }
@@ -165,6 +173,16 @@ else
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
+    }
+
+    private async Task LoadNewOpponent()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        editingOpponent = new Opponent();
+        originalOpponent = new Opponent();
+        assignedSeasonIds.Clear();
+        originalSeasonIds.Clear();
+        await HydrateTempState();
     }
 
     private async Task LoadEditingOpponent()
@@ -207,7 +225,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && isEditing)
+        if (firstRender && (isAdding || isEditing))
         {
             await HydrateTempState();
         }
@@ -329,15 +347,6 @@ else
     {
         opponentIdToDelete = id;
         showConfirm = true;
-    }
-
-    private async Task DeleteOpponent()
-    {
-        showConfirm = false;
-        await StatsService.DeleteOpponentAsync(opponentIdToDelete);
-        await LoadOpponents();
-    }
-}e;
     }
 
     private async Task DeleteOpponent()

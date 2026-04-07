@@ -22,7 +22,7 @@
             @ChildContent
 
             <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
-                <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem;">@SaveText</button>
+                <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem; opacity: @(IsFormValid ? "1" : "0.5"); cursor: @(IsFormValid ? "pointer" : "not-allowed");" disabled="@(!IsFormValid)">@SaveText</button>
                 <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="OnCancel">Cancel</button>
             </div>
         </div>
@@ -69,6 +69,8 @@ else
     private object? _lastModel;
 
     private EditContext? ActualEditContext => EditContext ?? _internalContext;
+
+    private bool IsFormValid => ActualEditContext != null && !ActualEditContext.GetValidationMessages().Any();
 
     protected override void OnParametersSet()
     {

@@ -432,8 +432,8 @@ else
     private List<StatEntry> originalStats = new();
     private List<Player> seasonRoster = new();
     private List<Opponent> availableOpponents = new();
-    private Game editingGame = new() { Date = DateTime.Now };
-    private Game originalGame = new() { Date = DateTime.Now };
+    private Game editingGame = new() { Date = new DateTime(2026, 1, 1) };
+    private Game originalGame = new() { Date = new DateTime(2026, 1, 1) };
     private int selectedSeasonId;
     private bool isEditing = false;
     private bool showSeasonModal = false;

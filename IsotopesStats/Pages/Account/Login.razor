@@ -32,7 +32,7 @@
         <div class="form-group" style="margin-top: 1.5rem; position: relative;">
             <label style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #888;">Password</label>
             <div style="position: relative;">
-                <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" placeholder="••••••••" @onkeyup="HandleKeyUp" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s; padding-right: 3rem;" />
+                <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" @onkeyup="HandleKeyUp" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s; padding-right: 3rem;" />
                 <button type="button" @onclick="() => showPassword = !showPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                     <PasswordToggleIcon IsVisible="@showPassword" />
                 </button>
