@@ -27,13 +27,15 @@
         Title="@($"{(editingRole.Id == 0 ? "Add" : "Edit")} User Role")"
         IsEdit="@(editingRole.Id != 0)"
         SaveText="Save Role"
+        Model="editingRole"
         OnSave="SaveRole"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingRole.Id))">
 
         <div class="form-group">
             <label>Role Name</label>
-            <input type="text" class="form-control" @bind="editingRole.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. Moderator" />
+            <InputText class="form-control" @bind-Value="editingRole.Name" placeholder="e.g. Moderator" />
+            <ValidationMessage For="@(() => editingRole.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
         <div class="form-group" style="margin-top: 1.5rem;">
@@ -309,8 +311,6 @@ else
 
     private async Task SaveRole()
     {
-        if (string.IsNullOrEmpty(editingRole.Name)) return;
-
         if (editingRole.Id == 0) await AuthService.AddUserRoleAsync(editingRole);
         else await AuthService.UpdateUserRoleAsync(editingRole);
 

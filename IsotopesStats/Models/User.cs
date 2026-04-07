@@ -1,9 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace IsotopesStats.Models;
 
 public record class User
 {
     public int Id { get; set; }
+    
+    [Required(ErrorMessage = "Email address is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
     public string Email { get; set; } = string.Empty;
+    
     public string PasswordHash { get; set; } = string.Empty;
     public List<UserRole> Roles { get; set; } = new();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

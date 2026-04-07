@@ -27,13 +27,15 @@
         Title="@($"{(editingSeason.Id == 0 ? "Add" : "Edit")} Season")"
         IsEdit="@(editingSeason.Id != 0)"
         SaveText="Save Season"
+        Model="editingSeason"
         OnSave="SaveSeason"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingSeason.Id))">
         
         <div class="form-group">
             <label>Season Name</label>
-            <input type="text" class="form-control" @bind="editingSeason.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. 2026" />
+            <InputText class="form-control" @bind-Value="editingSeason.Name" placeholder="e.g. 2026" />
+            <ValidationMessage For="@(() => editingSeason.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 
         @if (editingSeason.Id != 0)
@@ -351,8 +353,6 @@ else
 
     private async Task SaveSeason()
     {
-        if (string.IsNullOrEmpty(editingSeason.Name)) return;
-
         if (editingSeason.Id == 0)
         {
             await StatsService.AddSeasonAsync(editingSeason);
@@ -383,6 +383,15 @@ else
     {
         seasonIdToDelete = id;
         showConfirm = true;
+    }
+
+    private async Task DeleteSeason()
+    {
+        showConfirm = false;
+        await StatsService.DeleteSeasonAsync(seasonIdToDelete);
+        await LoadSeasons();
+    }
+}rue;
     }
 
     private async Task DeleteSeason()

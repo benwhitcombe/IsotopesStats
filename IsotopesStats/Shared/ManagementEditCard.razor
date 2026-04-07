@@ -1,32 +1,105 @@
-<div id="@Id" class="stat-card view-fade-in" style="margin-bottom: 2rem; position: relative;">
-    <button type="button" @onclick="OnCancel" 
-            style="position: absolute; top: 0.25rem; right: 0.5rem; background: none; border: none; font-size: 3.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; height: 60px; width: 60px;" 
-            title="Cancel changes">&times;</button>
+@using Microsoft.AspNetCore.Components.Forms
+@implements IDisposable
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-right: 4.5rem;">
-        <h4 style="margin: 0;">@Title</h4>
-        @if (IsEdit)
-        {
-            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.4rem 1rem; font-size: 0.85rem;" 
-                    @onclick="OnDelete">Delete</button>
-        }
+@if (ActualEditContext != null)
+{
+    <EditForm EditContext="ActualEditContext" OnValidSubmit="OnSave" id="@Id">
+        <DataAnnotationsValidator />
+        <div class="stat-card view-fade-in" style="margin-bottom: 2rem; position: relative;">
+            <button type="button" @onclick="OnCancel" 
+                    style="position: absolute; top: 0.25rem; right: 0.5rem; background: none; border: none; font-size: 3.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; height: 60px; width: 60px;" 
+                    title="Cancel changes">&times;</button>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-right: 4.5rem;">
+                <h4 style="margin: 0;">@Title</h4>
+                @if (IsEdit)
+                {
+                    <button type="button" class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.4rem 1rem; font-size: 0.85rem;" 
+                            @onclick="OnDelete">Delete</button>
+                }
+            </div>
+
+            @ChildContent
+
+            <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
+                <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem;">@SaveText</button>
+                <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="OnCancel">Cancel</button>
+            </div>
+        </div>
+    </EditForm>
+}
+else
+{
+    <div id="@Id" class="stat-card view-fade-in" style="margin-bottom: 2rem; position: relative;">
+        <button type="button" @onclick="OnCancel" 
+                style="position: absolute; top: 0.25rem; right: 0.5rem; background: none; border: none; font-size: 3.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; height: 60px; width: 60px;" 
+                title="Cancel changes">&times;</button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-right: 4.5rem;">
+            <h4 style="margin: 0;">@Title</h4>
+            @if (IsEdit)
+            {
+                <button type="button" class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.4rem 1rem; font-size: 0.85rem;" 
+                        @onclick="OnDelete">Delete</button>
+            }
+        </div>
+
+        @ChildContent
+
+        <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
+            <button type="button" class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="OnSave">@SaveText</button>
+            <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="OnCancel">Cancel</button>
+        </div>
     </div>
-
-    @ChildContent
-
-    <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
-        <button class="view-btn active" style="padding: 0.8rem 2rem;" @onclick="OnSave">@SaveText</button>
-        <button class="view-btn" style="padding: 0.8rem 2rem;" @onclick="OnCancel">Cancel</button>
-    </div>
-</div>
+}
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public bool IsEdit { get; set; }
     [Parameter] public string SaveText { get; set; } = "Save";
+    [Parameter] public object? Model { get; set; }
+    [Parameter] public EditContext? EditContext { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private EditContext? _internalContext;
+    private object? _lastModel;
+
+    private EditContext? ActualEditContext => EditContext ?? _internalContext;
+
+    protected override void OnParametersSet()
+    {
+        if (EditContext != null)
+        {
+            _internalContext = null;
+            _lastModel = null;
+        }
+        else if (Model != null && Model != _lastModel)
+        {
+            _internalContext = new EditContext(Model);
+            _lastModel = Model;
+            
+            // Subscribe to field changes to trigger validation proactively
+            _internalContext.OnFieldChanged += HandleFieldChanged;
+        }
+    }
+
+    private void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
+    {
+        // This triggers field-level validation automatically in many cases,
+        // but calling Validate() ensures the validation state is fully updated.
+        ActualEditContext?.Validate();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        if (_internalContext != null)
+        {
+            _internalContext.OnFieldChanged -= HandleFieldChanged;
+        }
+    }
 }

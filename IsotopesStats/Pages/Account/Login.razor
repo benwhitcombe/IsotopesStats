@@ -3,7 +3,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @inject AuthService AuthService
-@inject AuthenticationStateProvider AuthStateProvider
+@inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
 
@@ -64,7 +64,7 @@
         
         if (user != null)
         {
-            await ((CustomAuthenticationStateProvider)AuthStateProvider).UpdateAuthenticationState(user);
+            await AuthStateProvider.UpdateAuthenticationState(user);
             
             SharedState.OpenMenuOnLoad = true;
 

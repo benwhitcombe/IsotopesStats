@@ -27,13 +27,15 @@
         Title="@($"{(editingOpponent.Id == 0 ? "Add" : "Edit")} Opponent")"
         IsEdit="@(editingOpponent.Id != 0)"
         SaveText="Save Opponent"
+        Model="editingOpponent"
         OnSave="SaveOpponent"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingOpponent.Id))">
 
         <div class="form-group">
             <label>Opponent Name</label>
-            <input type="text" class="form-control" @bind="editingOpponent.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. Springfield Atoms" />
+            <InputText class="form-control" @bind-Value="editingOpponent.Name" placeholder="e.g. Springfield Atoms" />
+            <ValidationMessage For="@(() => editingOpponent.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
         <div class="form-group" style="margin-top: 1.5rem;">
@@ -297,8 +299,6 @@ else
 
     private async Task SaveOpponent()
     {
-        if (string.IsNullOrEmpty(editingOpponent.Name)) return;
-
         if (editingOpponent.Id == 0)
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();
@@ -329,6 +329,15 @@ else
     {
         opponentIdToDelete = id;
         showConfirm = true;
+    }
+
+    private async Task DeleteOpponent()
+    {
+        showConfirm = false;
+        await StatsService.DeleteOpponentAsync(opponentIdToDelete);
+        await LoadOpponents();
+    }
+}e;
     }
 
     private async Task DeleteOpponent()

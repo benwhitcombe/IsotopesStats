@@ -27,13 +27,15 @@
         Title="@($"{(editingPlayer.Id == 0 ? "Add" : "Edit")} Player")"
         IsEdit="@(editingPlayer.Id != 0)"
         SaveText="Save Player"
+        Model="editingPlayer"
         OnSave="SavePlayer"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingPlayer.Id))">
 
         <div class="form-group">
             <label>Player Name</label>
-            <input type="text" class="form-control" @bind="editingPlayer.Name" @bind:event="oninput" @onkeyup="HandleInput" placeholder="e.g. John Doe" />
+            <InputText class="form-control" @bind-Value="editingPlayer.Name" placeholder="e.g. John Doe" />
+            <ValidationMessage For="@(() => editingPlayer.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
         <div class="form-group" style="margin-top: 1.5rem;">
@@ -297,8 +299,6 @@ else
 
     private async Task SavePlayer()
     {
-        if (string.IsNullOrEmpty(editingPlayer.Name)) return;
-
         if (editingPlayer.Id == 0)
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();

@@ -34,7 +34,9 @@
                 <AuthorizeView Context="authContext">
                     <Authorized>
                         <div style="display: flex; align-items: center; gap: 0.5rem;" class="desktop-only">
-                            <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@authContext.User.Identity?.Name</span>
+                            <a href="account/profile" style="text-decoration: none; color: inherit;">
+                                <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@authContext.User.Identity?.Name</span>
+                            </a>
                             <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; text-decoration: none; font-weight: bold; border-radius: 20px;">
                                 <span>Logout</span>
                             </a>
@@ -119,7 +121,9 @@
                 <AuthorizeView Context="footerContext">
                     <Authorized>
                         <div style="padding: 0 1.5rem 0.5rem 1.5rem; font-size: 0.8rem; color: #888; word-break: break-all; font-weight: 600;">
-                            @footerContext.User.Identity?.Name
+                            <a href="account/profile" style="text-decoration: none; color: inherit;" @onclick="ToggleMenu">
+                                @footerContext.User.Identity?.Name
+                            </a>
                         </div>
                         <a href="account/logout" class="drawer-item" style="border:none; color: var(--isotopes-red); padding-top: 0;" @onclick="ToggleMenu">
                             <span>🚪</span> Logout

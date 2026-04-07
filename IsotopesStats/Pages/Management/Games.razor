@@ -5,6 +5,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Components.Forms
 @attribute [Authorize(Policy = "Manage Games")]
 @inject StatsService StatsService
 @inject NavigationManager Navigation
@@ -27,6 +28,7 @@
         Title="@($"{(editingGame.Id == 0 ? "Add New" : "Edit")} Game")"
         IsEdit="@(editingGame.Id != 0)"
         SaveText="Save Game"
+        Model="editingGame"
         OnSave="SaveGame"
         OnCancel="HandleCancel"
         OnDelete="@(() => ShowDeleteConfirm(editingGame.Id))">
@@ -34,35 +36,48 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
                 <label>Season</label>
-                <select class="form-control" value="@editingGame.SeasonId" @onchange="OnEditingSeasonChange">
+                <InputSelect class="form-control" @bind-Value="editingGame.SeasonId" @bind-Value:after="OnEditingSeasonChanged">
                     @foreach (Season season in activeSeasons)
                     {
                         <option value="@season.Id">@season.Name</option>
                     }
-                </select>
+                </InputSelect>
+                <ValidationMessage For="@(() => editingGame.SeasonId)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
             <div class="form-group">
                 <label>Date & Time</label>
-                <input type="datetime-local" class="form-control" value="@editingGame.Date.ToString("yyyy-MM-ddTHH:mm")" @oninput="OnDateInput" />
+                <InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="editingGame.Date" />
+                <ValidationMessage For="@(() => editingGame.Date)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
             <div class="form-group">
                 <label>Opponent</label>
-                <select class="form-control" value="@editingGame.OpponentId" @onchange="OnOpponentChange">
+                <InputSelect class="form-control" @bind-Value="editingGame.OpponentId">
                     <option value="0">-- Select Opponent --</option>
                     @foreach (Opponent opponent in availableOpponents)
                     {
                         <option value="@opponent.Id">@opponent.Name</option>
                     }
-                </select>
+                </InputSelect>
+                <ValidationMessage For="@(() => editingGame.OpponentId)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            </div>
+            <div class="form-group">
+                <label>Game Number</label>
+                <InputNumber class="form-control" @bind-Value="editingGame.GameNumber" />
+                <ValidationMessage For="@(() => editingGame.GameNumber)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            </div>
+            <div class="form-group">
+                <label>Diamond</label>
+                <InputText class="form-control" @bind-Value="editingGame.Diamond" placeholder="e.g. Diamond 1" />
+                <ValidationMessage For="@(() => editingGame.Diamond)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
             <div class="form-group">
                 <label>Game Type</label>
-                <select class="form-control" value="@editingGame.Type" @onchange="OnTypeChange">
+                <InputSelect class="form-control" @bind-Value="editingGame.Type">
                     @foreach (GameType type in Enum.GetValues<GameType>())
                     {
                         <option value="@type">@type</option>
                     }
-                </select>
+                </InputSelect>
             </div>
         </div>
 
@@ -596,44 +611,13 @@ else
         }
     }
 
-    private async Task OnEditingSeasonChange(ChangeEventArgs e)
+    private async Task OnEditingSeasonChanged()
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            editingGame.SeasonId = id;
-            await LoadSeasonRoster();
-            await LoadAvailableOpponents();
-            playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
-            ReassignBO();
-            await SaveTempState();
-        }
-    }
-
-    private async Task OnOpponentChange(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            editingGame.OpponentId = id;
-            await SaveTempState();
-        }
-    }
-
-    private async Task OnDateInput(ChangeEventArgs e)
-    {
-        if (DateTime.TryParse(e.Value?.ToString(), out DateTime date))
-        {
-            editingGame.Date = date;
-            await SaveTempState();
-        }
-    }
-
-    private async Task OnTypeChange(ChangeEventArgs e)
-    {
-        if (Enum.TryParse(e.Value?.ToString(), out GameType type))
-        {
-            editingGame.Type = type;
-            await SaveTempState();
-        }
+        await LoadSeasonRoster();
+        await LoadAvailableOpponents();
+        playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
+        ReassignBO();
+        await SaveTempState();
     }
 
     private async Task LoadSeasonRoster()
