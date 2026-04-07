@@ -34,16 +34,16 @@
                 <AuthorizeView Context="authContext">
                     <Authorized>
                         <div style="display: flex; align-items: center; gap: 0.5rem;" class="desktop-only">
-                            <a href="account/profile" style="text-decoration: none; color: inherit;">
-                                <span style="font-size: 0.8rem; opacity: 0.9; margin-right: 0.5rem;">@authContext.User.Identity?.Name</span>
+                            <a href="account/profile" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none; display: flex; align-items: center; padding: 0.5rem 1.25rem;">
+                                <span>@authContext.User.Identity?.Name</span>
                             </a>
-                            <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; text-decoration: none; font-weight: bold; border-radius: 20px;">
+                            <a href="account/logout" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; display: flex; align-items: center; justify-content: center; padding: 0.5rem 1.25rem; text-decoration: none; font-weight: bold;">
                                 <span>Logout</span>
                             </a>
                         </div>
                     </Authorized>
                     <NotAuthorized>
-                        <a href="@GetLoginUrl()" class="view-btn desktop-only" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 0.4rem 1rem; border-radius: 20px;">
+                        <a href="@GetLoginUrl()" class="view-btn desktop-only" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 0.5rem 1.25rem;">
                             <span>Login</span>
                         </a>
                     </NotAuthorized>
@@ -128,14 +128,12 @@
                     </Authorized>
                 </AuthorizeView>
             </div>
-            <div class="drawer-footer">
+            <div class="drawer-footer" style="padding: 0;">
                 <AuthorizeView Context="footerContext">
                     <Authorized>
-                        <div style="padding: 0 1.5rem 0.5rem 1.5rem; font-size: 0.8rem; color: #888; word-break: break-all; font-weight: 600;">
-                            <a href="account/profile" style="text-decoration: none; color: inherit;" @onclick="ToggleMenu">
-                                @footerContext.User.Identity?.Name
-                            </a>
-                        </div>
+                        <a href="account/profile" class="drawer-item" style="border-top: 1px solid #eee; border-bottom: none;" @onclick="ToggleMenu">
+                            <span>👤</span> @footerContext.User.Identity?.Name
+                        </a>
                         <a href="account/logout" class="drawer-item" style="border:none; color: var(--isotopes-red); padding-top: 0;" @onclick="ToggleMenu">
                             <span>🚪</span> Logout
                         </a>
