@@ -72,9 +72,9 @@ public class StatsService
         await _repository.DeleteGameAsync(gameId);
     }
 
-    public async Task AddSeasonAsync(Season season)
+    public async Task<int> AddSeasonAsync(Season season)
     {
-        await _repository.AddSeasonAsync(season);
+        return await _repository.AddSeasonAsync(season);
     }
 
     public async Task UpdateSeasonAsync(Season season)
@@ -97,9 +97,9 @@ public class StatsService
         return await _repository.GetSeasonsForPlayerAsync(playerId);
     }
 
-    public async Task AddPlayerAsync(Player player, int seasonId)
+    public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
-        await _repository.AddPlayerAsync(player, seasonId);
+        return await _repository.AddPlayerAsync(player, seasonId);
     }
 
     public async Task UpdatePlayerAsync(Player player)
@@ -132,9 +132,9 @@ public class StatsService
         return await _repository.GetAllOpponentsAsync();
     }
 
-    public async Task AddOpponentAsync(Opponent opponent, int seasonId)
+    public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
-        await _repository.AddOpponentAsync(opponent, seasonId);
+        return await _repository.AddOpponentAsync(opponent, seasonId);
     }
 
     public async Task UpdateOpponentAsync(Opponent opponent)

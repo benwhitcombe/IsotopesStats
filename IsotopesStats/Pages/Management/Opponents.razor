@@ -21,10 +21,10 @@
     }
 </div>
 
-@if (isEditing)
+@if (isAdding || isEditing)
 {
     <ManagementEditCard 
-        Title="@($"{(editingOpponent.Id == 0 ? "Add" : "Edit")} Opponent")"
+        Title="@($"{(isAdding ? "Add" : "Edit")} Opponent")"
         IsEdit="@(editingOpponent.Id != 0)"
         SaveText="Save Opponent"
         Model="editingOpponent"
@@ -317,25 +317,24 @@ else
 
     private async Task SaveOpponent()
     {
+        int opponentId;
         if (editingOpponent.Id == 0)
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();
-            await StatsService.AddOpponentAsync(editingOpponent, firstSeasonId);
-            List<Opponent> all = await StatsService.GetAllOpponentsAsync();
-            Opponent? newO = all.FirstOrDefault(o => o.Name == editingOpponent.Name);
-            if (newO != null)
-            {
-                foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
-                    await StatsService.AddOpponentToSeasonAsync(newO.Id, sid);
-            }
+            opponentId = await StatsService.AddOpponentAsync(editingOpponent, firstSeasonId);
+            
+            // Add to all other selected seasons
+            foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
+                await StatsService.AddOpponentToSeasonAsync(opponentId, sid);
         }
         else
         {
+            opponentId = editingOpponent.Id;
             await StatsService.UpdateOpponentAsync(editingOpponent);
             foreach (int sid in assignedSeasonIds.Except(originalSeasonIds))
-                await StatsService.AddOpponentToSeasonAsync(editingOpponent.Id, sid);
+                await StatsService.AddOpponentToSeasonAsync(opponentId, sid);
             foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
-                await StatsService.DeleteOpponentFromSeasonAsync(editingOpponent.Id, sid);
+                await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
         }
 
         await ClearTempState();

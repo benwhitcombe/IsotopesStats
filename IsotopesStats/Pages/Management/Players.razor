@@ -15,16 +15,16 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Players</h3>
-    @if (!isEditing)
+    @if (!isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Player</button>
     }
 </div>
 
-@if (isEditing)
+@if (isAdding || isEditing)
 {
     <ManagementEditCard 
-        Title="@($"{(editingPlayer.Id == 0 ? "Add" : "Edit")} Player")"
+        Title="@($"{(isAdding ? "Add" : "Edit")} Player")"
         IsEdit="@(editingPlayer.Id != 0)"
         SaveText="Save Player"
         Model="editingPlayer"
@@ -124,6 +124,7 @@ else
     private HashSet<int> originalSeasonIds = new();
     private Player editingPlayer = new();
     private Player originalPlayer = new();
+    private bool isAdding = false;
     private bool isEditing = false;
     private bool showConfirm = false;
     private bool showDiscardConfirm = false;
@@ -137,6 +138,7 @@ else
         public Player OriginalPlayer { get; set; } = new();
         public HashSet<int> AssignedSeasonIds { get; set; } = new();
         public HashSet<int> OriginalSeasonIds { get; set; } = new();
+        public bool IsAdding { get; set; }
         public bool IsEditing { get; set; }
     }
 
@@ -148,12 +150,19 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        bool wasAdding = isAdding;
         bool wasEditing = isEditing;
-        isEditing = Action == "add" || Action == "edit";
+        
+        isAdding = Action == "add";
+        isEditing = Action == "edit";
 
-        if (isEditing)
+        if (isAdding || isEditing)
         {
-            if (!wasEditing || (Id.HasValue && Id != editingPlayer.Id))
+            if (isAdding && !wasAdding)
+            {
+                await LoadNewPlayer();
+            }
+            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingPlayer.Id)))
             {
                 await LoadEditingPlayer();
             }
@@ -165,6 +174,16 @@ else
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
+    }
+
+    private async Task LoadNewPlayer()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        editingPlayer = new Player();
+        originalPlayer = new Player();
+        assignedSeasonIds.Clear();
+        originalSeasonIds.Clear();
+        await HydrateTempState();
     }
 
     private async Task LoadEditingPlayer()
@@ -207,7 +226,7 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && isEditing)
+        if (firstRender && (isAdding || isEditing))
         {
             await HydrateTempState();
         }
@@ -218,7 +237,7 @@ else
         try
         {
             ProtectedBrowserStorageResult<PlayerEditState> result = await ProtectedSessionStore.GetAsync<PlayerEditState>("PlayerEditState");
-            if (result.Success && result.Value != null && result.Value.IsEditing)
+            if (result.Success && result.Value != null && (result.Value.IsAdding || result.Value.IsEditing))
             {
                 if (result.Value.Player.Id == (Id ?? 0))
                 {
@@ -243,6 +262,7 @@ else
                 OriginalPlayer = originalPlayer,
                 AssignedSeasonIds = assignedSeasonIds,
                 OriginalSeasonIds = originalSeasonIds,
+                IsAdding = isAdding,
                 IsEditing = isEditing
             };
             await ProtectedSessionStore.SetAsync("PlayerEditState", state);
@@ -299,25 +319,24 @@ else
 
     private async Task SavePlayer()
     {
+        int playerId;
         if (editingPlayer.Id == 0)
         {
             int firstSeasonId = assignedSeasonIds.FirstOrDefault();
-            await StatsService.AddPlayerAsync(editingPlayer, firstSeasonId);
-            List<Player> all = await StatsService.GetAllPlayersAsync();
-            Player? newP = all.FirstOrDefault(p => p.Name == editingPlayer.Name);
-            if (newP != null)
-            {
-                foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
-                    await StatsService.AddPlayerToSeasonAsync(newP.Id, sid);
-            }
+            playerId = await StatsService.AddPlayerAsync(editingPlayer, firstSeasonId);
+            
+            // Add to all other selected seasons
+            foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
+                await StatsService.AddPlayerToSeasonAsync(playerId, sid);
         }
         else
         {
+            playerId = editingPlayer.Id;
             await StatsService.UpdatePlayerAsync(editingPlayer);
             foreach (int sid in assignedSeasonIds.Except(originalSeasonIds))
-                await StatsService.AddPlayerToSeasonAsync(editingPlayer.Id, sid);
+                await StatsService.AddPlayerToSeasonAsync(playerId, sid);
             foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
-                await StatsService.DeletePlayerFromSeasonAsync(editingPlayer.Id, sid);
+                await StatsService.DeletePlayerFromSeasonAsync(playerId, sid);
         }
 
         await ClearTempState();

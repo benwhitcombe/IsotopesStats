@@ -631,15 +631,15 @@ public class StatsRepository
         }
     }
 
-    public async Task AddSeasonAsync(Season season)
+    public async Task<int> AddSeasonAsync(Season season)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
             await connection.OpenAsync();
             SqliteCommand command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Seasons (Name, IsDeleted) VALUES ($name, 0)";
+            command.CommandText = "INSERT INTO Seasons (Name, IsDeleted) VALUES ($name, 0); SELECT last_insert_rowid();";
             command.Parameters.AddWithValue("$name", season.Name);
-            await command.ExecuteNonQueryAsync();
+            return Convert.ToInt32(await command.ExecuteScalarAsync());
         }
     }
 
@@ -714,7 +714,7 @@ public class StatsRepository
         return seasons;
     }
 
-    public async Task AddPlayerAsync(Player player, int seasonId)
+    public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
@@ -744,14 +744,18 @@ public class StatsRepository
                 }
 
                 // 2. Add to Season roster
-                SqliteCommand rosterCmd = connection.CreateCommand();
-                rosterCmd.Transaction = transaction;
-                rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
-                rosterCmd.Parameters.AddWithValue("$seasonId", seasonId);
-                rosterCmd.Parameters.AddWithValue("$playerId", playerId);
-                await rosterCmd.ExecuteNonQueryAsync();
+                if (seasonId != 0)
+                {
+                    SqliteCommand rosterCmd = connection.CreateCommand();
+                    rosterCmd.Transaction = transaction;
+                    rosterCmd.CommandText = "INSERT OR IGNORE INTO SeasonPlayers (SeasonId, PlayerId) VALUES ($seasonId, $playerId)";
+                    rosterCmd.Parameters.AddWithValue("$seasonId", seasonId);
+                    rosterCmd.Parameters.AddWithValue("$playerId", playerId);
+                    await rosterCmd.ExecuteNonQueryAsync();
+                }
 
                 await transaction.CommitAsync();
+                return playerId;
             }
             catch
             {
@@ -882,7 +886,7 @@ public class StatsRepository
         return opponents;
     }
 
-    public async Task AddOpponentAsync(Opponent opponent, int seasonId)
+    public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))
         {
@@ -921,6 +925,7 @@ public class StatsRepository
                 }
 
                 await transaction.CommitAsync();
+                return opponentId;
             }
             catch
             {

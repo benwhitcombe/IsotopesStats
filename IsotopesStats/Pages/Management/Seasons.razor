@@ -21,10 +21,10 @@
     }
 </div>
 
-@if (isEditing)
+@if (isAdding || isEditing)
 {
     <ManagementEditCard 
-        Title="@($"{(editingSeason.Id == 0 ? "Add" : "Edit")} Season")"
+        Title="@($"{(isAdding ? "Add" : "Edit")} Season")"
         IsEdit="@(editingSeason.Id != 0)"
         SaveText="Save Season"
         Model="editingSeason"
@@ -38,36 +38,33 @@
             <ValidationMessage For="@(() => editingSeason.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 
-        @if (editingSeason.Id != 0)
-        {
-            <div class="form-group" style="margin-top: 1.5rem;">
-                <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Season Roster</label>
-                <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
-                    @foreach (Player player in allPlayers)
-                    {
-                        <CheckboxButton 
-                            Id="@($"p-{player.Id}")" 
-                            Text="@player.Name" 
-                            Checked="@assignedPlayerIds.Contains(player.Id)" 
-                            CheckedChanged="@((bool val) => TogglePlayer(player.Id, val))" />
-                    }
-                </div>
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Season Roster</label>
+            <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
+                @foreach (Player player in allPlayers)
+                {
+                    <CheckboxButton 
+                        Id="@($"p-{player.Id}")" 
+                        Text="@player.Name" 
+                        Checked="@assignedPlayerIds.Contains(player.Id)" 
+                        CheckedChanged="@((bool val) => TogglePlayer(player.Id, val))" />
+                }
             </div>
+        </div>
 
-            <div class="form-group" style="margin-top: 1.5rem;">
-                <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Opponents This Season</label>
-                <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
-                    @foreach (Opponent opponent in allOpponents)
-                    {
-                        <CheckboxButton 
-                            Id="@($"o-{opponent.Id}")" 
-                            Text="@opponent.Name" 
-                            Checked="@assignedOpponentIds.Contains(opponent.Id)" 
-                            CheckedChanged="@((bool val) => ToggleOpponent(opponent.Id, val))" />
-                    }
-                </div>
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Opponents This Season</label>
+            <div class="selectable-grid" style="padding: 0.5rem; background: #f9f9f9; border-radius: 8px;">
+                @foreach (Opponent opponent in allOpponents)
+                {
+                    <CheckboxButton 
+                        Id="@($"o-{opponent.Id}")" 
+                        Text="@opponent.Name" 
+                        Checked="@assignedOpponentIds.Contains(opponent.Id)" 
+                        CheckedChanged="@((bool val) => ToggleOpponent(opponent.Id, val))" />
+                }
             </div>
-        }
+        </div>
     </ManagementEditCard>
 }
 else
@@ -374,25 +371,34 @@ else
 
     private async Task SaveSeason()
     {
+        int seasonId;
         if (editingSeason.Id == 0)
         {
-            await StatsService.AddSeasonAsync(editingSeason);
+            seasonId = await StatsService.AddSeasonAsync(editingSeason);
+            
+            // For new season, just add all selected associations
+            foreach (int playerId in assignedPlayerIds)
+                await StatsService.AddPlayerToSeasonAsync(playerId, seasonId);
+                
+            foreach (int opponentId in assignedOpponentIds)
+                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId);
         }
         else
         {
+            seasonId = editingSeason.Id;
             await StatsService.UpdateSeasonAsync(editingSeason);
             
             // Sync Players
             foreach (int playerId in assignedPlayerIds.Except(originalPlayerIds))
-                await StatsService.AddPlayerToSeasonAsync(playerId, editingSeason.Id);
+                await StatsService.AddPlayerToSeasonAsync(playerId, seasonId);
             foreach (int playerId in originalPlayerIds.Except(assignedPlayerIds))
-                await StatsService.DeletePlayerFromSeasonAsync(playerId, editingSeason.Id);
+                await StatsService.DeletePlayerFromSeasonAsync(playerId, seasonId);
 
             // Sync Opponents
             foreach (int opponentId in assignedOpponentIds.Except(originalOpponentIds))
-                await StatsService.AddOpponentToSeasonAsync(opponentId, editingSeason.Id);
+                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId);
             foreach (int opponentId in originalOpponentIds.Except(assignedOpponentIds))
-                await StatsService.DeleteOpponentFromSeasonAsync(opponentId, editingSeason.Id);
+                await StatsService.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
         }
 
         await ClearTempState();
