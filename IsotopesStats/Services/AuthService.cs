@@ -8,6 +8,32 @@ public class AuthService
 {
     private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
+    public async Task<bool> IsEmailUniqueAsync(string email, int excludeUserId = 0)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM Users WHERE Email = $email AND Id != $excludeId AND IsDeleted = 0";
+            command.Parameters.AddWithValue("$email", email ?? "");
+            command.Parameters.AddWithValue("$excludeId", excludeUserId);
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) == 0;
+        }
+    }
+
+    public async Task<bool> IsRoleNameUniqueAsync(string name, int excludeRoleId = 0)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM UserRoles WHERE Name = $name AND Id != $excludeId AND IsDeleted = 0";
+            command.Parameters.AddWithValue("$name", name ?? "");
+            command.Parameters.AddWithValue("$excludeId", excludeRoleId);
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) == 0;
+        }
+    }
+
     public async Task<User?> LoginAsync(string email, string password)
     {
         using (SqliteConnection connection = new SqliteConnection(ConnectionString))

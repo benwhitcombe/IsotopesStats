@@ -3,6 +3,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Services
 @using System.Security.Claims
+@using Microsoft.Data.Sqlite
 @typeparam TItem where TItem : class, new()
 @implements IDisposable
 @inject ProtectedSessionStorage ProtectedSessionStore
@@ -30,6 +31,13 @@
                 </div>
 
                 @ChildContent
+
+                @if (!string.IsNullOrEmpty(_saveError))
+                {
+                    <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-top: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
+                        @_saveError
+                    </div>
+                }
 
                 <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
                     <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem; opacity: @(IsFormValid ? "1" : "0.5"); cursor: @(IsFormValid ? "pointer" : "not-allowed");" disabled="@(!IsFormValid)">@SaveText</button>
@@ -76,6 +84,7 @@
     [Parameter] public EventCallback OnDelete { get; set; }
     [Parameter] public Func<Task>? OnBeforeInternalSave { get; set; }
     [Parameter] public Func<bool>? HasCustomChanges { get; set; }
+    [Parameter] public Func<TItem, Task<string?>>? CheckUniqueAsync { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private EditContext? _internalContext;
@@ -114,7 +123,17 @@
     {
         ActualEditContext?.Validate();
         await SaveTempState();
-        StateHasChanged();
+
+        if (CheckUniqueAsync != null && Item != null)
+        {
+            _uniqueError = await CheckUniqueAsync(Item);
+        }
+        else
+        {
+            _uniqueError = null;
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SaveTempState()
@@ -129,15 +148,44 @@
         catch { }
     }
 
+    private string? _saveError;
+    private string? _uniqueError;
+
     private async Task HandleSave()
     {
+        _saveError = null;
+
+        if (CheckUniqueAsync != null && Item != null)
+        {
+            _uniqueError = await CheckUniqueAsync(Item);
+            if (!string.IsNullOrEmpty(_uniqueError)) return;
+        }
+
         bool wasEdit = IsEdit;
         if (OnBeforeInternalSave != null)
         {
             await OnBeforeInternalSave.Invoke();
         }
 
-        await OnSave.InvokeAsync();
+        try
+        {
+            await OnSave.InvokeAsync();
+        }
+        catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+        {
+            _saveError = "A record with this name or email already exists.";
+            return;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _saveError = ex.Message;
+            return;
+        }
+        catch (Exception ex)
+        {
+            _saveError = "An unexpected error occurred: " + ex.Message;
+            return;
+        }
         
         // Log the change
         await CreateLog(wasEdit ? UserLogAction.Updated : UserLogAction.Created);

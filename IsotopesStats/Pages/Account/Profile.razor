@@ -32,7 +32,7 @@
 
         <div class="form-group">
             <label>Email Address</label>
-            <InputText class="form-control" @bind-Value="profileModel.Email" placeholder="user@isotopes.com" />
+            <InputText class="form-control" @bind-Value="profileModel.Email" @bind-Value:event="oninput" placeholder="user@isotopes.com" />
             <ValidationMessage For="@(() => profileModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             <small style="color: #666; display: block; margin-top: 0.5rem;">Changing your email will affect your login credentials.</small>
         </div>
@@ -49,7 +49,7 @@
                     <div class="form-group">
                         <label>New Password</label>
                         <div style="position: relative;">
-                            <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.Password" style="padding-right: 3rem;" />
+                            <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.Password" autocomplete="new-password" style="padding-right: 3rem;" />
                             <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
                                 <PasswordToggleIcon IsVisible="@showPassword" />
                             </button>
@@ -58,7 +58,12 @@
                     </div>
                     <div class="form-group">
                         <label>Confirm New Password</label>
-                        <InputText type="password" class="form-control" @bind-Value="profileModel.ConfirmPassword" />
+                        <div style="position: relative;">
+                            <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.ConfirmPassword" autocomplete="new-password" style="padding-right: 3rem;" />
+                            <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                                <PasswordToggleIcon IsVisible="@showConfirmPassword" />
+                            </button>
+                        </div>
                         <ValidationMessage For="@(() => profileModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                     </div>
                 </div>
@@ -83,6 +88,7 @@
     private ProfileViewModel originalViewModel = new();
     
     private bool showPassword = false;
+    private bool showConfirmPassword = false;
     private string errorMessage = "";
 
     public record class ProfileViewModel : IEntity
@@ -131,7 +137,16 @@
         await HydrateTempState();
     }
 
+    private async Task<string?> CheckUniqueEmail(ProfileViewModel model)
+    {
+        if (currentUser == null || string.IsNullOrWhiteSpace(model.Email)) return null;
+        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, currentUser.Id);
+        return isUnique ? null : "An account with this email already exists.";
+    }
+
     private void TogglePassword() => showPassword = !showPassword;
+
+    private void ToggleConfirmPassword() => showConfirmPassword = !showConfirmPassword;
 
     private void TogglePasswordFields()
     {
@@ -164,32 +179,23 @@
     private async Task HandleSave()
     {
         if (currentUser == null) return;
-        errorMessage = "";
 
-        try
+        bool emailChanged = profileModel.Email != currentUser.Email;
+        if (emailChanged)
         {
-            bool emailChanged = profileModel.Email != currentUser.Email;
-            if (emailChanged)
-            {
-                List<int> roleIds = currentUser.Roles.Select(r => r.Id).ToList();
-                await AuthService.UpdateUserAsync(new User { Id = currentUser.Id, Email = profileModel.Email }, roleIds);
-                currentUser = currentUser with { Email = profileModel.Email };
-            }
-
-            if (profileModel.ShowPasswordFields && !string.IsNullOrEmpty(profileModel.Password))
-            {
-                await AuthService.UpdateUserPasswordAsync(currentUser.Id, profileModel.Password);
-            }
-
-            if (emailChanged)
-            {
-                await AuthStateProvider.UpdateAuthenticationState(currentUser);
-            }
+            List<int> roleIds = currentUser.Roles.Select(r => r.Id).ToList();
+            await AuthService.UpdateUserAsync(new User { Id = currentUser.Id, Email = profileModel.Email }, roleIds);
+            currentUser = currentUser with { Email = profileModel.Email };
         }
-        catch (Exception ex)
+
+        if (profileModel.ShowPasswordFields && !string.IsNullOrEmpty(profileModel.Password))
         {
-            errorMessage = "An error occurred while saving: " + ex.Message;
-            throw; // Let the card handle or show error
+            await AuthService.UpdateUserPasswordAsync(currentUser.Id, profileModel.Password);
+        }
+
+        if (emailChanged)
+        {
+            await AuthStateProvider.UpdateAuthenticationState(currentUser);
         }
     }
 

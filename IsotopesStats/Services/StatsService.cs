@@ -12,6 +12,10 @@ public class StatsService
         _repository = repository;
     }
 
+    public async Task<bool> IsSeasonNameUniqueAsync(string name, int excludeSeasonId = 0) => await _repository.IsSeasonNameUniqueAsync(name, excludeSeasonId);
+    public async Task<bool> IsPlayerNameUniqueAsync(string name, int excludePlayerId = 0) => await _repository.IsPlayerNameUniqueAsync(name, excludePlayerId);
+    public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeOpponentId = 0) => await _repository.IsOpponentNameUniqueAsync(name, excludeOpponentId);
+
     public async Task<List<Season>> GetSeasonsAsync()
     {
         return await _repository.GetSeasonsAsync();

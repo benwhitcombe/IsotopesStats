@@ -37,7 +37,7 @@
 
         <div class="form-group">
             <label>Role Name</label>
-            <InputText class="form-control" @bind-Value="editingRole.Name" placeholder="e.g. Moderator" />
+            <InputText class="form-control" @bind-Value="editingRole.Name" @bind-Value:event="oninput" placeholder="e.g. Moderator" />
             <ValidationMessage For="@(() => editingRole.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 
@@ -246,6 +246,13 @@ else
     {
         if (action == "add") Navigation.NavigateTo("/management/roles/add");
         else Navigation.NavigateTo($"/management/roles/edit/{id}");
+    }
+
+    private async Task<string?> CheckUniqueRole(UserRole model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Name)) return null;
+        bool isUnique = await AuthService.IsRoleNameUniqueAsync(model.Name, model.Id);
+        return isUnique ? null : "A role with this name already exists.";
     }
 
     private void OnPermissionToggled(int permissionId, bool isChecked)

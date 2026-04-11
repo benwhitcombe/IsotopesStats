@@ -7,6 +7,45 @@ public class StatsRepository
 {
     private const string ConnectionString = "Data Source=Data/IsotopesStats.db";
 
+    public async Task<bool> IsSeasonNameUniqueAsync(string name, int excludeSeasonId = 0)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM Seasons WHERE Name = $name AND Id != $excludeId AND IsDeleted = 0";
+            command.Parameters.AddWithValue("$name", name ?? "");
+            command.Parameters.AddWithValue("$excludeId", excludeSeasonId);
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) == 0;
+        }
+    }
+
+    public async Task<bool> IsPlayerNameUniqueAsync(string name, int excludePlayerId = 0)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM Players WHERE Name = $name AND Id != $excludeId AND IsDeleted = 0";
+            command.Parameters.AddWithValue("$name", name ?? "");
+            command.Parameters.AddWithValue("$excludeId", excludePlayerId);
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) == 0;
+        }
+    }
+
+    public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeOpponentId = 0)
+    {
+        using (SqliteConnection connection = new SqliteConnection(ConnectionString))
+        {
+            await connection.OpenAsync();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(1) FROM Opponents WHERE Name = $name AND Id != $excludeId AND IsDeleted = 0";
+            command.Parameters.AddWithValue("$name", name ?? "");
+            command.Parameters.AddWithValue("$excludeId", excludeOpponentId);
+            return Convert.ToInt32(await command.ExecuteScalarAsync()) == 0;
+        }
+    }
+
     public async Task<List<Season>> GetSeasonsAsync()
     {
         List<Season> seasons = new List<Season>();

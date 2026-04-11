@@ -31,13 +31,14 @@
         Item="editingOpponent"
         OriginalItem="originalOpponent"
         BasePath="/management/opponents"
+        CheckUniqueAsync="CheckUniqueOpponent"
         OnSave="SaveOpponent"
         OnDelete="DeleteOpponent"
         HasCustomChanges="@(() => !assignedSeasonIds.SetEquals(originalSeasonIds))">
 
         <div class="form-group">
             <label>Opponent Name</label>
-            <InputText class="form-control" @bind-Value="editingOpponent.Name" placeholder="e.g. Springfield Atoms" />
+            <InputText class="form-control" @bind-Value="editingOpponent.Name" @bind-Value:event="oninput" placeholder="e.g. Springfield Atoms" />
             <ValidationMessage For="@(() => editingOpponent.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
@@ -222,6 +223,14 @@ else
     {
         if (action == "add") Navigation.NavigateTo("/management/opponents/add");
         else Navigation.NavigateTo($"/management/opponents/edit/{id}");
+    }
+
+    private async Task<string?> CheckUniqueOpponent(Opponent model)
+    {
+        if (model.Id == 0) return null; // Creation reuses opponents
+        if (string.IsNullOrWhiteSpace(model.Name)) return null;
+        bool isUnique = await StatsService.IsOpponentNameUniqueAsync(model.Name, model.Id);
+        return isUnique ? null : "Another opponent with this name already exists.";
     }
 
     private void ToggleSeason(int seasonId, bool isChecked)

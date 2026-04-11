@@ -33,6 +33,7 @@
         Item="editViewModel"
         OriginalItem="originalViewModel"
         BasePath="/management/users"
+        CheckUniqueAsync="CheckUniqueEmail"
         OnSave="HandleSave"
         OnDelete="DeleteUser"
         HasCustomChanges="@(() => !selectedRoleIds.SetEquals(originalRoleIds))">
@@ -40,7 +41,7 @@
         <div class="form-group">
 
             <label>Email</label>
-            <InputText class="form-control" @bind-Value="editViewModel.Email" placeholder="user@isotopes.com" autocomplete="off" />
+            <InputText class="form-control" @bind-Value="editViewModel.Email" @bind-Value:event="oninput" placeholder="user@isotopes.com" autocomplete="off" />
             <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 
@@ -58,7 +59,12 @@
             </div>
             <div class="form-group">
                 <label>Confirm Password</label>
-                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" autocomplete="new-password" />
+                <div style="position: relative;">
+                    <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" autocomplete="new-password" style="padding-right: 3rem;" />
+                    <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                        <PasswordToggleIcon IsVisible="@showConfirmPassword" />
+                    </button>
+                </div>
                 <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
         }
@@ -85,7 +91,12 @@
                         </div>
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" placeholder="" autocomplete="new-password" />
+                            <div style="position: relative;">
+                                <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" placeholder="" autocomplete="new-password" style="padding-right: 3rem;" />
+                                <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                                    <PasswordToggleIcon IsVisible="@showConfirmPassword" />
+                                </button>
+                            </div>
                             <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                         </div>
                     </div>
@@ -216,6 +227,7 @@ else
     private HashSet<int> originalRoleIds = new();
     
     private bool showPassword = false;
+    private bool showConfirmPassword = false;
     private string errorMessage = "";
 
     public record class UserEditViewModel : IEntity
@@ -350,6 +362,15 @@ else
 
     private void TogglePassword() => showPassword = !showPassword;
 
+    private void ToggleConfirmPassword() => showConfirmPassword = !showConfirmPassword;
+
+    private async Task<string?> CheckUniqueEmail(UserEditViewModel model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Email)) return null;
+        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, model.Id);
+        return isUnique ? null : "A user with this email already exists.";
+    }
+
     private void TogglePasswordFields()
     {
         editViewModel.ShowPasswordFields = !editViewModel.ShowPasswordFields;
@@ -362,16 +383,14 @@ else
 
     private async Task HandleSave()
     {
-        errorMessage = "";
+        if (!selectedRoleIds.Any()) { throw new InvalidOperationException("At least one role is required."); }
 
-        if (!selectedRoleIds.Any()) { errorMessage = "At least one role is required."; return; }
-
-        if (isAdding && string.IsNullOrEmpty(editViewModel.Password)) { errorMessage = "Password is required."; return; }
+        if (isAdding && string.IsNullOrEmpty(editViewModel.Password)) { throw new InvalidOperationException("Password is required."); }
 
         if (isAdding)
         {
             bool result = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password!, selectedRoleIds.ToList());
-            if (!result) { errorMessage = "Error creating user. Email might already exist."; return; }
+            if (!result) { throw new InvalidOperationException("Error creating user. Email might already exist."); }
         }
         else
         {
