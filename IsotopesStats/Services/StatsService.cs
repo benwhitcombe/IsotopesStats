@@ -1,168 +1,184 @@
 using IsotopesStats.Models;
-using IsotopesStats.Data;
+using Supabase;
+using Postgrest;
 
 namespace IsotopesStats.Services;
 
 public class StatsService
 {
-    private readonly StatsRepository _repository;
+    private readonly Client _supabase;
 
-    public StatsService(StatsRepository repository)
+    public StatsService(Client supabase)
     {
-        _repository = repository;
+        _supabase = supabase;
     }
 
-    public async Task<bool> IsSeasonNameUniqueAsync(string name, int excludeSeasonId = 0) => await _repository.IsSeasonNameUniqueAsync(name, excludeSeasonId);
-    public async Task<bool> IsPlayerNameUniqueAsync(string name, int excludePlayerId = 0) => await _repository.IsPlayerNameUniqueAsync(name, excludePlayerId);
-    public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeOpponentId = 0) => await _repository.IsOpponentNameUniqueAsync(name, excludeOpponentId);
-
+    // --- SEASONS ---
     public async Task<List<Season>> GetSeasonsAsync()
     {
-        return await _repository.GetSeasonsAsync();
-    }
-
-    public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
-    {
-        return await _repository.GetStatsSummaryAsync(seasonId);
-    }
-
-    public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
-    {
-        return await _repository.GetTeamTotalsAsync(seasonId);
-    }
-
-    public async Task<List<Player>> GetPlayersAsync(int seasonId)
-    {
-        return await _repository.GetPlayersAsync(seasonId);
-    }
-
-    public async Task<List<StatEntry>> GetAllGameStatsAsync(int seasonId)
-    {
-        return await _repository.GetAllGameStatsAsync(seasonId);
-    }
-
-    public async Task<List<StatEntry>> GetPlayerGameLogAsync(string playerName, int seasonId)
-    {
-        return await _repository.GetPlayerGameLogAsync(playerName, seasonId);
-    }
-
-    public async Task<Game?> GetGameAsync(int gameId)
-    {
-        return await _repository.GetGameAsync(gameId);
-    }
-
-    public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
-    {
-        return await _repository.GetGameStatsAsync(gameId);
-    }
-
-    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
-    {
-        await _repository.UpdateGameWithStatsAsync(game, stats);
-    }
-
-    public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
-    {
-        await _repository.AddGameWithStatsAsync(game, stats);
-    }
-
-    public async Task UpdateGameAsync(Game game)
-    {
-        await _repository.UpdateGameAsync(game);
-    }
-
-    public async Task DeleteGameAsync(int gameId)
-    {
-        await _repository.DeleteGameAsync(gameId);
+        BaseResponse<Season> response = await _supabase.From<Season>()
+            .Where(x => x.IsDeleted == false)
+            .Order("name", Constants.Ordering.Descending)
+            .Get();
+        return response.Models;
     }
 
     public async Task<int> AddSeasonAsync(Season season)
     {
-        return await _repository.AddSeasonAsync(season);
+        BaseResponse<Season> response = await _supabase.From<Season>().Insert(season);
+        return response.Model?.Id ?? 0;
     }
 
     public async Task UpdateSeasonAsync(Season season)
     {
-        await _repository.UpdateSeasonAsync(season);
+        await _supabase.From<Season>().Update(season);
     }
 
     public async Task DeleteSeasonAsync(int seasonId)
     {
-        await _repository.DeleteSeasonAsync(seasonId);
+        Season season = new Season { Id = seasonId, IsDeleted = true };
+        await _supabase.From<Season>().Update(season);
     }
 
-    public async Task AddPlayerToSeasonAsync(int playerId, int seasonId)
+    // --- PLAYERS ---
+    public async Task<List<Player>> GetAllPlayersAsync()
     {
-        await _repository.AddPlayerToSeasonAsync(playerId, seasonId);
+        BaseResponse<Player> response = await _supabase.From<Player>()
+            .Where(x => x.IsDeleted == false)
+            .Order("name", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
     }
 
-    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    public async Task<List<Player>> GetPlayersAsync(int seasonId)
     {
-        return await _repository.GetSeasonsForPlayerAsync(playerId);
+        BaseResponse<Player> response = await _supabase.From<Player>()
+            .Join<SeasonPlayers>("id", "playerid")
+            .Where<SeasonPlayers>(x => x.SeasonId == seasonId)
+            .Where(x => x.IsDeleted == false)
+            .Order("name", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
     }
 
     public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
-        return await _repository.AddPlayerAsync(player, seasonId);
+        BaseResponse<Player> response = await _supabase.From<Player>().Insert(player);
+        int playerId = response.Model?.Id ?? 0;
+
+        if (playerId != 0 && seasonId != 0)
+        {
+            await AddPlayerToSeasonAsync(playerId, seasonId);
+        }
+        return playerId;
     }
 
     public async Task UpdatePlayerAsync(Player player)
     {
-        await _repository.UpdatePlayerAsync(player);
+        await _supabase.From<Player>().Update(player);
     }
 
     public async Task DeletePlayerAsync(int playerId)
     {
-        await _repository.DeletePlayerAsync(playerId);
+        Player player = new Player { Id = playerId, IsDeleted = true };
+        await _supabase.From<Player>().Update(player);
+    }
+
+    public async Task AddPlayerToSeasonAsync(int playerId, int seasonId)
+    {
+        SeasonPlayers link = new SeasonPlayers { PlayerId = playerId, SeasonId = seasonId };
+        await _supabase.From<SeasonPlayers>().Insert(link);
     }
 
     public async Task DeletePlayerFromSeasonAsync(int playerId, int seasonId)
     {
-        await _repository.DeletePlayerFromSeasonAsync(playerId, seasonId);
+        await _supabase.From<SeasonPlayers>()
+            .Where(x => x.PlayerId == playerId)
+            .Where(x => x.SeasonId == seasonId)
+            .Delete();
     }
 
-    public async Task<List<Player>> GetAllPlayersAsync()
-    {
-        return await _repository.GetAllPlayersAsync();
-    }
-
-    public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
-    {
-        return await _repository.GetOpponentsAsync(seasonId);
-    }
-
+    // --- OPPONENTS ---
     public async Task<List<Opponent>> GetAllOpponentsAsync()
     {
-        return await _repository.GetAllOpponentsAsync();
+        BaseResponse<Opponent> response = await _supabase.From<Opponent>()
+            .Where(x => x.IsDeleted == false)
+            .Order("name", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
     }
 
     public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
-        return await _repository.AddOpponentAsync(opponent, seasonId);
+        BaseResponse<Opponent> response = await _supabase.From<Opponent>().Insert(opponent);
+        return response.Model?.Id ?? 0;
     }
 
     public async Task UpdateOpponentAsync(Opponent opponent)
     {
-        await _repository.UpdateOpponentAsync(opponent);
+        await _supabase.From<Opponent>().Update(opponent);
     }
 
     public async Task DeleteOpponentAsync(int opponentId)
     {
-        await _repository.DeleteOpponentAsync(opponentId);
+        Opponent opponent = new Opponent { Id = opponentId, IsDeleted = true };
+        await _supabase.From<Opponent>().Update(opponent);
     }
 
-    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId)
+    // --- GAMES & STATS ---
+    public async Task<Game?> GetGameAsync(int gameId)
     {
-        await _repository.AddOpponentToSeasonAsync(opponentId, seasonId);
+        BaseResponse<Game> response = await _supabase.From<Game>("v_games_management")
+            .Where("id", Constants.Operator.Equals, gameId)
+            .Single();
+        return response.Model;
     }
 
-    public async Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId)
+    public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
-        await _repository.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
+        BaseResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>("v_player_stats_summary")
+            .Where("seasonid", Constants.Operator.Equals, seasonId)
+            .Get();
+        return response.Models;
     }
 
-    public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
+    public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
     {
-        return await _repository.GetSeasonsForOpponentAsync(opponentId);
+        BaseResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>("v_team_stats_summary")
+            .Where("seasonid", Constants.Operator.Equals, seasonId)
+            .Single();
+        return response.Model ?? new PlayerStatsSummary { PlayerName = "TEAM TOTALS" };
+    }
+
+    public async Task<List<StatEntry>> GetAllGameStatsAsync(int seasonId)
+    {
+        BaseResponse<StatEntry> response = await _supabase.From<StatEntry>("v_game_stats_extended")
+            .Where("seasonid", Constants.Operator.Equals, seasonId)
+            .Where("gameisdeleted", Constants.Operator.Equals, false)
+            .Order("date", Constants.Ordering.Descending)
+            .Order("bo", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
+    }
+
+    public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        BaseResponse<Game> gameResponse = await _supabase.From<Game>().Insert(game);
+        int gameId = gameResponse.Model?.Id ?? 0;
+
+        if (gameId != 0)
+        {
+            foreach (StatEntry stat in stats)
+            {
+                stat.GameId = gameId;
+            }
+            await _supabase.From<StatEntry>().Insert(stats);
+        }
+    }
+
+    public async Task DeleteGameAsync(int gameId)
+    {
+        Game game = new Game { Id = gameId, IsDeleted = true };
+        await _supabase.From<Game>().Update(game);
     }
 }

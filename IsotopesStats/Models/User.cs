@@ -1,17 +1,25 @@
-using System.ComponentModel.DataAnnotations;
+using Postgrest.Attributes;
+using Postgrest.Models;
 
 namespace IsotopesStats.Models;
 
-public record class User : IEntity
+[Table("users")]
+public class User : BaseModel
 {
+    [PrimaryKey("id", false)]
     public int Id { get; set; }
     
-    [Required(ErrorMessage = "Email address is required.")]
-    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    [Column("email")]
     public string Email { get; set; } = string.Empty;
     
+    [Column("passwordhash")]
     public string PasswordHash { get; set; } = string.Empty;
-    public List<UserRole> Roles { get; set; } = new();
+    
+    [Column("createdat")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    public List<UserRole> Roles { get; set; } = new();
 }

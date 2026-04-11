@@ -1,34 +1,43 @@
 using System.ComponentModel.DataAnnotations;
+using Postgrest.Attributes;
+using Postgrest.Models;
 
 namespace IsotopesStats.Models;
 
 public enum GameType
 {
-    RegularSeason,
-    Playoffs,
-    Exhibition
+    League = 0,
+    Tournament = 1,
+    Exhibition = 2
 }
 
-public record class Game : IEntity
+[Table("games")]
+public class Game : BaseModel, IEntity
 {
+    [PrimaryKey("id", false)]
     public int Id { get; set; }
     
-    [Range(1, int.MaxValue, ErrorMessage = "Please select a season.")]
+    [Column("seasonid")]
     public int SeasonId { get; set; }
     
-    [Range(1, 1000, ErrorMessage = "Game number must be between 1 and 1000.")]
+    [Column("gamenumber")]
     public int GameNumber { get; set; }
     
-    [Required(ErrorMessage = "Date is required.")]
-    public DateTime Date { get; set; }
+    [Column("date")]
+    public DateTime Date { get; set; } = DateTime.Now;
     
-    [StringLength(100, ErrorMessage = "Diamond name cannot exceed 100 characters.")]
+    [Column("diamond")]
     public string Diamond { get; set; } = string.Empty;
     
-    [Range(1, int.MaxValue, ErrorMessage = "Please select an opponent.")]
+    [Column("opponentid")]
     public int OpponentId { get; set; }
     
-    public Opponent? Opponent { get; set; }
-    public GameType Type { get; set; } = GameType.RegularSeason;
+    [Column("type")]
+    public GameType Type { get; set; } = GameType.League;
+    
+    [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    [Reference(typeof(Opponent), shouldFilterTopLevel: false)]
+    public Opponent? Opponent { get; set; }
 }

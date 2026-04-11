@@ -1,84 +1,84 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using IsotopesStats.Models;
+using Supabase;
 
 namespace IsotopesStats.Services;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private readonly ProtectedSessionStorage _sessionStorage;
+    private readonly Client _supabase;
+    private readonly AuthService _authService;
     private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public CustomAuthenticationStateProvider(ProtectedSessionStorage sessionStorage)
+    public CustomAuthenticationStateProvider(Client supabase, AuthService authService)
     {
-        _sessionStorage = sessionStorage;
+        _supabase = supabase;
+        _authService = authService;
+
+        // Listen for Supabase Auth State Changes
+        _supabase.Auth.AddStateChangedListener((sender, state) =>
+        {
+            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        });
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
         {
-            ProtectedBrowserStorageResult<User> userSessionStorageResult = await _sessionStorage.GetAsync<User>("UserSession");
-            User? userSession = userSessionStorageResult.Success ? userSessionStorageResult.Value : null;
+            var session = _supabase.Auth.CurrentSession;
 
-            if (userSession == null)
-                return await Task.FromResult(new AuthenticationState(_anonymous));
+            if (session == null || session.User == null)
+                return new AuthenticationState(_anonymous);
 
-            return await Task.FromResult(new AuthenticationState(CreateClaimsPrincipal(userSession)));
+            // Fetch custom roles/permissions from our DB for this Supabase user
+            var roles = await GetUserRolesForUserAsync(session.User.Id);
+            return new AuthenticationState(CreateClaimsPrincipal(session.User, roles));
         }
         catch
         {
-            return await Task.FromResult(new AuthenticationState(_anonymous));
+            return new AuthenticationState(_anonymous);
         }
     }
 
-    public async Task UpdateAuthenticationState(User? userSession)
+    private ClaimsPrincipal CreateClaimsPrincipal(Supabase.Gotrue.User user, List<UserRole> roles)
     {
-        ClaimsPrincipal claimsPrincipal;
-
-        if (userSession != null)
+        var claims = new List<Claim>
         {
-            await _sessionStorage.SetAsync("UserSession", userSession);
-            claimsPrincipal = CreateClaimsPrincipal(userSession);
-        }
-        else
-        {
-            await _sessionStorage.DeleteAsync("UserSession");
-            claimsPrincipal = _anonymous;
-        }
-
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
-    }
-
-    private ClaimsPrincipal CreateClaimsPrincipal(User user)
-    {
-        List<Claim> claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.NameIdentifier, user.Id ?? ""),
+            new Claim(ClaimTypes.Name, user.Email ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? "")
         };
 
-        if (user.Roles != null && user.Roles.Any())
+        foreach (var role in roles)
         {
-            foreach (UserRole role in user.Roles)
+            claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            foreach (var permission in role.Permissions)
             {
-                claims.Add(new Claim(ClaimTypes.Role, role.Name ?? "User"));
-                if (role.Permissions != null)
-                {
-                    foreach (Permission permission in role.Permissions)
-                    {
-                        claims.Add(new Claim("Permission", permission.Name));
-                    }
-                }
+                claims.Add(new Claim("Permission", permission.Name));
             }
         }
-        else
-        {
-            claims.Add(new Claim(ClaimTypes.Role, "User"));
-        }
 
-        return new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, "SupabaseAuth"));
+    }
+
+    private async Task<List<UserRole>> GetUserRolesForUserAsync(string supabaseUserId)
+    {
+        try 
+        {
+            var response = await _supabase
+                .From<UserRole>()
+                .Select("id, name, isdeleted, rolepermissions(permissions(id, name))")
+                .Join<UserUserRoles>("id", "roleid")
+                .Where<UserUserRoles>(x => x.UserId.ToString() == supabaseUserId)
+                .Get();
+
+            return response.Models;
+        }
+        catch
+        {
+            return new List<UserRole>();
+        }
     }
 }

@@ -1,15 +1,19 @@
-using System.ComponentModel.DataAnnotations;
+using Postgrest.Attributes;
+using Postgrest.Models;
 
 namespace IsotopesStats.Models;
 
-public record class UserRole : IEntity
+[Table("userroles")]
+public class UserRole : BaseModel
 {
+    [PrimaryKey("id", false)]
     public int Id { get; set; }
     
-    [Required(ErrorMessage = "Role name is required.")]
-    [StringLength(100, ErrorMessage = "Role name cannot exceed 100 characters.")]
+    [Column("name")]
     public string Name { get; set; } = string.Empty;
     
-    public List<Permission> Permissions { get; set; } = new();
+    [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    public List<Permission> Permissions { get; set; } = new();
 }
