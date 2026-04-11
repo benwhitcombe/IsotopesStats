@@ -3,6 +3,7 @@ using Postgrest.Models;
 
 namespace IsotopesStats.Models;
 
+[Table("v_player_stats_summary")]
 public class PlayerStatsSummary : BaseModel
 {
     [Column("playername")]

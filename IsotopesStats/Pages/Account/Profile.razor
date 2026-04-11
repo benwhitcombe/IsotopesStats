@@ -2,211 +2,165 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@using System.Security.Claims
-@using System.Text.RegularExpressions
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using System.ComponentModel.DataAnnotations
-@implements IDisposable
 @attribute [Authorize]
 @inject AuthService AuthService
-@inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
-@inject ProtectedSessionStorage ProtectedSessionStore
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - My Profile</PageTitle>
 
-<div class="header-with-filter" style="margin-bottom: 1.5rem;">
-    <h3 style="margin:0">My Profile</h3>
-</div>
-
-<div style="max-width: 600px; margin: 0 auto;">
-    <ModelEditor 
-        TItem="ProfileViewModel"
-        Title="Update Profile Information"
-        Item="profileModel"
-        OriginalItem="originalViewModel"
-        BasePath="/"
-        DeleteWarning="This will permanently disable your account and log you out."
-        OnSave="HandleSave"
-        OnDelete="HandleDelete">
-
-        <div class="form-group">
-            <label>Email Address</label>
-            <InputText class="form-control" @bind-Value="profileModel.Email" @bind-Value:event="oninput" placeholder="user@isotopes.com" />
-            <ValidationMessage For="@(() => profileModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-            <small style="color: #666; display: block; margin-top: 0.5rem;">Changing your email will affect your login credentials.</small>
+@if (currentUser == null)
+{
+    <div style="text-align: center; padding: 5rem;">
+        <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="stat-card view-fade-in" style="max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 80px; height: 80px; background: var(--isotopes-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; margin: 0 auto 1rem auto; box-shadow: 0 10px 20px rgba(237, 28, 36, 0.2);">
+                @currentUser.Email[0].ToString().ToUpper()
+            </div>
+            <h3 style="margin: 0;">My Profile</h3>
+            <p style="color: #666; margin-top: 0.5rem;">@currentUser.Email</p>
         </div>
 
-        <div style="background: #f9f9f9; padding: 1.5rem; border-radius: 12px; margin: 2rem 0; border: 1px solid #eee;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: @(profileModel.ShowPasswordFields ? "1.5rem" : "0")">
-                <label style="margin:0; font-weight: bold;">Security</label>
-                <button type="button" class="view-btn" @onclick="TogglePasswordFields">@(profileModel.ShowPasswordFields ? "Cancel" : "Change Password")</button>
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">Email Address</label>
+                <div class="form-control" style="background: #f8f9fa; border-color: #eee; color: #666;">@currentUser.Email</div>
             </div>
 
-            @if (profileModel.ShowPasswordFields)
-            {
-                <div class="view-fade-in">
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <div style="position: relative;">
-                            <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.Password" autocomplete="new-password" style="padding-right: 3rem;" />
-                            <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                                <PasswordToggleIcon IsVisible="@showPassword" />
-                            </button>
-                        </div>
-                        <ValidationMessage For="@(() => profileModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <div style="position: relative;">
-                            <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="profileModel.ConfirmPassword" autocomplete="new-password" style="padding-right: 3rem;" />
-                            <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                                <PasswordToggleIcon IsVisible="@showConfirmPassword" />
-                            </button>
-                        </div>
-                        <ValidationMessage For="@(() => profileModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                    </div>
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">Account Created</label>
+                <div class="form-control" style="background: #f8f9fa; border-color: #eee; color: #666;">@currentUser.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")</div>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">My Roles</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.25rem 0;">
+                    @if (string.IsNullOrEmpty(currentUser.RoleNames))
+                    {
+                        <span style="color: #ccc; font-style: italic;">No roles assigned</span>
+                    }
+                    else
+                    {
+                        @foreach (string role in currentUser.RoleNames.Split(", "))
+                        {
+                            <span class="badge bg-light text-dark" style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #eee; font-weight: 600;">@role</span>
+                        }
+                    }
                 </div>
-            }
-        </div>
-
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
-                @errorMessage
             </div>
-        }
-    </ModelEditor>
-</div>
+
+            <hr style="margin: 1rem 0; border-color: #eee;" />
+
+            <div style="background: #fffcf0; border: 1px solid #ffeeba; padding: 1.5rem; border-radius: 12px;">
+                <h5 style="margin: 0 0 1rem 0; font-weight: bold; color: #856404;">Change Password</h5>
+                
+                @if (isChangingPassword)
+                {
+                    <EditForm Model="passwordModel" OnValidSubmit="UpdatePassword">
+                        <DataAnnotationsValidator />
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="passwordModel.NewPassword" />
+                                <ValidationMessage For="@(() => passwordModel.NewPassword)" style="color: var(--isotopes-red); font-size: 0.8rem;" />
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">Confirm New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="passwordModel.ConfirmPassword" />
+                                <ValidationMessage For="@(() => passwordModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem;" />
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(passwordError))
+                            {
+                                <div style="color: var(--isotopes-red); font-size: 0.85rem; font-weight: bold; text-align: center;">@passwordError</div>
+                            }
+
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <button type="submit" class="view-btn active" style="flex: 1;">Save Password</button>
+                                <button type="button" class="view-btn" style="flex: 1;" @onclick="() => isChangingPassword = false">Cancel</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <p style="font-size: 0.85rem; color: #856404; margin-bottom: 1.25rem;">For your security, please use a strong password that you don't use elsewhere.</p>
+                    <button type="button" class="view-btn" style="width: 100%;" @onclick="() => isChangingPassword = true">Update Password</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (showSuccess)
+{
+    <div class="view-fade-in" style="position: fixed; bottom: 2rem; right: 2rem; background: #155724; color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 3000;">
+        ✨ Password updated successfully!
+    </div>
+}
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthStateTask { get; set; } = null!;
-
-    private User? currentUser;
-    private ProfileViewModel profileModel = new();
-    private ProfileViewModel originalViewModel = new();
+    [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
     
-    private bool showPassword = false;
-    private bool showConfirmPassword = false;
-    private string errorMessage = "";
-
-    public record class ProfileViewModel : IEntity
-    {
-        public int Id { get; set; } = 1; // Dummy Id for IEntity
-
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; } = "";
-
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters.")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[0-9]).+$", ErrorMessage = "Password must contain at least one uppercase letter and one number.")]
-        public string Password { get; set; } = "";
-
-        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
-        public string ConfirmPassword { get; set; } = "";
-
-        public bool ShowPasswordFields { get; set; }
-    }
+    private UserRolesSummaryView? currentUser;
+    private bool isChangingPassword = false;
+    private bool showSuccess = false;
+    private string? passwordError;
+    private PasswordChangeModel passwordModel = new();
 
     protected override async Task OnInitializedAsync()
     {
         AuthenticationState authState = await AuthStateTask;
-        ClaimsPrincipal user = authState.User;
-
+        System.Security.Claims.ClaimsPrincipal user = authState.User;
+        
         if (user.Identity?.IsAuthenticated == true)
         {
-            string? email = user.FindFirst(ClaimTypes.Email)?.Value;
+            string? email = user.Identity.Name;
             if (!string.IsNullOrEmpty(email))
             {
-                List<User> users = await AuthService.GetUsersAsync();
+                List<UserRolesSummaryView> users = await AuthService.GetUsersAsync();
                 currentUser = users.FirstOrDefault(u => u.Email == email);
-                if (currentUser != null)
-                {
-                    profileModel.Email = currentUser.Email;
-                    originalViewModel.Email = currentUser.Email;
-                }
             }
         }
-
-        if (currentUser == null)
-        {
-            Navigation.NavigateTo("account/login");
-        }
-
-        await HydrateTempState();
     }
 
-    private async Task<string?> CheckUniqueEmail(ProfileViewModel model)
+    private async Task UpdatePassword()
     {
-        if (currentUser == null || string.IsNullOrWhiteSpace(model.Email)) return null;
-        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, currentUser.Id);
-        return isUnique ? null : "An account with this email already exists.";
-    }
-
-    private void TogglePassword() => showPassword = !showPassword;
-
-    private void ToggleConfirmPassword() => showConfirmPassword = !showConfirmPassword;
-
-    private void TogglePasswordFields()
-    {
-        profileModel.ShowPasswordFields = !profileModel.ShowPasswordFields;
-        if (!profileModel.ShowPasswordFields)
-        {
-            profileModel.Password = "";
-            profileModel.ConfirmPassword = "";
-        }
-        errorMessage = "";
-    }
-
-    private async Task HydrateTempState()
-    {
+        passwordError = null;
         try
         {
-            ProtectedBrowserStorageResult<ProfileViewModel> result = await ProtectedSessionStore.GetAsync<ProfileViewModel>("EditState_ProfileViewModel_1");
-            if (result.Success && result.Value != null)
+            if (currentUser != null)
             {
-                profileModel.Email = result.Value.Email;
-                profileModel.Password = result.Value.Password;
-                profileModel.ConfirmPassword = result.Value.ConfirmPassword;
-                profileModel.ShowPasswordFields = result.Value.ShowPasswordFields;
+                await AuthService.UpdateUserPasswordAsync(currentUser.Id, passwordModel.NewPassword);
+                isChangingPassword = false;
+                passwordModel = new();
+                showSuccess = true;
+                StateHasChanged();
+                await Task.Delay(3000);
+                showSuccess = false;
                 StateHasChanged();
             }
         }
-        catch (Exception) { }
+        catch (Exception ex)
+        {
+            passwordError = "Failed to update password: " + ex.Message;
+        }
     }
 
-    private async Task HandleSave()
+    public class PasswordChangeModel
     {
-        if (currentUser == null) return;
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
+        public string NewPassword { get; set; } = "";
 
-        bool emailChanged = profileModel.Email != currentUser.Email;
-        if (emailChanged)
-        {
-            List<int> roleIds = currentUser.Roles.Select(r => r.Id).ToList();
-            await AuthService.UpdateUserAsync(new User { Id = currentUser.Id, Email = profileModel.Email }, roleIds);
-            currentUser = currentUser with { Email = profileModel.Email };
-        }
-
-        if (profileModel.ShowPasswordFields && !string.IsNullOrEmpty(profileModel.Password))
-        {
-            await AuthService.UpdateUserPasswordAsync(currentUser.Id, profileModel.Password);
-        }
-
-        if (emailChanged)
-        {
-            await AuthStateProvider.UpdateAuthenticationState(currentUser);
-        }
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = "";
     }
-
-    private async Task HandleDelete()
-    {
-        if (currentUser == null) return;
-        
-        await AuthService.DeleteUserAsync(currentUser.Id);
-        await AuthStateProvider.UpdateAuthenticationState(null);
-        Navigation.NavigateTo("/");
-    }
-
-    public void Dispose() { }
 }

@@ -4,13 +4,12 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.AspNetCore.Components.Forms
 @attribute [Authorize(Policy = "Manage Games")]
 @inject StatsService StatsService
+@inject AuthService AuthSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
@@ -142,7 +141,7 @@
                                 @ondragenter:preventdefault="true"
                                 @ondrop="() => HandleDrop(stat)"
                                 class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
-                                <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.Player?.Name</td>
+                                <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.PlayerName</td>
                                 <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
                                 <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
                                 <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
@@ -199,7 +198,7 @@
 
                     <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 1px solid #eee;">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
-                            <div style="color: var(--isotopes-accent); font-weight: bold;">@(index + 1). @stat.Player?.Name</div>
+                            <div style="color: var(--isotopes-accent); font-weight: bold;">@(index + 1). @stat.PlayerName</div>
                             <div style="font-size: 0.8rem; display: flex; gap: 8px;">
                                 <span class="badge @(paWarning ? "bg-danger" : "bg-light text-dark")">PA: @stat.PA</span>
                                 <span class="badge bg-light text-dark">AB: @stat.AB</span>
@@ -319,7 +318,7 @@ else
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>@game.Opponent?.Name</td>
                                 <td style="text-align: left;">@game.Diamond</td>
                                 <td>
-                                    <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                    <span class="badge @(game.Type == GameType.League ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
                                         @game.Type
                                     </span>
                                 </td>
@@ -355,7 +354,7 @@ else
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                        <span class="badge @(game.Type == GameType.RegularSeason ? "bg-primary" : "bg-warning")" style="padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
+                        <span class="badge @(game.Type == GameType.League ? "bg-primary" : "bg-warning")" style="padding: 0.3rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
                             @game.Type
                         </span>
                         <div style="display: flex; gap: 0.5rem;">
@@ -424,7 +423,7 @@ else
         else
         {
             editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
-            originalGame = editingGame with { };
+            originalGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
             playerStats.Clear();
             originalStats.Clear();
             seasonRoster.Clear();
@@ -437,56 +436,48 @@ else
         
         if (Action == "edit" && Id.HasValue && Id != 0)
         {
-            Game? game = games.FirstOrDefault(g => g.Id == Id);
-            if (game == null)
-            {
-                List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
-                game = stats.FirstOrDefault(s => s.GameId == Id)?.Game;
-            }
-
+            Game? game = await StatsService.GetGameAsync(Id.Value);
             if (game != null)
             {
-                editingGame = game with { };
-                originalGame = game with { };
+                editingGame = game.Clone();
+                originalGame = game.Clone();
                 await LoadSeasonRoster();
                 await LoadAvailableOpponents();
                 playerStats = await StatsService.GetGameStatsAsync(game.Id);
                 playerStats = playerStats.OrderBy(s => s.BO).ToList();
-                originalStats = playerStats.Select(s => s with { }).ToList();
+                originalStats = playerStats.Select(s => s.Clone()).Cast<StatEntry>().ToList();
             }
         }
         else
         {
             editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
-            originalGame = editingGame with { };
+            originalGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
-            int order =  order = 1;
+            int order = 1;
             playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
-            originalStats = playerStats.Select(s => s with { }).ToList();
+            originalStats = playerStats.Select(s => new StatEntry { PlayerId = s.PlayerId, BO = s.BO }).ToList();
         }
-
-        await HydrateTempState();
-    }
-
-    private async Task HydrateTempState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<Game> result = await ProtectedSessionStore.GetAsync<Game>($"EditState_Game_{Id ?? 0}");
-            if (result.Success && result.Value != null)
-            {
-                editingGame = result.Value;
-                StateHasChanged();
-            }
-        }
-        catch (Exception) { }
     }
 
     private async Task LoadGames()
     {
-        List<StatEntry> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
-        games = stats.GroupBy(s => s.GameId).Select(g => g.First().Game!).OrderByDescending(g => g.Date).ToList();
+        List<GameStatsExtendedView> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
+        games = stats.GroupBy(s => s.GameId).Select(g => 
+        {
+            GameStatsExtendedView v = g.First();
+            return new Game {
+                Id = v.GameId,
+                SeasonId = v.SeasonId,
+                GameNumber = v.GameNumber,
+                Date = v.Date,
+                Diamond = v.Diamond,
+                OpponentId = v.OpponentId,
+                Type = v.GameType,
+                IsDeleted = v.GameIsDeleted,
+                Opponent = new Opponent { Name = v.OpponentName }
+            };
+        }).OrderByDescending(g => g.Date).ToList();
     }
 
     private async Task OnSeasonChange(ChangeEventArgs e)
@@ -571,6 +562,7 @@ else
 
     private async Task DeleteGame()
     {
+        await AuthSvc.AddLogAsync(new UserLog { Action = UserLogAction.Deleted, EntityType = "Game", EntityId = editingGame.Id.ToString(), Description = $"Deleted game {editingGame.GameNumber}" });
         await StatsService.DeleteGameAsync(editingGame.Id);
         await LoadGames();
     }

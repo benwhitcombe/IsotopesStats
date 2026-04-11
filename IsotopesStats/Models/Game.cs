@@ -38,6 +38,8 @@ public class Game : BaseModel, IEntity
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 
-    [Reference(typeof(Opponent), shouldFilterTopLevel: false)]
+    [Reference(typeof(Opponent))]
     public Opponent? Opponent { get; set; }
+
+    public Game Clone() => (Game)this.MemberwiseClone();
 }

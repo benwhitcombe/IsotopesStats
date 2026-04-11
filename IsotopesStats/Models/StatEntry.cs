@@ -60,9 +60,17 @@ public class StatEntry : BaseModel, IEntity
     [Column("rbi")]
     public int RBI { get; set; }
 
-    [Reference(typeof(Player), shouldFilterTopLevel: false)]
+    [Reference(typeof(Player))]
     public Player? Player { get; set; }
 
-    [Reference(typeof(Game), shouldFilterTopLevel: false)]
+    [Reference(typeof(Game))]
     public Game? Game { get; set; }
+
+    // Calculated properties restored for UI
+    public string PlayerName => Player?.Name ?? string.Empty;
+    public int H => H1B + H2B + H3B + H4B + HR;
+    public int AB => H + FC + K + KF + GO + FO;
+    public int PA => AB + BB + SF;
+
+    public StatEntry Clone() => (StatEntry)this.MemberwiseClone();
 }

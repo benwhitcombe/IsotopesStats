@@ -2,19 +2,19 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using IsotopesStats.Models;
 using Supabase;
+using Postgrest;
+using Postgrest.Responses;
 
 namespace IsotopesStats.Services;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private readonly Client _supabase;
-    private readonly AuthService _authService;
+    private readonly Supabase.Client _supabase;
     private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public CustomAuthenticationStateProvider(Client supabase, AuthService authService)
+    public CustomAuthenticationStateProvider(Supabase.Client supabase)
     {
         _supabase = supabase;
-        _authService = authService;
 
         // Listen for Supabase Auth State Changes
         _supabase.Auth.AddStateChangedListener((sender, state) =>
@@ -27,13 +27,13 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
         try
         {
-            var session = _supabase.Auth.CurrentSession;
+            Supabase.Gotrue.Session? session = _supabase.Auth.CurrentSession;
 
             if (session == null || session.User == null)
                 return new AuthenticationState(_anonymous);
 
             // Fetch custom roles/permissions from our DB for this Supabase user
-            var roles = await GetUserRolesForUserAsync(session.User.Id);
+            List<UserRole> roles = await GetUserRolesForUserAsync(session.User.Id);
             return new AuthenticationState(CreateClaimsPrincipal(session.User, roles));
         }
         catch
@@ -42,19 +42,25 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
     }
 
+    public async Task UpdateAuthenticationState(User? userSession)
+    {
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+        await Task.CompletedTask;
+    }
+
     private ClaimsPrincipal CreateClaimsPrincipal(Supabase.Gotrue.User user, List<UserRole> roles)
     {
-        var claims = new List<Claim>
+        List<Claim> claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id ?? ""),
             new Claim(ClaimTypes.Name, user.Email ?? ""),
             new Claim(ClaimTypes.Email, user.Email ?? "")
         };
 
-        foreach (var role in roles)
+        foreach (UserRole role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role.Name));
-            foreach (var permission in role.Permissions)
+            foreach (Permission permission in role.Permissions)
             {
                 claims.Add(new Claim("Permission", permission.Name));
             }
@@ -67,11 +73,10 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
         try 
         {
-            var response = await _supabase
-                .From<UserRole>()
+            ModeledResponse<UserRole> response = await _supabase.Postgrest
+                .Table<UserRole>()
                 .Select("id, name, isdeleted, rolepermissions(permissions(id, name))")
-                .Join<UserUserRoles>("id", "roleid")
-                .Where<UserUserRoles>(x => x.UserId.ToString() == supabaseUserId)
+                .Filter("useruserroles.userid", Constants.Operator.Equals, supabaseUserId)
                 .Get();
 
             return response.Models;

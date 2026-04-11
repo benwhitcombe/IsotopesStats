@@ -17,4 +17,6 @@ public class Season : BaseModel, IEntity
     
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    public Season Clone() => (Season)this.MemberwiseClone();
 }

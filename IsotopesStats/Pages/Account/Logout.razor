@@ -1,12 +1,12 @@
 @page "/account/logout"
 @using IsotopesStats.Services
-@inject AuthenticationStateProvider AuthStateProvider
+@inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await ((CustomAuthenticationStateProvider)AuthStateProvider).UpdateAuthenticationState(null);
+        await AuthStateProvider.UpdateAuthenticationState(null);
         Navigation.NavigateTo("/");
     }
 }

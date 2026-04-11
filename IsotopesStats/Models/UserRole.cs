@@ -4,7 +4,7 @@ using Postgrest.Models;
 namespace IsotopesStats.Models;
 
 [Table("userroles")]
-public class UserRole : BaseModel
+public class UserRole : BaseModel, IEntity
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -16,4 +16,6 @@ public class UserRole : BaseModel
     public bool IsDeleted { get; set; } = false;
 
     public List<Permission> Permissions { get; set; } = new();
+
+    public UserRole Clone() => (UserRole)this.MemberwiseClone();
 }

@@ -5,208 +5,154 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @using System.Text.RegularExpressions
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Policy = "Manage Users")]
 @inject AuthService AuthService
-@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
-@inject ProtectedSessionStorage ProtectedSessionStore
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
 
-<DeleteManager TItem="User" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="AuthService.DeleteUserAsync" />
+<DeleteManager TItem="UserRolesSummaryView" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="DeleteUserByIdAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Users</h3>
-    @if (!isAdding && !isEditing)
+    @if (!isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New User</button>
     }
 </div>
 
-@if (isAdding || isEditing)
+@if (isEditing)
 {
     <ModelEditor 
         TItem="UserEditViewModel"
-        Title="@($"{(isAdding ? "Add" : "Edit")} User")"
+        Title="@($"{(editViewModel.Id == 0 ? "Add New" : "Edit")} User")"
         Item="editViewModel"
         OriginalItem="originalViewModel"
         BasePath="/management/users"
-        CheckUniqueAsync="CheckUniqueEmail"
-        OnSave="HandleSave"
+        OnSave="SaveUser"
         OnDelete="DeleteUser"
-        HasCustomChanges="@(() => !selectedRoleIds.SetEquals(originalRoleIds))">
+        CheckUniqueAsync="CheckEmailUnique">
 
-        <div class="form-group">
-
-            <label>Email</label>
-            <InputText class="form-control" @bind-Value="editViewModel.Email" @bind-Value:event="oninput" placeholder="user@isotopes.com" autocomplete="off" />
-            <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-        </div>
-
-        @if (isAdding)
-        {
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
-                <label>Password</label>
-                <div style="position: relative;">
-                    <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" autocomplete="new-password" style="padding-right: 3rem;" />
-                    <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                        <PasswordToggleIcon IsVisible="@showPassword" />
-                    </button>
-                </div>
-                <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+                <label>Email Address</label>
+                <InputText class="form-control" @bind-Value="editViewModel.Email" placeholder="user@example.com" />
+                <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <div style="position: relative;">
-                    <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" autocomplete="new-password" style="padding-right: 3rem;" />
-                    <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                        <PasswordToggleIcon IsVisible="@showConfirmPassword" />
-                    </button>
-                </div>
-                <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-            </div>
-        }
-        else
-        {
-            <div style="background: #f9f9f9; padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid #eee;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: @(editViewModel.ShowPasswordFields ? "1rem" : "0")">
-                    <label style="margin:0; font-weight: bold;">Change Password?</label>
-                    <button type="button" class="view-btn" @onclick="TogglePasswordFields">@(editViewModel.ShowPasswordFields ? "Cancel Password Change" : "Update Password")</button>
-                </div>
 
-                @if (editViewModel.ShowPasswordFields)
-                {
-                    <div class="view-fade-in">
-                        <div class="form-group">
-                            <label>New Password</label>
-                            <div style="position: relative;">
-                                <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" placeholder="" autocomplete="new-password" style="padding-right: 3rem;" />
-                                <button type="button" @onclick="TogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                                    <PasswordToggleIcon IsVisible="@showPassword" />
-                                </button>
-                            </div>
-                            <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            @if (editViewModel.Id == 0)
+            {
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div style="position: relative;">
+                            <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" />
+                            <PasswordToggleIcon IsVisible="showPassword" OnToggle="() => showPassword = !showPassword" />
                         </div>
-                        <div class="form-group">
-                            <label>Confirm New Password</label>
-                            <div style="position: relative;">
-                                <InputText type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" placeholder="" autocomplete="new-password" style="padding-right: 3rem;" />
-                                <button type="button" @onclick="ToggleConfirmPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
-                                    <PasswordToggleIcon IsVisible="@showConfirmPassword" />
-                                </button>
-                            </div>
-                            <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                        </div>
+                        <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
                     </div>
-                }
-            </div>
-        }
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" />
+                        <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="stat-card" style="background: #f8f9fa; border: 1px dashed #ddd; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h6 style="margin: 0 0 0.25rem 0; font-weight: bold;">Change Password</h6>
+                            <p style="margin: 0; font-size: 0.8rem; color: #666;">Leave blank to keep current password.</p>
+                        </div>
+                        <button type="button" class="view-btn" @onclick="() => showPasswordFields = !showPasswordFields">
+                            @(showPasswordFields ? "Cancel" : "Change")
+                        </button>
+                    </div>
 
-        <div class="form-group" style="margin-top: 1.5rem;">
-            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Roles</label>
-            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
-                @foreach (UserRole role in availableRoles)
-                {
-                    <CheckboxButton 
-                        Id="@($"r-{role.Id}")" 
-                        Text="@role.Name" 
-                        Checked="@selectedRoleIds.Contains(role.Id)" 
-                        CheckedChanged="@((bool val) => OnRoleToggled(role.Id, val))" />
-                }
+                    @if (showPasswordFields)
+                    {
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.25rem;" class="view-fade-in">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="editViewModel.Password" />
+                                <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" />
+                                <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="form-group">
+                <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Assigned Roles</label>
+                <div class="selectable-grid">
+                    @foreach (UserRole role in availableRoles)
+                    {
+                        <CheckboxButton 
+                            Id="@($"role-{role.Id}")" 
+                            Text="@role.Name" 
+                            Checked="@editViewModel.RoleIds.Contains(role.Id)" 
+                            CheckedChanged="@((bool val) => ToggleRole(role.Id, val))" />
+                    }
+                </div>
             </div>
         </div>
-        
-        @if (!string.IsNullOrEmpty(errorMessage))
+
+        @if (!string.IsNullOrEmpty(saveError))
         {
             <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
-                @errorMessage
+                @saveError
             </div>
         }
     </ModelEditor>
 }
 else
 {
-    <div class="desktop-only">
-        <div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
-            <div class="table-container">
-                <table class="table">
-                    <thead>
+    <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Email</th>
+                        <th style="text-align: left;">Roles</th>
+                        <th style="text-align: left;">Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (UserRolesSummaryView user in users)
+                    {
                         <tr>
-                            <th style="text-align: left;">Email</th>
-                            <th>Roles</th>
-                            <th style="text-align: left;">Created</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (User user in users)
-                        {
-                            <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
-                                <td>
-                                    <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;">
-                                        @if (user.Roles.Any())
-                                        {
-                                            @foreach (UserRole role in user.Roles)
-                                            {
-                                                <span class="badge bg-primary" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                                    @role.Name
-                                                </span>
-                                            }
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary" style="padding: 0.4rem 0.8rem; border-radius: 20px;">None</span>
-                                        }
-                                    </div>
-                                </td>
-                                <td style="text-align: left;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
-                                <td style="text-align: right;">
-                                    <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="mobile-only">
-        <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
-            @foreach (User user in users)
-            {
-                <div class="mobile-player-card">
-                    <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
-                            @if (user.Roles.Any())
-                            {
-                                @foreach (UserRole role in user.Roles)
+                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
+                            <td style="text-align: left;">
+                                @if (string.IsNullOrEmpty(user.RoleNames))
                                 {
-                                    <span class="badge bg-primary" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">
-                                        @role.Name
-                                    </span>
+                                    <span style="color: #ccc; font-style: italic;">No roles assigned</span>
                                 }
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary" style="padding: 0.2rem 0.6rem; font-size: 0.7rem; border-radius: 10px;">None</span>
-                            }
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">
-                        <strong>Created:</strong> @user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
-                    </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
-                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); flex: 1;" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
-                    </div>
-                </div>
-            }
+                                else
+                                {
+                                    @foreach (string role in user.RoleNames.Split(", "))
+                                    {
+                                        <span class="badge bg-light text-dark" style="margin-right: 4px; border: 1px solid #eee;">@role</span>
+                                    }
+                                }
+                            </td>
+                            <td style="text-align: left; font-size: 0.85rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                            <td style="text-align: right;">
+                                <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
+                                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 }
@@ -215,188 +161,107 @@ else
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
 
-    private DeleteManager<User> deleteManager = null!;
-    private List<User> users = new();
+    private DeleteManager<UserRolesSummaryView> deleteManager = null!;
+    private List<UserRolesSummaryView> users = new();
     private List<UserRole> availableRoles = new();
-    private bool isAdding = false;
-    private bool isEditing = false;
-    
     private UserEditViewModel editViewModel = new();
     private UserEditViewModel originalViewModel = new();
-    private HashSet<int> selectedRoleIds = new();
-    private HashSet<int> originalRoleIds = new();
-    
+    private bool isEditing = false;
     private bool showPassword = false;
-    private bool showConfirmPassword = false;
-    private string errorMessage = "";
-
-    public record class UserEditViewModel : IEntity
-    {
-        public int Id { get; set; }
-
-        [Required(ErrorMessage = "Email address is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; } = "";
-
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters.")]
-        [RegularExpression(@"^(?=.*[A-Z])(?=.*[0-9]).*$", ErrorMessage = "Password must contain at least one uppercase letter and one number.")]
-        public string? Password { get; set; }
-
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
-        public string? ConfirmPassword { get; set; }
-        
-        public bool ShowPasswordFields { get; set; }
-    }
+    private bool showPasswordFields = false;
+    private string? saveError;
 
     protected override async Task OnInitializedAsync()
     {
+        availableRoles = await AuthService.GetUserRolesAsync(true);
         await LoadData();
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        bool wasAdding = isAdding;
-        bool wasEditing = isEditing;
-        
-        isAdding = Action == "add";
-        isEditing = Action == "edit";
+        isEditing = Action == "add" || Action == "edit";
 
-        if (isAdding || isEditing)
+        if (isEditing)
         {
-            if (isAdding && !wasAdding)
+            if (Action == "edit" && Id.HasValue && Id != 0)
             {
-                await LoadNewUser();
-            }
-            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editViewModel.Id)))
-            {
-                await LoadEditingUser();
-            }
-        }
-        else
-        {
-            ResetState();
-        }
-    }
-
-    private void ResetState()
-    {
-        editViewModel = new UserEditViewModel();
-        originalViewModel = new UserEditViewModel();
-        selectedRoleIds.Clear();
-        originalRoleIds.Clear();
-        errorMessage = "";
-    }
-
-    private async Task LoadNewUser()
-    {
-        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
-        ResetState();
-        editViewModel.ShowPasswordFields = true;
-        originalViewModel.ShowPasswordFields = true;
-        await HydrateTempState();
-    }
-
-    private async Task LoadEditingUser()
-    {
-        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
-        ResetState();
-        
-        if (Action == "edit" && Id.HasValue && Id != 0)
-        {
-            User? user = users.FirstOrDefault(u => u.Id == Id);
-            if (user == null)
-            {
-                user = (await AuthService.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
-            }
-
-            if (user != null)
-            {
-                editViewModel.Id = user.Id;
-                editViewModel.Email = user.Email;
-                originalViewModel.Id = user.Id;
-                originalViewModel.Email = user.Email;
-                selectedRoleIds.Clear();
-                originalRoleIds.Clear();
-                foreach (UserRole r in user.Roles)
+                UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
+                if (userView != null)
                 {
-                    selectedRoleIds.Add(r.Id);
-                    originalRoleIds.Add(r.Id);
+                    editViewModel = new UserEditViewModel
+                    {
+                        Id = userView.Id,
+                        Email = userView.Email,
+                        RoleIds = userView.RoleNames?.Split(", ")
+                            .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
+                            .Where(id => id != 0).ToList() ?? new List<int>()
+                    };
+                    originalViewModel = new UserEditViewModel
+                    {
+                        Id = editViewModel.Id,
+                        Email = editViewModel.Email,
+                        RoleIds = new List<int>(editViewModel.RoleIds)
+                    };
                 }
             }
-        }
-
-        await HydrateTempState();
-    }
-
-    private async Task HydrateTempState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<UserEditViewModel> result = await ProtectedSessionStore.GetAsync<UserEditViewModel>($"EditState_UserEditViewModel_{Id ?? 0}");
-            if (result.Success && result.Value != null)
+            else
             {
-                editViewModel = result.Value;
-                StateHasChanged();
+                editViewModel = new UserEditViewModel();
+                originalViewModel = new UserEditViewModel();
             }
         }
-        catch (Exception) { }
     }
 
     private async Task LoadData()
     {
         users = await AuthService.GetUsersAsync();
-        availableRoles = await AuthService.GetUserRolesAsync(true);
     }
 
     private void StartEdit(string action, int id)
     {
+        showPassword = false;
+        showPasswordFields = false;
+        saveError = null;
         if (action == "add") Navigation.NavigateTo("/management/users/add");
         else Navigation.NavigateTo($"/management/users/edit/{id}");
     }
 
-    private void OnRoleToggled(int roleId, bool isChecked)
+    private void ToggleRole(int roleId, bool isChecked)
     {
-        if (isChecked) selectedRoleIds.Add(roleId);
-        else selectedRoleIds.Remove(roleId);
-    }
-
-    private void TogglePassword() => showPassword = !showPassword;
-
-    private void ToggleConfirmPassword() => showConfirmPassword = !showConfirmPassword;
-
-    private async Task<string?> CheckUniqueEmail(UserEditViewModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Email)) return null;
-        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, model.Id);
-        return isUnique ? null : "A user with this email already exists.";
-    }
-
-    private void TogglePasswordFields()
-    {
-        editViewModel.ShowPasswordFields = !editViewModel.ShowPasswordFields;
-        if (!editViewModel.ShowPasswordFields)
+        if (isChecked)
         {
-            editViewModel.Password = null;
-            editViewModel.ConfirmPassword = null;
-        }
-    }
-
-    private async Task HandleSave()
-    {
-        if (!selectedRoleIds.Any()) { throw new InvalidOperationException("At least one role is required."); }
-
-        if (isAdding && string.IsNullOrEmpty(editViewModel.Password)) { throw new InvalidOperationException("Password is required."); }
-
-        if (isAdding)
-        {
-            bool result = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password!, selectedRoleIds.ToList());
-            if (!result) { throw new InvalidOperationException("Error creating user. Email might already exist."); }
+            if (!editViewModel.RoleIds.Contains(roleId)) editViewModel.RoleIds.Add(roleId);
         }
         else
         {
-            await AuthService.UpdateUserAsync(new User { Id = editViewModel.Id, Email = editViewModel.Email }, selectedRoleIds.ToList());
+            editViewModel.RoleIds.Remove(roleId);
+        }
+    }
+
+    private async Task<string?> CheckEmailUnique(UserEditViewModel model)
+    {
+        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, model.Id);
+        return isUnique ? null : "This email address is already in use.";
+    }
+
+    private async Task SaveUser()
+    {
+        saveError = null;
+        if (editViewModel.Id == 0)
+        {
+            bool success = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password, editViewModel.RoleIds);
+            if (!success)
+            {
+                saveError = "Failed to create user. Please check if the email is valid and try again.";
+                return;
+            }
+        }
+        else
+        {
+            User user = new User { Id = editViewModel.Id, Email = editViewModel.Email };
+            await AuthService.UpdateUserAsync(user, editViewModel.RoleIds);
             
-            if (editViewModel.ShowPasswordFields && !string.IsNullOrEmpty(editViewModel.Password))
+            if (showPasswordFields && !string.IsNullOrEmpty(editViewModel.Password))
             {
                 await AuthService.UpdateUserPasswordAsync(editViewModel.Id, editViewModel.Password);
             }
@@ -409,5 +274,38 @@ else
     {
         await AuthService.DeleteUserAsync(editViewModel.Id);
         await LoadData();
+    }
+
+    private async Task DeleteUserByIdAsync(int id)
+    {
+        await AuthService.DeleteUserAsync(id);
+    }
+
+    public class UserEditViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = "";
+
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = "";
+
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = "";
+
+        public List<int> RoleIds { get; set; } = new();
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not UserEditViewModel other) return false;
+            return Id == other.Id && 
+                   Email == other.Email && 
+                   Password == other.Password && 
+                   RoleIds.SequenceEqual(other.RoleIds);
+        }
+
+        public override int GetHashCode() => Id.GetHashCode();
     }
 }

@@ -1,568 +1,220 @@
-@page "/"
 @page "/gamestats"
-@using IsotopesStats.Services
 @using IsotopesStats.Models
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using IsotopesStats.Services
 @inject StatsService StatsService
-@inject GameStatsState SessionState
-@inject SharedSessionState SharedState
-@inject ProtectedSessionStorage ProtectedSessionStore
+@inject SharedSessionState SessionState
+@inject GameStatsState PageState
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Game Stats</PageTitle>
 
-<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">Game Stats</h3>
-    <div style="display: flex; gap: 1rem; align-items: center;">
-        <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
-            <label style="margin:0; font-weight: bold;">Season:</label>
-            <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
-                @foreach (Season season in seasons)
-                {
-                    <option value="@season.Id">@season.Name</option>
-                }
-            </select>
-        </div>
-        <div class="mobile-only">
-             <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal">
-                🗓️ @seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name
-            </button>
-        </div>
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Game Logs</h3>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="text" class="form-control" @bind="PageState.FilterText" @bind:event="oninput" placeholder="Search opponents..." style="max-width: 200px;" />
     </div>
 </div>
 
-@if (showSeasonModal)
+@if (games == null)
 {
-    <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
-        <div class="sort-modal" @onclick:stopPropagation="true">
-            <div class="sort-modal-header">
-                <h4 style="margin:0">Select Season</h4>
-                <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
-            </div>
-            <div class="sort-grid">
-                @foreach (Season season in seasons)
-                {
-                    <div class="sort-option @(SharedState.SelectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
-                        @season.Name
-                    </div>
-                }
-            </div>
+    <div style="text-align: center; padding: 5rem;">
+        <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 }
-
-<div class="stat-card" style="margin-bottom: 1.5rem;">
-    <div class="filter-container" style="max-width: 100%;">
-        <div class="search-container">
-            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Player or Opponent..." />
-            @if (!string.IsNullOrEmpty(filterText))
-            {
-                <button class="clear-button" @onclick="ClearFilter">✕</button>
-            }
-        </div>
-    </div>
-</div>
-
-@if (isLoading && showSkeleton)
+else
 {
-    <div class="game-cards-list">
-        @for (int i = 0; i < 3; i++)
+    <div class="game-logs-container view-fade-in" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        @foreach (int gameId in FilteredGameIds)
         {
-            <div class="game-card" style="padding: 1rem;">
-                <div class="skeleton" style="height: 100px; margin-bottom: 1rem; width: 100%;"></div>
-                <div class="skeleton" style="height: 40px; width: 100%;"></div>
-            </div>
-        }
-    </div>
-}
-else if (!isLoading)
-{
-    @if (!GroupedStats.Any())
-    {
-        <div class="empty-state">
-            <span class="empty-icon">⚾</span>
-            <h4>No Games Found</h4>
-            <p>Try a different search or season.</p>
-        </div>
-    }
-    else
-    {
-        <div class="game-cards-list">
-            @{ int index = 0; }
-            @foreach (IGrouping<int, StatEntry> group in GroupedStats)
-            {
-                Game? gameInfo = group.First().Game;
-                int gameId = gameInfo?.Id ?? 0;
-                GameUIState uiState = SessionState.GetState(gameId);
+            List<StatEntry> gameStats = games[gameId];
+            StatEntry firstStat = gameStats.First();
+            GameStatsExtendedView extended = (GameStatsExtendedView)firstStat;
+            GameUIState uiState = PageState.GetState(gameId);
 
-                int teamRuns = group.Sum(s => s.R);
-                int teamHits = group.Sum(s => s.H);
-                int teamHRs = group.Sum(s => s.HR);
-                int teamBBs = group.Sum(s => s.BB);
-                int teamAB = group.Sum(s => s.AB);
-                int teamPA = group.Sum(s => s.PA);
-                int teamRBI = group.Sum(s => s.RBI);
-                double teamAVG = teamAB > 0 ? (double)teamHits / teamAB : 0;
-                double currentDelay = index * 0.1;
-                index++;
-
-                // Apply inner sorting for each game group
-                IEnumerable<StatEntry> sortedStats = ApplyInnerSorting(uiState, group);
-
-                <div class="game-card" style="animation-delay: @(currentDelay)s">
-                    <div class="game-card-header" @onclick="() => ToggleGame(gameId)">
-                        <div class="game-info-left">
-                            <div class="game-number-badge">GAME #@gameInfo?.GameNumber</div>
-                            <div class="game-date">@gameInfo?.Date.ToString("MMM dd, yyyy @ HH:mm")</div>       
+            <div class="stat-card" style="padding: 0; overflow: hidden; border-left: 4px solid var(--isotopes-red);">
+                <div class="game-header" @onclick="() => ToggleGame(gameId)" style="cursor: pointer; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="text-align: center; min-width: 60px;">
+                            <div style="font-size: 0.75rem; font-weight: 800; color: #999; text-transform: uppercase; margin-bottom: -2px;">Game</div>
+                            <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red); line-height: 1;">@extended.GameNumber</div>
                         </div>
-
-                        <div class="game-matchup">
-                            <div class="opponent-name">vs @gameInfo?.Opponent?.Name</div>
-                            <div class="diamond-name">📍 @gameInfo?.Diamond</div>
-                        </div>
-
-                        <div class="game-score-summary">
-                            <div class="score-item">
-                                <span class="score-value">@teamRuns</span>
-                                <span class="score-label">Runs</span>
+                        
+                        <div style="height: 30px; width: 1px; background: #eee;"></div>
+                        
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                                <span style="font-weight: 800; font-size: 1.1rem;">vs @extended.OpponentName</span>
+                                <span class="badge @(extended.GameType == GameType.Tournament ? "bg-warning text-dark" : "bg-light text-muted")" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">@extended.GameType</span>
                             </div>
-                            <div class="score-item">
-                                <span class="score-value">@teamHits</span>
-                                <span class="score-label">Hits</span>
-                            </div>
-                            <div class="expand-icon" style="margin-left: 1rem; color: #ccc;">
-                                @(uiState.IsExpanded ? "▲" : "▼")
+                            <div style="font-size: 0.85rem; color: #666; font-weight: 500;">
+                                <span>@extended.Date.ToString("ddd, MMM dd")</span>
+                                <span style="margin: 0 0.5rem; color: #ddd;">•</span>
+                                <span>@extended.Diamond</span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="game-card-footer">
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">Players:</span> @group.Count()
+                    
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="text-align: right; display: flex; flex-direction: column;">
+                            <span style="font-size: 0.7rem; font-weight: 800; color: #999; text-transform: uppercase;">Result</span>
+                            <span style="font-weight: 900; font-size: 1.1rem; color: #333;">@GetGameResult(gameStats)</span>
                         </div>
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">HR:</span> @teamHRs
-                        </div>
-                        <div class="footer-stat">
-                            <span class="footer-stat-label">AVG:</span> @teamAVG.ToString(".000")
-                        </div>
-                    </div>
-
-                    <div class="game-card-detail @(uiState.IsExpanded ? "expanded" : "")">
-                        <div class="box-score-table-wrapper">
-                            <table class="box-score-table table-sm">
-                            <thead>
-                                <tr>
-                                    <th @onclick="@(() => Sort(gameId, "BO"))" class="sortable-header" style="width: 40px;">BO<span class="sort-icon">@(GetSortIcon(gameId, "BO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "Player"))" class="sortable-header sticky-col">Player<span class="sort-icon">@(GetSortIcon(gameId, "Player"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "PA"))" class="sortable-header group-divider">PA<span class="sort-icon">@(GetSortIcon(gameId, "PA"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "AB"))" class="sortable-header">AB<span class="sort-icon">@(GetSortIcon(gameId, "AB"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "R"))" class="sortable-header group-divider">R<span class="sort-icon">@(GetSortIcon(gameId, "R"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "H"))" class="sortable-header">H<span class="sort-icon">@(GetSortIcon(gameId, "H"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "2B"))" class="sortable-header">2B<span class="sort-icon">@(GetSortIcon(gameId, "2B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "3B"))" class="sortable-header">3B<span class="sort-icon">@(GetSortIcon(gameId, "3B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "4B"))" class="sortable-header">4B<span class="sort-icon">@(GetSortIcon(gameId, "4B"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "HR"))" class="sortable-header">HR<span class="sort-icon">@(GetSortIcon(gameId, "HR"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "RBI"))" class="sortable-header">RBI<span class="sort-icon">@(GetSortIcon(gameId, "RBI"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "BB"))" class="sortable-header group-divider">BB<span class="sort-icon">@(GetSortIcon(gameId, "BB"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "K"))" class="sortable-header">K<span class="sort-icon">@(GetSortIcon(gameId, "K"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "KF"))" class="sortable-header">KF<span class="sort-icon">@(GetSortIcon(gameId, "KF"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "SF"))" class="sortable-header group-divider">SF<span class="sort-icon">@(GetSortIcon(gameId, "SF"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "FC"))" class="sortable-header">FC<span class="sort-icon">@(GetSortIcon(gameId, "FC"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "GO"))" class="sortable-header">GO<span class="sort-icon">@(GetSortIcon(gameId, "GO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "FO"))" class="sortable-header">FO<span class="sort-icon">@(GetSortIcon(gameId, "FO"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "AVG"))" class="sortable-header group-divider">AVG<span class="sort-icon">@(GetSortIcon(gameId, "AVG"))</span></th>
-                                    <th @onclick="@(() => Sort(gameId, "OBP"))" class="sortable-header">OBP<span class="sort-icon">@(GetSortIcon(gameId, "OBP"))</span></th>
-                                </tr>
-                            </thead>
-                                <tbody>
-                                    @{
-                                        string currentSortCol = uiState.SortColumn;       
-                                        IEnumerable<StatEntry> filteredSortedStats = sortedStats.Where(s =>     
-                                            string.IsNullOrEmpty(filterText) ||
-                                            (s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)
-                                        );
-                                    }
-                                    @foreach (StatEntry stat in filteredSortedStats)
-                                    {
-                                        <tr>
-                                            <td>@stat.BO</td>
-                                            <td class="player-name sticky-col">
-                                                <a href="/player/@stat.Player?.Name/@SharedState.SelectedSeasonId" style="text-decoration: none; color: inherit;">
-                                                    @stat.Player?.Name
-                                                </a>
-                                            </td>
-                                            <td class="group-divider @(currentSortCol == "PA" ? "active-sort-col" : "")">@stat.PA</td>
-                                            <td class="@(currentSortCol == "AB" ? "active-sort-col" : "")">@stat.AB</td>
-                                            <td class="group-divider @(currentSortCol == "R" ? "active-sort-col" : "")">@stat.R</td>
-                                            <td class="@(currentSortCol == "H" ? "active-sort-col" : "")">@stat.H</td>
-                                            <td class="@(currentSortCol == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
-                                            <td class="@(currentSortCol == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
-                                            <td class="@(currentSortCol == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
-                                            <td class="@(currentSortCol == "HR" ? "active-sort-col" : "")">@stat.HR</td>
-                                            <td class="@(currentSortCol == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
-                                            <td class="group-divider @(currentSortCol == "BB" ? "active-sort-col" : "")">@stat.BB</td>
-                                            <td class="@(currentSortCol == "K" ? "active-sort-col" : "")">@stat.K</td>
-                                            <td class="@(currentSortCol == "KF" ? "active-sort-col" : "")">@stat.KF</td>
-                                            <td class="group-divider @(currentSortCol == "SF" ? "active-sort-col" : "")">@stat.SF</td>
-                                            <td class="@(currentSortCol == "FC" ? "active-sort-col" : "")">@stat.FC</td>
-                                            <td class="@(currentSortCol == "GO" ? "active-sort-col" : "")">@stat.GO</td>
-                                            <td class="@(currentSortCol == "FO" ? "active-sort-col" : "")">@stat.FO</td>
-                                            <td class="group-divider @(currentSortCol == "AVG" ? "active-sort-col" : "")">@stat.AVG.ToString(".000")</td>
-                                            <td class="@(currentSortCol == "OBP" ? "active-sort-col" : "")">@stat.OBP.ToString(".000")</td>
-                                        </tr>
-                                    }
-                                    <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
-                                        <td colspan="2" class="sticky-col">TOTALS</td>
-                                        <td class="group-divider">@teamPA</td>
-                                        <td>@teamAB</td>
-                                        <td class="group-divider">@teamRuns</td>
-                                        <td>@teamHits</td>
-                                        <td>@group.Sum(s => s.H2B)</td>
-                                        <td>@group.Sum(s => s.H3B)</td>
-                                        <td>@group.Sum(s => s.H4B)</td>
-                                        <td>@teamHRs</td>
-                                        <td>@teamRBI</td>
-                                        <td class="group-divider">@teamBBs</td>
-                                        <td>@group.Sum(s => s.K)</td>
-                                        <td>@group.Sum(s => s.KF)</td>
-                                        <td class="group-divider">@group.Sum(s => s.SF)</td>
-                                        <td>@group.Sum(s => s.FC)</td>
-                                        <td>@group.Sum(s => s.GO)</td>
-                                        <td>@group.Sum(s => s.FO)</td>
-                                        <td class="group-divider">@teamAVG.ToString(".000")</td>
-                                        @{
-                                            int teamSF = group.Sum(s => s.SF);
-                                            double teamOBP = (teamAB + teamBBs + teamSF) > 0
-                                                ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + teamSF)    
-                                                : 0;
-                                        }
-                                        <td>@teamOBP.ToString(".000")</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="mobile-player-grid">
-                            @foreach (StatEntry stat in sortedStats)
-                            {
-                                <div class="mobile-player-card">
-                                    <div class="mobile-card-header">
-                                        <span class="mobile-card-name">@stat.BO. @stat.Player?.Name</span>      
-                                        <span class="badge bg-light text-dark">AVG: @stat.AVG.ToString(".000") | OBP: @stat.OBP.ToString(".000")</span>
-                                    </div>
-                                    <div class="mobile-card-stats">
-                                        @if (stat.AB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.AB</span><span class="m-stat-label">AB</span></div> }
-                                        @if (stat.R > 0) { <div class="m-stat"><span class="m-stat-val">@stat.R</span><span class="m-stat-label">R</span></div> }
-                                        @if (stat.H > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H</span><span class="m-stat-label">H</span></div> }
-                                        @if (stat.H2B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H2B</span><span class="m-stat-label">2B</span></div> }
-                                        @if (stat.H3B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H3B</span><span class="m-stat-label">3B</span></div> }
-                                        @if (stat.H4B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H4B</span><span class="m-stat-label">4B</span></div> }
-                                        @if (stat.HR > 0) { <div class="m-stat"><span class="m-stat-val">@stat.HR</span><span class="m-stat-label">HR</span></div> }
-                                        @if (stat.RBI > 0) { <div class="m-stat"><span class="m-stat-val">@stat.RBI</span><span class="m-stat-label">RBI</span></div> }
-                                        @if (stat.BB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.BB</span><span class="m-stat-label">BB</span></div> }
-                                        @if (stat.K > 0) { <div class="m-stat"><span class="m-stat-val">@stat.K</span><span class="m-stat-label">K</span></div> }
-                                        @if (stat.KF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.KF</span><span class="m-stat-label">KF</span></div> }
-                                        @if (stat.SF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.SF</span><span class="m-stat-label">SF</span></div> }
-                                        @if (stat.FC > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FC</span><span class="m-stat-label">FC</span></div> }
-                                        @if (stat.GO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.GO</span><span class="m-stat-label">GO</span></div> }
-                                        @if (stat.FO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FO</span><span class="m-stat-label">FO</span></div> }
-                                    </div>
-                                </div>
-                            }
-                            @{
-                                int tSF = group.Sum(s => s.SF);
-                                double tOBP = (teamAB + teamBBs + tSF) > 0 ? (double)(teamHits + teamBBs) / (teamAB + teamBBs + tSF) : 0;
-                            }
-                            <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
-                                <div class="mobile-card-header">
-                                    <span class="mobile-card-name">TEAM TOTALS</span>
-                                    <span class="badge bg-primary">AVG: @teamAVG.ToString(".000") | OBP: @tOBP.ToString(".000")</span>
-                                </div>
-                                <div class="mobile-card-stats">
-                                    <div class="m-stat"><span class="m-stat-val">@teamAB</span><span class="m-stat-label">AB</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamRuns</span><span class="m-stat-label">R</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamHits</span><span class="m-stat-label">H</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamHRs</span><span class="m-stat-label">HR</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamRBI</span><span class="m-stat-label">RBI</span></div>
-                                    <div class="m-stat"><span class="m-stat-val">@teamBBs</span><span class="m-stat-label">BB</span></div>
-                                </div>
-                            </div>
+                        <div style="color: #ccc; transition: transform 0.3s; transform: rotate(@(uiState.IsExpanded ? "180deg" : "0deg"))">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
+
+                @if (uiState.IsExpanded)
+                {
+                    <div class="game-details view-fade-in" style="border-top: 1px solid #f5f5f5; background: #fafafa;">
+                        <div class="table-container" style="padding: 1rem;">
+                            <table class="table" style="background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;" @onclick='() => Sort(gameId, "BO")'>BO @GetSortIcon(gameId, "BO")</th>
+                                        <th style="text-align: left;" @onclick='() => Sort(gameId, "Player")'>Player @GetSortIcon(gameId, "Player")</th>
+                                        <th @onclick='() => Sort(gameId, "H")'>H @GetSortIcon(gameId, "H")</th>
+                                        <th @onclick='() => Sort(gameId, "RBI")'>RBI @GetSortIcon(gameId, "RBI")</th>
+                                        <th @onclick='() => Sort(gameId, "R")'>R @GetSortIcon(gameId, "R")</th>
+                                        <th @onclick='() => Sort(gameId, "BB")'>BB @GetSortIcon(gameId, "BB")</th>
+                                        <th @onclick='() => Sort(gameId, "Out")'>Out @GetSortIcon(gameId, "Out")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (StatEntry stat in GetSortedStats(gameId))
+                                    {
+                                        GameStatsExtendedView extStat = (GameStatsExtendedView)stat;
+                                        <tr>
+                                            <td style="text-align: left; font-weight: 800; color: #999; font-size: 0.85rem;">@stat.BO</td>
+                                            <td style="text-align: left; font-weight: 700; color: var(--isotopes-accent);">@extStat.ExtendedPlayerName</td>
+                                            <td>@GetHits(stat)</td>
+                                            <td>@stat.RBI</td>
+                                            <td>@stat.R</td>
+                                            <td>@stat.BB</td>
+                                            <td style="font-size: 0.8rem; color: #888;">@GetOutDescription(stat)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 }
 
 @code {
-    private List<StatEntry> allStats = new();
-    private List<Season> seasons = new();
-    private string filterText = "";
-    private bool showSeasonModal = false;
-    private bool isLoading = true;
-    private bool showSkeleton = false;
+    private Dictionary<int, List<StatEntry>>? games;
 
-    private IEnumerable<IGrouping<int, StatEntry>> GroupedStats =>
-        allStats.GroupBy(s => s.GameId)
-        .Where(g =>
-            string.IsNullOrEmpty(filterText) ||
-            g.Any(s => s.Player?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false) ||    
-            (g.First().Game?.Opponent?.Name?.Contains(filterText, StringComparison.OrdinalIgnoreCase) ?? false)       
-        )
-        .OrderByDescending(g => g.First().Game?.Date);
+    private IEnumerable<int> FilteredGameIds
+    {
+        get
+        {
+            if (games == null) return Enumerable.Empty<int>();
+            
+            IEnumerable<int> query = games.Keys.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(PageState.FilterText))
+            {
+                query = query.Where(id => ((GameStatsExtendedView)games[id].First()).OpponentName.Contains(PageState.FilterText, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            return query.OrderByDescending(id => ((GameStatsExtendedView)games[id].First()).Date);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        SharedState.ReturnUrl = ""; // Root is Game Stats
-        List<Season> allSeasons = await StatsService.GetSeasonsAsync();
-        seasons = allSeasons.Where(s => !s.IsDeleted).ToList();
-
-        if (SharedState.SelectedSeasonId == 0 && seasons.Any())
-        {
-            SharedState.SelectedSeasonId = seasons.First().Id;
-        }
-
         await LoadData();
-        isLoading = true; // Stay in loading state for the interactive transition
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await HydrateState();
-        }
-    }
-
-    private async Task HydrateState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<int> seasonResult = await ProtectedSessionStore.GetAsync<int>("SelectedSeasonId");
-            if (seasonResult.Success && seasonResult.Value != 0)
-            {
-                // Only use if it belongs to an active season
-                if (seasons.Any(s => s.Id == seasonResult.Value))
-                {
-                    SharedState.SelectedSeasonId = seasonResult.Value;
-                }
-            }
-
-            ProtectedBrowserStorageResult<string> filterResult = await ProtectedSessionStore.GetAsync<string>("GameFilterText");
-            if (filterResult.Success && !string.IsNullOrEmpty(filterResult.Value))
-            {
-                filterText = filterResult.Value;
-                SessionState.FilterText = filterText;
-            }
-
-            ProtectedBrowserStorageResult<Dictionary<int, GameUIState>> gameStatesResult = await ProtectedSessionStore.GetAsync<Dictionary<int, GameUIState>>("GameUIStates");
-            if (gameStatesResult.Success && gameStatesResult.Value != null)
-            {
-                SessionState.GameUIStates = gameStatesResult.Value;
-            }
-        }
-        catch (Exception)
-        {
-            // Silently fail, defaults are handled
-        }
-
-        await LoadData();
-        StateHasChanged();
     }
 
     private async Task LoadData()
     {
-        isLoading = true;
-        showSkeleton = false;
-
-        // Start a timer task to show skeleton after 250ms
-        _ = Task.Run(async () => {
-            await Task.Delay(250);
-            if (isLoading)
-            {
-                showSkeleton = true;
-                await InvokeAsync(StateHasChanged);
-            }
-        });
-
-        try
+        if (SessionState.SelectedSeasonId != 0)
         {
-            allStats = await StatsService.GetAllGameStatsAsync(SharedState.SelectedSeasonId);
-            filterText = SessionState.FilterText;
-
-            if (!SessionState.GameUIStates.Any(s => s.Value.IsExpanded) && allStats.Any())
-            {
-                int latestGameId = allStats.First().GameId;
-                SessionState.GetState(latestGameId).IsExpanded = true;
-            }
-        }
-        catch (Exception)
-        {
-            allStats = new List<StatEntry>();
-        }
-        finally
-        {
-            isLoading = false;
+            List<GameStatsExtendedView> allStats = await StatsService.GetAllGameStatsAsync(SessionState.SelectedSeasonId);
+            games = allStats.Cast<StatEntry>().GroupBy(s => s.GameId).ToDictionary(g => g.Key, g => g.ToList());
         }
     }
 
-    private async Task OnSeasonChange(ChangeEventArgs e)
+    private void ToggleGame(int gameId)
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            SharedState.SelectedSeasonId = id;
-            await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
-            await LoadData();
-        }
-    }
-
-    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
-
-    private async Task SelectMobileSeason(int id)
-    {
-        SharedState.SelectedSeasonId = id;
-        await ProtectedSessionStore.SetAsync("SelectedSeasonId", id);
-        showSeasonModal = false;
-        await LoadData();
-    }
-
-    private async Task ClearFilter()
-    {
-        filterText = "";
-        await UpdateFilterState();
-    }
-
-    private async Task UpdateFilterState()
-    {
-        SessionState.FilterText = filterText;
-        await ProtectedSessionStore.SetAsync("GameFilterText", filterText);
-    }
-
-    private async Task ToggleGame(int gameId)
-    {
-        GameUIState state = SessionState.GetState(gameId);
+        GameUIState state = PageState.GetState(gameId);
         state.IsExpanded = !state.IsExpanded;
-        await ProtectedSessionStore.SetAsync("GameUIStates", SessionState.GameUIStates);
-    }
-
-    private async Task ExpandAll()
-    {
-        foreach (IGrouping<int, StatEntry> group in GroupedStats)
-        {
-            SessionState.GetState(group.Key).IsExpanded = true;
-        }
-        await ProtectedSessionStore.SetAsync("GameUIStates", SessionState.GameUIStates);
-    }
-
-    private async Task CollapseAll()
-    {
-        foreach (GameUIState state in SessionState.GameUIStates.Values)
-        {
-            state.IsExpanded = false;
-        }
-        await ProtectedSessionStore.SetAsync("GameUIStates", SessionState.GameUIStates);
-    }
-
-    private async Task Sort(int gameId, string column)
-    {
-        GameUIState state = SessionState.GetState(gameId);
-
-        if (state.SortColumn == column)
-        {
-            state.IsAscending = !state.IsAscending;
-        }
-        else
-        {
-            state.SortColumn = column;
-            state.IsAscending = false;
-            // Default ascending for Player and BO
-            if (column == "Player" || column == "BO") state.IsAscending = true;
-        }
-
-        await ProtectedSessionStore.SetAsync("GameUIStates", SessionState.GameUIStates);
         StateHasChanged();
     }
 
+    private void Sort(int gameId, string column)
+    {
+        GameUIState state = PageState.GetState(gameId);
+        if (state.SortColumn == column) state.IsAscending = !state.IsAscending;
+        else
+        {
+            state.SortColumn = column;
+            state.IsAscending = (column == "BO" || column == "Player");
+        }
+    }
+
+    private IEnumerable<StatEntry> GetSortedStats(int gameId)
+    {
+        GameUIState state = PageState.GetState(gameId);
+        IEnumerable<StatEntry> query = games![gameId].AsEnumerable();
+
+        return state.IsAscending 
+            ? query.OrderBy(s => GetSortValue(s, state.SortColumn))
+            : query.OrderByDescending(s => GetSortValue(s, state.SortColumn));
+    }
+
+    private object GetSortValue(StatEntry s, string column) => column switch
+    {
+        "BO" => s.BO,
+        "Player" => ((GameStatsExtendedView)s).ExtendedPlayerName,
+        "H" => s.H,
+        "RBI" => s.RBI,
+        "R" => s.R,
+        "BB" => s.BB,
+        "Out" => s.K + s.KF + s.GO + s.FO + s.FC,
+        _ => (object)s.BO
+    };
+
     private string GetSortIcon(int gameId, string column)
     {
-        GameUIState state = SessionState.GetState(gameId);
-        if (state.SortColumn != column) return "";
-        return state.IsAscending ? "▴" : "▾";
+        GameUIState state = PageState.GetState(gameId);
+        if (state.SortColumn != column) return "↕";
+        return state.IsAscending ? "↑" : "↓";
     }
 
-    private IEnumerable<StatEntry> ApplyInnerSorting(GameUIState uiState, IEnumerable<StatEntry> stats)
+    private string GetGameResult(List<StatEntry> stats)
     {
-        return uiState.SortColumn switch
-        {
-            "Player" => uiState.IsAscending ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),    
-            "BO" => uiState.IsAscending ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),        
-            "PA" => uiState.IsAscending ? stats.OrderBy(s => s.PA) : stats.OrderByDescending(s => s.PA),        
-            "AB" => uiState.IsAscending ? stats.OrderBy(s => s.AB) : stats.OrderByDescending(s => s.AB),        
-            "R" => uiState.IsAscending ? stats.OrderBy(s => s.R) : stats.OrderByDescending(s => s.R),
-            "H" => uiState.IsAscending ? stats.OrderBy(s => s.H) : stats.OrderByDescending(s => s.H),
-            "2B" => uiState.IsAscending ? stats.OrderBy(s => s.H2B) : stats.OrderByDescending(s => s.H2B),      
-            "3B" => uiState.IsAscending ? stats.OrderBy(s => s.H3B) : stats.OrderByDescending(s => s.H3B),      
-            "4B" => uiState.IsAscending ? stats.OrderBy(s => s.H4B) : stats.OrderByDescending(s => s.H4B),      
-            "HR" => uiState.IsAscending ? stats.OrderBy(s => s.HR) : stats.OrderByDescending(s => s.HR),        
-            "RBI" => uiState.IsAscending ? stats.OrderBy(s => s.RBI) : stats.OrderByDescending(s => s.RBI),     
-            "BB" => uiState.IsAscending ? stats.OrderBy(s => s.BB) : stats.OrderByDescending(s => s.BB),        
-            "K" => uiState.IsAscending ? stats.OrderBy(s => s.K) : stats.OrderByDescending(s => s.K),
-            "KF" => uiState.IsAscending ? stats.OrderBy(s => s.KF) : stats.OrderByDescending(s => s.KF),        
-            "SF" => uiState.IsAscending ? stats.OrderBy(s => s.SF) : stats.OrderByDescending(s => s.SF),        
-            "FC" => uiState.IsAscending ? stats.OrderBy(s => s.FC) : stats.OrderByDescending(s => s.FC),        
-            "GO" => uiState.IsAscending ? stats.OrderBy(s => s.GO) : stats.OrderByDescending(s => s.GO),        
-            "FO" => uiState.IsAscending ? stats.OrderBy(s => s.FO) : stats.OrderByDescending(s => s.FO),        
-            "AVG" => uiState.IsAscending ? stats.OrderBy(s => s.AVG) : stats.OrderByDescending(s => s.AVG),
-            "OBP" => uiState.IsAscending ? stats.OrderBy(s => s.OBP) : stats.OrderByDescending(s => s.OBP),
-            _ => stats.OrderBy(s => s.BO)
-        };
+        int runs = stats.Sum(s => s.R);
+        return $"{runs} Runs";
+    }
+
+    private string GetHits(StatEntry s)
+    {
+        List<string> hits = new List<string>();
+        if (s.H1B > 0) hits.Add($"{s.H1B}x1B");
+        if (s.H2B > 0) hits.Add($"{s.H2B}x2B");
+        if (s.H3B > 0) hits.Add($"{s.H3B}x3B");
+        if (s.H4B > 0) hits.Add($"{s.H4B}x4B");
+        if (s.HR > 0) hits.Add($"{s.HR}xHR");
+        
+        return hits.Count > 0 ? string.Join(", ", hits) : "-";
+    }
+
+    private string GetOutDescription(StatEntry s)
+    {
+        List<string> outsList = new List<string>();
+        if (s.K > 0) outsList.Add($"{s.K}K");
+        if (s.KF > 0) outsList.Add($"{s.KF}KF");
+        if (s.GO > 0) outsList.Add($"{s.GO}GO");
+        if (s.FO > 0) outsList.Add($"{s.FO}FO");
+        if (s.FC > 0) outsList.Add($"{s.FC}FC");
+        
+        return outsList.Count > 0 ? string.Join(", ", outsList) : "-";
     }
 }
-
-<style>
-    .header-with-filter {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .filter-container {
-        flex: 1;
-        max-width: 400px;
-    }
-
-    .search-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    .clear-button {
-        position: absolute;
-        right: 10px;
-        background: #eee;
-        border: none;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #666;
-        font-size: 12px;
-        transition: background 0.2s;
-    }
-
-    .clear-button:hover {
-        background: #ddd;
-        color: #333;
-    }
-
-    .game-summary-row td:nth-child(3) {
-    }
-</style>

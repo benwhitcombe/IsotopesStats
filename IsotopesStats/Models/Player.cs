@@ -16,4 +16,6 @@ public class Player : BaseModel, IEntity
     
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    public Player Clone() => (Player)this.MemberwiseClone();
 }

@@ -6,15 +6,15 @@ using IsotopesStats.Services;
 using IsotopesStats.Models;
 using Supabase;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
+WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Add Supabase Client
-var supabaseUrl = builder.Configuration["Supabase:Url"] ?? throw new Exception("Supabase URL is missing");
-var supabaseKey = builder.Configuration["Supabase:Key"] ?? throw new Exception("Supabase Key is missing");
+string supabaseUrl = builder.Configuration["Supabase:Url"] ?? throw new Exception("Supabase URL is missing");
+string supabaseKey = builder.Configuration["Supabase:Key"] ?? throw new Exception("Supabase Key is missing");
 
-var options = new SupabaseOptions
+SupabaseOptions options = new SupabaseOptions
 {
     AutoRefreshToken = true,
     AutoConnectRealtime = true

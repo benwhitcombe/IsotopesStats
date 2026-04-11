@@ -4,12 +4,10 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "Manage Seasons")]
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
-@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Seasons</PageTitle>
 
@@ -186,7 +184,6 @@ else
         originalPlayerIds.Clear();
         assignedOpponentIds.Clear();
         originalOpponentIds.Clear();
-        await HydrateTempState();
     }
 
     private async Task LoadEditingSeason()
@@ -203,8 +200,8 @@ else
 
             if (season != null)
             {
-                editingSeason = season with { };
-                originalSeason = season with { };
+                editingSeason = season.Clone();
+                originalSeason = season.Clone();
                 assignedPlayerIds.Clear();
                 originalPlayerIds.Clear();
                 assignedOpponentIds.Clear();
@@ -234,22 +231,6 @@ else
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
         }
-
-        await HydrateTempState();
-    }
-
-    private async Task HydrateTempState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<Season> result = await ProtectedSessionStore.GetAsync<Season>($"EditState_Season_{Id ?? 0}");
-            if (result.Success && result.Value != null)
-            {
-                editingSeason = result.Value;
-                StateHasChanged();
-            }
-        }
-        catch (Exception) { }
     }
 
     private async Task LoadSeasons()

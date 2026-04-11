@@ -1,14 +1,15 @@
 using IsotopesStats.Models;
 using Supabase;
 using Postgrest;
+using Postgrest.Responses;
 
 namespace IsotopesStats.Services;
 
 public class StatsService
 {
-    private readonly Client _supabase;
+    private readonly Supabase.Client _supabase;
 
-    public StatsService(Client supabase)
+    public StatsService(Supabase.Client supabase)
     {
         _supabase = supabase;
     }
@@ -16,7 +17,7 @@ public class StatsService
     // --- SEASONS ---
     public async Task<List<Season>> GetSeasonsAsync()
     {
-        BaseResponse<Season> response = await _supabase.From<Season>()
+        ModeledResponse<Season> response = await _supabase.From<Season>()
             .Where(x => x.IsDeleted == false)
             .Order("name", Constants.Ordering.Descending)
             .Get();
@@ -25,7 +26,7 @@ public class StatsService
 
     public async Task<int> AddSeasonAsync(Season season)
     {
-        BaseResponse<Season> response = await _supabase.From<Season>().Insert(season);
+        ModeledResponse<Season> response = await _supabase.From<Season>().Insert(season);
         return response.Model?.Id ?? 0;
     }
 
@@ -40,10 +41,20 @@ public class StatsService
         await _supabase.From<Season>().Update(season);
     }
 
+    public async Task<bool> IsSeasonNameUniqueAsync(string name, int excludeId = 0)
+    {
+        ModeledResponse<Season> response = await _supabase.From<Season>()
+            .Where(x => x.Name == name)
+            .Where(x => x.Id != excludeId)
+            .Where(x => x.IsDeleted == false)
+            .Get();
+        return response.Models.Count == 0;
+    }
+
     // --- PLAYERS ---
     public async Task<List<Player>> GetAllPlayersAsync()
     {
-        BaseResponse<Player> response = await _supabase.From<Player>()
+        ModeledResponse<Player> response = await _supabase.From<Player>()
             .Where(x => x.IsDeleted == false)
             .Order("name", Constants.Ordering.Ascending)
             .Get();
@@ -52,20 +63,22 @@ public class StatsService
 
     public async Task<List<Player>> GetPlayersAsync(int seasonId)
     {
-        BaseResponse<Player> response = await _supabase.From<Player>()
-            .Join<SeasonPlayers>("id", "playerid")
-            .Where<SeasonPlayers>(x => x.SeasonId == seasonId)
-            .Where(x => x.IsDeleted == false)
-            .Order("name", Constants.Ordering.Ascending)
+        ModeledResponse<SeasonPlayerView> response = await _supabase.From<SeasonPlayerView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Get();
-        return response.Models;
+        
+        List<Player> players = new List<Player>();
+        foreach (SeasonPlayerView sp in response.Models)
+        {
+            players.Add(new Player { Id = sp.PlayerId, Name = sp.PlayerName });
+        }
+        return players;
     }
 
     public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
-        BaseResponse<Player> response = await _supabase.From<Player>().Insert(player);
+        ModeledResponse<Player> response = await _supabase.From<Player>().Insert(player);
         int playerId = response.Model?.Id ?? 0;
-
         if (playerId != 0 && seasonId != 0)
         {
             await AddPlayerToSeasonAsync(playerId, seasonId);
@@ -93,15 +106,34 @@ public class StatsService
     public async Task DeletePlayerFromSeasonAsync(int playerId, int seasonId)
     {
         await _supabase.From<SeasonPlayers>()
-            .Where(x => x.PlayerId == playerId)
-            .Where(x => x.SeasonId == seasonId)
+            .Filter("playerid", Constants.Operator.Equals, playerId)
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Delete();
+    }
+
+    public async Task<bool> IsPlayerNameUniqueAsync(string name, int excludeId = 0)
+    {
+        ModeledResponse<Player> response = await _supabase.From<Player>()
+            .Where(x => x.Name == name)
+            .Where(x => x.Id != excludeId)
+            .Where(x => x.IsDeleted == false)
+            .Get();
+        return response.Models.Count == 0;
     }
 
     // --- OPPONENTS ---
     public async Task<List<Opponent>> GetAllOpponentsAsync()
     {
-        BaseResponse<Opponent> response = await _supabase.From<Opponent>()
+        ModeledResponse<Opponent> response = await _supabase.From<Opponent>()
+            .Where(x => x.IsDeleted == false)
+            .Order("name", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
+    }
+
+    public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
+    {
+        ModeledResponse<Opponent> response = await _supabase.From<Opponent>()
             .Where(x => x.IsDeleted == false)
             .Order("name", Constants.Ordering.Ascending)
             .Get();
@@ -110,8 +142,13 @@ public class StatsService
 
     public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
-        BaseResponse<Opponent> response = await _supabase.From<Opponent>().Insert(opponent);
-        return response.Model?.Id ?? 0;
+        ModeledResponse<Opponent> response = await _supabase.From<Opponent>().Insert(opponent);
+        int opponentId = response.Model?.Id ?? 0;
+        if (opponentId != 0 && seasonId != 0)
+        {
+            await AddOpponentToSeasonAsync(opponentId, seasonId);
+        }
+        return opponentId;
     }
 
     public async Task UpdateOpponentAsync(Opponent opponent)
@@ -125,36 +162,69 @@ public class StatsService
         await _supabase.From<Opponent>().Update(opponent);
     }
 
+    public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeId = 0)
+    {
+        ModeledResponse<Opponent> response = await _supabase.From<Opponent>()
+            .Where(x => x.Name == name)
+            .Where(x => x.Id != excludeId)
+            .Where(x => x.IsDeleted == false)
+            .Get();
+        return response.Models.Count == 0;
+    }
+
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId)
+    {
+        SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId };
+        await _supabase.From<SeasonOpponents>().Insert(link);
+    }
+
+    public async Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId)
+    {
+        await _supabase.From<SeasonOpponents>()
+            .Filter("opponentid", Constants.Operator.Equals, opponentId)
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Delete();
+    }
+
     // --- GAMES & STATS ---
     public async Task<Game?> GetGameAsync(int gameId)
     {
-        BaseResponse<Game> response = await _supabase.From<Game>("v_games_management")
-            .Where("id", Constants.Operator.Equals, gameId)
+        return await _supabase.From<Game>()
+            .Filter("id", Constants.Operator.Equals, gameId)
             .Single();
-        return response.Model;
+    }
+
+    public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
+    {
+        ModeledResponse<StatEntry> response = await _supabase.From<StatEntry>()
+            .Select("*, player:players(*)")
+            .Where(x => x.GameId == gameId)
+            .Order("bo", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
     }
 
     public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
-        BaseResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>("v_player_stats_summary")
-            .Where("seasonid", Constants.Operator.Equals, seasonId)
+        ModeledResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Get();
         return response.Models;
     }
 
     public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
     {
-        BaseResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>("v_team_stats_summary")
-            .Where("seasonid", Constants.Operator.Equals, seasonId)
+        TeamStatsSummary? result = await _supabase.From<TeamStatsSummary>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Single();
-        return response.Model ?? new PlayerStatsSummary { PlayerName = "TEAM TOTALS" };
+        return (PlayerStatsSummary?)result ?? new PlayerStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
-    public async Task<List<StatEntry>> GetAllGameStatsAsync(int seasonId)
+    public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)
     {
-        BaseResponse<StatEntry> response = await _supabase.From<StatEntry>("v_game_stats_extended")
-            .Where("seasonid", Constants.Operator.Equals, seasonId)
-            .Where("gameisdeleted", Constants.Operator.Equals, false)
+        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Filter("gameisdeleted", Constants.Operator.Equals, false)
             .Order("date", Constants.Ordering.Descending)
             .Order("bo", Constants.Ordering.Ascending)
             .Get();
@@ -163,22 +233,36 @@ public class StatsService
 
     public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
-        BaseResponse<Game> gameResponse = await _supabase.From<Game>().Insert(game);
+        ModeledResponse<Game> gameResponse = await _supabase.From<Game>().Insert(game);
         int gameId = gameResponse.Model?.Id ?? 0;
-
         if (gameId != 0)
         {
-            foreach (StatEntry stat in stats)
-            {
-                stat.GameId = gameId;
-            }
+            foreach (StatEntry stat in stats) { stat.GameId = gameId; }
             await _supabase.From<StatEntry>().Insert(stats);
         }
+    }
+
+    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        await _supabase.From<Game>().Update(game);
+        await _supabase.From<StatEntry>().Where(x => x.GameId == game.Id).Delete();
+        foreach (StatEntry stat in stats) { stat.GameId = game.Id; stat.Id = 0; }
+        await _supabase.From<StatEntry>().Insert(stats);
     }
 
     public async Task DeleteGameAsync(int gameId)
     {
         Game game = new Game { Id = gameId, IsDeleted = true };
         await _supabase.From<Game>().Update(game);
+    }
+
+    public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
+    {
+        return await GetSeasonsAsync();
+    }
+
+    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    {
+        return await GetSeasonsAsync();
     }
 }

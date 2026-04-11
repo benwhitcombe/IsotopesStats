@@ -4,12 +4,10 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "Manage Opponents")]
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
-@inject ProtectedSessionStorage ProtectedSessionStore
 
 <PageTitle>Isotopes - Manage Opponents</PageTitle>
 
@@ -159,7 +157,6 @@ else
         originalOpponent = new Opponent();
         assignedSeasonIds.Clear();
         originalSeasonIds.Clear();
-        await HydrateTempState();
     }
 
     private async Task LoadEditingOpponent()
@@ -176,8 +173,8 @@ else
 
             if (opponent != null)
             {
-                editingOpponent = opponent with { };
-                originalOpponent = opponent with { };
+                editingOpponent = opponent.Clone();
+                originalOpponent = opponent.Clone();
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
 
@@ -196,22 +193,6 @@ else
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
-
-        await HydrateTempState();
-    }
-
-    private async Task HydrateTempState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<Opponent> result = await ProtectedSessionStore.GetAsync<Opponent>($"EditState_Opponent_{Id ?? 0}");
-            if (result.Success && result.Value != null)
-            {
-                editingOpponent = result.Value;
-                StateHasChanged();
-            }
-        }
-        catch (Exception) { }
     }
 
     private async Task LoadOpponents()

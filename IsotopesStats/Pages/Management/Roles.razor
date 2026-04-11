@@ -4,12 +4,10 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @attribute [Authorize(Policy = "Manage Roles")]
 @inject AuthService AuthService
-@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
-@inject ProtectedSessionStorage ProtectedSessionStore
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Manage Roles</PageTitle>
 
@@ -17,41 +15,43 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Roles</h3>
-    @if (!isAdding && !isEditing)
+    @if (!isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Role</button>
     }
 </div>
 
-@if (isAdding || isEditing)
+@if (isEditing)
 {
     <ModelEditor 
         TItem="UserRole"
-        Title="@($"{(isAdding ? "Add" : "Edit")} User Role")"
+        Title="@($"{(editingRole.Id == 0 ? "Add New" : "Edit")} Role")"
         Item="editingRole"
         OriginalItem="originalRole"
         BasePath="/management/roles"
         OnSave="SaveRole"
         OnDelete="DeleteRole"
-        HasCustomChanges="@(() => !selectedPermissionIds.SetEquals(originalPermissionIds))">
+        CheckUniqueAsync="CheckRoleNameUnique">
 
-        <div class="form-group">
-            <label>Role Name</label>
-            <InputText class="form-control" @bind-Value="editingRole.Name" @bind-Value:event="oninput" placeholder="e.g. Moderator" />
-            <ValidationMessage For="@(() => editingRole.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-        </div>
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label>Role Name</label>
+                <InputText class="form-control" @bind-Value="editingRole.Name" placeholder="e.g. Administrator" />
+                <ValidationMessage For="@(() => editingRole.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            </div>
 
-        <div class="form-group" style="margin-top: 1.5rem;">
-            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Permissions</label>
-            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
-                @foreach (Permission permission in allPermissions)
-                {
-                    <CheckboxButton 
-                        Id="@($"p-{permission.Id}")" 
-                        Text="@permission.Name" 
-                        Checked="@selectedPermissionIds.Contains(permission.Id)" 
-                        CheckedChanged="@((bool val) => OnPermissionToggled(permission.Id, val))" />
-                }
+            <div class="form-group">
+                <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Permissions</label>
+                <div class="selectable-grid">
+                    @foreach (Permission permission in availablePermissions)
+                    {
+                        <CheckboxButton 
+                            Id="@($"perm-{permission.Id}")" 
+                            Text="@permission.Name" 
+                            Checked="@selectedPermissionIds.Contains(permission.Id)" 
+                            CheckedChanged="@((bool val) => TogglePermission(permission.Id, val))" />
+                    }
+                </div>
             </div>
         </div>
     </ModelEditor>
@@ -59,13 +59,13 @@
 else
 {
     <div class="desktop-only">
-        <div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
+        <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">Name</th>
-                            <th>Permissions</th>
+                            <th style="text-align: left;">Role Name</th>
+                            <th style="text-align: left;">Permissions</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
@@ -74,13 +74,18 @@ else
                         {
                             <tr>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", role.Id)'>@role.Name</td>
-                                <td>
-                                    <div style="display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center;">
-                                        @foreach (Permission p in role.Permissions)
+                                <td style="text-align: left;">
+                                    @if (!role.Permissions.Any())
+                                    {
+                                        <span style="color: #ccc; font-style: italic;">No permissions assigned</span>
+                                    }
+                                    else
+                                    {
+                                        @foreach (Permission permission in role.Permissions)
                                         {
-                                            <span class="badge bg-light text-dark" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; border: 1px solid #eee;">@p.Name</span>
+                                            <span class="badge bg-light text-dark" style="margin-right: 4px; border: 1px solid #eee;">@permission.Name</span>
                                         }
-                                    </div>
+                                    }
                                 </td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", role.Id)'>Edit</button>
@@ -95,7 +100,7 @@ else
     </div>
 
     <div class="mobile-only">
-        <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
+        <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s;">
             @foreach (UserRole role in roles)
             {
                 <div class="mobile-player-card">
@@ -103,10 +108,18 @@ else
                         <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", role.Id)'>@role.Name</div>
                     </div>
                     <div style="margin-bottom: 1rem;">
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
-                            @foreach (Permission p in role.Permissions)
+                        <label style="font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: 800; display: block; margin-bottom: 0.25rem;">Permissions</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            @if (!role.Permissions.Any())
                             {
-                                <span class="badge bg-light text-dark" style="font-size: 0.7rem;">@p.Name</span>
+                                <span style="color: #ccc; font-size: 0.8rem; font-style: italic;">None</span>
+                            }
+                            else
+                            {
+                                @foreach (Permission permission in role.Permissions)
+                                {
+                                    <span class="badge bg-light text-dark" style="font-size: 0.7rem; border: 1px solid #eee;">@permission.Name</span>
+                                }
                             }
                         </div>
                     </div>
@@ -126,120 +139,46 @@ else
 
     private DeleteManager<UserRole> deleteManager = null!;
     private List<UserRole> roles = new();
-    private List<Permission> allPermissions = new();
-    private HashSet<int> selectedPermissionIds = new();
-    private HashSet<int> originalPermissionIds = new();
+    private List<Permission> availablePermissions = new();
+    private List<int> selectedPermissionIds = new();
     private UserRole editingRole = new();
     private UserRole originalRole = new();
-    private bool isAdding = false;
     private bool isEditing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        allPermissions = await AuthService.GetPermissionsAsync();
+        availablePermissions = await AuthService.GetPermissionsAsync();
         await LoadData();
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        bool wasAdding = isAdding;
-        bool wasEditing = isEditing;
-        
-        isAdding = Action == "add";
-        isEditing = Action == "edit";
+        isEditing = Action == "add" || Action == "edit";
 
-        if (isAdding || isEditing)
+        if (isEditing)
         {
-            if (isAdding && !wasAdding)
+            if (Action == "edit" && Id.HasValue && Id != 0)
             {
-                await LoadNewRole();
-            }
-            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingRole.Id)))
-            {
-                await LoadEditingRole();
-            }
-        }
-        else
-        {
-            editingRole = new UserRole();
-            originalRole = new UserRole();
-            selectedPermissionIds.Clear();
-            originalPermissionIds.Clear();
-        }
-    }
-
-    private async Task LoadNewRole()
-    {
-        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
-        editingRole = new UserRole();
-        originalRole = new UserRole();
-        selectedPermissionIds.Clear();
-        originalPermissionIds.Clear();
-        await HydrateTempState();
-    }
-
-    private async Task LoadEditingRole()
-    {
-        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
-        ResetState();
-        
-        if (Action == "edit" && Id.HasValue && Id != 0)
-        {
-            UserRole? role = roles.FirstOrDefault(r => r.Id == Id);
-            if (role == null)
-            {
-                role = (await AuthService.GetUserRolesAsync(true)).FirstOrDefault(r => r.Id == Id);
-            }
-
-            if (role != null)
-            {
-                editingRole = role with { };
-                originalRole = role with { };
-                selectedPermissionIds.Clear();
-                originalPermissionIds.Clear();
-                foreach (Permission p in role.Permissions)
+                UserRole? role = roles.FirstOrDefault(r => r.Id == Id);
+                if (role != null)
                 {
-                    selectedPermissionIds.Add(p.Id);
-                    originalPermissionIds.Add(p.Id);
+                    editingRole = role.Clone();
+                    originalRole = role.Clone();
+                    selectedPermissionIds = role.Permissions.Select(p => p.Id).ToList();
                 }
             }
-        }
-        else
-        {
-            editingRole = new UserRole();
-            originalRole = new UserRole();
-            selectedPermissionIds.Clear();
-            originalPermissionIds.Clear();
-        }
-
-        await HydrateTempState();
-    }
-
-    private void ResetState()
-    {
-        editingRole = new UserRole();
-        originalRole = new UserRole();
-        selectedPermissionIds.Clear();
-        originalPermissionIds.Clear();
-    }
-
-    private async Task HydrateTempState()
-    {
-        try
-        {
-            ProtectedBrowserStorageResult<UserRole> result = await ProtectedSessionStore.GetAsync<UserRole>($"EditState_UserRole_{Id ?? 0}");
-            if (result.Success && result.Value != null)
+            else
             {
-                editingRole = result.Value;
-                StateHasChanged();
+                editingRole = new UserRole();
+                originalRole = new UserRole();
+                selectedPermissionIds.Clear();
             }
         }
-        catch (Exception) { }
     }
 
     private async Task LoadData()
     {
-        roles = await AuthService.GetUserRolesAsync(true);
+        roles = await AuthService.GetUserRolesAsync();
     }
 
     private void StartEdit(string action, int id)
@@ -248,31 +187,35 @@ else
         else Navigation.NavigateTo($"/management/roles/edit/{id}");
     }
 
-    private async Task<string?> CheckUniqueRole(UserRole model)
+    private void TogglePermission(int permissionId, bool isChecked)
     {
-        if (string.IsNullOrWhiteSpace(model.Name)) return null;
-        bool isUnique = await AuthService.IsRoleNameUniqueAsync(model.Name, model.Id);
-        return isUnique ? null : "A role with this name already exists.";
+        if (isChecked)
+        {
+            if (!selectedPermissionIds.Contains(permissionId)) selectedPermissionIds.Add(permissionId);
+        }
+        else
+        {
+            selectedPermissionIds.Remove(permissionId);
+        }
     }
 
-    private void OnPermissionToggled(int permissionId, bool isChecked)
+    private async Task<string?> CheckRoleNameUnique(UserRole role)
     {
-        if (isChecked) selectedPermissionIds.Add(permissionId);
-        else selectedPermissionIds.Remove(permissionId);
+        bool isUnique = await AuthService.IsRoleNameUniqueAsync(role.Name, role.Id);
+        return isUnique ? null : "A role with this name already exists.";
     }
 
     private async Task SaveRole()
     {
-        editingRole.Permissions = allPermissions.Where(p => selectedPermissionIds.Contains(p.Id)).ToList();
-        
         if (editingRole.Id == 0)
         {
-            await AuthService.AddUserRoleAsync(editingRole);
+            await AuthService.AddUserRoleAsync(editingRole, selectedPermissionIds);
         }
         else
         {
-            await AuthService.UpdateUserRoleAsync(editingRole);
+            await AuthService.UpdateUserRoleAsync(editingRole, selectedPermissionIds);
         }
+
         await LoadData();
     }
 

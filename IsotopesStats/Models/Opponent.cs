@@ -16,4 +16,6 @@ public class Opponent : BaseModel, IEntity
     
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
+
+    public Opponent Clone() => (Opponent)this.MemberwiseClone();
 }
