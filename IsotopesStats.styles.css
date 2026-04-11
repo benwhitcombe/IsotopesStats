@@ -1,0 +1,21 @@
+/* /Shared/MainLayout.razor.rz.scp.css */
+.page[b-xmxopcrqke] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main[b-xmxopcrqke] {
+    flex: 1;
+}
+
+article[b-xmxopcrqke] {
+    padding: 1rem;
+}
+
+@media (min-width: 641px) {
+    article[b-xmxopcrqke] {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Isotopes Stats</title>
+    <base href="/IsotopesStats/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="IsotopesStats.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJyBmaWxsPSdub25lJyBzdHJva2U9JyNFRDFDMjQnIHN0cm9rZS13aWR0aD0nOCc+PGNpcmNsZSBjeD0nNTAnIGN5PSc1MCcgcj0nOCcgZmlsbD0nI0VEMUMyNCcgc3Ryb2tlPSdub25lJy8+PGVsbGlwc2UgY3g9JzUwJyBjeT0nNTAnIHJ4PSc0NScgcnk9JzE1Jy8+PGVsbGlwc2UgY3g9JzUwJyBjeT0nNTAnIHJ4PSc0NScgcnk9JzE1JyB0cmFuc2Zvcm09J3JvdGF0ZSg2MCA1MCA1MCknLz48ZWxsaXBzZSBjeD0nNTAnIGN5PSc1MCcgcng9JzQ1JyByeT0nMTUnIHRyYW5zZm9ybT0ncm90YXRlKDEyMCA1MCA1MCknLz48L3N2Zz4=" />
+</head>
+<body>
+    <div id="app">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column;">
+            <div class="spinner-border text-danger" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p style="margin-top: 1rem; color: #666;">Isotopes stats loading...</p>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        window.getWindowWidth = function () {
+            return window.innerWidth;
+        };
+        document.addEventListener('dragover', function (e) {
+            if (e.target.closest('.reorderable-row')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
