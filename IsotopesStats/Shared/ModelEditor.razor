@@ -163,6 +163,7 @@
         await CreateLog(wasEdit ? UserLogAction.Updated : UserLogAction.Created);
 
         showSuccess = true;
+        StateHasChanged();
         _ = Task.Run(async () => {
             await Task.Delay(3000);
             showSuccess = false;
@@ -178,10 +179,11 @@
         else await DiscardChanges();
     }
 
-    private async Task DiscardChanges()
+    private Task DiscardChanges()
     {
         showDiscardConfirm = false;
         Navigation.NavigateTo(BasePath);
+        return Task.CompletedTask;
     }
 
     private async Task HandleDelete()
@@ -195,8 +197,8 @@
     private async Task CreateLog(UserLogAction action)
     {
         if (AuthStateTask == null) return;
-        var authState = await AuthStateTask;
-        var user = authState.User;
+        AuthenticationState authState = await AuthStateTask;
+        ClaimsPrincipal user = authState.User;
         
         if (user.Identity?.IsAuthenticated == true)
         {
@@ -219,8 +221,8 @@
     private string GetLogDescription(UserLogAction action)
     {
         string identifier = "";
-        var nameProp = typeof(TItem).GetProperty("Name");
-        var emailProp = typeof(TItem).GetProperty("Email");
+        System.Reflection.PropertyInfo? nameProp = typeof(TItem).GetProperty("Name");
+        System.Reflection.PropertyInfo? emailProp = typeof(TItem).GetProperty("Email");
         
         if (nameProp != null && Item != null) identifier = nameProp.GetValue(Item)?.ToString() ?? "";
         else if (emailProp != null && Item != null) identifier = emailProp.GetValue(Item)?.ToString() ?? "";

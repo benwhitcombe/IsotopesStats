@@ -20,7 +20,7 @@ public class AuthService
         try
         {
             Supabase.Gotrue.Session? session = await _supabase.Auth.SignIn(email, password);
-            if (session != null && session.User != null)
+            if (session != null && session.User != null && !string.IsNullOrEmpty(session.User.Id))
             {
                 User user = new User
                 {
@@ -66,7 +66,7 @@ public class AuthService
         try
         {
             Supabase.Gotrue.Session? response = await _supabase.Auth.SignUp(email, password);
-            if (response?.User != null)
+            if (response?.User != null && !string.IsNullOrEmpty(response.User.Id))
             {
                 foreach (int roleId in roleIds)
                 {
@@ -124,7 +124,9 @@ public class AuthService
 
     private async Task<List<UserRole>> GetUserRolesForUserAsync(string supabaseUserId)
     {
-        ModeledResponse<UserRole> response = await _supabase.From<UserRole>()
+        if (string.IsNullOrEmpty(supabaseUserId)) return new List<UserRole>();
+
+        ModeledResponse<UserRole> response = await _supabase.Postgrest.Table<UserRole>()
             .Select("id, name, isdeleted, rolepermissions(permissions(id, name))")
             .Filter("useruserroles.userid", Constants.Operator.Equals, supabaseUserId)
             .Get();
@@ -153,6 +155,7 @@ public class AuthService
 
     public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
     {
+        // Using Task.FromResult to resolve CS1998 warning
         return await Task.FromResult(true);
     }
 

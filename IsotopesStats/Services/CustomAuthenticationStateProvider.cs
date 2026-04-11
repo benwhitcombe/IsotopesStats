@@ -29,7 +29,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         {
             Supabase.Gotrue.Session? session = _supabase.Auth.CurrentSession;
 
-            if (session == null || session.User == null)
+            if (session == null || session.User == null || string.IsNullOrEmpty(session.User.Id))
                 return new AuthenticationState(_anonymous);
 
             // Fetch custom roles/permissions from our DB for this Supabase user
@@ -71,6 +71,8 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     private async Task<List<UserRole>> GetUserRolesForUserAsync(string supabaseUserId)
     {
+        if (string.IsNullOrEmpty(supabaseUserId)) return new List<UserRole>();
+
         try 
         {
             ModeledResponse<UserRole> response = await _supabase.Postgrest

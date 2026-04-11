@@ -177,7 +177,7 @@ else
         await LoadData();
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
         isEditing = Action == "add" || Action == "edit";
 
@@ -210,6 +210,8 @@ else
                 originalViewModel = new UserEditViewModel();
             }
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task LoadData()
