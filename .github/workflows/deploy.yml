@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
 
+env:
+  # Opt into the latest Node runtime for GitHub Actions
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,7 +23,6 @@ jobs:
         run: dotnet publish IsotopesStats/IsotopesStats.csproj -c Release -o release
 
       - name: Change base-tag in index.html for GitHub Pages
-        # This replaces <base href="/" /> with <base href="/IsotopesStats/" />
         run: sed -i 's/<base href="\/" \/>/<base href="\/IsotopesStats\/" \/>/g' release/wwwroot/index.html
 
       - name: Deploy to GitHub Pages
