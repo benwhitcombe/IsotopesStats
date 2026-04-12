@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "IsotopesStats",
   "resources": {
-    "hash": "sha256-hCg2mUdYCAI2oJ0z/XzyFK2mFGtunAwGsLBUjtTA2Ew=",
+    "hash": "sha256-ezG1SL9nij7MvI0MEAKpoxZjJvxGVTvEgsKXGyyfbbU=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -110,7 +110,7 @@
       "System.wasm": "sha256-25KTxVbx+rD8S9iyUye7jmbj1e4TZ5Ca+elup4oegJA=",
       "netstandard.wasm": "sha256-qBhQpiKNF1ykVlV7yAWi8ZPMWf3fMf0j5etOkuszu3A=",
       "System.Private.CoreLib.wasm": "sha256-/Kj2h0DEJ8SYt3axVzfc5XPWE7pbHMXP4J8jGzg8PNA=",
-      "IsotopesStats.wasm": "sha256-yia8mVAGbnzcnLQGxh/YwFeWo3aF0qU4RCEaYGx75jA="
+      "IsotopesStats.wasm": "sha256-D1y6ovDiEKs8cB/ODHpyGqZcQc0Ao4DyGItHKK4ZhSI="
     }
   },
   "cacheBootResources": true,
