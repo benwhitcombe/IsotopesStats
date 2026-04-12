@@ -254,7 +254,7 @@ public class StatsService
         ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
             .Filter("playername", Constants.Operator.Equals, playerName)
             .Filter("seasonid", Constants.Operator.Equals, seasonId)
-            .Filter("gameisdeleted", Constants.Operator.Equals, false)
+            .Where(x => x.GameIsDeleted == false)
             .Order("date", Constants.Ordering.Descending)
             .Get();
         return response.Models;

@@ -237,21 +237,21 @@ else
                                             <span class="badge bg-light text-dark">AVG: @stat.AVG.ToString(".000") | OBP: @stat.OBP.ToString(".000")</span>
                                         </div>
                                         <div class="mobile-card-stats">
-                                            @if (stat.AB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.AB</span><span class="m-stat-label">AB</span></div> }
-                                            @if (stat.R > 0) { <div class="m-stat"><span class="m-stat-val">@stat.R</span><span class="m-stat-label">R</span></div> } 
-                                            @if (stat.H > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H</span><span class="m-stat-label">H</span></div> } 
-                                            @if (stat.H2B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H2B</span><span class="m-stat-label">2B</span></div> }
-                                            @if (stat.H3B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H3B</span><span class="m-stat-label">3B</span></div> }
-                                            @if (stat.H4B > 0) { <div class="m-stat"><span class="m-stat-val">@stat.H4B</span><span class="m-stat-label">4B</span></div> }
-                                            @if (stat.HR > 0) { <div class="m-stat"><span class="m-stat-val">@stat.HR</span><span class="m-stat-label">HR</span></div> }
-                                            @if (stat.RBI > 0) { <div class="m-stat"><span class="m-stat-val">@stat.RBI</span><span class="m-stat-label">RBI</span></div> }
-                                            @if (stat.BB > 0) { <div class="m-stat"><span class="m-stat-val">@stat.BB</span><span class="m-stat-label">BB</span></div> }
-                                            @if (stat.K > 0) { <div class="m-stat"><span class="m-stat-val">@stat.K</span><span class="m-stat-label">K</span></div> } 
-                                            @if (stat.KF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.KF</span><span class="m-stat-label">KF</span></div> }
-                                            @if (stat.SF > 0) { <div class="m-stat"><span class="m-stat-val">@stat.SF</span><span class="m-stat-label">SF</span></div> }
-                                            @if (stat.FC > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FC</span><span class="m-stat-label">FC</span></div> }
-                                            @if (stat.GO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.GO</span><span class="m-stat-label">GO</span></div> }
-                                            @if (stat.FO > 0) { <div class="m-stat"><span class="m-stat-val">@stat.FO</span><span class="m-stat-label">FO</span></div> }
+                                            @if (stat.AB > 0) { <div class="m-stat @(uiState.SortColumn == "AB" ? "active" : "")" @onclick='@(() => Sort(gameId, "AB"))' style="cursor: pointer;"><span class="m-stat-val">@stat.AB</span><span class="m-stat-label">AB</span></div> }
+                                            @if (stat.R > 0) { <div class="m-stat @(uiState.SortColumn == "R" ? "active" : "")" @onclick='@(() => Sort(gameId, "R"))' style="cursor: pointer;"><span class="m-stat-val">@stat.R</span><span class="m-stat-label">R</span></div> } 
+                                            @if (stat.H > 0) { <div class="m-stat @(uiState.SortColumn == "H" ? "active" : "")" @onclick='@(() => Sort(gameId, "H"))' style="cursor: pointer;"><span class="m-stat-val">@stat.H</span><span class="m-stat-label">H</span></div> } 
+                                            @if (stat.H2B > 0) { <div class="m-stat @(uiState.SortColumn == "2B" ? "active" : "")" @onclick='@(() => Sort(gameId, "2B"))' style="cursor: pointer;"><span class="m-stat-val">@stat.H2B</span><span class="m-stat-label">2B</span></div> }
+                                            @if (stat.H3B > 0) { <div class="m-stat @(uiState.SortColumn == "3B" ? "active" : "")" @onclick='@(() => Sort(gameId, "3B"))' style="cursor: pointer;"><span class="m-stat-val">@stat.H3B</span><span class="m-stat-label">3B</span></div> }
+                                            @if (stat.H4B > 0) { <div class="m-stat @(uiState.SortColumn == "4B" ? "active" : "")" @onclick='@(() => Sort(gameId, "4B"))' style="cursor: pointer;"><span class="m-stat-val">@stat.H4B</span><span class="m-stat-label">4B</span></div> }
+                                            @if (stat.HR > 0) { <div class="m-stat @(uiState.SortColumn == "HR" ? "active" : "")" @onclick='@(() => Sort(gameId, "HR"))' style="cursor: pointer;"><span class="m-stat-val">@stat.HR</span><span class="m-stat-label">HR</span></div> }
+                                            @if (stat.RBI > 0) { <div class="m-stat @(uiState.SortColumn == "RBI" ? "active" : "")" @onclick='@(() => Sort(gameId, "RBI"))' style="cursor: pointer;"><span class="m-stat-val">@stat.RBI</span><span class="m-stat-label">RBI</span></div> }
+                                            @if (stat.BB > 0) { <div class="m-stat @(uiState.SortColumn == "BB" ? "active" : "")" @onclick='@(() => Sort(gameId, "BB"))' style="cursor: pointer;"><span class="m-stat-val">@stat.BB</span><span class="m-stat-label">BB</span></div> }
+                                            @if (stat.K > 0) { <div class="m-stat @(uiState.SortColumn == "K" ? "active" : "")" @onclick='@(() => Sort(gameId, "K"))' style="cursor: pointer;"><span class="m-stat-val">@stat.K</span><span class="m-stat-label">K</span></div> } 
+                                            @if (stat.KF > 0) { <div class="m-stat @(uiState.SortColumn == "KF" ? "active" : "")" @onclick='@(() => Sort(gameId, "KF"))' style="cursor: pointer;"><span class="m-stat-val">@stat.KF</span><span class="m-stat-label">KF</span></div> }
+                                            @if (stat.SF > 0) { <div class="m-stat @(uiState.SortColumn == "SF" ? "active" : "")" @onclick='@(() => Sort(gameId, "SF"))' style="cursor: pointer;"><span class="m-stat-val">@stat.SF</span><span class="m-stat-label">SF</span></div> }
+                                            @if (stat.FC > 0) { <div class="m-stat @(uiState.SortColumn == "FC" ? "active" : "")" @onclick='@(() => Sort(gameId, "FC"))' style="cursor: pointer;"><span class="m-stat-val">@stat.FC</span><span class="m-stat-label">FC</span></div> }
+                                            @if (stat.GO > 0) { <div class="m-stat @(uiState.SortColumn == "GO" ? "active" : "")" @onclick='@(() => Sort(gameId, "GO"))' style="cursor: pointer;"><span class="m-stat-val">@stat.GO</span><span class="m-stat-label">GO</span></div> }
+                                            @if (stat.FO > 0) { <div class="m-stat @(uiState.SortColumn == "FO" ? "active" : "")" @onclick='@(() => Sort(gameId, "FO"))' style="cursor: pointer;"><span class="m-stat-val">@stat.FO</span><span class="m-stat-label">FO</span></div> }
                                         </div>
                                     </div>
                                 }

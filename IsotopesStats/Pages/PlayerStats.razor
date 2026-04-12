@@ -121,8 +121,10 @@ else
             </div>
         }
 
-        <div class="table-container">
-            <table class="table table-hover">
+        <div class="desktop-only">
+            <div class="table-container">
+                <div class="box-score-table-wrapper">
+                    <table class="box-score-table table-sm">
                 <thead>
                     <tr>
                         <th style="width: 40px; text-align: center;">#</th>
@@ -256,64 +258,68 @@ else
                 </tfoot>
             </table>
         </div>
+        </div>
+        </div>
 
+        <div class="mobile-only">
         <div class="mobile-player-grid view-fade-in" @key='@("mobile-" + activeView)'>
             @for (int i = 0; i < allStats.Count; i++)
             {
                 PlayerStatsSummary player = allStats[i];
                 <div class="mobile-player-card">
-                    <div class="mobile-card-header" @onclick='() => NavigationManager.NavigateTo($"/playerlogs/{Uri.EscapeDataString(player.PlayerName)}")'>
-                        <span class="mobile-card-name">
+                    <div class="mobile-card-header">
+                        <span class="mobile-card-name" @onclick='() => NavigationManager.NavigateTo($"/playerlogs/{Uri.EscapeDataString(player.PlayerName)}")' style="cursor: pointer;">
                             <span class="rank-badge">#@(i + 1)</span>
                             @player.PlayerName
                         </span>
                         <div style="display: flex; gap: 4px;">
                             @if (activeView == "Hits")
                             {
-                                <span class="badge bg-light text-dark @(currentSortColumn == "SLG" ? "border border-danger" : "")">SLG: @player.SLG.ToString(".000")</span>
-                                <span class="badge bg-light text-dark @(currentSortColumn == "OPS" ? "border border-danger" : "")">OPS: @player.OPS.ToString(".000")</span>
+                                <span class="badge bg-light text-dark @(currentSortColumn == "SLG" ? "border border-danger" : "")" @onclick='@(() => Sort("SLG"))' @onclick:stopPropagation="true" style="cursor: pointer;">SLG: @player.SLG.ToString(".000")</span>
+                                <span class="badge bg-light text-dark @(currentSortColumn == "OPS" ? "border border-danger" : "")" @onclick='@(() => Sort("OPS"))' @onclick:stopPropagation="true" style="cursor: pointer;">OPS: @player.OPS.ToString(".000")</span>
                             }
                             else
                             {
-                                <span class="badge bg-light text-dark @(currentSortColumn == "AVG" ? "border border-danger" : "")">AVG: @player.AVG.ToString(".000")</span>
-                                <span class="badge bg-light text-dark @(currentSortColumn == "OBP" ? "border border-danger" : "")">OBP: @player.OBP.ToString(".000")</span>
+                                <span class="badge bg-light text-dark @(currentSortColumn == "AVG" ? "border border-danger" : "")" @onclick='@(() => Sort("AVG"))' @onclick:stopPropagation="true" style="cursor: pointer;">AVG: @player.AVG.ToString(".000")</span>
+                                <span class="badge bg-light text-dark @(currentSortColumn == "OBP" ? "border border-danger" : "")" @onclick='@(() => Sort("OBP"))' @onclick:stopPropagation="true" style="cursor: pointer;">OBP: @player.OBP.ToString(".000")</span>
                             }
                         </div>
                     </div>
                     <div class="mobile-card-stats">
                         @if (activeView == "Standard")
                         {
-                            <div class="m-stat @(currentSortColumn == "GP" ? "active" : "")"><span class="m-stat-val">@player.GamesPlayed</span><span class="m-stat-label">GP</span></div>
-                            <div class="m-stat @(currentSortColumn == "PA" ? "active" : "")"><span class="m-stat-val">@player.PA</span><span class="m-stat-label">PA</span></div>
-                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
-                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
-                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
-                            <div class="m-stat @(currentSortColumn == "RBI" ? "active" : "")"><span class="m-stat-val">@player.RBI</span><span class="m-stat-label">RBI</span></div>
-                            <div class="m-stat @(currentSortColumn == "R" ? "active" : "")"><span class="m-stat-val">@player.R</span><span class="m-stat-label">R</span></div>
+                            <div class="m-stat @(currentSortColumn == "GP" ? "active" : "")" @onclick='@(() => Sort("GP"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.GamesPlayed</span><span class="m-stat-label">GP</span></div>
+                            <div class="m-stat @(currentSortColumn == "PA" ? "active" : "")" @onclick='@(() => Sort("PA"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.PA</span><span class="m-stat-label">PA</span></div>
+                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick='@(() => Sort("AB"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
+                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick='@(() => Sort("H"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
+                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick='@(() => Sort("HR"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
+                            <div class="m-stat @(currentSortColumn == "RBI" ? "active" : "")" @onclick='@(() => Sort("RBI"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.RBI</span><span class="m-stat-label">RBI</span></div>
+                            <div class="m-stat @(currentSortColumn == "R" ? "active" : "")" @onclick='@(() => Sort("R"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.R</span><span class="m-stat-label">R</span></div>
                         }
                         else if (activeView == "Hits")
                         {
-                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
-                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
-                            <div class="m-stat @(currentSortColumn == "1B" ? "active" : "")"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
-                            <div class="m-stat @(currentSortColumn == "2B" ? "active" : "")"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
-                            <div class="m-stat @(currentSortColumn == "3B" ? "active" : "")"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
-                            <div class="m-stat @(currentSortColumn == "4B" ? "active" : "")"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
-                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
+                            <div class="m-stat @(currentSortColumn == "AB" ? "active" : "")" @onclick='@(() => Sort("AB"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.AB</span><span class="m-stat-label">AB</span></div>
+                            <div class="m-stat @(currentSortColumn == "H" ? "active" : "")" @onclick='@(() => Sort("H"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H</span><span class="m-stat-label">H</span></div>
+                            <div class="m-stat @(currentSortColumn == "1B" ? "active" : "")" @onclick='@(() => Sort("1B"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H1B</span><span class="m-stat-label">1B</span></div>
+                            <div class="m-stat @(currentSortColumn == "2B" ? "active" : "")" @onclick='@(() => Sort("2B"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H2B</span><span class="m-stat-label">2B</span></div>
+                            <div class="m-stat @(currentSortColumn == "3B" ? "active" : "")" @onclick='@(() => Sort("3B"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H3B</span><span class="m-stat-label">3B</span></div>
+                            <div class="m-stat @(currentSortColumn == "4B" ? "active" : "")" @onclick='@(() => Sort("4B"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.H4B</span><span class="m-stat-label">4B</span></div>
+                            <div class="m-stat @(currentSortColumn == "HR" ? "active" : "")" @onclick='@(() => Sort("HR"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.HR</span><span class="m-stat-label">HR</span></div>
                         }
                         else if (activeView == "Outcomes")
                         {
-                            <div class="m-stat @(currentSortColumn == "BB" ? "active" : "")"><span class="m-stat-val">@player.BB</span><span class="m-stat-label">BB</span></div>
-                            <div class="m-stat @(currentSortColumn == "K" ? "active" : "")"><span class="m-stat-val">@player.K</span><span class="m-stat-label">K</span></div>
-                            <div class="m-stat @(currentSortColumn == "KF" ? "active" : "")"><span class="m-stat-val">@player.KF</span><span class="m-stat-label">KF</span></div>
-                            <div class="m-stat @(currentSortColumn == "SF" ? "active" : "")"><span class="m-stat-val">@player.SF</span><span class="m-stat-label">SF</span></div>
-                            <div class="m-stat @(currentSortColumn == "FC" ? "active" : "")"><span class="m-stat-val">@player.FC</span><span class="m-stat-label">FC</span></div>
-                            <div class="m-stat @(currentSortColumn == "GO" ? "active" : "")"><span class="m-stat-val">@player.GO</span><span class="m-stat-label">GO</span></div>
-                            <div class="m-stat @(currentSortColumn == "FO" ? "active" : "")"><span class="m-stat-val">@player.FO</span><span class="m-stat-label">FO</span></div>
+                            <div class="m-stat @(currentSortColumn == "BB" ? "active" : "")" @onclick='@(() => Sort("BB"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.BB</span><span class="m-stat-label">BB</span></div>
+                            <div class="m-stat @(currentSortColumn == "K" ? "active" : "")" @onclick='@(() => Sort("K"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.K</span><span class="m-stat-label">K</span></div>
+                            <div class="m-stat @(currentSortColumn == "KF" ? "active" : "")" @onclick='@(() => Sort("KF"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.KF</span><span class="m-stat-label">KF</span></div>
+                            <div class="m-stat @(currentSortColumn == "SF" ? "active" : "")" @onclick='@(() => Sort("SF"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.SF</span><span class="m-stat-label">SF</span></div>
+                            <div class="m-stat @(currentSortColumn == "FC" ? "active" : "")" @onclick='@(() => Sort("FC"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.FC</span><span class="m-stat-label">FC</span></div>
+                            <div class="m-stat @(currentSortColumn == "GO" ? "active" : "")" @onclick='@(() => Sort("GO"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.GO</span><span class="m-stat-label">GO</span></div>
+                            <div class="m-stat @(currentSortColumn == "FO" ? "active" : "")" @onclick='@(() => Sort("FO"))' @onclick:stopPropagation="true" style="cursor: pointer;"><span class="m-stat-val">@player.FO</span><span class="m-stat-label">FO</span></div>
                         }
                     </div>
                 </div>
             }
+        </div>
         </div>
     </div>
 }
