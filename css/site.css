@@ -75,11 +75,11 @@ body {
 .desktop-nav a {
     color: white;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
     border-radius: 8px;
-    transition: background 0.3s;
+    transition: all 0.3s;
 }
 
 .desktop-nav a:hover {
@@ -87,8 +87,8 @@ body {
 }
 
 .desktop-nav a.active {
-    background: white;
-    color: var(--isotopes-red);
+    color: white;
+    font-weight: 800;
 }
 
 @media (min-width: 769px) {
