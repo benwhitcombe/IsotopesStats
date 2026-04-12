@@ -71,6 +71,20 @@ public class StatEntry : BaseModel, IEntity
     public int H => H1B + H2B + H3B + H4B + HR;
     public int AB => H + FC + K + KF + GO + FO;
     public int PA => AB + BB + SF;
+    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
+    
+    // Calculated Stats
+    public double AVG => AB > 0 ? (double)H / AB : 0;
+    
+    public double OBP => (AB + BB + SF) > 0 
+        ? (double)(H + BB) / (AB + BB + SF) 
+        : 0;
+
+    public double SLG => AB > 0 
+        ? (double)TB / AB 
+        : 0;
+
+    public double OPS => OBP + SLG;
 
     public StatEntry Clone() => (StatEntry)this.MemberwiseClone();
 }

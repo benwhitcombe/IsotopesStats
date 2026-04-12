@@ -1,18 +1,20 @@
+@page "/player/{PlayerName}/{SeasonId:int}"
 @page "/playerlogs/{PlayerName}"
-@using IsotopesStats.Models
 @using IsotopesStats.Services
+@using IsotopesStats.Models
 @inject StatsService StatsService
-@inject SharedSessionState SessionState
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject SharedSessionState SharedState
 
-<PageTitle>Isotopes - @PlayerName Logs</PageTitle>
+<PageTitle>Isotopes - @PlayerName Game Log</PageTitle>
 
-<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-    <button class="view-btn" @onclick="GoBack">← Back</button>
-    <h3 style="margin:0">@PlayerName's Game Log</h3>
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h3 style="margin:0">@PlayerName - Game Log</h3>
+    <button class="view-btn" @onclick="GoBack">Back to Stats</button>
 </div>
 
-@if (stats == null)
+@if (isLoading)
 {
     <div style="text-align: center; padding: 5rem;">
         <div class="spinner-border text-danger" role="status">
@@ -20,91 +22,117 @@
         </div>
     </div>
 }
-else if (!stats.Any())
-{
-    <div class="stat-card" style="text-align: center; padding: 3rem; color: #999;">
-        No game logs found for this season.
-    </div>
-}
 else
 {
-    <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Date</th>
-                        <th style="text-align: left;">Opponent</th>
-                        <th>BO</th>
-                        <th>H</th>
-                        <th>RBI</th>
-                        <th>R</th>
-                        <th>BB</th>
-                        <th style="text-align: left;">Outs</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (GameStatsExtendedView stat in stats)
-                    {
-                        <tr>
-                            <td style="text-align: left; font-weight: bold;">@stat.Date.ToString("MMM dd")</td>
-                            <td style="text-align: left;">@stat.OpponentName</td>
-                            <td style="font-weight: 800; color: #999;">@stat.BO</td>
-                            <td style="font-weight: bold; color: var(--isotopes-accent);">@GetHitsSummary(stat)</td>
-                            <td>@stat.RBI</td>
-                            <td>@stat.R</td>
-                            <td>@stat.BB</td>
-                            <td style="text-align: left; font-size: 0.85rem; color: #666;">@GetOutsSummary(stat)</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    @if (logs == null || !logs.Any())
+    {
+        <div class="stat-card" style="text-align: center; padding: 5rem; color: #999;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚾</div>
+            <h4>No Games Found</h4>
+            <p>This player doesn't have any stats for the selected season.</p>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="stat-card view-fade-in" style="margin-bottom: 1.5rem;">
+            <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">Games</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Count</div>
+                </div>
+                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">Hits</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Sum(l => l.H)</div>
+                </div>
+                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">HR</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red);">@logs.Sum(l => l.HR)</div>
+                </div>
+                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">RBI</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Sum(l => l.RBI)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container view-fade-in" style="animation-delay: 0.2s;">
+            <div class="box-score-table-wrapper">
+                <table class="box-score-table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Opponent</th>
+                            <th>PA</th>
+                            <th>AB</th>
+                            <th>H</th>
+                            <th>2B</th>
+                            <th>3B</th>
+                            <th>4B</th>
+                            <th>HR</th>
+                            <th>RBI</th>
+                            <th>BB</th>
+                            <th>K</th>
+                            <th>KF</th>
+                            <th>R</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (GameStatsExtendedView log in logs)
+                        {
+                            <tr>
+                                <td style="color: #666;">@log.Date.ToString("MMM dd")</td>
+                                <td style="font-weight: bold; text-align: left;">@log.OpponentName</td>
+                                <td>@log.PA</td>
+                                <td>@log.AB</td>
+                                <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
+                                <td>@log.H2B</td>
+                                <td>@log.H3B</td>
+                                <td>@log.H4B</td>
+                                <td style="color: var(--isotopes-red); font-weight: bold;">@log.HR</td>
+                                <td>@log.RBI</td>
+                                <td>@log.BB</td>
+                                <td>@log.K</td>
+                                <td>@log.KF</td>
+                                <td>@log.R</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 }
 
 @code {
-    [Parameter] public string PlayerName { get; set; } = "";
-    private List<GameStatsExtendedView>? stats;
+    [Parameter] public string PlayerName { get; set; } = string.Empty;
+    [Parameter] public int? SeasonId { get; set; }
+
+    private List<GameStatsExtendedView>? logs;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        if (SessionState.SelectedSeasonId != 0)
+        int targetSeasonId = SeasonId ?? SharedState.SelectedSeasonId;
+        if (targetSeasonId == 0)
         {
-            List<GameStatsExtendedView> allStats = await StatsService.GetAllGameStatsAsync(SessionState.SelectedSeasonId);
-            stats = allStats.Where(s => s.ExtendedPlayerName == PlayerName).ToList();
+            List<Season> seasons = await StatsService.GetSeasonsAsync();
+            if (seasons.Any()) targetSeasonId = seasons.First().Id;
         }
+
+        if (targetSeasonId != 0)
+        {
+            logs = await StatsService.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
+        }
+        else
+        {
+            logs = new List<GameStatsExtendedView>();
+        }
+        
+        isLoading = false;
     }
 
     private void GoBack()
     {
-        Navigation.NavigateTo("/" + SessionState.ReturnUrl);
-    }
-
-    private string GetHitsSummary(StatEntry s)
-    {
-        int totalHits = s.H1B + s.H2B + s.H3B + s.H4B + s.HR;
-        if (totalHits == 0) return "0";
-        
-        List<string> parts = new List<string>();
-        if (s.HR > 0) parts.Add($"{s.HR}HR");
-        if (s.H4B > 0) parts.Add($"{s.H4B}4B");
-        if (s.H3B > 0) parts.Add($"{s.H3B}3B");
-        if (s.H2B > 0) parts.Add($"{s.H2B}2B");
-        if (s.H1B > 0) parts.Add($"{s.H1B}1B");
-        
-        return $"{totalHits} ({string.Join(",", parts)})";
-    }
-
-    private string GetOutsSummary(StatEntry s)
-    {
-        List<string> parts = new List<string>();
-        if (s.K > 0) parts.Add($"{s.K}K");
-        if (s.KF > 0) parts.Add($"{s.KF}KF");
-        if (s.GO > 0) parts.Add($"{s.GO}GO");
-        if (s.FO > 0) parts.Add($"{s.FO}FO");
-        if (s.FC > 0) parts.Add($"{s.FC}FC");
-        
-        return string.Join(", ", parts);
+        NavigationManager.NavigateTo("/" + SharedState.ReturnUrl);
     }
 }

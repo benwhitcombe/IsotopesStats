@@ -64,8 +64,6 @@
         
         if (user != null)
         {
-            await AuthStateProvider.UpdateAuthenticationState(user);
-            
             SharedState.OpenMenuOnLoad = true;
 
             if (!string.IsNullOrEmpty(ReturnUrl))

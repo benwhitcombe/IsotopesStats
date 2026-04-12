@@ -217,16 +217,27 @@ public class StatsService
         TeamStatsSummary? result = await _supabase.From<TeamStatsSummary>()
             .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Single();
-        return (PlayerStatsSummary?)result ?? new PlayerStatsSummary { PlayerName = "TEAM TOTALS" };
+        return (PlayerStatsSummary?)result ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
     public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)
     {
         ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
             .Filter("seasonid", Constants.Operator.Equals, seasonId)
-            .Filter("gameisdeleted", Constants.Operator.Equals, false)
+            .Where(x => x.GameIsDeleted == false)
             .Order("date", Constants.Ordering.Descending)
             .Order("bo", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
+    }
+
+    public async Task<List<GameStatsExtendedView>> GetPlayerGameLogAsync(string playerName, int seasonId)
+    {
+        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
+            .Filter("playername", Constants.Operator.Equals, playerName)
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Filter("gameisdeleted", Constants.Operator.Equals, false)
+            .Order("date", Constants.Ordering.Descending)
             .Get();
         return response.Models;
     }

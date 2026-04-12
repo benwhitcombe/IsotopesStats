@@ -36,8 +36,9 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             List<UserRole> roles = await GetUserRolesForUserAsync(session.User.Id);
             return new AuthenticationState(CreateClaimsPrincipal(session.User, roles));
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine("Auth Error: " + ex.Message);
             return new AuthenticationState(_anonymous);
         }
     }
@@ -75,16 +76,34 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
         try 
         {
-            ModeledResponse<UserRole> response = await _supabase.Postgrest
-                .Table<UserRole>()
-                .Select("id, name, isdeleted, rolepermissions(permissions(id, name))")
-                .Filter("useruserroles.userid", Constants.Operator.Equals, supabaseUserId)
-                .Get();
+            ModeledResponse<UserUserRoles> urResponse = await _supabase.From<UserUserRoles>().Where(x => x.UserId == supabaseUserId).Get();
+            List<int> roleIds = urResponse.Models.Select(x => x.RoleId).ToList();
 
-            return response.Models;
+            if (!roleIds.Any()) return new List<UserRole>();
+
+            ModeledResponse<UserRole> rolesResponse = await _supabase.From<UserRole>().Get();
+            List<UserRole> roles = rolesResponse.Models.Where(r => roleIds.Contains(r.Id)).ToList();
+
+            ModeledResponse<RolePermission> rpResponse = await _supabase.From<RolePermission>().Get();
+            List<int> permissionIds = rpResponse.Models.Where(rp => roleIds.Contains(rp.RoleId)).Select(x => x.PermissionId).Distinct().ToList();
+
+            if (permissionIds.Any())
+            {
+                ModeledResponse<Permission> permResponse = await _supabase.From<Permission>().Get();
+                List<Permission> perms = permResponse.Models;
+
+                foreach (UserRole role in roles)
+                {
+                    List<int> rolePermIds = rpResponse.Models.Where(x => x.RoleId == role.Id).Select(x => x.PermissionId).ToList();
+                    role.Permissions = perms.Where(p => rolePermIds.Contains(p.Id)).ToList();
+                }
+            }
+
+            return roles;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine("Auth Error: " + ex.Message);
             return new List<UserRole>();
         }
     }
