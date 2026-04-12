@@ -1,4 +1,3 @@
-@page "/"
 @page "/gamestats"
 @using IsotopesStats.Models
 @using IsotopesStats.Services
@@ -304,7 +303,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        SharedState.ReturnUrl = "";
+        SharedState.ReturnUrl = "gamestats";
         seasons = await StatsService.GetSeasonsAsync();
 
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())

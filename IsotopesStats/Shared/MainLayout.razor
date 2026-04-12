@@ -25,8 +25,8 @@
                 <h1 style="margin:0; font-size: 1.25rem;">ISOTOPES STATS</h1>
                 
                 <nav class="desktop-only" style="margin-left: 2rem; display: flex; gap: 1rem;">
-                    <NavLink href="" Match="NavLinkMatch.All" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Games</NavLink>
-                    <NavLink href="players" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Players</NavLink>
+                    <NavLink href="" Match="NavLinkMatch.All" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Players</NavLink>
+                    <NavLink href="gamestats" class="view-btn" style="background: var(--isotopes-red); color: white; border: none; font-weight: bold; text-decoration: none;">Games</NavLink>
                 </nav>
             </div>
             
@@ -64,10 +64,10 @@
                 @* Public Links *@
                 <div style="padding: 1rem 0;">
                     <NavLink href="" Match="NavLinkMatch.All" class="drawer-item" @onclick="ToggleMenu">
-                        <span>⚾</span> Games
-                    </NavLink>
-                    <NavLink href="players" class="drawer-item" @onclick="ToggleMenu">
                         <JerseyIcon /> Players
+                    </NavLink>
+                    <NavLink href="gamestats" class="drawer-item" @onclick="ToggleMenu">
+                        <span>⚾</span> Games
                     </NavLink>
                 </div>
 
