@@ -65,22 +65,22 @@ else
         <div class="leader-highlights">
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "AVG")' style="cursor:pointer; animation-delay: 0.1s;">
                 <div class="leader-category">Batting Average</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(avgLeader?.PlayerName)' @onclick:stopPropagation="true" style="text-decoration: underline;">@avgLeader?.PlayerName</div>
+                <div class="leader-name" @onclick='() => NavigateToLog(avgLeader?.PlayerName)' @onclick:stopPropagation="true">@avgLeader?.PlayerName</div>
                 <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Hits", "OPS")' style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.2s;">
                 <div class="leader-category">On-Base Plus Slugging</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(opsLeader?.PlayerName)' @onclick:stopPropagation="true" style="text-decoration: underline;">@opsLeader?.PlayerName</div>
+                <div class="leader-name" @onclick='() => NavigateToLog(opsLeader?.PlayerName)' @onclick:stopPropagation="true">@opsLeader?.PlayerName</div>
                 <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "HR")' style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.3s;">
                 <div class="leader-category">Home Runs</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(hrLeader?.PlayerName)' @onclick:stopPropagation="true" style="text-decoration: underline;">@hrLeader?.PlayerName</div>
+                <div class="leader-name" @onclick='() => NavigateToLog(hrLeader?.PlayerName)' @onclick:stopPropagation="true">@hrLeader?.PlayerName</div>
                 <div class="leader-value">@hrLeader?.HR</div>
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "RBI")' style="cursor:pointer; background: linear-gradient(135deg, #666, #444); animation-delay: 0.4s;">
                 <div class="leader-category">Runs Batted In</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(rbiLeader?.PlayerName)' @onclick:stopPropagation="true" style="text-decoration: underline;">@rbiLeader?.PlayerName</div>
+                <div class="leader-name" @onclick='() => NavigateToLog(rbiLeader?.PlayerName)' @onclick:stopPropagation="true">@rbiLeader?.PlayerName</div>
                 <div class="leader-value">@rbiLeader?.RBI</div>
             </div>
         </div>
@@ -521,3 +521,10 @@ else
         NavigationManager.NavigateTo($"/playerlogs/{Uri.EscapeDataString(playerName)}");
     }
 }
+
+<style>
+    .leader-name:hover {
+        text-decoration: underline !important;
+        opacity: 0.9;
+    }
+</style>
