@@ -204,6 +204,24 @@ public class StatsService
         return response.Models;
     }
 
+    public async Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId)
+    {
+        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
+            .Filter("gameid", Constants.Operator.Equals, gameId)
+            .Order("bo", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
+    }
+
+    public async Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId)
+    {
+        ModeledResponse<GameSummaryView> response = await _supabase.From<GameSummaryView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Order("date", Constants.Ordering.Descending)
+            .Get();
+        return response.Models;
+    }
+
     public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
         ModeledResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>()
