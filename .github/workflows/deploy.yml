@@ -22,9 +22,6 @@ jobs:
       - name: Publish application
         run: dotnet publish IsotopesStats/IsotopesStats.csproj -c Release -o release
 
-      - name: Change base-tag in index.html for GitHub Pages
-        run: sed -i 's/<base href="\/" \/>/<base href="\/IsotopesStats\/" \/>/g' release/wwwroot/index.html
-
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
