@@ -177,30 +177,30 @@ else
                                         @foreach (GameStatsExtendedView stat in sortedStats)
                                         {
                                             <tr>
-                                                <td>@stat.BO</td>
-                                                <td class="player-name sticky-col">
+                                                <td class="@(uiState.SortColumn == "BO" ? "active-sort-col" : "")">@stat.BO</td>
+                                                <td class="player-name sticky-col @(uiState.SortColumn == "Player" ? "active-sort-col" : "")">
                                                     <a href="/playerlogs/@Uri.EscapeDataString(stat.ExtendedPlayerName)" style="text-decoration: none; color: inherit;">
                                                         @stat.ExtendedPlayerName
                                                     </a>
                                                 </td>
-                                                <td class="group-divider">@stat.PA</td>
-                                                <td>@stat.AB</td>
-                                                <td class="group-divider">@stat.R</td>
-                                                <td>@stat.H</td>
-                                                <td>@stat.H2B</td>
-                                                <td>@stat.H3B</td>
-                                                <td>@stat.H4B</td>
-                                                <td>@stat.HR</td>
-                                                <td>@stat.RBI</td>
-                                                <td class="group-divider">@stat.BB</td>
-                                                <td>@stat.K</td>
-                                                <td>@stat.KF</td>
-                                                <td class="group-divider">@stat.SF</td>
-                                                <td>@stat.FC</td>
-                                                <td>@stat.GO</td>
-                                                <td>@stat.FO</td>
-                                                <td class="group-divider">@stat.AVG.ToString(".000")</td>
-                                                <td>@stat.OBP.ToString(".000")</td>
+                                                <td class="group-divider @(uiState.SortColumn == "PA" ? "active-sort-col" : "")">@stat.PA</td>
+                                                <td class="@(uiState.SortColumn == "AB" ? "active-sort-col" : "")">@stat.AB</td>
+                                                <td class="group-divider @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
+                                                <td class="@(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
+                                                <td class="@(uiState.SortColumn == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
+                                                <td class="@(uiState.SortColumn == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
+                                                <td class="@(uiState.SortColumn == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
+                                                <td class="@(uiState.SortColumn == "HR" ? "active-sort-col" : "")">@stat.HR</td>
+                                                <td class="@(uiState.SortColumn == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
+                                                <td class="group-divider @(uiState.SortColumn == "BB" ? "active-sort-col" : "")">@stat.BB</td>
+                                                <td class="@(uiState.SortColumn == "K" ? "active-sort-col" : "")">@stat.K</td>
+                                                <td class="@(uiState.SortColumn == "KF" ? "active-sort-col" : "")">@stat.KF</td>
+                                                <td class="group-divider @(uiState.SortColumn == "SF" ? "active-sort-col" : "")">@stat.SF</td>
+                                                <td class="@(uiState.SortColumn == "FC" ? "active-sort-col" : "")">@stat.FC</td>
+                                                <td class="@(uiState.SortColumn == "GO" ? "active-sort-col" : "")">@stat.GO</td>
+                                                <td class="@(uiState.SortColumn == "FO" ? "active-sort-col" : "")">@stat.FO</td>
+                                                <td class="group-divider @(uiState.SortColumn == "AVG" ? "active-sort-col" : "")">@stat.AVG.ToString(".000")</td>
+                                                <td class="@(uiState.SortColumn == "OBP" ? "active-sort-col" : "")">@stat.OBP.ToString(".000")</td>
                                             </tr>
                                         }
                                         <tr class="game-summary-row">
@@ -261,10 +261,10 @@ else
                                         </div>
                                     </div>
                                 }
-                                <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
+                                <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff; margin-top: 1rem;">
                                     <div class="mobile-card-header">
                                         <span class="mobile-card-name">TEAM TOTALS</span>
-                                        <span class="badge bg-primary">AVG: @teamAVG.ToString(".000") | OBP: @teamOBP.ToString(".000")</span>
+                                        <span class="badge bg-light text-dark">AVG: @teamAVG.ToString(".000") | OBP: @teamOBP.ToString(".000")</span>
                                     </div>
                                     <div class="mobile-card-stats">
                                         <div class="m-stat"><span class="m-stat-val">@summary.TeamAB</span><span class="m-stat-label">AB</span></div>

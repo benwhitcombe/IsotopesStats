@@ -89,10 +89,13 @@ else
 
     <div class="stat-card" style="animation-delay: 0.5s; margin-bottom: 1.5rem;">
         <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick='() => SetView("Standard")'>Standard</button>
-                <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick='() => SetView("Hits")'>Hits</button>
-                <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick='() => SetView("Outcomes")'>Plate Outcomes</button>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="margin:0; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #666;">Stat Selection</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick='() => SetView("Standard")'>Standard</button>
+                    <button class="view-btn @(activeView == "Hits" ? "active" : "")" @onclick='() => SetView("Hits")'>Hits</button>
+                    <button class="view-btn @(activeView == "Outcomes" ? "active" : "")" @onclick='() => SetView("Outcomes")'>Plate Outcomes</button>
+                </div>
             </div>
 
             <div class="mobile-only">
@@ -318,6 +321,54 @@ else
                     </div>
                 </div>
             }
+            <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff; margin-top: 1rem;">
+                <div class="mobile-card-header">
+                    <span class="mobile-card-name">TEAM TOTALS</span>
+                    <div style="display: flex; gap: 4px;">
+                        @if (activeView == "Hits")
+                        {
+                            <span class="badge bg-primary">SLG: @teamTotals.SLG.ToString(".000")</span>
+                            <span class="badge bg-primary">OPS: @teamTotals.OPS.ToString(".000")</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-primary">AVG: @teamTotals.AVG.ToString(".000")</span>
+                            <span class="badge bg-primary">OBP: @teamTotals.OBP.ToString(".000")</span>
+                        }
+                    </div>
+                </div>
+                <div class="mobile-card-stats">
+                    @if (activeView == "Standard")
+                    {
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.PA</span><span class="m-stat-label">PA</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.AB</span><span class="m-stat-label">AB</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H</span><span class="m-stat-label">H</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.HR</span><span class="m-stat-label">HR</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.RBI</span><span class="m-stat-label">RBI</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.R</span><span class="m-stat-label">R</span></div>
+                    }
+                    else if (activeView == "Hits")
+                    {
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.AB</span><span class="m-stat-label">AB</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H</span><span class="m-stat-label">H</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H1B</span><span class="m-stat-label">1B</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H2B</span><span class="m-stat-label">2B</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H3B</span><span class="m-stat-label">3B</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.H4B</span><span class="m-stat-label">4B</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.HR</span><span class="m-stat-label">HR</span></div>
+                    }
+                    else if (activeView == "Outcomes")
+                    {
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.BB</span><span class="m-stat-label">BB</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.K</span><span class="m-stat-label">K</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.KF</span><span class="m-stat-label">KF</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.SF</span><span class="m-stat-label">SF</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.FC</span><span class="m-stat-label">FC</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.GO</span><span class="m-stat-label">GO</span></div>
+                        <div class="m-stat"><span class="m-stat-val">@teamTotals.FO</span><span class="m-stat-label">FO</span></div>
+                    }
+                </div>
+            </div>
         </div>
         </div>
     </div>
