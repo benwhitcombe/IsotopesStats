@@ -240,7 +240,7 @@ else
                                 {
                                     <div class="mobile-player-card">
                                         <div class="mobile-card-header">
-                                            <span class="mobile-card-name">@stat.BO. @stat.ExtendedPlayerName</span>
+                                            <span class="mobile-card-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.ExtendedPlayerName)}")' style="cursor: pointer;">@stat.BO. @stat.ExtendedPlayerName</span>
                                             <span class="badge bg-light text-dark">AVG: @stat.AVG.ToString(".000") | OBP: @stat.OBP.ToString(".000")</span>
                                         </div>
                                         <div class="mobile-card-stats">

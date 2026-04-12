@@ -55,49 +55,105 @@ else
             </div>
         </div>
 
-        <div class="table-container view-fade-in" style="animation-delay: 0.2s;">
-            <div class="box-score-table-wrapper">
-                <table class="box-score-table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Opponent</th>
-                            <th>PA</th>
-                            <th>AB</th>
-                            <th>H</th>
-                            <th>2B</th>
-                            <th>3B</th>
-                            <th>4B</th>
-                            <th>HR</th>
-                            <th>RBI</th>
-                            <th>BB</th>
-                            <th>K</th>
-                            <th>KF</th>
-                            <th>R</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (GameStatsExtendedView log in logs)
-                        {
+        <div class="desktop-only">
+            <div class="table-container view-fade-in" style="animation-delay: 0.2s;">
+                <div class="box-score-table-wrapper">
+                    <table class="box-score-table table-sm">
+                        <thead>
                             <tr>
-                                <td style="color: #666;">@log.Date.ToString("MMM dd")</td>
-                                <td style="font-weight: bold; text-align: left;">@log.OpponentName</td>
-                                <td>@log.PA</td>
-                                <td>@log.AB</td>
-                                <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
-                                <td>@log.H2B</td>
-                                <td>@log.H3B</td>
-                                <td>@log.H4B</td>
-                                <td style="color: var(--isotopes-red); font-weight: bold;">@log.HR</td>
-                                <td>@log.RBI</td>
-                                <td>@log.BB</td>
-                                <td>@log.K</td>
-                                <td>@log.KF</td>
-                                <td>@log.R</td>
+                                <th>Date</th>
+                                <th>Opponent</th>
+                                <th>PA</th>
+                                <th>AB</th>
+                                <th>H</th>
+                                <th>2B</th>
+                                <th>3B</th>
+                                <th>4B</th>
+                                <th>HR</th>
+                                <th>RBI</th>
+                                <th>BB</th>
+                                <th>K</th>
+                                <th>KF</th>
+                                <th>R</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (GameStatsExtendedView log in logs)
+                            {
+                                <tr>
+                                    <td style="color: #666;">@log.Date.ToString("MMM dd")</td>
+                                    <td style="font-weight: bold; text-align: left;">@log.OpponentName</td>
+                                    <td>@log.PA</td>
+                                    <td>@log.AB</td>
+                                    <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
+                                    <td>@log.H2B</td>
+                                    <td>@log.H3B</td>
+                                    <td>@log.H4B</td>
+                                    <td style="color: var(--isotopes-red); font-weight: bold;">@log.HR</td>
+                                    <td>@log.RBI</td>
+                                    <td>@log.BB</td>
+                                    <td>@log.K</td>
+                                    <td>@log.KF</td>
+                                    <td>@log.R</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-only">
+            <div class="game-cards-list">
+                @for (int i = 0; i < logs.Count; i++)
+                {
+                    GameStatsExtendedView log = logs[i];
+                    double currentDelay = i * 0.1;
+
+                    <div class="game-card stat-card view-fade-in" style="animation-delay: @(currentDelay)s; margin-bottom: 1rem;">
+                        <div class="game-card-header" style="cursor: default;">
+                            <div class="game-info-left">
+                                <div class="game-number-badge">GAME #@log.GameNumber</div>
+                                <div class="game-date">@log.Date.ToString("MMM dd, yyyy")</div>
+                            </div>
+
+                            <div class="game-matchup">
+                                <div class="opponent-name">vs @log.OpponentName</div>
+                                <div class="diamond-name">📍 @log.Diamond</div>
+                            </div>
+
+                            <div class="game-score-summary">
+                                <div class="score-item">
+                                    <span class="score-value">@log.H</span>
+                                    <span class="score-label">Hits</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="score-value">@log.R</span>
+                                    <span class="score-label">Runs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="game-card-detail expanded" style="border-top: 1px solid #f0f0f0; padding-top: 0.75rem;">
+                            <div class="mobile-card-stats">
+                                @if (log.PA > 0) { <div class="m-stat"><span class="m-stat-val">@log.PA</span><span class="m-stat-label">PA</span></div> }
+                                @if (log.AB > 0) { <div class="m-stat"><span class="m-stat-val">@log.AB</span><span class="m-stat-label">AB</span></div> }
+                                @if (log.H2B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H2B</span><span class="m-stat-label">2B</span></div> }
+                                @if (log.H3B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H3B</span><span class="m-stat-label">3B</span></div> }
+                                @if (log.H4B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H4B</span><span class="m-stat-label">4B</span></div> }
+                                @if (log.HR > 0) { <div class="m-stat"><span class="m-stat-val" style="color: var(--isotopes-red); font-weight: bold;">@log.HR</span><span class="m-stat-label">HR</span></div> }
+                                @if (log.RBI > 0) { <div class="m-stat"><span class="m-stat-val">@log.RBI</span><span class="m-stat-label">RBI</span></div> }
+                                @if (log.BB > 0) { <div class="m-stat"><span class="m-stat-val">@log.BB</span><span class="m-stat-label">BB</span></div> }
+                                @if (log.K > 0) { <div class="m-stat"><span class="m-stat-val">@log.K</span><span class="m-stat-label">K</span></div> }
+                                @if (log.KF > 0) { <div class="m-stat"><span class="m-stat-val">@log.KF</span><span class="m-stat-label">KF</span></div> }
+                                @if (log.SF > 0) { <div class="m-stat"><span class="m-stat-val">@log.SF</span><span class="m-stat-label">SF</span></div> }
+                                @if (log.FC > 0) { <div class="m-stat"><span class="m-stat-val">@log.FC</span><span class="m-stat-label">FC</span></div> }
+                                @if (log.GO > 0) { <div class="m-stat"><span class="m-stat-val">@log.GO</span><span class="m-stat-label">GO</span></div> }
+                                @if (log.FO > 0) { <div class="m-stat"><span class="m-stat-val">@log.FO</span><span class="m-stat-label">FO</span></div> }
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     }
