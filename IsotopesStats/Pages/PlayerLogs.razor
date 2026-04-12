@@ -35,22 +35,22 @@ else
     else
     {
         <div class="stat-card view-fade-in" style="margin-bottom: 1.5rem;">
-            <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">Games</div>
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Count</div>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-value">@logs.Count</span>
+                    <span class="stat-label">Games</span>
                 </div>
-                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">Hits</div>
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Sum(l => l.H)</div>
+                <div class="stat-item">
+                    <span class="stat-value">@logs.Sum(l => l.H)</span>
+                    <span class="stat-label">Hits</span>
                 </div>
-                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">HR</div>
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red);">@logs.Sum(l => l.HR)</div>
+                <div class="stat-item">
+                    <span class="stat-value">@logs.Sum(l => l.HR)</span>
+                    <span class="stat-label">HR</span>
                 </div>
-                <div class="stat-item" style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #999; font-weight: 800; margin-bottom: 0.25rem;">RBI</div>
-                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--isotopes-accent);">@logs.Sum(l => l.RBI)</div>
+                <div class="stat-item">
+                    <span class="stat-value">@logs.Sum(l => l.RBI)</span>
+                    <span class="stat-label">RBI</span>
                 </div>
             </div>
         </div>

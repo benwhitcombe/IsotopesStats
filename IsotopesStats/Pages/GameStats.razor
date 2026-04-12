@@ -108,10 +108,17 @@ else
                             <div class="diamond-name">📍 @summary.Diamond</div>
                         </div>
 
-                        <div class="game-result-summary">
-                            <div class="result-score">@summary.TeamRuns <span class="score-label">Runs</span></div>
-                            <div class="expand-icon @(uiState.IsExpanded ? "rotated" : "")">
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                        <div class="game-score-summary">
+                            <div class="score-item">
+                                <span class="score-value">@summary.TeamRuns</span>
+                                <span class="score-label">Runs</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-value">@summary.TeamHits</span>
+                                <span class="score-label">Hits</span>
+                            </div>
+                            <div class="expand-icon" style="margin-left: 1rem; color: #ccc; width: auto;">
+                                @(uiState.IsExpanded ? "▲" : "▼")
                             </div>
                         </div>
                     </div>
@@ -197,7 +204,7 @@ else
                                                 <td>@stat.OBP.ToString(".000")</td>
                                             </tr>
                                         }
-                                        <tr class="game-summary-row" style="background: #f8f9fa; font-weight: bold;">
+                                        <tr class="game-summary-row">
                                             <td colspan="2" class="sticky-col">TOTALS</td>
                                             <td class="group-divider">@summary.TeamPA</td>
                                             <td>@summary.TeamAB</td>

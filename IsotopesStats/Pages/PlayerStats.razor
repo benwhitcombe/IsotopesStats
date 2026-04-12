@@ -86,7 +86,7 @@ else
         </div>
     }
 
-    <div class="stat-card" style="animation-delay: 0.5s;">
+    <div class="stat-card" style="animation-delay: 0.5s; margin-bottom: 1.5rem;">
         <div class="view-switcher" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button class="view-btn @(activeView == "Standard" ? "active" : "")" @onclick='() => SetView("Standard")'>Standard</button>
@@ -121,10 +121,9 @@ else
             </div>
         }
 
-        <div class="desktop-only">
-            <div class="table-container">
-                <div class="box-score-table-wrapper">
-                    <table class="box-score-table table-sm">
+        <div class="desktop-only" style="margin-top: 1.5rem;">
+            <div class="box-score-table-wrapper" style="padding: 0;">
+                <table class="box-score-table table-sm">
                 <thead>
                     <tr>
                         <th style="width: 40px; text-align: center;">#</th>
@@ -133,37 +132,37 @@ else
                         @if (activeView == "Standard")
                         {
                             <th @onclick='() => Sort("GP")' class="sortable-header">GP<span class="sort-icon">@(GetSortIcon("GP"))</span></th>
-                            <th @onclick='() => Sort("PA")' class="sortable-header">PA<span class="sort-icon">@(GetSortIcon("PA"))</span></th>
+                            <th @onclick='() => Sort("PA")' class="sortable-header group-divider">PA<span class="sort-icon">@(GetSortIcon("PA"))</span></th>
                             <th @onclick='() => Sort("AB")' class="sortable-header">AB<span class="sort-icon">@(GetSortIcon("AB"))</span></th>
-                            <th @onclick='() => Sort("H")' class="sortable-header">H<span class="sort-icon">@(GetSortIcon("H"))</span></th>
+                            <th @onclick='() => Sort("H")' class="sortable-header group-divider">H<span class="sort-icon">@(GetSortIcon("H"))</span></th>
                             <th @onclick='() => Sort("HR")' class="sortable-header">HR<span class="sort-icon">@(GetSortIcon("HR"))</span></th>
                             <th @onclick='() => Sort("RBI")' class="sortable-header">RBI<span class="sort-icon">@(GetSortIcon("RBI"))</span></th>
                             <th @onclick='() => Sort("R")' class="sortable-header">R<span class="sort-icon">@(GetSortIcon("R"))</span></th>
-                            <th @onclick='() => Sort("AVG")' class="sortable-header highlight-col">AVG<span class="sort-icon">@(GetSortIcon("AVG"))</span></th>
+                            <th @onclick='() => Sort("AVG")' class="sortable-header group-divider highlight-col">AVG<span class="sort-icon">@(GetSortIcon("AVG"))</span></th>
                             <th @onclick='() => Sort("OBP")' class="sortable-header highlight-col">OBP<span class="sort-icon">@(GetSortIcon("OBP"))</span></th>
                         }
                         else if (activeView == "Hits")
                         {
                             <th @onclick='() => Sort("H")' class="sortable-header">H<span class="sort-icon">@(GetSortIcon("H"))</span></th>
                             <th @onclick='() => Sort("AB")' class="sortable-header">AB<span class="sort-icon">@(GetSortIcon("AB"))</span></th>
-                            <th @onclick='() => Sort("1B")' class="sortable-header">1B<span class="sort-icon">@(GetSortIcon("1B"))</span></th>
+                            <th @onclick='() => Sort("1B")' class="sortable-header group-divider">1B<span class="sort-icon">@(GetSortIcon("1B"))</span></th>
                             <th @onclick='() => Sort("2B")' class="sortable-header">2B<span class="sort-icon">@(GetSortIcon("2B"))</span></th>
                             <th @onclick='() => Sort("3B")' class="sortable-header">3B<span class="sort-icon">@(GetSortIcon("3B"))</span></th>
                             <th @onclick='() => Sort("4B")' class="sortable-header">4B<span class="sort-icon">@(GetSortIcon("4B"))</span></th>
                             <th @onclick='() => Sort("HR")' class="sortable-header">HR<span class="sort-icon">@(GetSortIcon("HR"))</span></th>
-                            <th @onclick='() => Sort("SLG")' class="sortable-header highlight-col">SLG<span class="sort-icon">@(GetSortIcon("SLG"))</span></th>
+                            <th @onclick='() => Sort("SLG")' class="sortable-header group-divider highlight-col">SLG<span class="sort-icon">@(GetSortIcon("SLG"))</span></th>
                             <th @onclick='() => Sort("OPS")' class="sortable-header highlight-col">OPS<span class="sort-icon">@(GetSortIcon("OPS"))</span></th>
                         }
                         else if (activeView == "Outcomes")
                         {
                             <th @onclick='() => Sort("BB")' class="sortable-header">BB<span class="sort-icon">@(GetSortIcon("BB"))</span></th>
-                            <th @onclick='() => Sort("K")' class="sortable-header">K<span class="sort-icon">@(GetSortIcon("K"))</span></th>
+                            <th @onclick='() => Sort("K")' class="sortable-header group-divider">K<span class="sort-icon">@(GetSortIcon("K"))</span></th>
                             <th @onclick='() => Sort("KF")' class="sortable-header">KF<span class="sort-icon">@(GetSortIcon("KF"))</span></th>
-                            <th @onclick='() => Sort("SF")' class="sortable-header">SF<span class="sort-icon">@(GetSortIcon("SF"))</span></th>
+                            <th @onclick='() => Sort("SF")' class="sortable-header group-divider">SF<span class="sort-icon">@(GetSortIcon("SF"))</span></th>
                             <th @onclick='() => Sort("FC")' class="sortable-header">FC<span class="sort-icon">@(GetSortIcon("FC"))</span></th>
                             <th @onclick='() => Sort("GO")' class="sortable-header">GO<span class="sort-icon">@(GetSortIcon("GO"))</span></th>
                             <th @onclick='() => Sort("FO")' class="sortable-header">FO<span class="sort-icon">@(GetSortIcon("FO"))</span></th>
-                            <th @onclick='() => Sort("OBP")' class="sortable-header highlight-col">OBP<span class="sort-icon">@(GetSortIcon("OBP"))</span></th>      
+                            <th @onclick='() => Sort("OBP")' class="sortable-header group-divider highlight-col">OBP<span class="sort-icon">@(GetSortIcon("OBP"))</span></th>      
                         }
                     </tr>
                 </thead>
@@ -181,83 +180,82 @@ else
                             @if (activeView == "Standard")
                             {
                                 <td class="@(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
-                                <td class="@(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
+                                <td class="group-divider @(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
                                 <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
-                                <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                                <td class="group-divider @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
                                 <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
                                 <td class="@(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
                                 <td class="@(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
-                                <td class="@(currentSortColumn == "AVG" ? "active-sort-col" : "")">@player.AVG.ToString(".000")</td>
-                                <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
+                                <td class="group-divider highlight-col @(currentSortColumn == "AVG" ? "active-sort-col" : "")">@player.AVG.ToString(".000")</td>
+                                <td class="highlight-col @(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
                             }
                             else if (activeView == "Hits")
                             {
                                 <td class="@(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
                                 <td class="@(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
-                                <td class="@(currentSortColumn == "1B" ? "active-sort-col" : "")">@player.H1B</td>
+                                <td class="group-divider @(currentSortColumn == "1B" ? "active-sort-col" : "")">@player.H1B</td>
                                 <td class="@(currentSortColumn == "2B" ? "active-sort-col" : "")">@player.H2B</td>
                                 <td class="@(currentSortColumn == "3B" ? "active-sort-col" : "")">@player.H3B</td>
                                 <td class="@(currentSortColumn == "4B" ? "active-sort-col" : "")">@player.H4B</td>
                                 <td class="@(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
-                                <td class="@(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
-                                <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
+                                <td class="group-divider highlight-col @(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
+                                <td class="highlight-col @(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
                             }
                             else if (activeView == "Outcomes")
                             {
                                 <td class="@(currentSortColumn == "BB" ? "active-sort-col" : "")">@player.BB</td>
-                                <td class="@(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
+                                <td class="group-divider @(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
                                 <td class="@(currentSortColumn == "KF" ? "active-sort-col" : "")">@player.KF</td>
-                                <td class="@(currentSortColumn == "SF" ? "active-sort-col" : "")">@player.SF</td>
+                                <td class="group-divider @(currentSortColumn == "SF" ? "active-sort-col" : "")">@player.SF</td>
                                 <td class="@(currentSortColumn == "FC" ? "active-sort-col" : "")">@player.FC</td>
                                 <td class="@(currentSortColumn == "GO" ? "active-sort-col" : "")">@player.GO</td>
                                 <td class="@(currentSortColumn == "FO" ? "active-sort-col" : "")">@player.FO</td>
-                                <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
+                                <td class="group-divider highlight-col @(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
                             }
                         </tr>
                     }
                 </tbody>
                 <tfoot>
-                    <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #dee2e6;">
-                        <td colspan="2" style="text-align: left;">@teamTotals.PlayerName</td>
+                    <tr class="game-summary-row">
+                        <td colspan="2" class="sticky-col">TEAM TOTALS</td>
                         @if (activeView == "Standard")
                         {
                             <td>-</td>
-                            <td>@teamTotals.PA</td>
+                            <td class="group-divider">@teamTotals.PA</td>
                             <td>@teamTotals.AB</td>
-                            <td>@teamTotals.H</td>
+                            <td class="group-divider">@teamTotals.H</td>
                             <td>@teamTotals.HR</td>
                             <td>@teamTotals.RBI</td>
                             <td>@teamTotals.R</td>
-                            <td class="highlight-col">@teamTotals.AVG.ToString(".000")</td>
+                            <td class="group-divider highlight-col">@teamTotals.AVG.ToString(".000")</td>
                             <td class="highlight-col">@teamTotals.OBP.ToString(".000")</td>
                         }
                         else if (activeView == "Hits")
                         {
                             <td>@teamTotals.H</td>
                             <td>@teamTotals.AB</td>
-                            <td>@teamTotals.H1B</td>
+                            <td class="group-divider">@teamTotals.H1B</td>
                             <td>@teamTotals.H2B</td>
                             <td>@teamTotals.H3B</td>
                             <td>@teamTotals.H4B</td>
                             <td>@teamTotals.HR</td>
-                            <td class="highlight-col">@teamTotals.SLG.ToString(".000")</td>
+                            <td class="group-divider highlight-col">@teamTotals.SLG.ToString(".000")</td>
                             <td class="highlight-col">@teamTotals.OPS.ToString(".000")</td>
                         }
                         else if (activeView == "Outcomes")
                         {
                             <td>@teamTotals.BB</td>
-                            <td>@teamTotals.K</td>
+                            <td class="group-divider">@teamTotals.K</td>
                             <td>@teamTotals.KF</td>
-                            <td>@teamTotals.SF</td>
+                            <td class="group-divider">@teamTotals.SF</td>
                             <td>@teamTotals.FC</td>
                             <td>@teamTotals.GO</td>
                             <td>@teamTotals.FO</td>
-                            <td class="highlight-col">@teamTotals.OBP.ToString(".000")</td>
+                            <td class="group-divider highlight-col">@teamTotals.OBP.ToString(".000")</td>
                         }
                     </tr>
                 </tfoot>
             </table>
-        </div>
         </div>
         </div>
 
