@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "IsotopesStats",
   "resources": {
-    "hash": "sha256-+G3dhpMs9XscD82CFUlbcaZ8eS7q5v/qHOHiFpcq3ew=",
+    "hash": "sha256-hCg2mUdYCAI2oJ0z/XzyFK2mFGtunAwGsLBUjtTA2Ew=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -72,7 +72,7 @@
       "System.IO.Compression.wasm": "sha256-KHr72MF0t+KlUU53L5ZUotrkhU75+EIbFrbrewHdLPg=",
       "System.Linq.Expressions.wasm": "sha256-MiRPFnht0l6lF4qfKmbdR8O8kNSDgAWxhvoO64C7oWo=",
       "System.Linq.Queryable.wasm": "sha256-0OUU77GfKuKJql12IbXGajG9Kk+vZFqBI3t26dNV2mY=",
-      "System.Linq.wasm": "sha256-e6xUshoEdjQVW3kHM+B9B7a4IjJFLZ5WfvGl45BXGWw=",
+      "System.Linq.wasm": "sha256-dGxXXv0wfdNj/4hv044hMex0Vh5iRe2ShXEeGBsXCXE=",
       "System.Memory.wasm": "sha256-0TjhHjrw2tKcSyTx358U07QUdt1Ja/tTVHzoRp1k0sU=",
       "System.Net.Http.wasm": "sha256-DaRV+V54buBsYfwMVYSuw3AWvUXKz6dL/1zn8Oh7AZw=",
       "System.Net.NetworkInformation.wasm": "sha256-LQEBfwuvyi9NsFbuhaRuqF0vdiP2RpKzCMnEEdNMzrk=",
@@ -110,7 +110,7 @@
       "System.wasm": "sha256-25KTxVbx+rD8S9iyUye7jmbj1e4TZ5Ca+elup4oegJA=",
       "netstandard.wasm": "sha256-qBhQpiKNF1ykVlV7yAWi8ZPMWf3fMf0j5etOkuszu3A=",
       "System.Private.CoreLib.wasm": "sha256-/Kj2h0DEJ8SYt3axVzfc5XPWE7pbHMXP4J8jGzg8PNA=",
-      "IsotopesStats.wasm": "sha256-cs1yX7NUKdTINe8FN+77xNZ61UANDpIzpCM5olq+oO0="
+      "IsotopesStats.wasm": "sha256-yia8mVAGbnzcnLQGxh/YwFeWo3aF0qU4RCEaYGx75jA="
     }
   },
   "cacheBootResources": true,
