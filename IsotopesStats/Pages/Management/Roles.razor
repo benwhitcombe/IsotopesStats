@@ -31,7 +31,8 @@
         BasePath="/management/roles"
         OnSave="SaveRole"
         OnDelete="DeleteRole"
-        CheckUniqueAsync="CheckRoleNameUnique">
+        CheckUniqueAsync="CheckRoleNameUnique"
+        HasCustomChanges="HasPermissionsChanged">
 
         <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
@@ -141,6 +142,7 @@ else
     private List<UserRole> roles = new();
     private List<Permission> availablePermissions = new();
     private List<int> selectedPermissionIds = new();
+    private List<int> originalPermissionIds = new();
     private UserRole editingRole = new();
     private UserRole originalRole = new();
     private bool isEditing = false;
@@ -165,6 +167,7 @@ else
                     editingRole = role.Clone();
                     originalRole = role.Clone();
                     selectedPermissionIds = role.Permissions.Select(p => p.Id).ToList();
+                    originalPermissionIds = new List<int>(selectedPermissionIds);
                 }
             }
             else
@@ -172,6 +175,7 @@ else
                 editingRole = new UserRole();
                 originalRole = new UserRole();
                 selectedPermissionIds.Clear();
+                originalPermissionIds.Clear();
             }
         }
 
@@ -199,6 +203,11 @@ else
         {
             selectedPermissionIds.Remove(permissionId);
         }
+    }
+
+    private bool HasPermissionsChanged()
+    {
+        return !selectedPermissionIds.OrderBy(id => id).SequenceEqual(originalPermissionIds.OrderBy(id => id));
     }
 
     private async Task<string?> CheckRoleNameUnique(UserRole role)

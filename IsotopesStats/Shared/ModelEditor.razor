@@ -112,9 +112,40 @@
         }
     }
 
-    private bool HasChanges => 
-        (Item != null && OriginalItem != null && !Item.Equals(OriginalItem)) || 
-        (HasCustomChanges?.Invoke() ?? false);
+    private bool HasChanges
+    {
+        get
+        {
+            if (Item == null || OriginalItem == null) return false;
+            if (HasCustomChanges?.Invoke() ?? false) return true;
+
+            // 1. If the type overrides Equals, use it (e.g. UserEditViewModel)
+            // Note: Classes from Postgrest.Models usually don't override Equals for value comparison
+            bool overridesEquals = typeof(TItem).GetMethod("Equals", new[] { typeof(object) })?.DeclaringType != typeof(object);
+            
+            if (overridesEquals)
+            {
+                return !Item.Equals(OriginalItem);
+            }
+
+            // 2. Fallback: JSON-based value comparison for plain POCOs
+            try 
+            {
+                System.Text.Json.JsonSerializerOptions options = new System.Text.Json.JsonSerializerOptions { 
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                    IncludeFields = true
+                };
+                string itemJson = System.Text.Json.JsonSerializer.Serialize(Item, options);
+                string originalJson = System.Text.Json.JsonSerializer.Serialize(OriginalItem, options);
+                return itemJson != originalJson;
+            }
+            catch 
+            {
+                // If serialization fails, we can't reliably detect changes this way
+                return false; 
+            }
+        }
+    }
 
     protected override void OnParametersSet()
     {

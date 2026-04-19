@@ -1,6 +1,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Services
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @typeparam TItem where TItem : class, IEntity<TId>
 @typeparam TId
 @inject AuthService AuthService
@@ -50,8 +51,8 @@
 
     private async Task CreateLog(TItem item)
     {
-        var authState = await AuthStateTask;
-        var user = authState.User;
+        AuthenticationState authState = await AuthStateTask;
+        ClaimsPrincipal user = authState.User;
         
         if (user.Identity?.IsAuthenticated == true)
         {
@@ -77,8 +78,8 @@
 
     private string GetItemIdentifier(TItem item)
     {
-        var nameProp = typeof(TItem).GetProperty("Name");
-        var emailProp = typeof(TItem).GetProperty("Email");
+        System.Reflection.PropertyInfo? nameProp = typeof(TItem).GetProperty("Name");
+        System.Reflection.PropertyInfo? emailProp = typeof(TItem).GetProperty("Email");
         
         if (nameProp != null) return nameProp.GetValue(item)?.ToString() ?? "";
         if (emailProp != null) return emailProp.GetValue(item)?.ToString() ?? "";
