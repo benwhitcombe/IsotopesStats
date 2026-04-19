@@ -331,12 +331,15 @@ else
                 }
             }
 
+            // Remove automatic expansion of latest game
+            /* 
             if (!SessionState.GameUIStates.Any(s => s.Value.IsExpanded) && summaries.Any())
             {
                 int latestGameId = summaries.First().GameId;
                 SessionState.GetState(latestGameId).IsExpanded = true;
                 expandedStats[latestGameId] = await StatsService.GetExtendedGameStatsAsync(latestGameId);
             }
+            */
         }
         catch (Exception)
         {
