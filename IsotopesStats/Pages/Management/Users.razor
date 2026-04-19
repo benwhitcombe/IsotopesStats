@@ -132,11 +132,9 @@ else
     private DeleteManager<UserRolesSummaryView, string> deleteManager = null!;
     private List<UserRolesSummaryView> users = new();
     private List<UserRole> availableRoles = new();
-    private UserEditViewModel editViewModel = new();
-    private UserEditViewModel originalViewModel = new();
+    private UserEditViewModel editViewModel = new UserEditViewModel();
+    private UserEditViewModel originalViewModel = new UserEditViewModel();
     private bool isEditing = false;
-    private bool showPassword = false;
-    private bool showPasswordFields = false;
     private string? saveError;
 
     protected override async Task OnInitializedAsync()
@@ -189,8 +187,6 @@ else
 
     private void StartEdit(string action, string id)
     {
-        showPassword = false;
-        showPasswordFields = false;
         saveError = null;
         if (action == "add") Navigation.NavigateTo("/management/users/add");
         else Navigation.NavigateTo($"/management/users/edit/{id}");

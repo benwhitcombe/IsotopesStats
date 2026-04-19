@@ -17,4 +17,7 @@ public class UserRolesSummaryView : BaseModel, IEntity<string>
 
     [Column("rolenames")]
     public string RoleNames { get; set; } = string.Empty;
+
+    [Column("isdeleted")]
+    public bool IsDeleted { get; set; } = false;
 }

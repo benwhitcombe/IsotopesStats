@@ -46,6 +46,7 @@ public class AuthService
     public async Task<List<UserRolesSummaryView>> GetUsersAsync()
     {
         ModeledResponse<UserRolesSummaryView> response = await _supabase.From<UserRolesSummaryView>()
+            .Where(x => x.IsDeleted == false)
             .Order("email", Constants.Ordering.Ascending)
             .Get();
         return response.Models;
@@ -106,10 +107,21 @@ public class AuthService
         await _supabase.Auth.Update(attrs);
     }
 
+    public async Task<User?> GetUserByIdAsync(string userId)
+    {
+        if (string.IsNullOrEmpty(userId)) return null;
+        ModeledResponse<User> response = await _supabase.From<User>().Where(x => x.Id == userId).Get();
+        return response.Models.FirstOrDefault();
+    }
+
     public async Task DeleteUserAsync(string userId)
     {
+        // 1. Mark as deleted in users table
         User user = new User { Id = userId, IsDeleted = true };
         await _supabase.From<User>().Update(user);
+
+        // 2. Revoke all roles immediately so they lose all permissions
+        await _supabase.From<UserUserRoles>().Where(x => x.UserId == userId).Delete();
     }
 
     public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
