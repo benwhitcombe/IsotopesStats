@@ -151,24 +151,24 @@ else
                                     <table class="box-score-table table-sm">
                                     <thead>
                                         <tr>
-                                            <th @onclick='() => Sort(gameId, "BO")' class="sortable-header" style="width: 40px;">BO<span class="sort-icon">@(GetSortIcon(gameId, "BO"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "BO")' class="sortable-header" style="width: 30px;">BO<span class="sort-icon">@(GetSortIcon(gameId, "BO"))</span></th>
                                             <th @onclick='() => Sort(gameId, "Player")' class="sortable-header sticky-col">Player<span class="sort-icon">@(GetSortIcon(gameId, "Player"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "PA")' class="sortable-header group-divider">PA<span class="sort-icon">@(GetSortIcon(gameId, "PA"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "AB")' class="sortable-header">AB<span class="sort-icon">@(GetSortIcon(gameId, "AB"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "R")' class="sortable-header group-divider">R<span class="sort-icon">@(GetSortIcon(gameId, "R"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "H")' class="sortable-header">H<span class="sort-icon">@(GetSortIcon(gameId, "H"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "2B")' class="sortable-header">2B<span class="sort-icon">@(GetSortIcon(gameId, "2B"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "3B")' class="sortable-header">3B<span class="sort-icon">@(GetSortIcon(gameId, "3B"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "4B")' class="sortable-header">4B<span class="sort-icon">@(GetSortIcon(gameId, "4B"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "HR")' class="sortable-header">HR<span class="sort-icon">@(GetSortIcon(gameId, "HR"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "RBI")' class="sortable-header">RBI<span class="sort-icon">@(GetSortIcon(gameId, "RBI"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "BB")' class="sortable-header group-divider">BB<span class="sort-icon">@(GetSortIcon(gameId, "BB"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "K")' class="sortable-header">K<span class="sort-icon">@(GetSortIcon(gameId, "K"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "KF")' class="sortable-header">KF<span class="sort-icon">@(GetSortIcon(gameId, "KF"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "SF")' class="sortable-header group-divider">SF<span class="sort-icon">@(GetSortIcon(gameId, "SF"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "FC")' class="sortable-header">FC<span class="sort-icon">@(GetSortIcon(gameId, "FC"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "GO")' class="sortable-header">GO<span class="sort-icon">@(GetSortIcon(gameId, "GO"))</span></th>
-                                            <th @onclick='() => Sort(gameId, "FO")' class="sortable-header">FO<span class="sort-icon">@(GetSortIcon(gameId, "FO"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "PA")' class="sortable-header group-divider narrow-col">PA<span class="sort-icon">@(GetSortIcon(gameId, "PA"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "AB")' class="sortable-header narrow-col">AB<span class="sort-icon">@(GetSortIcon(gameId, "AB"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "R")' class="sortable-header group-divider narrow-col">R<span class="sort-icon">@(GetSortIcon(gameId, "R"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "H")' class="sortable-header narrow-col">H<span class="sort-icon">@(GetSortIcon(gameId, "H"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "2B")' class="sortable-header narrow-col">2B<span class="sort-icon">@(GetSortIcon(gameId, "2B"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "3B")' class="sortable-header narrow-col">3B<span class="sort-icon">@(GetSortIcon(gameId, "3B"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "4B")' class="sortable-header narrow-col">4B<span class="sort-icon">@(GetSortIcon(gameId, "4B"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "HR")' class="sortable-header narrow-col">HR<span class="sort-icon">@(GetSortIcon(gameId, "HR"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "RBI")' class="sortable-header narrow-col">RBI<span class="sort-icon">@(GetSortIcon(gameId, "RBI"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "BB")' class="sortable-header group-divider narrow-col">BB<span class="sort-icon">@(GetSortIcon(gameId, "BB"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "K")' class="sortable-header narrow-col">K<span class="sort-icon">@(GetSortIcon(gameId, "K"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "KF")' class="sortable-header narrow-col">KF<span class="sort-icon">@(GetSortIcon(gameId, "KF"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "SF")' class="sortable-header group-divider narrow-col">SF<span class="sort-icon">@(GetSortIcon(gameId, "SF"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "FC")' class="sortable-header narrow-col">FC<span class="sort-icon">@(GetSortIcon(gameId, "FC"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "GO")' class="sortable-header narrow-col">GO<span class="sort-icon">@(GetSortIcon(gameId, "GO"))</span></th>
+                                            <th @onclick='() => Sort(gameId, "FO")' class="sortable-header narrow-col">FO<span class="sort-icon">@(GetSortIcon(gameId, "FO"))</span></th>
                                             <th @onclick='() => Sort(gameId, "AVG")' class="sortable-header group-divider">AVG<span class="sort-icon">@(GetSortIcon(gameId, "AVG"))</span></th>
                                             <th @onclick='() => Sort(gameId, "OBP")' class="sortable-header">OBP<span class="sort-icon">@(GetSortIcon(gameId, "OBP"))</span></th>
                                         </tr>
@@ -183,44 +183,44 @@ else
                                                         @stat.ExtendedPlayerName
                                                     </a>
                                                 </td>
-                                                <td class="group-divider @(uiState.SortColumn == "PA" ? "active-sort-col" : "")">@stat.PA</td>
-                                                <td class="@(uiState.SortColumn == "AB" ? "active-sort-col" : "")">@stat.AB</td>
-                                                <td class="group-divider @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
-                                                <td class="@(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
-                                                <td class="@(uiState.SortColumn == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
-                                                <td class="@(uiState.SortColumn == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
-                                                <td class="@(uiState.SortColumn == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
-                                                <td class="@(uiState.SortColumn == "HR" ? "active-sort-col" : "")">@stat.HR</td>
-                                                <td class="@(uiState.SortColumn == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
-                                                <td class="group-divider @(uiState.SortColumn == "BB" ? "active-sort-col" : "")">@stat.BB</td>
-                                                <td class="@(uiState.SortColumn == "K" ? "active-sort-col" : "")">@stat.K</td>
-                                                <td class="@(uiState.SortColumn == "KF" ? "active-sort-col" : "")">@stat.KF</td>
-                                                <td class="group-divider @(uiState.SortColumn == "SF" ? "active-sort-col" : "")">@stat.SF</td>
-                                                <td class="@(uiState.SortColumn == "FC" ? "active-sort-col" : "")">@stat.FC</td>
-                                                <td class="@(uiState.SortColumn == "GO" ? "active-sort-col" : "")">@stat.GO</td>
-                                                <td class="@(uiState.SortColumn == "FO" ? "active-sort-col" : "")">@stat.FO</td>
+                                                <td class="group-divider narrow-col @(uiState.SortColumn == "PA" ? "active-sort-col" : "")">@stat.PA</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "AB" ? "active-sort-col" : "")">@stat.AB</td>
+                                                <td class="group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "4B" ? "active-sort-col" : "")">@stat.H4B</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "HR" ? "active-sort-col" : "")">@stat.HR</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
+                                                <td class="group-divider narrow-col @(uiState.SortColumn == "BB" ? "active-sort-col" : "")">@stat.BB</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "K" ? "active-sort-col" : "")">@stat.K</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "KF" ? "active-sort-col" : "")">@stat.KF</td>
+                                                <td class="group-divider narrow-col @(uiState.SortColumn == "SF" ? "active-sort-col" : "")">@stat.SF</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "FC" ? "active-sort-col" : "")">@stat.FC</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "GO" ? "active-sort-col" : "")">@stat.GO</td>
+                                                <td class="narrow-col @(uiState.SortColumn == "FO" ? "active-sort-col" : "")">@stat.FO</td>
                                                 <td class="group-divider @(uiState.SortColumn == "AVG" ? "active-sort-col" : "")">@stat.AVG.ToString(".000")</td>
                                                 <td class="@(uiState.SortColumn == "OBP" ? "active-sort-col" : "")">@stat.OBP.ToString(".000")</td>
                                             </tr>
                                         }
                                         <tr class="game-summary-row">
                                             <td colspan="2" class="sticky-col">TOTALS</td>
-                                            <td class="group-divider">@summary.TeamPA</td>
-                                            <td>@summary.TeamAB</td>
-                                            <td class="group-divider">@summary.TeamRuns</td>
-                                            <td>@summary.TeamHits</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.H2B)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.H3B)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.H4B)</td>
-                                            <td>@summary.TeamHRs</td>
-                                            <td>@summary.TeamRBI</td>
-                                            <td class="group-divider">@summary.TeamBBs</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.K)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.KF)</td>
-                                            <td class="group-divider">@expandedStats[gameId].Sum(s => s.SF)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.FC)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.GO)</td>
-                                            <td>@expandedStats[gameId].Sum(s => s.FO)</td>
+                                            <td class="group-divider narrow-col">@summary.TeamPA</td>
+                                            <td class="narrow-col">@summary.TeamAB</td>
+                                            <td class="group-divider narrow-col">@summary.TeamRuns</td>
+                                            <td class="narrow-col">@summary.TeamHits</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H2B)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H3B)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H4B)</td>
+                                            <td class="narrow-col">@summary.TeamHRs</td>
+                                            <td class="narrow-col">@summary.TeamRBI</td>
+                                            <td class="group-divider narrow-col">@summary.TeamBBs</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.K)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.KF)</td>
+                                            <td class="group-divider narrow-col">@expandedStats[gameId].Sum(s => s.SF)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.FC)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.GO)</td>
+                                            <td class="narrow-col">@expandedStats[gameId].Sum(s => s.FO)</td>
                                             <td class="group-divider">@teamAVG.ToString(".000")</td>
                                             @{
                                                 int teamSF = expandedStats[gameId].Sum(s => s.SF);

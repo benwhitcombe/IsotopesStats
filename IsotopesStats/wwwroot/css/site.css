@@ -213,9 +213,23 @@ body {
 }
 
 .table-sm th, .table-sm td {
-    padding: 12px 4px;
-    font-size: 0.8rem;
+    padding: 8px 2px;
+    font-size: 0.7rem;
     white-space: nowrap;
+}
+
+@media (min-width: 992px) {
+    .table-sm th, .table-sm td {
+        padding: 8px 3px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .table-sm th, .table-sm td {
+        padding: 10px 4px;
+        font-size: 0.8rem;
+    }
 }
 
 table {
@@ -414,7 +428,13 @@ tr:last-child td {
 
 .box-score-table-wrapper {
     overflow-x: auto;
-    padding: 1rem;
+    padding: 0.5rem;
+}
+
+@media (min-width: 992px) {
+    .box-score-table-wrapper {
+        padding: 1rem 0.5rem;
+    }
 }
 
 .box-score-table {
@@ -424,6 +444,7 @@ tr:last-child td {
     background: white;
     border-radius: 8px;
     border: 1px solid #eee;
+    table-layout: auto;
 }
 
 .box-score-table th {
@@ -439,6 +460,7 @@ tr:last-child td {
     background: #f8f9fa;
     z-index: 20;
     border-right: 2px solid #eee;
+    min-width: 120px;
 }
 
 .box-score-table td.sticky-col {
@@ -596,18 +618,38 @@ tr:last-child td {
     animation: pulse 4s ease-in-out infinite;
 }
 
+.narrow-col {
+    min-width: 35px !important;
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+    text-align: center !important;
+}
+
+@media (min-width: 1200px) {
+    .narrow-col {
+        min-width: 40px !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
+    }
+}
+
 .active-sort-col {
     font-weight: bold;
 }
 
 .sortable-header {
     position: relative;
-    padding-left: 20px !important;
-    padding-right: 20px !important;
+    padding: 10px 4px !important;
     cursor: pointer;
     white-space: nowrap;
     text-align: center;
     transition: background-color 0.2s;
+}
+
+@media (min-width: 992px) {
+    .sortable-header {
+        padding: 12px 8px !important;
+    }
 }
 
 .sortable-header:hover {
