@@ -1,10 +1,11 @@
 @page "/management/users"
 @page "/management/users/{Action}"
-@page "/management/users/{Action}/{Id:int}"
+@page "/management/users/{Action}/{Id}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Policy = "Manage Users")]
 @inject AuthService AuthService
 @inject NavigationManager Navigation
@@ -12,13 +13,13 @@
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
 
-<DeleteManager TItem="UserRolesSummaryView" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="DeleteUserByIdAsync" />
+<DeleteManager TItem="UserRolesSummaryView" TId="string" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="DeleteUserByIdAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Users</h3>
     @if (!isEditing)
     {
-        <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New User</button>
+        <button class="view-btn active" @onclick='() => StartEdit("add", "")'>Add New User</button>
     }
 </div>
 
@@ -26,7 +27,7 @@
 {
     <ModelEditor 
         TItem="UserEditViewModel"
-        Title="@($"{(editViewModel.Id == 0 ? "Add New" : "Edit")} User")"
+        Title="@($"{(string.IsNullOrEmpty(editViewModel.Id) ? "Add New" : "Edit")} User")"
         Item="editViewModel"
         OriginalItem="originalViewModel"
         BasePath="/management/users"
@@ -41,7 +42,7 @@
                 <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
 
-            @if (editViewModel.Id == 0)
+            @if (string.IsNullOrEmpty(editViewModel.Id))
             {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="form-group">
@@ -159,9 +160,9 @@ else
 
 @code {
     [Parameter] public string? Action { get; set; }
-    [Parameter] public int? Id { get; set; }
+    [Parameter] public string? Id { get; set; }
 
-    private DeleteManager<UserRolesSummaryView> deleteManager = null!;
+    private DeleteManager<UserRolesSummaryView, string> deleteManager = null!;
     private List<UserRolesSummaryView> users = new();
     private List<UserRole> availableRoles = new();
     private UserEditViewModel editViewModel = new();
@@ -183,7 +184,7 @@ else
 
         if (isEditing)
         {
-            if (Action == "edit" && Id.HasValue && Id != 0)
+            if (Action == "edit" && !string.IsNullOrEmpty(Id))
             {
                 UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
                 if (userView != null)
@@ -219,7 +220,7 @@ else
         users = await AuthService.GetUsersAsync();
     }
 
-    private void StartEdit(string action, int id)
+    private void StartEdit(string action, string id)
     {
         showPassword = false;
         showPasswordFields = false;
@@ -249,7 +250,7 @@ else
     private async Task SaveUser()
     {
         saveError = null;
-        if (editViewModel.Id == 0)
+        if (string.IsNullOrEmpty(editViewModel.Id))
         {
             bool success = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password, editViewModel.RoleIds);
             if (!success)
@@ -278,14 +279,14 @@ else
         await LoadData();
     }
 
-    private async Task DeleteUserByIdAsync(int id)
+    private async Task DeleteUserByIdAsync(string id)
     {
         await AuthService.DeleteUserAsync(id);
     }
 
-    public class UserEditViewModel
+    public class UserEditViewModel : IEntity<string>
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email address")]
@@ -308,6 +309,6 @@ else
                    RoleIds.SequenceEqual(other.RoleIds);
         }
 
-        public override int GetHashCode() => Id.GetHashCode();
+        public override int GetHashCode() => Id?.GetHashCode() ?? 0;
     }
 }

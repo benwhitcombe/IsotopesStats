@@ -11,7 +11,7 @@
 
 <PageTitle>Isotopes - Manage Opponents</PageTitle>
 
-<DeleteManager TItem="Opponent" @ref="deleteManager" OnDeleted="LoadOpponents" DeleteAction="StatsService.DeleteOpponentAsync" />
+<DeleteManager TItem="Opponent" TId="int" @ref="deleteManager" OnDeleted="LoadOpponents" DeleteAction="StatsService.DeleteOpponentAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Opponents</h3>
@@ -106,7 +106,7 @@ else
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
 
-    private DeleteManager<Opponent> deleteManager = null!;
+    private DeleteManager<Opponent, int> deleteManager = null!;
     private List<Opponent> opponents = new();
     private List<Season> allSeasons = new();
     private HashSet<int> assignedSeasonIds = new();

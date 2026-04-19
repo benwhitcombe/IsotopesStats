@@ -1,6 +1,10 @@
 namespace IsotopesStats.Models;
 
-public interface IEntity
+public interface IEntity<TId>
 {
-    int Id { get; set; }
+    TId Id { get; set; }
+}
+
+public interface IEntity : IEntity<int>
+{
 }

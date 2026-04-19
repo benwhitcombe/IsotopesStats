@@ -51,7 +51,7 @@ public class AuthService
         return response.Models;
     }
 
-    public async Task<bool> IsEmailUniqueAsync(string email, int excludeUserId = 0)
+    public async Task<bool> IsEmailUniqueAsync(string email, string excludeUserId = "")
     {
         ModeledResponse<User> response = await _supabase.From<User>()
             .Where(x => x.Email == email)
@@ -85,21 +85,21 @@ public class AuthService
 
     public async Task UpdateUserAsync(User user, List<int> newRoleIds)
     {
-        await _supabase.From<UserUserRoles>().Where(x => x.UserId == user.Id.ToString()).Delete();
+        await _supabase.From<UserUserRoles>().Where(x => x.UserId == user.Id).Delete();
         foreach (int roleId in newRoleIds)
         {
-            UserUserRoles link = new UserUserRoles { UserId = user.Id.ToString(), RoleId = roleId };
+            UserUserRoles link = new UserUserRoles { UserId = user.Id, RoleId = roleId };
             await _supabase.From<UserUserRoles>().Insert(link);
         }
     }
 
-    public async Task UpdateUserPasswordAsync(int userId, string newPassword)
+    public async Task UpdateUserPasswordAsync(string userId, string newPassword)
     {
         Supabase.Gotrue.UserAttributes attrs = new Supabase.Gotrue.UserAttributes { Password = newPassword };
         await _supabase.Auth.Update(attrs);
     }
 
-    public async Task DeleteUserAsync(int userId)
+    public async Task DeleteUserAsync(string userId)
     {
         User user = new User { Id = userId, IsDeleted = true };
         await _supabase.From<User>().Update(user);
@@ -107,19 +107,43 @@ public class AuthService
 
     public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
     {
+        ModeledResponse<UserRole> response;
         if (onlyActive)
         {
-            ModeledResponse<UserRole> activeResponse = await _supabase.From<UserRole>()
+            response = await _supabase.From<UserRole>()
                 .Where(x => x.IsDeleted == false)
                 .Order("name", Constants.Ordering.Ascending)
                 .Get();
-            return activeResponse.Models;
         }
-        
-        ModeledResponse<UserRole> response = await _supabase.From<UserRole>()
-            .Order("name", Constants.Ordering.Ascending)
-            .Get();
-        return response.Models;
+        else
+        {
+            response = await _supabase.From<UserRole>()
+                .Order("name", Constants.Ordering.Ascending)
+                .Get();
+        }
+
+        List<UserRole> roles = response.Models;
+
+        if (roles.Any())
+        {
+            ModeledResponse<RolePermission> rpResponse = await _supabase.From<RolePermission>().Get();
+            ModeledResponse<Permission> permResponse = await _supabase.From<Permission>().Get();
+            List<Permission> allPermissions = permResponse.Models;
+
+            foreach (UserRole role in roles)
+            {
+                List<int> rolePermIds = rpResponse.Models
+                    .Where(rp => rp.RoleId == role.Id)
+                    .Select(rp => rp.PermissionId)
+                    .ToList();
+                
+                role.Permissions = allPermissions
+                    .Where(p => rolePermIds.Contains(p.Id))
+                    .ToList();
+            }
+        }
+
+        return roles;
     }
 
     private async Task<List<UserRole>> GetUserRolesForUserAsync(string supabaseUserId)
@@ -137,16 +161,24 @@ public class AuthService
             List<UserRole> roles = rolesResponse.Models.Where(r => roleIds.Contains(r.Id)).ToList();
 
             ModeledResponse<RolePermission> rpResponse = await _supabase.From<RolePermission>().Get();
-            List<int> permissionIds = rpResponse.Models.Where(rp => roleIds.Contains(rp.RoleId)).Select(x => x.PermissionId).Distinct().ToList();
+            List<int> permissionIdsForTheseRoles = rpResponse.Models
+                .Where(rp => roleIds.Contains(rp.RoleId))
+                .Select(x => x.PermissionId)
+                .Distinct()
+                .ToList();
 
-            if (permissionIds.Any())
+            if (permissionIdsForTheseRoles.Any())
             {
                 ModeledResponse<Permission> permResponse = await _supabase.From<Permission>().Get();
                 List<Permission> perms = permResponse.Models;
 
                 foreach (UserRole role in roles)
                 {
-                    List<int> rolePermIds = rpResponse.Models.Where(x => x.RoleId == role.Id).Select(x => x.PermissionId).ToList();
+                    List<int> rolePermIds = rpResponse.Models
+                        .Where(rp => rp.RoleId == role.Id)
+                        .Select(rp => rp.PermissionId)
+                        .ToList();
+                    
                     role.Permissions = perms.Where(p => rolePermIds.Contains(p.Id)).ToList();
                 }
             }
@@ -204,12 +236,27 @@ public class AuthService
 
     public async Task AddUserRoleAsync(UserRole role, List<int> permissionIds)
     {
-        await _supabase.From<UserRole>().Insert(role);
+        ModeledResponse<UserRole> response = await _supabase.From<UserRole>().Insert(role);
+        UserRole? newRole = response.Models.FirstOrDefault();
+        if (newRole != null && permissionIds.Any())
+        {
+            foreach (int permId in permissionIds)
+            {
+                await _supabase.From<RolePermission>().Insert(new RolePermission { RoleId = newRole.Id, PermissionId = permId });
+            }
+        }
     }
 
     public async Task UpdateUserRoleAsync(UserRole role, List<int> permissionIds)
     {
         await _supabase.From<UserRole>().Update(role);
+        
+        // Update permissions: delete all and re-add
+        await _supabase.From<RolePermission>().Where(x => x.RoleId == role.Id).Delete();
+        foreach (int permId in permissionIds)
+        {
+            await _supabase.From<RolePermission>().Insert(new RolePermission { RoleId = role.Id, PermissionId = permId });
+        }
     }
 
     public async Task DeleteUserRoleAsync(int roleId)

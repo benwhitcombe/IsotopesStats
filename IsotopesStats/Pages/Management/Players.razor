@@ -19,7 +19,7 @@
     }
 </div>
 
-<DeleteManager TItem="Player" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsService.DeletePlayerAsync" />
+<DeleteManager TItem="Player" TId="int" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsService.DeletePlayerAsync" />
 
 @if (isAdding || isEditing)
 {
@@ -114,7 +114,7 @@ else
     private Player originalPlayer = new();
     private bool isAdding = false;
     private bool isEditing = false;
-    private DeleteManager<Player> deleteManager = null!;
+    private DeleteManager<Player, int> deleteManager = null!;
 
     protected override async Task OnInitializedAsync()
     {

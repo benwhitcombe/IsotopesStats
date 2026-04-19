@@ -1,7 +1,8 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Services
 @using System.Security.Claims
-@typeparam TItem where TItem : class, IEntity
+@typeparam TItem where TItem : class, IEntity<TId>
+@typeparam TId
 @inject AuthService AuthService
 
 <ConfirmDialog 
@@ -16,7 +17,7 @@
     [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
     [Parameter] public string? Warning { get; set; }
     [Parameter] public EventCallback OnDeleted { get; set; }
-    [Parameter] public Func<int, Task> DeleteAction { get; set; } = null!;
+    [Parameter] public Func<TId, Task> DeleteAction { get; set; } = null!;
 
     private bool isVisible = false;
     private TItem? itemToDelete;
@@ -57,21 +58,20 @@
             string? userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             string? userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
             
-            if (int.TryParse(userIdStr, out int userId))
-            {
-                string identifier = GetItemIdentifier(item);
+            string identifier = GetItemIdentifier(item);
 
-                await AuthService.AddLogAsync(new UserLog
-                {
-                    UserId = userId,
-                    UserEmail = userEmail ?? "unknown",
-                    Action = UserLogAction.Deleted,
-                    EntityType = TypeName,
-                    EntityId = item.Id.ToString(),
-                    Description = $"Deleted {TypeName}: {identifier}",
-                    Timestamp = DateTime.UtcNow
-                });
-            }
+            await AuthService.AddLogAsync(new UserLog
+            {
+                // We're leaving UserId as int? in the log for now if it's an internal ID, 
+                // but we should probably store the string Supabase ID in the logs too if we want to track who did what.
+                // For now, let's just use the string EntityId to record what was deleted.
+                UserEmail = userEmail ?? "unknown",
+                Action = UserLogAction.Deleted,
+                EntityType = TypeName,
+                EntityId = item.Id?.ToString() ?? "",
+                Description = $"Deleted {TypeName}: {identifier}",
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 

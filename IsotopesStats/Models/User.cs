@@ -4,10 +4,10 @@ using Postgrest.Models;
 namespace IsotopesStats.Models;
 
 [Table("users")]
-public class User : BaseModel, IEntity
+public class User : BaseModel, IEntity<string>
 {
     [PrimaryKey("id", false)]
-    public int Id { get; set; }
+    public string Id { get; set; } = string.Empty;
     
     [Column("email")]
     public string Email { get; set; } = string.Empty;

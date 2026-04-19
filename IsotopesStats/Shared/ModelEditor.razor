@@ -93,13 +93,24 @@
 
     private string GetItemId()
     {
-        if (Item is IEntity entity) return entity.Id.ToString();
+        if (Item is IEntity<int> intEntity) return intEntity.Id.ToString();
+        if (Item is IEntity<string> stringEntity) return stringEntity.Id;
         return "0";
     }
 
     private EditContext? ActualEditContext => _internalContext;
     private bool IsFormValid => ActualEditContext != null && !ActualEditContext.GetValidationMessages().Any();
-    private bool IsEdit => Item != null && (Item is not IEntity entity || entity.Id != 0);
+    
+    private bool IsEdit
+    {
+        get
+        {
+            if (Item == null) return false;
+            if (Item is IEntity<int> intEntity) return intEntity.Id != 0;
+            if (Item is IEntity<string> stringEntity) return !string.IsNullOrEmpty(stringEntity.Id);
+            return true;
+        }
+    }
 
     private bool HasChanges => 
         (Item != null && OriginalItem != null && !Item.Equals(OriginalItem)) || 

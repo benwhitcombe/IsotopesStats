@@ -11,7 +11,7 @@
 
 <PageTitle>Isotopes - Manage Roles</PageTitle>
 
-<DeleteManager TItem="UserRole" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="AuthService.DeleteUserRoleAsync" />
+<DeleteManager TItem="UserRole" TId="int" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="AuthService.DeleteUserRoleAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Roles</h3>
@@ -137,7 +137,7 @@ else
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
 
-    private DeleteManager<UserRole> deleteManager = null!;
+    private DeleteManager<UserRole, int> deleteManager = null!;
     private List<UserRole> roles = new();
     private List<Permission> availablePermissions = new();
     private List<int> selectedPermissionIds = new();
