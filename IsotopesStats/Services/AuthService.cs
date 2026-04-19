@@ -61,11 +61,14 @@ public class AuthService
         return response.Models.Count == 0;
     }
 
-    public async Task<bool> RegisterAsync(string email, string password, List<int> roleIds)
+    public async Task<bool> RegisterAsync(string email, List<int> roleIds)
     {
         try
         {
-            Supabase.Gotrue.Session? response = await _supabase.Auth.SignUp(email, password);
+            // Generate a random temporary password for the initial signup
+            string temporaryPassword = Guid.NewGuid().ToString("N") + "!";
+            
+            Supabase.Gotrue.Session? response = await _supabase.Auth.SignUp(email, temporaryPassword);
             if (response?.User != null && !string.IsNullOrEmpty(response.User.Id))
             {
                 foreach (int roleId in roleIds)
@@ -73,6 +76,10 @@ public class AuthService
                     UserUserRoles link = new UserUserRoles { UserId = response.User.Id, RoleId = roleId };
                     await _supabase.From<UserUserRoles>().Insert(link);
                 }
+
+                // Trigger a password reset email immediately so the user can set their own password
+                await _supabase.Auth.ResetPasswordForEmail(email);
+                
                 return true;
             }
         }

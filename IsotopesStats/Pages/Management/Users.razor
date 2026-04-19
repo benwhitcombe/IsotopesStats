@@ -44,50 +44,17 @@
 
             @if (string.IsNullOrEmpty(editViewModel.Id))
             {
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                    <div class="form-group">
-                        <label>Password</label>
-                        <div style="position: relative;">
-                            <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.Password" />
-                            <PasswordToggleIcon IsVisible="showPassword" OnToggle="() => showPassword = !showPassword" />
-                        </div>
-                        <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm Password</label>
-                        <InputText type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="editViewModel.ConfirmPassword" />
-                        <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="stat-card" style="background: #f8f9fa; border: 1px dashed #ddd; padding: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="stat-card" style="background: #e7f3ff; border: 1px solid #bde0ff; padding: 1.25rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="font-size: 1.5rem;">📧</div>
                         <div>
-                            <h6 style="margin: 0 0 0.25rem 0; font-weight: bold;">Change Password</h6>
-                            <p style="margin: 0; font-size: 0.8rem; color: #666;">Leave blank to keep current password.</p>
+                            <h6 style="margin: 0 0 0.25rem 0; font-weight: bold; color: #004085;">Invitation Email</h6>
+                            <p style="margin: 0; font-size: 0.8rem; color: #004085; line-height: 1.4;">
+                                A Supabase invitation email will be sent to this address. 
+                                The user will be prompted to set their own password upon clicking the link.
+                            </p>
                         </div>
-                        <button type="button" class="view-btn" @onclick="() => showPasswordFields = !showPasswordFields">
-                            @(showPasswordFields ? "Cancel" : "Change")
-                        </button>
                     </div>
-
-                    @if (showPasswordFields)
-                    {
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.25rem;" class="view-fade-in">
-                            <div class="form-group">
-                                <label>New Password</label>
-                                <InputText type="password" class="form-control" @bind-Value="editViewModel.Password" />
-                                <ValidationMessage For="@(() => editViewModel.Password)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                            </div>
-                            <div class="form-group">
-                                <label>Confirm New Password</label>
-                                <InputText type="password" class="form-control" @bind-Value="editViewModel.ConfirmPassword" />
-                                <ValidationMessage For="@(() => editViewModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
-                            </div>
-                        </div>
-                    }
                 </div>
             }
 
@@ -252,7 +219,7 @@ else
         saveError = null;
         if (string.IsNullOrEmpty(editViewModel.Id))
         {
-            bool success = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.Password, editViewModel.RoleIds);
+            bool success = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.RoleIds);
             if (!success)
             {
                 saveError = "Failed to create user. Please check if the email is valid and try again.";
@@ -263,11 +230,6 @@ else
         {
             User user = new User { Id = editViewModel.Id, Email = editViewModel.Email };
             await AuthService.UpdateUserAsync(user, editViewModel.RoleIds);
-            
-            if (showPasswordFields && !string.IsNullOrEmpty(editViewModel.Password))
-            {
-                await AuthService.UpdateUserPasswordAsync(editViewModel.Id, editViewModel.Password);
-            }
         }
 
         await LoadData();
@@ -292,12 +254,6 @@ else
         [EmailAddress(ErrorMessage = "Invalid email address")]
         public string Email { get; set; } = "";
 
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
-        public string Password { get; set; } = "";
-
-        [Compare("Password", ErrorMessage = "Passwords do not match")]
-        public string ConfirmPassword { get; set; } = "";
-
         public List<int> RoleIds { get; set; } = new();
 
         public override bool Equals(object? obj)
@@ -305,7 +261,6 @@ else
             if (obj is not UserEditViewModel other) return false;
             return Id == other.Id && 
                    Email == other.Email && 
-                   Password == other.Password && 
                    RoleIds.SequenceEqual(other.RoleIds);
         }
 
