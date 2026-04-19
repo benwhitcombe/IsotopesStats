@@ -46,7 +46,6 @@ public class AuthService
     public async Task<List<UserRolesSummaryView>> GetUsersAsync()
     {
         ModeledResponse<UserRolesSummaryView> response = await _supabase.From<UserRolesSummaryView>()
-            .Where(x => x.IsDeleted == false)
             .Order("email", Constants.Ordering.Ascending)
             .Get();
         return response.Models;
