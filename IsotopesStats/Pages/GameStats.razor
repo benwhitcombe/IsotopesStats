@@ -96,35 +96,56 @@ else
                 index++;
 
                 <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s">
-                    <div class="game-card-header" @onclick="() => ToggleGame(summary)" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 1.25rem;">
-                        <div class="game-info-main" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-                            <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                                <div class="game-number-badge" style="margin: 0; white-space: nowrap;">GAME #@summary.GameNumber</div>
-                                <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: var(--isotopes-dark);">vs @summary.OpponentName</div>
+                    <div class="game-card-header" @onclick="() => ToggleGame(summary)" style="padding: 1.25rem; cursor: pointer; display: block;">
+                        <!-- Desktop Header (Side-by-Side) -->
+                        <div class="desktop-only" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="game-info-main" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div class="game-number-badge" style="margin: 0; white-space: nowrap;">GAME #@summary.GameNumber</div>
+                                    <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: var(--isotopes-dark);">vs @summary.OpponentName</div>
+                                </div>
+                                <div class="game-row-2" style="display: flex; align-items: center; gap: 1rem; color: #666; font-size: 0.85rem;">
+                                    <div class="game-date">📅 @summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</div>
+                                    <div class="diamond-name">📍 @summary.Diamond</div>
+                                </div>
                             </div>
-                            <div class="game-row-2" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; color: #666; font-size: 0.85rem;">
-                                <div class="game-date" style="display: flex; align-items: center; gap: 0.25rem;">
-                                    📅 @summary.Date.ToString("MMM dd, yyyy @ h:mm tt")
+                            <div class="game-score-summary" style="display: flex; align-items: center; gap: 1rem; margin-left: 1rem;">
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <div class="score-item" style="text-align: center; min-width: 45px;">
+                                        <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red);">@summary.TeamRuns</span>
+                                        <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Runs</span>
+                                    </div>
+                                    <div class="score-item" style="text-align: center; min-width: 45px;">
+                                        <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red);">@summary.TeamHits</span>
+                                        <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Hits</span>
+                                    </div>
                                 </div>
-                                <div class="diamond-name" style="display: flex; align-items: center; gap: 0.25rem;">
-                                    📍 @summary.Diamond
-                                </div>
+                                <div class="expand-icon" style="color: #ccc; font-size: 0.8rem;">@(uiState.IsExpanded ? "▲" : "▼")</div>
                             </div>
                         </div>
 
-                        <div class="game-score-summary" style="display: flex; align-items: center; gap: 1rem; margin-left: 1rem;">
-                            <div style="display: flex; gap: 0.75rem;">
-                                <div class="score-item" style="text-align: center; min-width: 45px;">
-                                    <span class="score-value" style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--isotopes-accent);">@summary.TeamRuns</span>
-                                    <span class="score-label" style="display: block; font-size: 0.65rem; text-transform: uppercase; color: #999; font-weight: bold;">Runs</span>
-                                </div>
-                                <div class="score-item" style="text-align: center; min-width: 45px;">
-                                    <span class="score-value" style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--isotopes-accent);">@summary.TeamHits</span>
-                                    <span class="score-label" style="display: block; font-size: 0.65rem; text-transform: uppercase; color: #999; font-weight: bold;">Hits</span>
-                                </div>
+                        <!-- Mobile Header (Stacked) -->
+                        <div class="mobile-only" style="width: 100%;">
+                            <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; width: 100%;">
+                                <div class="game-number-badge" style="margin: 0; white-space: nowrap; font-size: 0.75rem; padding: 0.2rem 0.5rem;">#@summary.GameNumber</div>
+                                <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: var(--isotopes-dark); flex: 1;">vs @summary.OpponentName</div>
+                                <div class="expand-icon" style="color: #ccc; font-size: 0.7rem; width: 20px; text-align: center;">@(uiState.IsExpanded ? "▲" : "▼")</div>
                             </div>
-                            <div class="expand-icon" style="color: #ccc; font-size: 0.8rem; width: 20px; text-align: center;">
-                                @(uiState.IsExpanded ? "▲" : "▼")
+                            <div class="game-row-2" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; color: #666; font-size: 0.8rem; align-items: center;">
+                                    <div class="game-date">📅 @summary.Date.ToString("MMM dd @ h:mm tt")</div>
+                                    <div class="diamond-name">📍 @summary.Diamond</div>
+                                </div>
+                                <div class="game-score-summary" style="display: flex; gap: 0.75rem; margin-left: auto;">
+                                    <div class="score-item" style="text-align: center; min-width: 45px;">
+                                        <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red); line-height: 1;">@summary.TeamRuns</span>
+                                        <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Runs</span>
+                                    </div>
+                                    <div class="score-item" style="text-align: center; min-width: 45px;">
+                                        <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900; color: var(--isotopes-red); line-height: 1;">@summary.TeamHits</span>
+                                        <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Hits</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
