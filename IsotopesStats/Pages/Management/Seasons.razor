@@ -37,7 +37,7 @@
         
         <div class="form-group">
             <label>Season Name</label>
-            <InputText class="form-control" @bind-Value="editingSeason.Name" @bind-Value:event="oninput" placeholder="e.g. 2026" />
+            <InputText class="form-control" @bind-Value="editingSeason.Name" placeholder="e.g. 2026" />
             <ValidationMessage For="@(() => editingSeason.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
 

@@ -36,7 +36,7 @@
 
         <div class="form-group">
             <label>Opponent Name</label>
-            <InputText class="form-control" @bind-Value="editingOpponent.Name" @bind-Value:event="oninput" placeholder="e.g. Springfield Atoms" />
+            <InputText class="form-control" @bind-Value="editingOpponent.Name" placeholder="e.g. Springfield Atoms" />
             <ValidationMessage For="@(() => editingOpponent.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         

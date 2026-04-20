@@ -36,7 +36,7 @@
 
         <div class="form-group">
             <label>Player Name</label>
-            <InputText class="form-control" @bind-Value="editingPlayer.Name" @bind-Value:event="oninput" placeholder="e.g. John Doe" />
+            <InputText class="form-control" @bind-Value="editingPlayer.Name" placeholder="e.g. John Doe" />
             <ValidationMessage For="@(() => editingPlayer.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
