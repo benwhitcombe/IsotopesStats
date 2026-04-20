@@ -8,6 +8,7 @@
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
+@inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Players</PageTitle>
 
@@ -25,6 +26,7 @@
 {
     <ModelEditor 
         TItem="Player"
+        @ref="modelEditor"
         Title="@($"{(isAdding ? "Add" : "Edit")} Player")"
         Item="editingPlayer"
         OriginalItem="originalPlayer"
@@ -32,6 +34,7 @@
         CheckUniqueAsync="CheckUniquePlayer"
         OnSave="SavePlayer"
         OnDelete="DeletePlayer"
+        ExtraState="assignedSeasonIds"
         HasCustomChanges="@(() => !assignedSeasonIds.SetEquals(originalSeasonIds))">
 
         <div class="form-group">
@@ -114,6 +117,7 @@ else
     private Player originalPlayer = new();
     private bool isAdding = false;
     private bool isEditing = false;
+    private ModelEditor<Player> modelEditor = null!;
     private DeleteManager<Player, int> deleteManager = null!;
 
     protected override async Task OnInitializedAsync()
@@ -127,17 +131,21 @@ else
         bool wasAdding = isAdding;
         bool wasEditing = isEditing;
         
-        isAdding = Action == "add";
-        isEditing = Action == "edit";
+        bool nextAdding = Action == "add";
+        bool nextEditing = Action == "edit";
 
-        if (isAdding || isEditing)
+        if (nextAdding || nextEditing)
         {
-            if (isAdding && !wasAdding)
+            if (nextAdding && !wasAdding)
             {
+                isAdding = false;
+                isEditing = false;
                 await LoadNewPlayer();
             }
-            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingPlayer.Id)))
+            else if (nextEditing && (!wasEditing || (Id.HasValue && Id != editingPlayer.Id)))
             {
+                isAdding = false;
+                isEditing = false;
                 await LoadEditingPlayer();
             }
         }
@@ -148,6 +156,9 @@ else
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
+
+        isAdding = nextAdding;
+        isEditing = nextEditing;
     }
 
     private async Task LoadNewPlayer()
@@ -157,6 +168,7 @@ else
         originalPlayer = new Player();
         assignedSeasonIds.Clear();
         originalSeasonIds.Clear();
+        await HydrateTempState();
     }
 
     private async Task LoadEditingPlayer()
@@ -193,6 +205,27 @@ else
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
         }
+        await HydrateTempState();
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            Player? persisted = await SessionStorage.GetItemAsync<Player>($"EditState_Player_{Id ?? 0}");
+            if (persisted != null)
+            {
+                editingPlayer = persisted;
+            }
+            
+            var persistedExtra = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Player_{Id ?? 0}_Extra");
+            if (persistedExtra != null)
+            {
+                assignedSeasonIds = persistedExtra;
+            }
+            StateHasChanged();
+        }
+        catch { }
     }
 
     private async Task LoadPlayers()
@@ -214,10 +247,11 @@ else
         return isUnique ? null : "Another player with this name already exists.";
     }
 
-    private void ToggleSeason(int seasonId, bool isChecked)
+    private async Task ToggleSeason(int seasonId, bool isChecked)
     {
         if (isChecked) assignedSeasonIds.Add(seasonId);
         else assignedSeasonIds.Remove(seasonId);
+        if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
     private async Task SavePlayer()

@@ -10,6 +10,7 @@
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Users</PageTitle>
 
@@ -143,41 +144,86 @@ else
         await LoadData();
     }
 
-    protected override Task OnParametersSetAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        isEditing = Action == "add" || Action == "edit";
+        bool wasEditing = isEditing;
+        bool nextEditing = Action == "add" || Action == "edit";
 
-        if (isEditing)
+        if (nextEditing)
         {
             if (Action == "edit" && !string.IsNullOrEmpty(Id))
             {
-                UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
-                if (userView != null)
+                if (!wasEditing || Id != editViewModel.Id)
                 {
-                    editViewModel = new UserEditViewModel
-                    {
-                        Id = userView.Id,
-                        Email = userView.Email,
-                        RoleIds = userView.RoleNames?.Split(", ")
-                            .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
-                            .Where(id => id != 0).ToList() ?? new List<int>()
-                    };
-                    originalViewModel = new UserEditViewModel
-                    {
-                        Id = editViewModel.Id,
-                        Email = editViewModel.Email,
-                        RoleIds = new List<int>(editViewModel.RoleIds)
-                    };
+                    isEditing = false;
+                    await LoadEditingUser();
                 }
             }
-            else
+            else if (Action == "add" && !wasEditing)
             {
-                editViewModel = new UserEditViewModel();
-                originalViewModel = new UserEditViewModel();
+                isEditing = false;
+                await LoadNewUser();
             }
         }
+        else
+        {
+            editViewModel = new UserEditViewModel();
+            originalViewModel = new UserEditViewModel();
+        }
 
-        return Task.CompletedTask;
+        isEditing = nextEditing;
+    }
+
+    private async Task LoadNewUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        editViewModel = new UserEditViewModel();
+        originalViewModel = new UserEditViewModel();
+        await HydrateTempState();
+    }
+
+    private async Task LoadEditingUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        
+        UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
+        if (userView == null)
+        {
+            userView = (await AuthService.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
+        }
+
+        if (userView != null)
+        {
+            editViewModel = new UserEditViewModel
+            {
+                Id = userView.Id,
+                Email = userView.Email,
+                RoleIds = userView.RoleNames?.Split(", ")
+                    .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
+                    .Where(id => id != 0).ToList() ?? new List<int>()
+            };
+            originalViewModel = new UserEditViewModel
+            {
+                Id = editViewModel.Id,
+                Email = editViewModel.Email,
+                RoleIds = new List<int>(editViewModel.RoleIds)
+            };
+        }
+        await HydrateTempState();
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            UserEditViewModel? persisted = await SessionStorage.GetItemAsync<UserEditViewModel>($"EditState_UserEdit_{Id ?? "0"}");
+            if (persisted != null)
+            {
+                editViewModel = persisted;
+                StateHasChanged();
+            }
+        }
+        catch { }
     }
 
     private async Task LoadData()

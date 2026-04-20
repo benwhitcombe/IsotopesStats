@@ -8,6 +8,7 @@
 @inject StatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
+@inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Seasons</PageTitle>
 
@@ -25,6 +26,7 @@
 {
     <ModelEditor 
         TItem="Season"
+        @ref="modelEditor"
         Title="@($"{(isAdding ? "Add" : "Edit")} Season")"
         Item="editingSeason"
         OriginalItem="originalSeason"
@@ -33,6 +35,7 @@
         DeleteWarning="This will delete all associated games and stats."
         OnSave="SaveSeason"
         OnDelete="DeleteSeason"
+        ExtraState="extraState"
         HasCustomChanges="@(() => !assignedPlayerIds.SetEquals(originalPlayerIds) || !assignedOpponentIds.SetEquals(originalOpponentIds))">
         
         <div class="form-group">
@@ -137,6 +140,13 @@ else
     private Season originalSeason = new();
     private bool isAdding = false;
     private bool isEditing = false;
+    private ModelEditor<Season> modelEditor = null!;
+    private SeasonExtraState extraState = new();
+
+    public class SeasonExtraState {
+        public List<int> PlayerIds { get; set; } = new();
+        public List<int> OpponentIds { get; set; } = new();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,17 +160,21 @@ else
         bool wasAdding = isAdding;
         bool wasEditing = isEditing;
         
-        isAdding = Action == "add";
-        isEditing = Action == "edit";
+        bool nextAdding = Action == "add";
+        bool nextEditing = Action == "edit";
 
-        if (isAdding || isEditing)
+        if (nextAdding || nextEditing)
         {
-            if (isAdding && !wasAdding)
+            if (nextAdding && !wasAdding)
             {
+                isAdding = false;
+                isEditing = false;
                 await LoadNewSeason();
             }
-            else if (isEditing && (!wasEditing || (Id.HasValue && Id != editingSeason.Id)))
+            else if (nextEditing && (!wasEditing || (Id.HasValue && Id != editingSeason.Id)))
             {
+                isAdding = false;
+                isEditing = false;
                 await LoadEditingSeason();
             }
         }
@@ -172,7 +186,11 @@ else
             originalPlayerIds.Clear();
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
+            extraState = new SeasonExtraState();
         }
+
+        isAdding = nextAdding;
+        isEditing = nextEditing;
     }
 
     private async Task LoadNewSeason()
@@ -184,6 +202,8 @@ else
         originalPlayerIds.Clear();
         assignedOpponentIds.Clear();
         originalOpponentIds.Clear();
+        extraState = new SeasonExtraState();
+        await HydrateTempState();
     }
 
     private async Task LoadEditingSeason()
@@ -220,6 +240,11 @@ else
                     assignedOpponentIds.Add(o.Id);
                     originalOpponentIds.Add(o.Id);
                 }
+                
+                extraState = new SeasonExtraState { 
+                    PlayerIds = assignedPlayerIds.ToList(), 
+                    OpponentIds = assignedOpponentIds.ToList() 
+                };
             }
         }
         else
@@ -230,7 +255,31 @@ else
             originalPlayerIds.Clear();
             assignedOpponentIds.Clear();
             originalOpponentIds.Clear();
+            extraState = new SeasonExtraState();
         }
+        await HydrateTempState();
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            Season? persisted = await SessionStorage.GetItemAsync<Season>($"EditState_Season_{Id ?? 0}");
+            if (persisted != null)
+            {
+                editingSeason = persisted;
+            }
+
+            var persistedExtra = await SessionStorage.GetItemAsync<SeasonExtraState>($"EditState_Season_{Id ?? 0}_Extra");
+            if (persistedExtra != null)
+            {
+                extraState = persistedExtra;
+                assignedPlayerIds = persistedExtra.PlayerIds.ToHashSet();
+                assignedOpponentIds = persistedExtra.OpponentIds.ToHashSet();
+            }
+            StateHasChanged();
+        }
+        catch { }
     }
 
     private async Task LoadSeasons()
@@ -251,16 +300,22 @@ else
         return isUnique ? null : "A season with this name already exists.";
     }
 
-    private void TogglePlayer(int playerId, bool isChecked)
+    private async Task TogglePlayer(int playerId, bool isChecked)
     {
         if (isChecked) assignedPlayerIds.Add(playerId);
         else assignedPlayerIds.Remove(playerId);
+        
+        extraState.PlayerIds = assignedPlayerIds.ToList();
+        if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
-    private void ToggleOpponent(int opponentId, bool isChecked)
+    private async Task ToggleOpponent(int opponentId, bool isChecked)
     {
         if (isChecked) assignedOpponentIds.Add(opponentId);
         else assignedOpponentIds.Remove(opponentId);
+        
+        extraState.OpponentIds = assignedOpponentIds.ToList();
+        if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
     private async Task SaveSeason()

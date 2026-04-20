@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject AuthService AuthService
+@inject SessionStorageService SessionStorage
 
 @if (ActualEditContext != null)
 {
@@ -82,14 +83,18 @@
     [Parameter] public Func<Task>? OnBeforeInternalSave { get; set; }
     [Parameter] public Func<bool>? HasCustomChanges { get; set; }
     [Parameter] public Func<TItem, Task<string?>>? CheckUniqueAsync { get; set; }
+    [Parameter] public object? ExtraState { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private EditContext? _internalContext;
     private TItem? _lastItem;
+    private object? _lastExtraState;
     private bool showDeleteConfirm = false;
     private bool showDiscardConfirm = false;
     private bool showSuccess = false;
     private string TypeName => typeof(TItem).Name.Replace("ViewModel", "");
+    private string StorageKey => $"EditState_{TypeName}_{GetItemId()}";
+    private string ExtraStorageKey => $"EditState_{TypeName}_{GetItemId()}_Extra";
 
     private string GetItemId()
     {
@@ -131,12 +136,8 @@
             // 2. Fallback: JSON-based value comparison for plain POCOs
             try 
             {
-                System.Text.Json.JsonSerializerOptions options = new System.Text.Json.JsonSerializerOptions { 
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-                    IncludeFields = true
-                };
-                string itemJson = System.Text.Json.JsonSerializer.Serialize(Item, options);
-                string originalJson = System.Text.Json.JsonSerializer.Serialize(OriginalItem, options);
+                string itemJson = Newtonsoft.Json.JsonConvert.SerializeObject(Item);
+                string originalJson = Newtonsoft.Json.JsonConvert.SerializeObject(OriginalItem);
                 return itemJson != originalJson;
             }
             catch 
@@ -151,6 +152,10 @@
     {
         if (Item != null && Item != _lastItem)
         {
+            if (_internalContext != null)
+            {
+                _internalContext.OnFieldChanged -= HandleFieldChanged;
+            }
             _internalContext = new EditContext(Item);
             _lastItem = Item;
             _internalContext.OnFieldChanged += HandleFieldChanged;
@@ -160,6 +165,8 @@
     private async void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
     {
         ActualEditContext?.Validate();
+        await SaveTempState();
+        await SaveExtraState();
 
         if (CheckUniqueAsync != null && Item != null)
         {
@@ -171,6 +178,31 @@
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SaveTempState()
+    {
+        try
+        {
+            if (Item != null)
+            {
+                await SessionStorage.SetItemAsync(StorageKey, Item);
+            }
+        }
+        catch { }
+    }
+
+    public async Task SaveExtraState()
+    {
+        try
+        {
+            if (ExtraState != null)
+            {
+                await SessionStorage.SetItemAsync(ExtraStorageKey, ExtraState);
+                _lastExtraState = ExtraState;
+            }
+        }
+        catch { }
     }
 
     private string? _saveError;
@@ -204,6 +236,8 @@
         
         await CreateLog(wasEdit ? UserLogAction.Updated : UserLogAction.Created);
 
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
         showSuccess = true;
         StateHasChanged();
         _ = Task.Run(async () => {
@@ -221,11 +255,12 @@
         else await DiscardChanges();
     }
 
-    private Task DiscardChanges()
+    private async Task DiscardChanges()
     {
         showDiscardConfirm = false;
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
         Navigation.NavigateTo(BasePath);
-        return Task.CompletedTask;
     }
 
     private async Task HandleDelete()
@@ -233,8 +268,21 @@
         showDeleteConfirm = false;
         await OnDelete.InvokeAsync();
         await CreateLog(UserLogAction.Deleted);
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
         Navigation.NavigateTo(BasePath);
     }
+
+    public async Task<TItem?> GetPersistedStateAsync()
+    {
+        return await SessionStorage.GetItemAsync<TItem>(StorageKey);
+    }
+
+    public async Task<TExtra?> GetPersistedExtraStateAsync<TExtra>()
+    {
+        return await SessionStorage.GetItemAsync<TExtra>(ExtraStorageKey);
+    }
+
 
     private async Task CreateLog(UserLogAction action)
     {

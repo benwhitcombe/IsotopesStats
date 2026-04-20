@@ -10,6 +10,7 @@
 @inject AuthService AuthSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
@@ -27,6 +28,7 @@
 {
     <ModelEditor 
         TItem="Game"
+        @ref="modelEditor"
         Title="@($"{(editingGame.Id == 0 ? "Add New" : "Edit")} Game")"
         Item="editingGame"
         OriginalItem="originalGame"
@@ -34,6 +36,7 @@
         DeleteWarning="This will delete all associated player stats from this game."
         OnSave="SaveGame"
         OnDelete="DeleteGame"
+        ExtraState="playerStats"
         HasCustomChanges="@(() => !playerStats.SequenceEqual(originalStats))">
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
@@ -145,20 +148,20 @@
                                 <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
                                 <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
                                 <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control form-control-sm" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                                <td><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.H4B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H4B), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
+                                <td><input type="number" value="@stat.RBI" @oninput="(e) => HandleStatChange(stat, nameof(stat.RBI), e.Value)" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                             </tr>
                         }
                     </tbody>
@@ -206,20 +209,20 @@
                             </div>
                         </div>
                         <div class="admin-stats-grid">
-                            <div class="admin-stat-input"><label>1B</label><input type="number" @bind:event="oninput" @bind="stat.H1B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>2B</label><input type="number" @bind:event="oninput" @bind="stat.H2B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>3B</label><input type="number" @bind:event="oninput" @bind="stat.H3B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>4B</label><input type="number" @bind:event="oninput" @bind="stat.H4B" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>HR</label><input type="number" @bind:event="oninput" @bind="stat.HR" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>BB</label><input type="number" @bind:event="oninput" @bind="stat.BB" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" @bind:event="oninput" @bind="stat.SF" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" @bind:event="oninput" @bind="stat.FC" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>K</label><input type="number" @bind:event="oninput" @bind="stat.K" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>KF</label><input type="number" @bind:event="oninput" @bind="stat.KF" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>GO</label><input type="number" @bind:event="oninput" @bind="stat.GO" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FO</label><input type="number" @bind:event="oninput" @bind="stat.FO" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>R</label><input type="number" @bind:event="oninput" @bind="stat.R" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                            <div class="admin-stat-input"><label>RBI</label><input type="number" @bind:event="oninput" @bind="stat.RBI" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>1B</label><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>2B</label><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>3B</label><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>4B</label><input type="number" value="@stat.H4B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H4B), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>HR</label><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>BB</label><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>SF</label><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FC</label><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>K</label><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>KF</label><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>GO</label><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FO</label><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>R</label><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
+                            <div class="admin-stat-input"><label>RBI</label><input type="number" value="@stat.RBI" @oninput="(e) => HandleStatChange(stat, nameof(stat.RBI), e.Value)" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
                         </div>
                     </div>
                 }
@@ -381,6 +384,7 @@ else
     [Parameter] public int? Id { get; set; }
 
     private DeleteManager<Game, int> deleteManager = null!;
+    private ModelEditor<Game> modelEditor = null!;
     private List<Season> allSeasons = new();
     private List<Season> activeSeasons => allSeasons.Where(s => !s.IsDeleted).ToList();
     private List<Game> games = new();
@@ -411,12 +415,13 @@ else
     protected override async Task OnParametersSetAsync()
     {
         bool wasEditing = isEditing;
-        isEditing = Action == "add" || Action == "edit";
+        bool nextEditing = Action == "add" || Action == "edit";
 
-        if (isEditing)
+        if (nextEditing)
         {
             if (!wasEditing || (Id.HasValue && Id != editingGame.Id))
             {
+                isEditing = false;
                 await LoadEditingGame();
             }
         }
@@ -428,6 +433,8 @@ else
             originalStats.Clear();
             seasonRoster.Clear();
         }
+
+        isEditing = nextEditing;
     }
 
     private async Task LoadEditingGame()
@@ -458,6 +465,27 @@ else
             playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
             originalStats = playerStats.Select(s => new StatEntry { PlayerId = s.PlayerId, BO = s.BO }).ToList();
         }
+        await HydrateTempState();
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            Game? persisted = await SessionStorage.GetItemAsync<Game>($"EditState_Game_{Id ?? 0}");
+            if (persisted != null)
+            {
+                editingGame = persisted;
+            }
+
+            List<StatEntry>? persistedExtra = await SessionStorage.GetItemAsync<List<StatEntry>>($"EditState_Game_{Id ?? 0}_Extra");
+            if (persistedExtra != null)
+            {
+                playerStats = persistedExtra;
+            }
+            StateHasChanged();
+        }
+        catch { }
     }
 
     private async Task LoadGames()
@@ -495,6 +523,7 @@ else
         await LoadAvailableOpponents();
         playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
         ReassignBO();
+        if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
     private async Task LoadSeasonRoster() => seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
@@ -516,7 +545,7 @@ else
 
     private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
 
-    private void TogglePlayerInLineup(Player player, bool isChecked)
+    private async Task TogglePlayerInLineup(Player player, bool isChecked)
     {
         if (isChecked)
         {
@@ -528,6 +557,7 @@ else
             playerStats.RemoveAll(ps => ps.PlayerId == player.Id);
             ReassignBO();
         }
+        if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
     private void ReassignBO()
@@ -535,10 +565,24 @@ else
         for (int i = 0; i < playerStats.Count; i++) playerStats[i].BO = i + 1;
     }
 
+    private async Task HandleStatChange(StatEntry stat, string propertyName, object? value)
+    {
+        if (value == null) return;
+        var prop = typeof(StatEntry).GetProperty(propertyName);
+        if (prop != null)
+        {
+            try {
+                var typedValue = Convert.ChangeType(value.ToString(), prop.PropertyType);
+                prop.SetValue(stat, typedValue);
+                if (modelEditor != null) await modelEditor.SaveExtraState();
+            } catch { }
+        }
+    }
+
     private void HandleDragStart(StatEntry stat) => draggedStat = stat;
     private void HandleDragOver(StatEntry stat) => targetStat = stat;
 
-    private void HandleDrop(StatEntry dropTargetStat)
+    private async Task HandleDrop(StatEntry dropTargetStat)
     {
         if (draggedStat == null || draggedStat == dropTargetStat) { targetStat = null; return; }
         int oldIndex = playerStats.IndexOf(draggedStat);
@@ -548,6 +592,7 @@ else
             playerStats.RemoveAt(oldIndex);
             playerStats.Insert(newIndex, draggedStat);
             ReassignBO();
+            if (modelEditor != null) await modelEditor.SaveExtraState();
         }
         draggedStat = null;
         targetStat = null;

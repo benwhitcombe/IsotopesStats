@@ -1,5 +1,5 @@
 using Microsoft.JSInterop;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace IsotopesStats.Services;
 
@@ -14,22 +14,30 @@ public class SessionStorageService
 
     public async Task SetItemAsync<T>(string key, T value)
     {
-        string json = JsonSerializer.Serialize(value);
-        await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", key, json);
+        try
+        {
+            string json = JsonConvert.SerializeObject(value);
+            await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", key, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving to session storage: {ex.Message}");
+        }
     }
 
     public async Task<T?> GetItemAsync<T>(string key)
     {
-        string json = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", key);
-        if (string.IsNullOrEmpty(json))
-            return default;
-
         try
         {
-            return JsonSerializer.Deserialize<T>(json);
+            string json = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", key);
+            if (string.IsNullOrEmpty(json))
+                return default;
+
+            return JsonConvert.DeserializeObject<T>(json);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"Error reading from session storage: {ex.Message}");
             return default;
         }
     }
