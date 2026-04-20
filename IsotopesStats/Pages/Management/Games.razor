@@ -392,8 +392,8 @@ else
     private List<StatEntry> originalStats = new();
     private List<Player> seasonRoster = new();
     private List<Opponent> availableOpponents = new();
-    private Game editingGame = new() { Date = new DateTime(2026, 1, 1) };
-    private Game originalGame = new() { Date = new DateTime(2026, 1, 1) };
+    private Game editingGame = new() { Date = DateTime.Now };
+    private Game originalGame = new() { Date = DateTime.Now };
     private int selectedSeasonId;
     private bool isEditing = false;
     private bool showSeasonModal = false;
@@ -427,8 +427,8 @@ else
         }
         else
         {
-            editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
-            originalGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId };
             playerStats.Clear();
             originalStats.Clear();
             seasonRoster.Clear();
@@ -457,13 +457,15 @@ else
         }
         else
         {
-            editingGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
-            originalGame = new Game { Date = new DateTime(2026, 1, 1), SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId };
+            
+            editingGame.GameNumber = await StatsService.GetNextGameNumberAsync(editingGame.SeasonId);
+
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
-            int order = 1;
-            playerStats = seasonRoster.Select(p => new StatEntry { PlayerId = p.Id, Player = p, BO = order++ }).ToList();
-            originalStats = playerStats.Select(s => new StatEntry { PlayerId = s.PlayerId, BO = s.BO }).ToList();
+            playerStats = new List<StatEntry>();
+            originalStats = new List<StatEntry>();
         }
         await HydrateTempState();
     }
@@ -523,6 +525,12 @@ else
         await LoadAvailableOpponents();
         playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
         ReassignBO();
+
+        if (editingGame.Id == 0)
+        {
+            editingGame.GameNumber = await StatsService.GetNextGameNumberAsync(editingGame.SeasonId);
+        }
+
         if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 

@@ -300,6 +300,18 @@ public class StatsService
         await _supabase.From<Game>().Update(game);
     }
 
+    public async Task<int> GetNextGameNumberAsync(int seasonId)
+    {
+        ModeledResponse<Game> response = await _supabase.From<Game>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Where(x => x.IsDeleted == false)
+            .Order("gamenumber", Constants.Ordering.Descending)
+            .Limit(1)
+            .Get();
+        
+        return (response.Model?.GameNumber ?? 0) + 1;
+    }
+
     public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
     {
         return await GetSeasonsAsync();
