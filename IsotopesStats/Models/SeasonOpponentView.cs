@@ -3,8 +3,8 @@ using Postgrest.Models;
 
 namespace IsotopesStats.Models;
 
-[Table("seasonopponents")]
-public class SeasonOpponents : BaseModel
+[Table("v_season_opponents_list")]
+public class SeasonOpponentView : BaseModel
 {
     [Column("seasonid")]
     public int SeasonId { get; set; }
@@ -12,6 +12,6 @@ public class SeasonOpponents : BaseModel
     [Column("opponentid")]
     public int OpponentId { get; set; }
 
-    [Column("name")]
-    public string? Name { get; set; }
+    [Column("opponentname")]
+    public string OpponentName { get; set; } = string.Empty;
 }

@@ -34,25 +34,90 @@
         CheckUniqueAsync="CheckUniqueOpponent"
         OnSave="SaveOpponent"
         OnDelete="DeleteOpponent"
-        ExtraState="assignedSeasonIds"
-        HasCustomChanges="@(() => !assignedSeasonIds.SetEquals(originalSeasonIds))">
+        ExtraState="@(new { Ids = assignedSeasonIds, Names = assignedSeasonNames })"
+        HasCustomChanges="HasExtraStateChanges">
 
         <div class="form-group">
-            <label>Opponent Name</label>
+            <label>Name</label>
             <InputText class="form-control" @bind-Value="editingOpponent.Name" placeholder="e.g. Springfield Atoms" />
             <ValidationMessage For="@(() => editingOpponent.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
         </div>
         
-        <div class="form-group" style="margin-top: 1.5rem;">
-            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Seasons Faced</label>
-            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
+        <div class="form-group" style="margin-top: 2rem;">
+            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Season History & Identity</label>
+            
+            <div class="desktop-only">
+                <div class="table-container" style="border: 1px solid #eee; border-radius: 8px; background: white;">
+                    <table class="table" style="margin-bottom: 0;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="width: 50px; text-align: center;">Active</th>
+                                <th>Season</th>
+                                <th>Name in Season</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Season season in allSeasons)
+                            {
+                                bool isActive = assignedSeasonIds.Contains(season.Id);
+                                <tr>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <input type="checkbox" 
+                                               style="width: 18px; height: 18px; cursor: pointer;"
+                                               checked="@isActive" 
+                                               @onchange="@((e) => ToggleSeason(season.Id, (bool)(e.Value ?? false)))" />
+                                    </td>
+                                    <td style="vertical-align: middle; font-weight: bold; color: @(isActive ? "var(--isotopes-accent)" : "#999");">
+                                        @season.Name
+                                    </td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="Enter season name..." 
+                                                   value="@GetSeasonName(season.Id)" 
+                                                   @oninput="@((e) => UpdateSeasonName(season.Id, e.Value?.ToString()))" />
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #ccc; font-style: italic; font-size: 0.9rem;">Not in season</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mobile-only">
                 @foreach (Season season in allSeasons)
                 {
-                    <CheckboxButton 
-                        Id="@($"s-{season.Id}")" 
-                        Text="@season.Name" 
-                        Checked="@assignedSeasonIds.Contains(season.Id)" 
-                        CheckedChanged="@((bool val) => ToggleSeason(season.Id, val))" />
+                    bool isActive = assignedSeasonIds.Contains(season.Id);
+                    <div class="mobile-player-card" style="margin-bottom: 0.75rem;">
+                        <div class="mobile-card-header" style="border-bottom: @(isActive ? "1px solid #f0f0f0" : "none"); margin-bottom: @(isActive ? "0.75rem" : "0"); padding-bottom: @(isActive ? "0.5rem" : "0");">
+                            <div class="mobile-card-name" style="color: @(isActive ? "var(--isotopes-accent)" : "#999");">@season.Name</div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: bold;">Active</span>
+                                <input type="checkbox" 
+                                       style="width: 20px; height: 20px; cursor: pointer;"
+                                       checked="@isActive" 
+                                       @onchange="@((e) => ToggleSeason(season.Id, (bool)(e.Value ?? false)))" />
+                            </div>
+                        </div>
+                        @if (isActive)
+                        {
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: bold; margin-bottom: 0.25rem;">Name in Season</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Enter season name..." 
+                                       value="@GetSeasonName(season.Id)" 
+                                       @oninput="@((e) => UpdateSeasonName(season.Id, e.Value?.ToString()))" />
+                            </div>
+                        }
+                    </div>
                 }
             </div>
         </div>
@@ -67,6 +132,7 @@ else
                     <thead>
                         <tr>
                             <th style="text-align: left;">Name</th>
+                            <th style="text-align: left;">Seasons Played</th>
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
@@ -75,6 +141,9 @@ else
                         {
                             <tr>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</td>
+                                <td style="text-align: left; font-size: 0.85rem; color: #666;">
+                                    @GetSeasonSummary(opponent.Id)
+                                </td>
                                 <td style="text-align: right;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(opponent)">Delete</button>
@@ -92,10 +161,11 @@ else
             @foreach (Opponent opponent in opponents)
             {
                 <div class="mobile-player-card">
-                    <div class="mobile-card-header">
+                    <div class="mobile-card-header" style="flex-direction: column; align-items: flex-start;">
                         <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</div>
+                        <div style="font-size: 0.75rem; color: #888; margin-top: 0.2rem;">@GetSeasonSummary(opponent.Id)</div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                         <button class="view-btn" style="flex: 1;" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
                         <button class="view-btn" style="flex: 1; color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(opponent)">Delete</button>
                     </div>
@@ -112,13 +182,30 @@ else
     private DeleteManager<Opponent, int> deleteManager = null!;
     private List<Opponent> opponents = new();
     private List<Season> allSeasons = new();
+    private List<SeasonOpponents> allMappings = new();
     private HashSet<int> assignedSeasonIds = new();
     private HashSet<int> originalSeasonIds = new();
+    private Dictionary<int, string?> assignedSeasonNames = new();
+    private Dictionary<int, string?> originalSeasonNames = new();
     private Opponent editingOpponent = new();
     private Opponent originalOpponent = new Opponent();
     private bool isAdding = false;
     private bool isEditing = false;
     private ModelEditor<Opponent> modelEditor = null!;
+
+    private bool HasExtraStateChanges()
+    {
+        if (!assignedSeasonIds.SetEquals(originalSeasonIds)) return true;
+        
+        foreach (KeyValuePair<int, string?> kvp in assignedSeasonNames)
+        {
+            if (!originalSeasonNames.TryGetValue(kvp.Key, out string? originalValue) || originalValue != kvp.Value)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -155,6 +242,8 @@ else
             originalOpponent = new Opponent();
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
+            assignedSeasonNames.Clear();
+            originalSeasonNames.Clear();
         }
 
         isAdding = nextAdding;
@@ -168,6 +257,8 @@ else
         originalOpponent = new Opponent();
         assignedSeasonIds.Clear();
         originalSeasonIds.Clear();
+        assignedSeasonNames.Clear();
+        originalSeasonNames.Clear();
         await HydrateTempState();
     }
 
@@ -189,12 +280,16 @@ else
                 originalOpponent = opponent.Clone();
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
+                assignedSeasonNames.Clear();
+                originalSeasonNames.Clear();
 
-                List<Season> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
-                foreach (Season s in opponentSeasons)
+                List<SeasonOpponents> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
+                foreach (SeasonOpponents s in opponentSeasons)
                 {
-                    assignedSeasonIds.Add(s.Id);
-                    originalSeasonIds.Add(s.Id);
+                    assignedSeasonIds.Add(s.SeasonId);
+                    originalSeasonIds.Add(s.SeasonId);
+                    assignedSeasonNames[s.SeasonId] = s.Name;
+                    originalSeasonNames[s.SeasonId] = s.Name;
                 }
             }
         }
@@ -204,6 +299,8 @@ else
             originalOpponent = new Opponent();
             assignedSeasonIds.Clear();
             originalSeasonIds.Clear();
+            assignedSeasonNames.Clear();
+            originalSeasonNames.Clear();
         }
         await HydrateTempState();
     }
@@ -213,16 +310,14 @@ else
         try
         {
             Opponent? persisted = await SessionStorage.GetItemAsync<Opponent>($"EditState_Opponent_{Id ?? 0}");
-            if (persisted != null)
-            {
-                editingOpponent = persisted;
-            }
+            if (persisted != null) editingOpponent = persisted;
 
-            HashSet<int>? persistedExtra = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Opponent_{Id ?? 0}_Extra");
-            if (persistedExtra != null)
-            {
-                assignedSeasonIds = persistedExtra;
-            }
+            HashSet<int>? persistedIds = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Opponent_{Id ?? 0}_Extra_Ids");
+            if (persistedIds != null) assignedSeasonIds = persistedIds;
+
+            Dictionary<int, string?>? persistedNames = await SessionStorage.GetItemAsync<Dictionary<int, string?>>($"EditState_Opponent_{Id ?? 0}_Extra_Names");
+            if (persistedNames != null) assignedSeasonNames = persistedNames;
+
             StateHasChanged();
         }
         catch { }
@@ -231,6 +326,30 @@ else
     private async Task LoadOpponents()
     {
         opponents = await StatsService.GetAllOpponentsAsync();
+        // Load all mappings to show summary in table
+        allMappings.Clear();
+        foreach (Opponent o in opponents)
+        {
+            List<SeasonOpponents> maps = await StatsService.GetSeasonsForOpponentAsync(o.Id);
+            allMappings.AddRange(maps);
+        }
+    }
+
+    private string GetSeasonSummary(int opponentId)
+    {
+        List<SeasonOpponents> maps = allMappings.Where(m => m.OpponentId == opponentId).ToList();
+        if (!maps.Any()) return "No seasons assigned";
+        
+        List<string> summaries = new List<string>();
+        foreach (SeasonOpponents m in maps)
+        {
+            Season? s = allSeasons.FirstOrDefault(x => x.Id == m.SeasonId);
+            if (s != null)
+            {
+                summaries.Add(s.Name);
+            }
+        }
+        return string.Join(", ", summaries);
     }
 
     private void StartEdit(string action, int id)
@@ -241,17 +360,45 @@ else
 
     private async Task<string?> CheckUniqueOpponent(Opponent model)
     {
-        if (model.Id == 0) return null; // Creation reuses opponents
+        if (model.Id == 0) return null;
         if (string.IsNullOrWhiteSpace(model.Name)) return null;
         bool isUnique = await StatsService.IsOpponentNameUniqueAsync(model.Name, model.Id);
-        return isUnique ? null : "Another opponent with this name already exists.";
+        return isUnique ? null : "Another opponent with this master name already exists.";
     }
 
     private async Task ToggleSeason(int seasonId, bool isChecked)
     {
-        if (isChecked) assignedSeasonIds.Add(seasonId);
-        else assignedSeasonIds.Remove(seasonId);
-        if (modelEditor != null) await modelEditor.SaveExtraState();
+        if (isChecked) 
+        {
+            assignedSeasonIds.Add(seasonId);
+            if (!assignedSeasonNames.ContainsKey(seasonId))
+            {
+                assignedSeasonNames[seasonId] = editingOpponent.Name;
+            }
+        }
+        else 
+        {
+            assignedSeasonIds.Remove(seasonId);
+        }
+        if (modelEditor != null) 
+        {
+            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Ids", assignedSeasonIds);
+            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
+        }
+    }
+
+    private string? GetSeasonName(int seasonId)
+    {
+        return assignedSeasonNames.TryGetValue(seasonId, out string? name) ? name : editingOpponent.Name;
+    }
+
+    private async Task UpdateSeasonName(int seasonId, string? name)
+    {
+        assignedSeasonNames[seasonId] = name;
+        if (modelEditor != null)
+        {
+            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
+        }
     }
 
     private async Task SaveOpponent()
@@ -259,19 +406,42 @@ else
         int opponentId;
         if (editingOpponent.Id == 0)
         {
-            int firstSeasonId = assignedSeasonIds.FirstOrDefault();
-            opponentId = await StatsService.AddOpponentAsync(editingOpponent, firstSeasonId);
-            foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
-                await StatsService.AddOpponentToSeasonAsync(opponentId, sid);
+            opponentId = await StatsService.AddOpponentAsync(editingOpponent, 0);
+            foreach (int sid in assignedSeasonIds)
+            {
+                assignedSeasonNames.TryGetValue(sid, out string? name);
+                await StatsService.AddOpponentToSeasonAsync(opponentId, sid, name ?? editingOpponent.Name);
+            }
         }
         else
         {
             opponentId = editingOpponent.Id;
             await StatsService.UpdateOpponentAsync(editingOpponent);
-            foreach (int sid in assignedSeasonIds.Except(originalSeasonIds))
-                await StatsService.AddOpponentToSeasonAsync(opponentId, sid);
+            
+            foreach (int sid in assignedSeasonIds)
+            {
+                assignedSeasonNames.TryGetValue(sid, out string? name);
+                string currentName = name ?? editingOpponent.Name;
+
+                if (originalSeasonIds.Contains(sid))
+                {
+                    originalSeasonNames.TryGetValue(sid, out string? oldName);
+                    if (currentName != oldName)
+                    {
+                        await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
+                        await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName);
+                    }
+                }
+                else
+                {
+                    await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName);
+                }
+            }
+            
             foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
+            {
                 await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
+            }
         }
         await LoadOpponents();
     }

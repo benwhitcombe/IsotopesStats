@@ -136,11 +136,19 @@ public class StatsService
 
     public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
     {
-        ModeledResponse<Opponent> response = await _supabase.From<Opponent>()
-            .Where(x => x.IsDeleted == false)
-            .Order("name", Constants.Ordering.Ascending)
+        ModeledResponse<SeasonOpponentView> response = await _supabase.From<SeasonOpponentView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Get();
-        return response.Models;
+        
+        List<Opponent> opponents = new List<Opponent>();
+        foreach (SeasonOpponentView sov in response.Models)
+        {
+            opponents.Add(new Opponent { 
+                Id = sov.OpponentId, 
+                Name = sov.OpponentName 
+            });
+        }
+        return opponents.OrderBy(o => o.Name).ToList();
     }
 
     public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
@@ -176,9 +184,14 @@ public class StatsService
         return response.Models.Count == 0;
     }
 
-    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId)
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null)
     {
-        SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId };
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Opponent? master = await _supabase.From<Opponent>().Where(x => x.Id == opponentId).Single();
+            name = master?.Name;
+        }
+        SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = name };
         await _supabase.From<SeasonOpponents>().Insert(link);
     }
 
@@ -312,9 +325,12 @@ public class StatsService
         return (response.Model?.GameNumber ?? 0) + 1;
     }
 
-    public async Task<List<Season>> GetSeasonsForOpponentAsync(int opponentId)
+    public async Task<List<SeasonOpponents>> GetSeasonsForOpponentAsync(int opponentId)
     {
-        return await GetSeasonsAsync();
+        ModeledResponse<SeasonOpponents> response = await _supabase.From<SeasonOpponents>()
+            .Filter("opponentid", Constants.Operator.Equals, opponentId)
+            .Get();
+        return response.Models;
     }
 
     public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
