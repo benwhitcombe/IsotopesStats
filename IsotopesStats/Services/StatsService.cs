@@ -32,7 +32,9 @@ public class StatsService
 
     public async Task UpdateSeasonAsync(Season season)
     {
-        await _supabase.From<Season>().Update(season);
+        // Create a clean object to avoid Postgrest tracking issues with deserialized models
+        Season update = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
+        await _supabase.From<Season>().Update(update);
     }
 
     public async Task DeleteSeasonAsync(int seasonId)
@@ -88,7 +90,8 @@ public class StatsService
 
     public async Task UpdatePlayerAsync(Player player)
     {
-        await _supabase.From<Player>().Update(player);
+        Player update = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
+        await _supabase.From<Player>().Update(update);
     }
 
     public async Task DeletePlayerAsync(int playerId)
@@ -153,7 +156,8 @@ public class StatsService
 
     public async Task UpdateOpponentAsync(Opponent opponent)
     {
-        await _supabase.From<Opponent>().Update(opponent);
+        Opponent update = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
+        await _supabase.From<Opponent>().Update(update);
     }
 
     public async Task DeleteOpponentAsync(int opponentId)
@@ -273,7 +277,18 @@ public class StatsService
 
     public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
-        await _supabase.From<Game>().Update(game);
+        Game update = new Game 
+        { 
+            Id = game.Id, 
+            SeasonId = game.SeasonId, 
+            GameNumber = game.GameNumber, 
+            Date = game.Date, 
+            Diamond = game.Diamond, 
+            OpponentId = game.OpponentId, 
+            Type = game.Type, 
+            IsDeleted = game.IsDeleted 
+        };
+        await _supabase.From<Game>().Update(update);
         await _supabase.From<StatEntry>().Where(x => x.GameId == game.Id).Delete();
         foreach (StatEntry stat in stats) { stat.GameId = game.Id; stat.Id = 0; }
         await _supabase.From<StatEntry>().Insert(stats);
@@ -295,3 +310,4 @@ public class StatsService
         return await GetSeasonsAsync();
     }
 }
+

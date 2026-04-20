@@ -270,7 +270,7 @@ else
                 editingSeason = persisted;
             }
 
-            var persistedExtra = await SessionStorage.GetItemAsync<SeasonExtraState>($"EditState_Season_{Id ?? 0}_Extra");
+            SeasonExtraState? persistedExtra = await SessionStorage.GetItemAsync<SeasonExtraState>($"EditState_Season_{Id ?? 0}_Extra");
             if (persistedExtra != null)
             {
                 extraState = persistedExtra;

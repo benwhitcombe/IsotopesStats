@@ -568,11 +568,11 @@ else
     private async Task HandleStatChange(StatEntry stat, string propertyName, object? value)
     {
         if (value == null) return;
-        var prop = typeof(StatEntry).GetProperty(propertyName);
+        System.Reflection.PropertyInfo? prop = typeof(StatEntry).GetProperty(propertyName);
         if (prop != null)
         {
             try {
-                var typedValue = Convert.ChangeType(value.ToString(), prop.PropertyType);
+                object? typedValue = Convert.ChangeType(value.ToString(), prop.PropertyType);
                 prop.SetValue(stat, typedValue);
                 if (modelEditor != null) await modelEditor.SaveExtraState();
             } catch { }

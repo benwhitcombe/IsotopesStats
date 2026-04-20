@@ -218,7 +218,7 @@ else
                 editingOpponent = persisted;
             }
 
-            var persistedExtra = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Opponent_{Id ?? 0}_Extra");
+            HashSet<int>? persistedExtra = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Opponent_{Id ?? 0}_Extra");
             if (persistedExtra != null)
             {
                 assignedSeasonIds = persistedExtra;

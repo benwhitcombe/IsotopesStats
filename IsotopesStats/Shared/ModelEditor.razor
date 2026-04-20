@@ -86,6 +86,12 @@
     [Parameter] public object? ExtraState { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private static readonly Newtonsoft.Json.JsonSerializerSettings _compareSettings = new() 
+    { 
+        ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver(),
+        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore 
+    };
+
     private EditContext? _internalContext;
     private TItem? _lastItem;
     private object? _lastExtraState;
@@ -136,8 +142,8 @@
             // 2. Fallback: JSON-based value comparison for plain POCOs
             try 
             {
-                string itemJson = Newtonsoft.Json.JsonConvert.SerializeObject(Item);
-                string originalJson = Newtonsoft.Json.JsonConvert.SerializeObject(OriginalItem);
+                string itemJson = Newtonsoft.Json.JsonConvert.SerializeObject(Item, _compareSettings);
+                string originalJson = Newtonsoft.Json.JsonConvert.SerializeObject(OriginalItem, _compareSettings);
                 return itemJson != originalJson;
             }
             catch 
