@@ -6,6 +6,9 @@ using IsotopesStats;
 using IsotopesStats.Services;
 using IsotopesStats.Models;
 using Supabase;
+using IsotopesStats.Domain.Interfaces;
+using SupabaseRepository.Repositories;
+using SupabaseRepository.Auth;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -28,6 +31,8 @@ builder.Services.AddScoped(sp =>
 
 // Core Services
 builder.Services.AddScoped<SessionStorageService>();
+builder.Services.AddScoped<IStatsRepository, SupabaseStatsRepository>();
+builder.Services.AddScoped<IAuthRepository, SupabaseAuthRepository>();
 builder.Services.AddScoped<IStatsService, StatsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();

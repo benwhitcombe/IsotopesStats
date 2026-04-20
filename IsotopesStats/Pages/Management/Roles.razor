@@ -211,8 +211,8 @@ else
 
         if (role != null)
         {
-            editingRole = role.Clone();
-            originalRole = role.Clone();
+            editingRole = role with { };
+            originalRole = role with { };
             selectedPermissionIds = role.Permissions.Select(p => p.Id).ToList();
             originalPermissionIds = new List<int>(selectedPermissionIds);
         }

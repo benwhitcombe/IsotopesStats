@@ -220,8 +220,8 @@ else
 
             if (season != null)
             {
-                editingSeason = season.Clone();
-                originalSeason = season.Clone();
+                editingSeason = season with { };
+                originalSeason = season with { };
                 assignedPlayerIds.Clear();
                 originalPlayerIds.Clear();
                 assignedOpponentIds.Clear();

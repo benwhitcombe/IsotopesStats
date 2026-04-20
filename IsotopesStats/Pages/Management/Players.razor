@@ -185,8 +185,8 @@ else
 
             if (player != null)
             {
-                editingPlayer = player.Clone();
-                originalPlayer = player.Clone();
+                editingPlayer = player with { };
+                originalPlayer = player with { };
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
 

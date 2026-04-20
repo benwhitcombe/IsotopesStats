@@ -276,8 +276,8 @@ else
 
             if (opponent != null)
             {
-                editingOpponent = opponent.Clone();
-                originalOpponent = opponent.Clone();
+                editingOpponent = opponent with { };
+                originalOpponent = opponent with { };
                 assignedSeasonIds.Clear();
                 originalSeasonIds.Clear();
                 assignedSeasonNames.Clear();

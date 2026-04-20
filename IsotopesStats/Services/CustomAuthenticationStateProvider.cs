@@ -2,8 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using IsotopesStats.Models;
 using Supabase;
-using Postgrest;
-using Postgrest.Responses;
+using IsotopesStats.Domain.Interfaces;
 
 namespace IsotopesStats.Services;
 
@@ -92,38 +91,9 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
         try 
         {
-            ModeledResponse<UserUserRoles> urResponse = await _supabase.From<UserUserRoles>().Where(x => x.UserId == supabaseUserId).Get();
-            List<int> roleIds = urResponse.Models.Select(x => x.RoleId).ToList();
-
-            if (!roleIds.Any()) return new List<UserRole>();
-
-            ModeledResponse<UserRole> rolesResponse = await _supabase.From<UserRole>().Get();
-            List<UserRole> roles = rolesResponse.Models.Where(r => roleIds.Contains(r.Id)).ToList();
-
-            ModeledResponse<RolePermission> rpResponse = await _supabase.From<RolePermission>().Get();
-            List<int> permissionIdsForTheseRoles = rpResponse.Models
-                .Where(rp => roleIds.Contains(rp.RoleId))
-                .Select(x => x.PermissionId)
-                .Distinct()
-                .ToList();
-
-            if (permissionIdsForTheseRoles.Any())
-            {
-                ModeledResponse<Permission> permResponse = await _supabase.From<Permission>().Get();
-                List<Permission> perms = permResponse.Models;
-
-                foreach (UserRole role in roles)
-                {
-                    List<int> rolePermIds = rpResponse.Models
-                        .Where(rp => rp.RoleId == role.Id)
-                        .Select(rp => rp.PermissionId)
-                        .ToList();
-                    
-                    role.Permissions = perms.Where(p => rolePermIds.Contains(p.Id)).ToList();
-                }
-            }
-
-            return roles;
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            IAuthRepository authRepository = scope.ServiceProvider.GetRequiredService<IAuthRepository>();
+            return await authRepository.GetUserRolesForUserAsync(supabaseUserId);
         }
         catch (Exception ex)
         {

@@ -452,13 +452,13 @@ else
             Game? game = await StatsService.GetGameAsync(Id.Value);
             if (game != null)
             {
-                editingGame = game.Clone();
-                originalGame = game.Clone();
+                editingGame = game with { };
+                originalGame = game with { };
                 await LoadSeasonRoster();
                 await LoadAvailableOpponents();
                 playerStats = await StatsService.GetGameStatsAsync(game.Id);
                 playerStats = playerStats.OrderBy(s => s.BO).ToList();
-                originalStats = playerStats.Select(s => s.Clone()).Cast<StatEntry>().ToList();
+                originalStats = playerStats.Select(s => s with { }).Cast<StatEntry>().ToList();
             }
         }
         else
