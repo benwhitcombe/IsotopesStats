@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "IsotopesStats",
   "resources": {
-    "hash": "sha256-2BaabvQRtLh5Z5t9TpnDSX01f0cK+q+Gi4mC6SVR4rc=",
+    "hash": "sha256-c00iS8q7i878wzyp6r/XhJfOshI3DYFlzNwX6893moA=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -21,7 +21,7 @@
       "Supabase.Functions.wasm": "sha256-cAmNEcl3ZkcTAcSFQY9ViicWaBQnCMxJGk7fcpxTwAg=",
       "Supabase.Gotrue.wasm": "sha256-IJVfKJFlwBXRb7fR+mTHf66WvrXDZnn+xI+7Oohb0uo=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-xycdrBQyumqarGNuI1svxkaenBKxEn2+vKm83hkxTKA=",
-      "Microsoft.AspNetCore.Components.wasm": "sha256-+1+WmC1ugDFeLVGxbkqoYEi5ups2k+fR/PXzpBUhn0Q=",
+      "Microsoft.AspNetCore.Components.wasm": "sha256-7586cJVJNX3T8hzvIuLknGs+Jp6g+/edR85HNIPsK7Y=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-JjiMiKAGWjsOGDM+k3hDQ5y3vEBdb451H1zOjZLpI00=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-1Pf2meEYacKdf5lRRfCJ3jzjKu/7EYzQG6kLDDSz5bA=",
       "Microsoft.AspNetCore.Components.Web.wasm": "sha256-rpQ88XEkYjN6WJlhkHqLvMht31MJm1FqLrxeOCiIvaw=",
@@ -31,7 +31,7 @@
       "Microsoft.Extensions.Configuration.Abstractions.wasm": "sha256-s1R7VNMhH7bhSix+9iDG/nBoBr1IbxaUQAhnz69waSg=",
       "Microsoft.Extensions.Configuration.Json.wasm": "sha256-3UBRwvCkKtraRUarsIBDS05tA2rRm1leCB6EDfyVjeA=",
       "Microsoft.Extensions.DependencyInjection.wasm": "sha256-mw/Sy1n9J6R0bUD0GI5MtB/zP+wyzOPiVsOTA/1C4NA=",
-      "Microsoft.Extensions.DependencyInjection.Abstractions.wasm": "sha256-iUhFrs3Kiq9EEhqfr8JQJvlx7C18A7Sx4+mMZLCRbpw=",
+      "Microsoft.Extensions.DependencyInjection.Abstractions.wasm": "sha256-RO/ySGregcS4k460bUzLwdHlZXu0z5lnRUvPe9s6NVc=",
       "Microsoft.Extensions.Logging.wasm": "sha256-lronxO5RVywLbFhme/ExIuzFePlP8EosZyZteUaMAwE=",
       "Microsoft.Extensions.Logging.Abstractions.wasm": "sha256-ZvJQnQ6MZgoi+1arH0zmkRcLcWIUgThT7cMS5oTQw28=",
       "Microsoft.Extensions.Options.wasm": "sha256-ke8/McTHLAdKboebn69KN8xdKP4x5iiu9FK8771KfC8=",
@@ -72,7 +72,7 @@
       "System.IO.Compression.wasm": "sha256-KHr72MF0t+KlUU53L5ZUotrkhU75+EIbFrbrewHdLPg=",
       "System.Linq.Expressions.wasm": "sha256-MiRPFnht0l6lF4qfKmbdR8O8kNSDgAWxhvoO64C7oWo=",
       "System.Linq.Queryable.wasm": "sha256-0OUU77GfKuKJql12IbXGajG9Kk+vZFqBI3t26dNV2mY=",
-      "System.Linq.wasm": "sha256-dGxXXv0wfdNj/4hv044hMex0Vh5iRe2ShXEeGBsXCXE=",
+      "System.Linq.wasm": "sha256-nyeI5z5UqzeoOjQXVnA65tt9IblnR0dmOE5uKL7bSlo=",
       "System.Memory.wasm": "sha256-0TjhHjrw2tKcSyTx358U07QUdt1Ja/tTVHzoRp1k0sU=",
       "System.Net.Http.wasm": "sha256-DaRV+V54buBsYfwMVYSuw3AWvUXKz6dL/1zn8Oh7AZw=",
       "System.Net.NetworkInformation.wasm": "sha256-LQEBfwuvyi9NsFbuhaRuqF0vdiP2RpKzCMnEEdNMzrk=",
@@ -92,7 +92,7 @@
       "System.Runtime.Numerics.wasm": "sha256-hNDN9dxw8xfspXPdMMZi7aW+tnq5X/Of3FTOsMzx8xk=",
       "System.Runtime.Serialization.Formatters.wasm": "sha256-QWu1dZ1AYkOKOxqDLRdGGJdVQCL1t6ocVDsQQR9wEfY=",
       "System.Runtime.Serialization.Primitives.wasm": "sha256-0L0El1LYsU7WTaZZbs0KemT7HBzuK2VfY4pUTwd/SIs=",
-      "System.Runtime.wasm": "sha256-7t22zu4ZOgxj2gWZs7SX2ZnBluMfSfElkdMmf/5t3Tc=",
+      "System.Runtime.wasm": "sha256-d0qTPd59RFhm7R/+lwlWiYv4rgeNBlX8kV3pKAA+XMM=",
       "System.Security.Claims.wasm": "sha256-6g7ZYwzmlo87VpjPBfrD4j1KBROuKaK7OodS5kIzw94=",
       "System.Security.Cryptography.wasm": "sha256-prl33CTmEXIHWXS3izoWedkbDam0DMl0rg4JT1ksmYQ=",
       "System.Text.Encoding.Extensions.wasm": "sha256-4TICzQBcv8cmQOFDkOTetrunuIsmqxhqX7ovPn7Ly40=",
@@ -109,8 +109,8 @@
       "System.Xml.XDocument.wasm": "sha256-On0uOogVGRbouck7dNyN7zWjHWBPTwjg7g0pCL5MqHI=",
       "System.wasm": "sha256-25KTxVbx+rD8S9iyUye7jmbj1e4TZ5Ca+elup4oegJA=",
       "netstandard.wasm": "sha256-qBhQpiKNF1ykVlV7yAWi8ZPMWf3fMf0j5etOkuszu3A=",
-      "System.Private.CoreLib.wasm": "sha256-/Kj2h0DEJ8SYt3axVzfc5XPWE7pbHMXP4J8jGzg8PNA=",
-      "IsotopesStats.wasm": "sha256-Sp5rNS7IMyC1X1cMJEgdsJIfmnf3glytSojF5lZK3tc="
+      "System.Private.CoreLib.wasm": "sha256-P7nAN2xikQvNsUBThKiY81HXNRfQSQ1B8cuU4tJ34Ec=",
+      "IsotopesStats.wasm": "sha256-Zx2XMZFhk+e/MQISOsD9hKPLJ3g9IS527+oK54mFGZw="
     }
   },
   "cacheBootResources": true,
