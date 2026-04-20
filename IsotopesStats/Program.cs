@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using IsotopesStats;
 using IsotopesStats.Services;
 using IsotopesStats.Models;
@@ -14,13 +15,16 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 string supabaseUrl = builder.Configuration["Supabase:Url"] ?? throw new Exception("Supabase URL is missing");
 string supabaseKey = builder.Configuration["Supabase:Key"] ?? throw new Exception("Supabase Key is missing");
 
-SupabaseOptions options = new SupabaseOptions
+builder.Services.AddScoped(sp => 
 {
-    AutoRefreshToken = true,
-    AutoConnectRealtime = true
-};
-
-builder.Services.AddScoped(_ => new Supabase.Client(supabaseUrl, supabaseKey, options));
+    SupabaseOptions options = new SupabaseOptions
+    {
+        AutoRefreshToken = true,
+        AutoConnectRealtime = true,
+        SessionHandler = new SupabaseSessionPersistence(sp.GetRequiredService<IJSRuntime>())
+    };
+    return new Supabase.Client(supabaseUrl, supabaseKey, options);
+});
 
 // Core Services
 builder.Services.AddScoped<SessionStorageService>();
@@ -52,8 +56,26 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 WebAssemblyHost host = builder.Build();
 
-// Initialize State Persistence
+// Initialize App State Persistence
 PersistenceManager persistenceManager = host.Services.GetRequiredService<PersistenceManager>();
 await persistenceManager.InitializeAsync();
+
+// Initialize Supabase Auth Session
+Supabase.Client supabase = host.Services.GetRequiredService<Supabase.Client>();
+try 
+{
+    // Explicitly load the session from the persistence handler
+    supabase.Auth.LoadSession();
+    // Initialize the client (triggers token refresh check)
+    await supabase.InitializeAsync();
+}
+catch (Exception ex) 
+{ 
+    Console.WriteLine($"Auth initialization failed: {ex.Message}"); 
+}
+
+// Ensure the UI reflects the loaded auth state
+CustomAuthenticationStateProvider authProvider = (CustomAuthenticationStateProvider)host.Services.GetRequiredService<AuthenticationStateProvider>();
+authProvider.NotifyStateChanged();
 
 await host.RunAsync();
