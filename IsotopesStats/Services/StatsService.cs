@@ -241,18 +241,97 @@ public class StatsService
 
     public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
+        if (seasonId == -1) return await GetAllStatsSummaryAsync();
+        
         ModeledResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>()
             .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Get();
         return response.Models;
     }
 
+    public async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
+    {
+        ModeledResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>().Get();
+        
+        // Group by player name and sum up the stats manually since Postgrest doesn't support grouping well
+        return response.Models.GroupBy(p => p.PlayerName)
+            .Select(g => new PlayerStatsSummary
+            {
+                PlayerName = g.Key,
+                GamesPlayed = g.Sum(x => x.GamesPlayed),
+                H1B = g.Sum(x => x.H1B),
+                H2B = g.Sum(x => x.H2B),
+                H3B = g.Sum(x => x.H3B),
+                H4B = g.Sum(x => x.H4B),
+                HR = g.Sum(x => x.HR),
+                FC = g.Sum(x => x.FC),
+                BB = g.Sum(x => x.BB),
+                SF = g.Sum(x => x.SF),
+                K = g.Sum(x => x.K),
+                KF = g.Sum(x => x.KF),
+                GO = g.Sum(x => x.GO),
+                FO = g.Sum(x => x.FO),
+                R = g.Sum(x => x.R),
+                RBI = g.Sum(x => x.RBI)
+            }).ToList();
+    }
+
     public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
     {
+        if (seasonId == -1) return await GetAllTeamTotalsAsync();
+
         TeamStatsSummary? result = await _supabase.From<TeamStatsSummary>()
             .Filter("seasonid", Constants.Operator.Equals, seasonId)
             .Single();
         return (PlayerStatsSummary?)result ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
+    }
+
+    public async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
+    {
+        ModeledResponse<TeamStatsSummary> response = await _supabase.From<TeamStatsSummary>().Get();
+        
+        return new PlayerStatsSummary
+        {
+            PlayerName = "TEAM TOTALS",
+            GamesPlayed = response.Models.Sum(x => x.GamesPlayed),
+            H1B = response.Models.Sum(x => x.H1B),
+            H2B = response.Models.Sum(x => x.H2B),
+            H3B = response.Models.Sum(x => x.H3B),
+            H4B = response.Models.Sum(x => x.H4B),
+            HR = response.Models.Sum(x => x.HR),
+            FC = response.Models.Sum(x => x.FC),
+            BB = response.Models.Sum(x => x.BB),
+            SF = response.Models.Sum(x => x.SF),
+            K = response.Models.Sum(x => x.K),
+            KF = response.Models.Sum(x => x.KF),
+            GO = response.Models.Sum(x => x.GO),
+            FO = response.Models.Sum(x => x.FO),
+            R = response.Models.Sum(x => x.R),
+            RBI = response.Models.Sum(x => x.RBI)
+        };
+    }
+
+    public async Task<int> GetMostRecentStatsSeasonIdAsync()
+    {
+        // Get the most recent game that has stats
+        ModeledResponse<StatEntry> response = await _supabase.From<StatEntry>()
+            .Select("*, game:games(*)")
+            .Order("gameid", Constants.Ordering.Descending)
+            .Limit(1)
+            .Get();
+        
+        if (response.Model != null)
+        {
+            // We need to fetch the season ID from the game linked to the stat
+            // StatEntry has GameId, but we need the SeasonId from the Games table.
+            Game? game = await _supabase.From<Game>()
+                .Filter("id", Constants.Operator.Equals, response.Model.GameId)
+                .Single();
+            
+            return game?.SeasonId ?? 0;
+        }
+
+        return 0;
     }
 
     public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)

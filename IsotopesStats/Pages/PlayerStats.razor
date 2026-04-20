@@ -17,6 +17,7 @@
         <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
             <label style="margin:0; font-weight: bold;">Season:</label>
             <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
+                <option value="-1">All Seasons</option>
                 @foreach (Season season in seasons)
                 {
                     <option value="@season.Id">@season.Name</option>
@@ -25,7 +26,7 @@
         </div>
         <div class="mobile-only">
              <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal"> 
-                🗓️ @seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name
+                🗓️ @(SharedState.SelectedSeasonId == -1 ? "All Seasons" : seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name)
             </button>
         </div>
     </div>
@@ -40,6 +41,9 @@
                 <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
             </div>
             <div class="sort-grid">
+                <div class="sort-option @(SharedState.SelectedSeasonId == -1 ? "active" : "")" @onclick="() => SelectMobileSeason(-1)">
+                    All Seasons
+                </div>
                 @foreach (Season season in seasons)
                 {
                     <div class="sort-option @(SharedState.SelectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
@@ -400,9 +404,17 @@ else
         SharedState.ReturnUrl = "";
         seasons = await StatsService.GetSeasonsAsync();
 
-        if (SharedState.SelectedSeasonId == 0 && seasons.Any())
+        if (SharedState.SelectedSeasonId == 0)
         {
-            SharedState.SelectedSeasonId = seasons.First().Id;
+            int recentSeasonId = await StatsService.GetMostRecentStatsSeasonIdAsync();
+            if (recentSeasonId != 0)
+            {
+                SharedState.SelectedSeasonId = recentSeasonId;
+            }
+            else if (seasons.Any())
+            {
+                SharedState.SelectedSeasonId = seasons.First().Id;
+            }
         }
 
         activeView = SessionState.ActiveView;
