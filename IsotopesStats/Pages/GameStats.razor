@@ -385,6 +385,7 @@ else
         int gameId = summary.GameId;
         GameUIState state = SessionState.GetState(gameId);
         state.IsExpanded = !state.IsExpanded;
+        SessionState.TriggerChange();
 
         if (state.IsExpanded && (!expandedStats.ContainsKey(gameId) || expandedStats[gameId] == null))
         {
@@ -409,6 +410,7 @@ else
             state.IsAscending = false;
             if (column == "Player" || column == "BO") state.IsAscending = true;
         }
+        SessionState.TriggerChange();
         StateHasChanged();
     }
 

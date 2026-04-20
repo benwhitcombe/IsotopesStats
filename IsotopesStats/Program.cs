@@ -23,6 +23,7 @@ SupabaseOptions options = new SupabaseOptions
 builder.Services.AddScoped(_ => new Supabase.Client(supabaseUrl, supabaseKey, options));
 
 // Core Services
+builder.Services.AddScoped<LocalStorageService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
@@ -44,8 +45,15 @@ builder.Services.AddAuthorizationCore(options =>
 builder.Services.AddScoped<SharedSessionState>();
 builder.Services.AddScoped<PlayerStatsState>();
 builder.Services.AddScoped<GameStatsState>();
+builder.Services.AddScoped<PersistenceManager>();
 
 // HttpClient (standard for WASM)
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-await builder.Build().RunAsync();
+WebAssemblyHost host = builder.Build();
+
+// Initialize State Persistence
+PersistenceManager persistenceManager = host.Services.GetRequiredService<PersistenceManager>();
+await persistenceManager.InitializeAsync();
+
+await host.RunAsync();

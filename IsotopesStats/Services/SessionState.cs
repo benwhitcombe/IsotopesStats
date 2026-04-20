@@ -4,27 +4,94 @@ namespace IsotopesStats.Services;
 
 public class SharedSessionState
 {
-    public int SelectedSeasonId { get; set; } = 0;
-    public string ReturnUrl { get; set; } = "players"; // Default to players
-    public bool OpenMenuOnLoad { get; set; } = false;
+    private int _selectedSeasonId = 0;
+    public int SelectedSeasonId 
+    { 
+        get => _selectedSeasonId; 
+        set { if (_selectedSeasonId != value) { _selectedSeasonId = value; OnChanged?.Invoke(); } } 
+    }
+
+    private string _returnUrl = "players";
+    public string ReturnUrl 
+    { 
+        get => _returnUrl; 
+        set { if (_returnUrl != value) { _returnUrl = value; OnChanged?.Invoke(); } } 
+    }
+
+    private bool _openMenuOnLoad = false;
+    public bool OpenMenuOnLoad 
+    { 
+        get => _openMenuOnLoad; 
+        set { if (_openMenuOnLoad != value) { _openMenuOnLoad = value; OnChanged?.Invoke(); } } 
+    }
+
+    public event Action? OnChanged;
+
+    public void LoadFrom(SharedSessionState other)
+    {
+        _selectedSeasonId = other.SelectedSeasonId;
+        _returnUrl = other.ReturnUrl;
+        _openMenuOnLoad = other.OpenMenuOnLoad;
+    }
 }
 
 public class PlayerStatsState
 {
-    public string FilterText { get; set; } = string.Empty;
-    public string ActiveView { get; set; } = "Standard";
+    private string _filterText = string.Empty;
+    public string FilterText 
+    { 
+        get => _filterText; 
+        set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
+    }
+
+    private string _activeView = "Standard";
+    public string ActiveView 
+    { 
+        get => _activeView; 
+        set { if (_activeView != value) { _activeView = value; OnChanged?.Invoke(); } } 
+    }
     
-    // Standard View State
-    public string StandardSortColumn { get; set; } = "AVG";
-    public bool StandardIsAscending { get; set; } = false;
+    private string _standardSortColumn = "AVG";
+    public string StandardSortColumn 
+    { 
+        get => _standardSortColumn; 
+        set { if (_standardSortColumn != value) { _standardSortColumn = value; OnChanged?.Invoke(); } } 
+    }
 
-    // Hits View State
-    public string HitsSortColumn { get; set; } = "SLG";
-    public bool HitsIsAscending { get; set; } = false;
+    private bool _standardIsAscending = false;
+    public bool StandardIsAscending 
+    { 
+        get => _standardIsAscending; 
+        set { if (_standardIsAscending != value) { _standardIsAscending = value; OnChanged?.Invoke(); } } 
+    }
 
-    // Outcomes View State
-    public string OutcomesSortColumn { get; set; } = "OBP";
-    public bool OutcomesIsAscending { get; set; } = false;
+    private string _hitsSortColumn = "SLG";
+    public string HitsSortColumn 
+    { 
+        get => _hitsSortColumn; 
+        set { if (_hitsSortColumn != value) { _hitsSortColumn = value; OnChanged?.Invoke(); } } 
+    }
+
+    private bool _hitsIsAscending = false;
+    public bool HitsIsAscending 
+    { 
+        get => _hitsIsAscending; 
+        set { if (_hitsIsAscending != value) { _hitsIsAscending = value; OnChanged?.Invoke(); } } 
+    }
+
+    private string _outcomesSortColumn = "OBP";
+    public string OutcomesSortColumn 
+    { 
+        get => _outcomesSortColumn; 
+        set { if (_outcomesSortColumn != value) { _outcomesSortColumn = value; OnChanged?.Invoke(); } } 
+    }
+
+    private bool _outcomesIsAscending = false;
+    public bool OutcomesIsAscending 
+    { 
+        get => _outcomesIsAscending; 
+        set { if (_outcomesIsAscending != value) { _outcomesIsAscending = value; OnChanged?.Invoke(); } } 
+    }
 
     public string CurrentSortColumn => ActiveView switch {
         "Standard" => StandardSortColumn,
@@ -39,6 +106,20 @@ public class PlayerStatsState
         "Outcomes" => OutcomesIsAscending,
         _ => false
     };
+
+    public event Action? OnChanged;
+
+    public void LoadFrom(PlayerStatsState other)
+    {
+        _filterText = other.FilterText;
+        _activeView = other.ActiveView;
+        _standardSortColumn = other.StandardSortColumn;
+        _standardIsAscending = other.StandardIsAscending;
+        _hitsSortColumn = other.HitsSortColumn;
+        _hitsIsAscending = other.HitsIsAscending;
+        _outcomesSortColumn = other.OutcomesSortColumn;
+        _outcomesIsAscending = other.OutcomesIsAscending;
+    }
 }
 
 public class GameUIState
@@ -55,8 +136,13 @@ public class GameUIState
 
 public class GameStatsState
 {
+    private string _filterText = string.Empty;
     [JsonInclude]
-    public string FilterText { get; set; } = string.Empty;
+    public string FilterText 
+    { 
+        get => _filterText; 
+        set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
+    }
     
     [JsonInclude]
     public Dictionary<int, GameUIState> GameUIStates { get; set; } = new();
@@ -67,7 +153,18 @@ public class GameStatsState
         {
             state = new GameUIState { GameId = gameId };
             GameUIStates[gameId] = state;
+            OnChanged?.Invoke();
         }
         return state!;
+    }
+
+    public void TriggerChange() => OnChanged?.Invoke();
+
+    public event Action? OnChanged;
+
+    public void LoadFrom(GameStatsState other)
+    {
+        _filterText = other.FilterText;
+        GameUIStates = other.GameUIStates;
     }
 }
