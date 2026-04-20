@@ -1,5 +1,6 @@
 using Postgrest.Attributes;
 using Postgrest.Models;
+using Newtonsoft.Json;
 
 namespace IsotopesStats.Models;
 
@@ -66,24 +67,37 @@ public class StatEntry : BaseModel, IEntity
     [Reference(typeof(Game))]
     public Game? Game { get; set; }
 
-    // Calculated properties restored for UI
+    // --- DOMAIN LOGIC / CALCULATED PROPERTIES ---
+
+    [JsonIgnore]
     public string PlayerName => Player?.Name ?? string.Empty;
+    
+    [JsonIgnore]
     public int H => H1B + H2B + H3B + H4B + HR;
+    
+    [JsonIgnore]
     public int AB => H + FC + K + KF + GO + FO;
+    
+    [JsonIgnore]
     public int PA => AB + BB + SF;
+    
+    [JsonIgnore]
     public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
     
-    // Calculated Stats
+    [JsonIgnore]
     public double AVG => AB > 0 ? (double)H / AB : 0;
     
+    [JsonIgnore]
     public double OBP => (AB + BB + SF) > 0 
         ? (double)(H + BB) / (AB + BB + SF) 
         : 0;
 
+    [JsonIgnore]
     public double SLG => AB > 0 
         ? (double)TB / AB 
         : 0;
 
+    [JsonIgnore]
     public double OPS => OBP + SLG;
 
     public StatEntry Clone() => (StatEntry)this.MemberwiseClone();

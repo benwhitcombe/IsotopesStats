@@ -5,7 +5,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "Manage Seasons")]
-@inject StatsService StatsService
+@inject IStatsService StatsService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject SessionStorageService SessionStorage

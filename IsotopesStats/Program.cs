@@ -28,7 +28,7 @@ builder.Services.AddScoped(sp =>
 
 // Core Services
 builder.Services.AddScoped<SessionStorageService>();
-builder.Services.AddScoped<StatsService>();
+builder.Services.AddScoped<IStatsService, StatsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());

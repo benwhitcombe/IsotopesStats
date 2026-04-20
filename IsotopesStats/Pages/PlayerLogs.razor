@@ -2,7 +2,7 @@
 @page "/playerlogs/{PlayerName}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
-@inject StatsService StatsService
+@inject IStatsService StatsService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject SharedSessionState SharedState
@@ -118,7 +118,7 @@ else
                             </div>
 
                             <div class="game-matchup">
-                                <div class="opponent-name">vs @log.OpponentName</div>
+                                <div class="opponent-name">@(log.IsHome ? "vs" : "@") @log.OpponentName</div>
                                 <div class="diamond-name">📍 @log.Diamond</div>
                             </div>
 

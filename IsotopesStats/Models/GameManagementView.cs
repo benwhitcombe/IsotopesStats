@@ -21,6 +21,9 @@ public class GameManagementView : BaseModel
     [Column("diamond")]
     public string Diamond { get; set; } = string.Empty;
 
+    [Column("ishome")]
+    public bool IsHome { get; set; }
+
     [Column("opponentid")]
     public int OpponentId { get; set; }
 

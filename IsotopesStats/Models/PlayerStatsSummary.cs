@@ -1,5 +1,6 @@
 using Postgrest.Attributes;
 using Postgrest.Models;
+using Newtonsoft.Json;
 
 namespace IsotopesStats.Models;
 
@@ -12,8 +13,13 @@ public class PlayerStatsSummary : BaseModel
     [Column("gamesplayed")]
     public int GamesPlayed { get; set; }
     
+    [JsonIgnore]
     public int H => H1B + H2B + H3B + H4B + HR;
+    
+    [JsonIgnore]
     public int AB => H + FC + K + KF + GO + FO;
+    
+    [JsonIgnore]
     public int PA => AB + BB + SF;
 
     [Column("h1b")]
@@ -52,7 +58,10 @@ public class PlayerStatsSummary : BaseModel
     [Column("fo")]
     public int FO { get; set; }
     
+    [JsonIgnore]
     public int O => GO + FO;
+    
+    [JsonIgnore]
     public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
     
     [Column("r")]
@@ -62,15 +71,19 @@ public class PlayerStatsSummary : BaseModel
     public int RBI { get; set; }
 
     // Calculated Stats
+    [JsonIgnore]
     public double AVG => AB > 0 ? (double)H / AB : 0;
     
+    [JsonIgnore]
     public double OBP => (AB + BB + SF) > 0 
         ? (double)(H + BB) / (AB + BB + SF) 
         : 0;
 
+    [JsonIgnore]
     public double SLG => AB > 0 
         ? (double)TB / AB 
         : 0;
 
+    [JsonIgnore]
     public double OPS => OBP + SLG;
 }

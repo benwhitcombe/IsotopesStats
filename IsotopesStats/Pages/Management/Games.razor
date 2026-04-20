@@ -6,7 +6,7 @@
 @using IsotopesStats.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @attribute [Authorize(Policy = "Manage Games")]
-@inject StatsService StatsService
+@inject IStatsService StatsService
 @inject AuthService AuthSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -76,6 +76,12 @@
                 <label>Diamond</label>
                 <InputText class="form-control" @bind-Value="editingGame.Diamond" placeholder="e.g. Diamond 1" />
                 <ValidationMessage For="@(() => editingGame.Diamond)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 0.5rem;">
+                <div class="form-check">
+                    <InputCheckbox id="ishome" class="form-check-input" @bind-Value="editingGame.IsHome" />
+                    <label class="form-check-label" for="ishome" style="font-weight: bold; margin-bottom: 0;">Home Game?</label>
+                </div>
             </div>
             <div class="form-group">
                 <label>Game Type</label>
@@ -318,7 +324,7 @@ else
                             <tr>
                                 <td style="text-align: left;">@game.GameNumber</td>
                                 <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>@game.Opponent?.Name</td>
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>@(game.IsHome ? "vs" : "@") @game.Opponent?.Name</td>
                                 <td style="text-align: left;">@game.Diamond</td>
                                 <td>
                                     <span class="badge @(game.Type == GameType.League ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
@@ -492,22 +498,7 @@ else
 
     private async Task LoadGames()
     {
-        List<GameStatsExtendedView> stats = await StatsService.GetAllGameStatsAsync(selectedSeasonId);
-        games = stats.GroupBy(s => s.GameId).Select(g => 
-        {
-            GameStatsExtendedView v = g.First();
-            return new Game {
-                Id = v.GameId,
-                SeasonId = v.SeasonId,
-                GameNumber = v.GameNumber,
-                Date = v.Date,
-                Diamond = v.Diamond,
-                OpponentId = v.OpponentId,
-                Type = v.GameType,
-                IsDeleted = v.GameIsDeleted,
-                Opponent = new Opponent { Name = v.OpponentName }
-            };
-        }).OrderByDescending(g => g.Date).ToList();
+        games = await StatsService.GetGamesBySeasonAsync(selectedSeasonId);
     }
 
     private async Task OnSeasonChange(ChangeEventArgs e)

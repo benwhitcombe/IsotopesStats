@@ -2,10 +2,11 @@ using IsotopesStats.Models;
 using Supabase;
 using Postgrest;
 using Postgrest.Responses;
+using Newtonsoft.Json;
 
 namespace IsotopesStats.Services;
 
-public class StatsService
+public class StatsService : IStatsService
 {
     private readonly Supabase.Client _supabase;
 
@@ -32,7 +33,6 @@ public class StatsService
 
     public async Task UpdateSeasonAsync(Season season)
     {
-        // Create a clean object to avoid Postgrest tracking issues with deserialized models
         Season update = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
         await _supabase.From<Season>().Update(update);
     }
@@ -79,13 +79,20 @@ public class StatsService
 
     public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
-        ModeledResponse<Player> response = await _supabase.From<Player>().Insert(player);
-        int playerId = response.Model?.Id ?? 0;
-        if (playerId != 0 && seasonId != 0)
+        if (seasonId == 0)
         {
-            await AddPlayerToSeasonAsync(playerId, seasonId);
+            ModeledResponse<Player> insertResponse = await _supabase.From<Player>().Insert(player);
+            return insertResponse.Model?.Id ?? 0;
         }
-        return playerId;
+
+        Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { "p_name", player.Name },
+            { "p_season_id", seasonId }
+        };
+
+        BaseResponse rpcResponse = await _supabase.Rpc("add_player_to_season", parameters);
+        return string.IsNullOrEmpty(rpcResponse.Content) ? 0 : JsonConvert.DeserializeObject<int>(rpcResponse.Content);
     }
 
     public async Task UpdatePlayerAsync(Player player)
@@ -124,6 +131,11 @@ public class StatsService
         return response.Models.Count == 0;
     }
 
+    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    {
+        return await GetSeasonsAsync();
+    }
+
     // --- OPPONENTS ---
     public async Task<List<Opponent>> GetAllOpponentsAsync()
     {
@@ -153,13 +165,20 @@ public class StatsService
 
     public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
-        ModeledResponse<Opponent> response = await _supabase.From<Opponent>().Insert(opponent);
-        int opponentId = response.Model?.Id ?? 0;
-        if (opponentId != 0 && seasonId != 0)
+        if (seasonId == 0)
         {
-            await AddOpponentToSeasonAsync(opponentId, seasonId);
+            ModeledResponse<Opponent> insertResponse = await _supabase.From<Opponent>().Insert(opponent);
+            return insertResponse.Model?.Id ?? 0;
         }
-        return opponentId;
+
+        Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { "p_name", opponent.Name },
+            { "p_season_id", seasonId }
+        };
+
+        BaseResponse rpcResponse = await _supabase.Rpc("add_opponent_to_season", parameters);
+        return string.IsNullOrEmpty(rpcResponse.Content) ? 0 : JsonConvert.DeserializeObject<int>(rpcResponse.Content);
     }
 
     public async Task UpdateOpponentAsync(Opponent opponent)
@@ -182,6 +201,14 @@ public class StatsService
             .Where(x => x.IsDeleted == false)
             .Get();
         return response.Models.Count == 0;
+    }
+
+    public async Task<List<SeasonOpponents>> GetSeasonsForOpponentAsync(int opponentId)
+    {
+        ModeledResponse<SeasonOpponents> response = await _supabase.From<SeasonOpponents>()
+            .Filter("opponentid", Constants.Operator.Equals, opponentId)
+            .Get();
+        return response.Models;
     }
 
     public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null)
@@ -211,30 +238,38 @@ public class StatsService
             .Single();
     }
 
+    public async Task<List<Game>> GetGamesBySeasonAsync(int seasonId)
+    {
+        ModeledResponse<GameManagementView> response = await _supabase.From<GameManagementView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Order("date", Constants.Ordering.Descending)
+            .Get();
+        
+        List<Game> games = new List<Game>();
+        foreach (GameManagementView v in response.Models)
+        {
+            games.Add(new Game {
+                Id = v.Id,
+                SeasonId = v.SeasonId,
+                GameNumber = v.GameNumber,
+                Date = v.Date,
+                Diamond = v.Diamond,
+                IsHome = v.IsHome,
+                OpponentId = v.OpponentId,
+                Type = v.GameType,
+                IsDeleted = v.IsDeleted,
+                Opponent = new Opponent { Id = v.OpponentId, Name = v.OpponentName }
+            });
+        }
+        return games;
+    }
+
     public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
     {
         ModeledResponse<StatEntry> response = await _supabase.From<StatEntry>()
-            .Select("*, player:players(*)")
+            .Select("*, Player:players(*)")
             .Where(x => x.GameId == gameId)
             .Order("bo", Constants.Ordering.Ascending)
-            .Get();
-        return response.Models;
-    }
-
-    public async Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId)
-    {
-        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
-            .Filter("gameid", Constants.Operator.Equals, gameId)
-            .Order("bo", Constants.Ordering.Ascending)
-            .Get();
-        return response.Models;
-    }
-
-    public async Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId)
-    {
-        ModeledResponse<GameSummaryView> response = await _supabase.From<GameSummaryView>()
-            .Filter("seasonid", Constants.Operator.Equals, seasonId)
-            .Order("date", Constants.Ordering.Descending)
             .Get();
         return response.Models;
     }
@@ -249,11 +284,10 @@ public class StatsService
         return response.Models;
     }
 
-    public async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
+    private async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
     {
         ModeledResponse<PlayerStatsSummary> response = await _supabase.From<PlayerStatsSummary>().Get();
         
-        // Group by player name and sum up the stats manually since Postgrest doesn't support grouping well
         return response.Models.GroupBy(p => p.PlayerName)
             .Select(g => new PlayerStatsSummary
             {
@@ -286,7 +320,7 @@ public class StatsService
         return (PlayerStatsSummary?)result ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
-    public async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
+    private async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
     {
         ModeledResponse<TeamStatsSummary> response = await _supabase.From<TeamStatsSummary>().Get();
         
@@ -313,25 +347,54 @@ public class StatsService
 
     public async Task<int> GetMostRecentStatsSeasonIdAsync()
     {
-        // Get the most recent game that has stats
-        ModeledResponse<StatEntry> response = await _supabase.From<StatEntry>()
-            .Select("*, game:games(*)")
+        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
             .Order("gameid", Constants.Ordering.Descending)
             .Limit(1)
             .Get();
         
-        if (response.Model != null)
-        {
-            // We need to fetch the season ID from the game linked to the stat
-            // StatEntry has GameId, but we need the SeasonId from the Games table.
-            Game? game = await _supabase.From<Game>()
-                .Filter("id", Constants.Operator.Equals, response.Model.GameId)
-                .Single();
-            
-            return game?.SeasonId ?? 0;
-        }
+        return response.Model?.SeasonId ?? 0;
+    }
 
-        return 0;
+    public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { "p_season_id", game.SeasonId },
+            { "p_game_number", game.GameNumber },
+            { "p_date", game.Date },
+            { "p_diamond", game.Diamond },
+            { "p_ishome", game.IsHome },
+            { "p_opponent_id", game.OpponentId },
+            { "p_type", (int)game.Type },
+            { "p_stats", stats }
+        };
+
+        await _supabase.Rpc("create_game_with_stats", parameters);
+    }
+
+    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
+    {
+        Dictionary<string, object> parameters = new Dictionary<string, object>
+        {
+            { "p_game_id", game.Id },
+            { "p_season_id", game.SeasonId },
+            { "p_game_number", game.GameNumber },
+            { "p_date", game.Date },
+            { "p_diamond", game.Diamond },
+            { "p_ishome", game.IsHome },
+            { "p_opponent_id", game.OpponentId },
+            { "p_type", (int)game.Type },
+            { "p_is_deleted", game.IsDeleted },
+            { "p_stats", stats }
+        };
+
+        await _supabase.Rpc("update_game_with_stats", parameters);
+    }
+
+    public async Task DeleteGameAsync(int gameId)
+    {
+        Game game = new Game { Id = gameId, IsDeleted = true };
+        await _supabase.From<Game>().Update(game);
     }
 
     public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)
@@ -356,42 +419,6 @@ public class StatsService
         return response.Models;
     }
 
-    public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
-    {
-        ModeledResponse<Game> gameResponse = await _supabase.From<Game>().Insert(game);
-        int gameId = gameResponse.Model?.Id ?? 0;
-        if (gameId != 0)
-        {
-            foreach (StatEntry stat in stats) { stat.GameId = gameId; }
-            await _supabase.From<StatEntry>().Insert(stats);
-        }
-    }
-
-    public async Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats)
-    {
-        Game update = new Game 
-        { 
-            Id = game.Id, 
-            SeasonId = game.SeasonId, 
-            GameNumber = game.GameNumber, 
-            Date = game.Date, 
-            Diamond = game.Diamond, 
-            OpponentId = game.OpponentId, 
-            Type = game.Type, 
-            IsDeleted = game.IsDeleted 
-        };
-        await _supabase.From<Game>().Update(update);
-        await _supabase.From<StatEntry>().Where(x => x.GameId == game.Id).Delete();
-        foreach (StatEntry stat in stats) { stat.GameId = game.Id; stat.Id = 0; }
-        await _supabase.From<StatEntry>().Insert(stats);
-    }
-
-    public async Task DeleteGameAsync(int gameId)
-    {
-        Game game = new Game { Id = gameId, IsDeleted = true };
-        await _supabase.From<Game>().Update(game);
-    }
-
     public async Task<int> GetNextGameNumberAsync(int seasonId)
     {
         ModeledResponse<Game> response = await _supabase.From<Game>()
@@ -404,17 +431,21 @@ public class StatsService
         return (response.Model?.GameNumber ?? 0) + 1;
     }
 
-    public async Task<List<SeasonOpponents>> GetSeasonsForOpponentAsync(int opponentId)
+    public async Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId)
     {
-        ModeledResponse<SeasonOpponents> response = await _supabase.From<SeasonOpponents>()
-            .Filter("opponentid", Constants.Operator.Equals, opponentId)
+        ModeledResponse<GameSummaryView> response = await _supabase.From<GameSummaryView>()
+            .Filter("seasonid", Constants.Operator.Equals, seasonId)
+            .Order("date", Constants.Ordering.Descending)
             .Get();
         return response.Models;
     }
 
-    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    public async Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId)
     {
-        return await GetSeasonsAsync();
+        ModeledResponse<GameStatsExtendedView> response = await _supabase.From<GameStatsExtendedView>()
+            .Filter("gameid", Constants.Operator.Equals, gameId)
+            .Order("bo", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models;
     }
 }
-

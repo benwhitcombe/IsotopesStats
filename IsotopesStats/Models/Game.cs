@@ -29,6 +29,9 @@ public class Game : BaseModel, IEntity
     [Column("diamond")]
     public string Diamond { get; set; } = string.Empty;
     
+    [Column("ishome")]
+    public bool IsHome { get; set; } = true;
+    
     [Column("opponentid")]
     public int OpponentId { get; set; }
     
