@@ -23,7 +23,7 @@ SupabaseOptions options = new SupabaseOptions
 builder.Services.AddScoped(_ => new Supabase.Client(supabaseUrl, supabaseKey, options));
 
 // Core Services
-builder.Services.AddScoped<LocalStorageService>();
+builder.Services.AddScoped<SessionStorageService>();
 builder.Services.AddScoped<StatsService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
