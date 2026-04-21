@@ -286,17 +286,26 @@ public class SupabaseStatsRepository : IStatsRepository
     {
         if (seasonId == -1) return await GetAllStatsSummaryAsync();
         
+        List<Player> players = await GetPlayersAsync(seasonId);
+        
         ModeledResponse<PlayerStatsSummaryDto> response = await _supabase.From<PlayerStatsSummaryDto>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+            
+        List<PlayerStatsSummary> stats = response.Models.Select(x => x.ToModel()).ToList();
+        
+        return players.Where(p => p.Name != "Spare")
+            .Select(p => stats.FirstOrDefault(s => s.PlayerName == p.Name) ?? new PlayerStatsSummary { PlayerName = p.Name })
+            .ToList();
     }
 
     private async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
     {
+        List<Player> players = await GetAllPlayersAsync();
+        
         ModeledResponse<PlayerStatsSummaryDto> response = await _supabase.From<PlayerStatsSummaryDto>().Get();
         
-        return response.Models.GroupBy(p => p.PlayerName)
+        List<PlayerStatsSummary> aggregatedStats = response.Models.GroupBy(p => p.PlayerName)
             .Select(g => new PlayerStatsSummary
             {
                 PlayerName = g.Key,
@@ -316,6 +325,10 @@ public class SupabaseStatsRepository : IStatsRepository
                 R = g.Sum(x => x.R),
                 RBI = g.Sum(x => x.RBI)
             }).ToList();
+            
+        return players.Where(p => p.Name != "Spare")
+            .Select(p => aggregatedStats.FirstOrDefault(s => s.PlayerName == p.Name) ?? new PlayerStatsSummary { PlayerName = p.Name })
+            .ToList();
     }
 
     public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)

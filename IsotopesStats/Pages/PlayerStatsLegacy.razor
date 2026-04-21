@@ -76,23 +76,51 @@ else
         <div class="leader-highlights">
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "AVG")' style="cursor:pointer; animation-delay: 0.1s;">
                 <div class="leader-category">Batting Average</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(avgLeader?.PlayerName)' @onclick:stopPropagation="true">@avgLeader?.PlayerName</div>
-                <div class="leader-value">@avgLeader?.AVG.ToString(".000")</div>
+                @if (avgLeader != null)
+                {
+                    <div class="leader-name" @onclick='() => NavigateToLog(avgLeader.PlayerName)' @onclick:stopPropagation="true">@avgLeader.PlayerName</div>
+                    <div class="leader-value">@avgLeader.AVG.ToString(".000")</div>
+                }
+                else
+                {
+                    <div style="min-height: 4.5rem; display: flex; align-items: center; justify-content: center; opacity: 0.5; font-size: 2rem;">---</div>
+                }
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Hits", "OPS")' style="cursor:pointer; background: linear-gradient(135deg, #333, #000); animation-delay: 0.2s;">
                 <div class="leader-category">On-Base Plus Slugging</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(opsLeader?.PlayerName)' @onclick:stopPropagation="true">@opsLeader?.PlayerName</div>
-                <div class="leader-value">@opsLeader?.OPS.ToString(".000")</div>
+                @if (opsLeader != null)
+                {
+                    <div class="leader-name" @onclick='() => NavigateToLog(opsLeader.PlayerName)' @onclick:stopPropagation="true">@opsLeader.PlayerName</div>
+                    <div class="leader-value">@opsLeader.OPS.ToString(".000")</div>
+                }
+                else
+                {
+                    <div style="min-height: 4.5rem; display: flex; align-items: center; justify-content: center; opacity: 0.5; font-size: 2rem;">---</div>
+                }
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "HR")' style="cursor:pointer; background: linear-gradient(135deg, var(--isotopes-red), #990000); animation-delay: 0.3s;">
                 <div class="leader-category">Home Runs</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(hrLeader?.PlayerName)' @onclick:stopPropagation="true">@hrLeader?.PlayerName</div>
-                <div class="leader-value">@hrLeader?.HR</div>
+                @if (hrLeader != null)
+                {
+                    <div class="leader-name" @onclick='() => NavigateToLog(hrLeader.PlayerName)' @onclick:stopPropagation="true">@hrLeader.PlayerName</div>
+                    <div class="leader-value">@hrLeader.HR.ToString()</div>
+                }
+                else
+                {
+                    <div style="min-height: 4.5rem; display: flex; align-items: center; justify-content: center; opacity: 0.5; font-size: 2rem;">---</div>
+                }
             </div>
             <div class="leader-card" @onclick='() => SetViewAndSort("Standard", "RBI")' style="cursor:pointer; background: linear-gradient(135deg, #666, #444); animation-delay: 0.4s;">
                 <div class="leader-category">Runs Batted In</div>
-                <div class="leader-name" @onclick='() => NavigateToLog(rbiLeader?.PlayerName)' @onclick:stopPropagation="true">@rbiLeader?.PlayerName</div>
-                <div class="leader-value">@rbiLeader?.RBI</div>
+                @if (rbiLeader != null)
+                {
+                    <div class="leader-name" @onclick='() => NavigateToLog(rbiLeader.PlayerName)' @onclick:stopPropagation="true">@rbiLeader.PlayerName</div>
+                    <div class="leader-value">@rbiLeader.RBI.ToString()</div>
+                }
+                else
+                {
+                    <div style="min-height: 4.5rem; display: flex; align-items: center; justify-content: center; opacity: 0.5; font-size: 2rem;">---</div>
+                }
             </div>
         </div>
 
@@ -472,10 +500,10 @@ else
     {
         if (!allStats.Any()) return;
 
-        avgLeader = allStats.OrderByDescending(p => p.AVG).FirstOrDefault();
-        opsLeader = allStats.OrderByDescending(p => p.OPS).FirstOrDefault();
-        hrLeader = allStats.OrderByDescending(p => p.HR).FirstOrDefault();
-        rbiLeader = allStats.OrderByDescending(p => p.RBI).FirstOrDefault();
+        avgLeader = allStats.Where(p => p.AB > 0).OrderByDescending(p => p.AVG).FirstOrDefault();
+        opsLeader = allStats.Where(p => p.PA > 0).OrderByDescending(p => p.OPS).FirstOrDefault();
+        hrLeader = allStats.Where(p => p.HR > 0).OrderByDescending(p => p.HR).FirstOrDefault();
+        rbiLeader = allStats.Where(p => p.RBI > 0).OrderByDescending(p => p.RBI).FirstOrDefault();
     }
 
     private void ToggleSortModal() => showSortModal = !showSortModal;
