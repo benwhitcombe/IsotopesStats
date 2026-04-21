@@ -667,12 +667,12 @@ tr:last-child td {
         font-size: 1.25rem;
         color: var(--isotopes-accent);
         min-width: 85px;
-        text-align: right;
-        padding-right: 12px;
+        text-align: center;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: center;
         line-height: 1;
+        position: relative;
     }
 
     /* Bottom Stat Drawer */
