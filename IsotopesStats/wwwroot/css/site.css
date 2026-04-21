@@ -447,11 +447,16 @@ tr:last-child td {
     table-layout: auto;
 }
 
+.box-score-table th, .box-score-table td {
+    border-bottom: 1px solid #f0f0f0;
+}
+
 .box-score-table th {
     background: #f8f9fa;
     position: sticky;
     top: 0;
     z-index: 10;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .box-score-table .sticky-col {
@@ -459,8 +464,12 @@ tr:last-child td {
     left: 0;
     background: #f8f9fa;
     z-index: 20;
-    border-right: 2px solid #eee;
+    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
     min-width: 120px;
+}
+
+.box-score-table tr:nth-child(even) td {
+    background-color: #fdfdfd;
 }
 
 .box-score-table td.sticky-col {
@@ -468,15 +477,15 @@ tr:last-child td {
 }
 
 .box-score-table tr:nth-child(even) td.sticky-col {
-    background: #f9f9f9;
+    background: #fdfdfd;
+}
+
+.box-score-table tr:hover td {
+    background-color: #f1f6fa !important;
 }
 
 .box-score-table tr:hover td.sticky-col {
-    background: #f1f1f1;
-}
-
-.box-score-table tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f6fa !important;
 }
 
 /* Mobile Box Score Cards */
@@ -639,16 +648,16 @@ tr:last-child td {
 
 .sortable-header {
     position: relative;
-    padding: 10px 4px !important;
+    padding: 10px 10px !important;
     cursor: pointer;
     white-space: nowrap;
-    text-align: center;
+    text-align: center !important;
     transition: background-color 0.2s;
 }
 
 @media (min-width: 992px) {
     .sortable-header {
-        padding: 12px 8px !important;
+        padding: 12px 10px !important;
     }
 }
 
@@ -657,10 +666,14 @@ tr:last-child td {
 }
 
 .sort-icon {
-    display: inline-block;
-    margin-left: 4px;
-    width: 12px;
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
     text-align: center;
+    pointer-events: none;
+    font-size: 0.7rem;
     color: var(--isotopes-accent);
     font-weight: bold;
 }
