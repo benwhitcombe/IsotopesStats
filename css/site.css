@@ -943,7 +943,7 @@ tr:last-child td {
     width: 10px;
     text-align: center;
     pointer-events: none;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--isotopes-accent);
     font-weight: bold;
 }
