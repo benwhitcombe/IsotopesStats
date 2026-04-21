@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "IsotopesStats",
   "resources": {
-    "hash": "sha256-UjNNOHRJz3D8EkdgzUFhR3g5uboKBOwKkCrsiINlaHs=",
+    "hash": "sha256-d4TeR6IF21Es86U27cigjMqC5XHX6CXCCLL27f+q3eE=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -18,8 +18,8 @@
     },
     "coreAssembly": {},
     "assembly": {
-      "IsotopesStats.Domain.wasm": "sha256-/codxvFKhHEiBuI8EMxNxH0VUFU+yxXl4feJaC1mXzw=",
-      "IsotopesStats.wasm": "sha256-kcSg400eX92MsWAMYLGEisN5wBXTxGEOUsjcPS017zk=",
+      "IsotopesStats.Domain.wasm": "sha256-0hZFM4grUN0QiP8u0xZ2vloeSu1AtjaD0QkCce/QiP4=",
+      "IsotopesStats.wasm": "sha256-eZNLkVPuFpTk7YJZxreGL9Uad89l7r+chlZTEMH8acQ=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-xycdrBQyumqarGNuI1svxkaenBKxEn2+vKm83hkxTKA=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-JjiMiKAGWjsOGDM+k3hDQ5y3vEBdb451H1zOjZLpI00=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-1Pf2meEYacKdf5lRRfCJ3jzjKu/7EYzQG6kLDDSz5bA=",
@@ -52,7 +52,7 @@
       "Supabase.Realtime.wasm": "sha256-x/ryPhmfvBR+idRmyzcty43CY91ggqdkMiwLH6dvz0w=",
       "Supabase.Storage.wasm": "sha256-/JlNpn7ZLA1o00UE4pLSM3swF93PqY+GW5DgMl4Fook=",
       "Supabase.wasm": "sha256-cDT4RpTWur8+PQKlMzkf+YSS86akr64XMkNGi4xZ8Ec=",
-      "SupabaseRepository.wasm": "sha256-KeP84kOLHvt/tglkyV8/hHXVPhTxJ0JOqI1YKS49iKY=",
+      "SupabaseRepository.wasm": "sha256-acS50Pryh9KJAo3FtFk3C5y4T6K49bff93Ksjtqshd8=",
       "System.Collections.Concurrent.wasm": "sha256-SgsHKz8OrAG9z/6voOFVuGA+l6Snp01yk0CYv6xQBGU=",
       "System.Collections.NonGeneric.wasm": "sha256-RFWENVc3hRt8DBD/ygrBysrbcKwxv2eQxdFTTiQQ58g=",
       "System.Collections.Specialized.wasm": "sha256-diT1weMackZNHnEKnmk31/cfGICFovqIGhZO2b9nLYo=",
