@@ -135,28 +135,116 @@ else
                     <thead>
                         <tr>
                             <th style="width: 30px; text-align: center;">#</th>
-                            <th class="player-name sticky-col @(currentSortColumn == "PlayerName" ? "active-sort-header" : "")" @onclick='() => Sort("PlayerName")'>Player</th>
-                            <th @onclick='() => Sort("GP")' class="sortable-header group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-header" : "")">GP</th>
-                            <th @onclick='() => Sort("PA")' class="sortable-header narrow-col @(currentSortColumn == "PA" ? "active-sort-header" : "")">PA</th>
-                            <th @onclick='() => Sort("AB")' class="sortable-header narrow-col @(currentSortColumn == "AB" ? "active-sort-header" : "")">AB</th>
-                            <th @onclick='() => Sort("R")' class="sortable-header group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")">R</th>
-                            <th @onclick='() => Sort("H")' class="sortable-header narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")">H</th>
-                            <th @onclick='() => Sort("2B")' class="sortable-header narrow-col @(currentSortColumn == "2B" ? "active-sort-header" : "")">2B</th>
-                            <th @onclick='() => Sort("3B")' class="sortable-header narrow-col @(currentSortColumn == "3B" ? "active-sort-header" : "")">3B</th>
-                            <th @onclick='() => Sort("4B")' class="sortable-header narrow-col @(currentSortColumn == "4B" ? "active-sort-header" : "")">4B</th>
-                            <th @onclick='() => Sort("HR")' class="sortable-header narrow-col @(currentSortColumn == "HR" ? "active-sort-header" : "")">HR</th>
-                            <th @onclick='() => Sort("RBI")' class="sortable-header narrow-col @(currentSortColumn == "RBI" ? "active-sort-header" : "")">RBI</th>
-                            <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")">BB</th>
-                            <th @onclick='() => Sort("K")' class="sortable-header narrow-col @(currentSortColumn == "K" ? "active-sort-header" : "")">K</th>
-                            <th @onclick='() => Sort("KF")' class="sortable-header narrow-col @(currentSortColumn == "KF" ? "active-sort-header" : "")">KF</th>
-                            <th @onclick='() => Sort("SF")' class="sortable-header group-divider narrow-col @(currentSortColumn == "SF" ? "active-sort-header" : "")">SF</th>
-                            <th @onclick='() => Sort("FC")' class="sortable-header narrow-col @(currentSortColumn == "FC" ? "active-sort-header" : "")">FC</th>
-                            <th @onclick='() => Sort("GO")' class="sortable-header narrow-col @(currentSortColumn == "GO" ? "active-sort-header" : "")">GO</th>
-                            <th @onclick='() => Sort("FO")' class="sortable-header narrow-col @(currentSortColumn == "FO" ? "active-sort-header" : "")">FO</th>
-                            <th @onclick='() => Sort("AVG")' class="sortable-header group-divider @(currentSortColumn == "AVG" ? "active-sort-header" : "")">AVG</th>
-                            <th @onclick='() => Sort("OBP")' class="sortable-header @(currentSortColumn == "OBP" ? "active-sort-header" : "")">OBP</th>
-                            <th @onclick='() => Sort("SLG")' class="sortable-header @(currentSortColumn == "SLG" ? "active-sort-header" : "")">SLG</th>
-                            <th @onclick='() => Sort("OPS")' class="sortable-header @(currentSortColumn == "OPS" ? "active-sort-header" : "")">OPS</th>
+                            <th class="player-name sticky-col @(currentSortColumn == "PlayerName" ? "active-sort-header" : "")" @onclick='() => Sort("PlayerName")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Player<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("PlayerName"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("GP")' class="sortable-header group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    GP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("GP"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("PA")' class="sortable-header narrow-col @(currentSortColumn == "PA" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("PA"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("AB")' class="sortable-header narrow-col @(currentSortColumn == "AB" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("AB"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("R")' class="sortable-header group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("R"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("H")' class="sortable-header narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("H"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("2B")' class="sortable-header narrow-col @(currentSortColumn == "2B" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("2B"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("3B")' class="sortable-header narrow-col @(currentSortColumn == "3B" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    3B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("3B"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("4B")' class="sortable-header narrow-col @(currentSortColumn == "4B" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    4B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("4B"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("HR")' class="sortable-header narrow-col @(currentSortColumn == "HR" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    HR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("HR"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("RBI")' class="sortable-header narrow-col @(currentSortColumn == "RBI" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("RBI"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("BB"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("K")' class="sortable-header narrow-col @(currentSortColumn == "K" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    K<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("K"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("KF")' class="sortable-header narrow-col @(currentSortColumn == "KF" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    KF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("KF"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("SF")' class="sortable-header group-divider narrow-col @(currentSortColumn == "SF" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    SF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("SF"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("FC")' class="sortable-header narrow-col @(currentSortColumn == "FC" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    FC<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("FC"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("GO")' class="sortable-header narrow-col @(currentSortColumn == "GO" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    GO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("GO"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("FO")' class="sortable-header narrow-col @(currentSortColumn == "FO" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("FO"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("AVG")' class="sortable-header group-divider @(currentSortColumn == "AVG" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    AVG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("AVG"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("OBP")' class="sortable-header @(currentSortColumn == "OBP" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    OBP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("OBP"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("SLG")' class="sortable-header @(currentSortColumn == "SLG" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    SLG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("SLG"))</span>
+                                </span>
+                            </th>
+                            <th @onclick='() => Sort("OPS")' class="sortable-header @(currentSortColumn == "OPS" ? "active-sort-header" : "")">
+                                <span style="position: relative; display: inline-block;">
+                                    OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("OPS"))</span>
+                                </span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -229,9 +317,9 @@ else
                     <div class="mobile-list-header">
                         <div class="mobile-list-rank">#</div>
                         <div class="mobile-list-name">Player</div>
-                        <div class="mobile-list-value" @onclick="() => Sort(currentSortColumn, true)" style="cursor: pointer;">
+                        <div class="mobile-list-value" @onclick="() => Sort(currentSortColumn, true)" style="cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center;">
                             @currentSortColumn 
-                            <span class="sort-icon">
+                            <span class="sort-icon" style="position: absolute; right: 12px;">
                                 @(isAscending ? "▲" : "▼")
                             </span>
                         </div>
@@ -502,6 +590,12 @@ else
             "OPS" => player.OPS.ToString(".000"),
             _ => ""
         };
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (currentSortColumn != column) return "";
+        return isAscending ? "▲" : "▼";
     }
 
     private void NavigateToLog(string? playerName)
