@@ -569,22 +569,29 @@ tr:last-child td {
         z-index: 1000;
         display: flex;
         flex-direction: column;
-        max-height: 80vh;
-        transition: transform 0.3s ease;
+        max-height: 85vh;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        /* Don't set touch-action: none on the whole drawer as it blocks carousel scrolling */
+        touch-action: pan-y; 
+    }
+
+    .mobile-stat-drawer.expanded {
+        transform: translateY(0);
     }
 
     .drawer-handle-container {
-        padding: 15px;
+        padding: 12px;
         display: flex;
         justify-content: center;
         align-items: center;
         cursor: pointer;
+        touch-action: none; /* Handle is vertical drag only */
     }
 
     .drawer-handle {
         width: 40px;
         height: 5px;
-        background: #ccc;
+        background: #ddd;
         border-radius: 3px;
     }
 
@@ -594,6 +601,9 @@ tr:last-child td {
         padding: 0 16px 16px;
         gap: 10px;
         scrollbar-width: none;
+        min-height: 60px;
+        flex-shrink: 0;
+        touch-action: pan-x; /* Allow horizontal scroll, vertical drag handled by JS */
     }
 
     .stat-carousel::-webkit-scrollbar { 
@@ -604,8 +614,17 @@ tr:last-child td {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
-        padding: 0 16px 16px;
+        padding: 0 16px 30px;
         overflow-y: auto;
+        flex: 1;
+        touch-action: pan-y; /* Allow vertical scroll within the grid */
+    }
+
+    /* Adjust button appearance in the grid */
+    .stat-grid-full .stat-btn {
+        padding: 12px 8px;
+        text-align: center;
+        font-size: 0.85rem;
     }
 
     .stat-btn {

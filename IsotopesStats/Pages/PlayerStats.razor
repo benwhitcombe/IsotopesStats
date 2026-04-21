@@ -7,6 +7,7 @@
 @inject PlayerStatsState SessionState
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <PageTitle>Isotopes - Player Stats</PageTitle>
 
@@ -246,29 +247,24 @@ else
                 </div>
 
                 <!-- Bottom Drawer for Stat Selection -->
-                <div class="mobile-stat-drawer @(isDrawerExpanded ? "expanded" : "")">
-                    <div class="drawer-handle-container" @onclick="ToggleDrawer">
+                <div id="stat-drawer" class="mobile-stat-drawer @(isDrawerExpanded ? "expanded" : "")">
+                    <div id="drawer-handle" class="drawer-handle-container" @onclick="ToggleDrawer">
                         <div class="drawer-handle"></div>
                     </div>
                     
-                    @if (!isDrawerExpanded)
-                    {
-                        <div class="stat-carousel">
-                            @foreach (string stat in AllSortableStats)
-                            {
-                                <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="stat-grid-full">
-                            @foreach (string stat in AllSortableStats)
-                            {
-                                <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
-                            }
-                        </div>
-                    }
+                    <div class="stat-carousel">
+                        @foreach (string stat in AllSortableStats)
+                        {
+                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
+                        }
+                    </div>
+                    
+                    <div class="stat-grid-full">
+                        @foreach (string stat in AllSortableStats)
+                        {
+                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -284,6 +280,8 @@ else
     private bool showSeasonModal = false;
     private bool isDrawerExpanded = false;
     private bool isLoading = true;
+    private bool isJsInitialized = false;
+    private DotNetObjectReference<PlayerStats>? objRef;
 
     // Leader references
     private PlayerStatsSummary? avgLeader;
@@ -339,6 +337,28 @@ else
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!isLoading && allStats.Any())
+        {
+            if (objRef == null)
+            {
+                objRef = DotNetObjectReference.Create(this);
+            }
+            await JSRuntime.InvokeVoidAsync("drawerDragging.init", objRef, isDrawerExpanded);
+        }
+    }
+
+    [JSInvokable]
+    public void SetDrawerState(bool expanded)
+    {
+        if (isDrawerExpanded != expanded)
+        {
+            isDrawerExpanded = expanded;
+            StateHasChanged();
+        }
+    }
+
     private async Task OnSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
@@ -367,12 +387,22 @@ else
         rbiLeader = allStats.Where(p => p.RBI > 0).OrderByDescending(p => p.RBI).FirstOrDefault();
     }
 
-    private void ToggleDrawer() => isDrawerExpanded = !isDrawerExpanded;
+    private async Task ToggleDrawer()
+    {
+        isDrawerExpanded = !isDrawerExpanded;
+        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", isDrawerExpanded);
+    }
 
-    private void SelectMobileSort(string column)
+    private async Task SelectMobileSort(string column)
     {
         Sort(column, false);
         isDrawerExpanded = false;
+        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", false);
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
     }
 
     private void Sort(string column, bool toggle = true)
