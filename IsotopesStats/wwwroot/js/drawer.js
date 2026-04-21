@@ -77,16 +77,38 @@ window.drawerDragging = {
         }
     },
 
-    scrollToActive: function() {
-        const carousel = document.querySelector('.stat-carousel');
-        const activeBtn = carousel ? carousel.querySelector('.stat-btn.active') : null;
-        if (carousel && activeBtn) {
+    scrollToActive: function(immediate) {
+        // Use requestAnimationFrame to ensure the browser has performed layout
+        requestAnimationFrame(() => {
+            const carousel = document.querySelector('.stat-carousel');
+            if (!carousel) return;
+            
+            const activeBtn = carousel.querySelector('.stat-btn.active');
+            if (!activeBtn) return;
+
+            // If dimensions aren't ready yet, try once more in the next frame
+            if (carousel.offsetWidth === 0 || activeBtn.offsetWidth === 0) {
+                requestAnimationFrame(() => this.scrollToActive(immediate));
+                return;
+            }
+
+            // Check if already fully visible to prevent disorienting jumps
+            const isVisible = (activeBtn.offsetLeft >= carousel.scrollLeft) && 
+                              (activeBtn.offsetLeft + activeBtn.offsetWidth <= carousel.scrollLeft + carousel.offsetWidth);
+
+            if (isVisible) return;
+
             const scrollLeft = activeBtn.offsetLeft - (carousel.offsetWidth / 2) + (activeBtn.offsetWidth / 2);
-            carousel.scrollTo({
-                left: scrollLeft,
-                behavior: 'smooth'
-            });
-        }
+            
+            if (immediate) {
+                carousel.scrollLeft = scrollLeft;
+            } else {
+                carousel.scrollTo({
+                    left: scrollLeft,
+                    behavior: 'smooth'
+                });
+            }
+        });
     },
 
     applyStateTransform: function(immediate) {

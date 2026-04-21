@@ -288,7 +288,7 @@ else
     private bool showSeasonModal = false;
     private bool isDrawerExpanded = false;
     private bool isLoading = true;
-    private bool isJsInitialized = false;
+    private bool isFirstDataLoad = true;
     private DotNetObjectReference<PlayerStats>? objRef;
 
     // Leader references
@@ -354,6 +354,13 @@ else
                 objRef = DotNetObjectReference.Create(this);
             }
             await JSRuntime.InvokeVoidAsync("drawerDragging.init", objRef, isDrawerExpanded);
+            
+            if (isFirstDataLoad)
+            {
+                isFirstDataLoad = false;
+                // JavaScript now handles timing via requestAnimationFrame, no Task.Delay needed
+                await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive", true);
+            }
         }
     }
 
