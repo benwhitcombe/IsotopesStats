@@ -157,7 +157,7 @@ public static class ModelMappers
         if (dto == null) return null!;
         return new Permission
         {
-            Id = dto.Id,
+            Id = (int)dto.Id,
             Name = dto.Name
         };
     }
@@ -247,8 +247,9 @@ public static class ModelMappers
         if (dto == null) return null!;
         return new RolePermission
         {
-            RoleId = dto.RoleId,
-            PermissionId = dto.PermissionId
+            RoleId = (int)dto.RoleId,
+            PermissionId = (int)dto.PermissionId,
+            Permission = dto.Permission?.ToModel()
         };
     }
 
@@ -431,7 +432,7 @@ public static class ModelMappers
         if (dto == null) return null!;
         return new User
         {
-            Id = dto.Id,
+            Id = dto.Id.ToString(),
             Email = dto.Email,
             PasswordHash = dto.PasswordHash,
             CreatedAt = dto.CreatedAt,
@@ -444,7 +445,7 @@ public static class ModelMappers
         if (model == null) return null!;
         return new UserDto
         {
-            Id = model.Id,
+            Id = string.IsNullOrEmpty(model.Id) ? Guid.Empty : Guid.Parse(model.Id),
             Email = model.Email,
             PasswordHash = model.PasswordHash,
             CreatedAt = model.CreatedAt,
@@ -487,12 +488,22 @@ public static class ModelMappers
     public static UserRole ToModel(this UserRoleDto dto)
     {
         if (dto == null) return null!;
-        return new UserRole
+        UserRole model = new UserRole
         {
-            Id = dto.Id,
+            Id = (int)dto.Id,
             Name = dto.Name,
             IsDeleted = dto.IsDeleted
         };
+
+        if (dto.RolePermissions != null && dto.RolePermissions.Any())
+        {
+            model.Permissions = dto.RolePermissions
+                .Where(rp => rp.Permission != null)
+                .Select(rp => rp.Permission!.ToModel())
+                .ToList();
+        }
+
+        return model;
     }
 
     public static UserRoleDto ToDto(this UserRole model)
@@ -537,8 +548,8 @@ public static class ModelMappers
         if (dto == null) return null!;
         return new UserUserRoles
         {
-            UserId = dto.UserId,
-            RoleId = dto.RoleId
+            UserId = dto.UserId.ToString(),
+            RoleId = (int)dto.RoleId
         };
     }
 
@@ -547,7 +558,7 @@ public static class ModelMappers
         if (model == null) return null!;
         return new UserUserRolesDto
         {
-            UserId = model.UserId,
+            UserId = Guid.Parse(model.UserId),
             RoleId = model.RoleId
         };
     }

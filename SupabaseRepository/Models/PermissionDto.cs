@@ -8,7 +8,7 @@ namespace SupabaseRepository.Models;
 public class PermissionDto : BaseModel
 {
     [PrimaryKey("id", false)]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     [Column("name")]
     public string Name { get; set; } = string.Empty;

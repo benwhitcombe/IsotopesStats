@@ -9,18 +9,18 @@ namespace IsotopesStats.Services;
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly Supabase.Client _supabase;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IAuthRepository _authRepository;
     private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public CustomAuthenticationStateProvider(Supabase.Client supabase, IServiceProvider serviceProvider)
+    public CustomAuthenticationStateProvider(Supabase.Client supabase, IAuthRepository authRepository)
     {
         _supabase = supabase;
-        _serviceProvider = serviceProvider;
+        _authRepository = authRepository;
 
-        // Listen for Supabase Auth State Changes
+        // Listen for Supabase Auth State Changes (SignIn, SignOut, Token Refresh)
         _supabase.Auth.AddStateChangedListener((sender, state) =>
         {
-            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+            NotifyStateChanged();
         });
     }
 
@@ -33,16 +33,12 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             if (session == null || session.User == null || string.IsNullOrEmpty(session.User.Id))
                 return new AuthenticationState(_anonymous);
 
-            // Use AuthService to check if user is deleted and get roles
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            AuthService authService = scope.ServiceProvider.GetRequiredService<AuthService>();
-
-            User? dbUser = await authService.GetUserByIdAsync(session.User.Id);
+            User? dbUser = await _authRepository.GetUserByIdAsync(session.User.Id);
             if (dbUser != null && dbUser.IsDeleted)
             {
                 return new AuthenticationState(_anonymous);
             }
-            
+
             List<UserRole> roles = await GetUserRolesForUserAsync(session.User.Id);
             return new AuthenticationState(CreateClaimsPrincipal(session.User, roles));
         }
@@ -91,9 +87,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
         try 
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            IAuthRepository authRepository = scope.ServiceProvider.GetRequiredService<IAuthRepository>();
-            return await authRepository.GetUserRolesForUserAsync(supabaseUserId);
+            return await _authRepository.GetUserRolesForUserAsync(supabaseUserId);
         }
         catch (Exception ex)
         {

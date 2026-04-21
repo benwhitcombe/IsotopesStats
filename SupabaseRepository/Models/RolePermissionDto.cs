@@ -7,9 +7,14 @@ namespace SupabaseRepository.Models;
 [Table("rolepermissions")]
 public class RolePermissionDto : BaseModel
 {
+    [PrimaryKey("roleid", false)]
     [Column("roleid")]
-    public int RoleId { get; set; }
+    public long RoleId { get; set; }
 
+    [PrimaryKey("permissionid", false)]
     [Column("permissionid")]
-    public int PermissionId { get; set; }
+    public long PermissionId { get; set; }
+
+    [Reference(typeof(PermissionDto), useInnerJoin: false)]
+    public PermissionDto? Permission { get; set; }
 }

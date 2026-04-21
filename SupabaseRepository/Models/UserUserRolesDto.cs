@@ -7,9 +7,10 @@ namespace SupabaseRepository.Models;
 [Table("useruserroles")]
 public class UserUserRolesDto : BaseModel
 {
+    [PrimaryKey("userid", false)]
     [Column("userid")]
-    public string UserId { get; set; } = string.Empty;
+    public Guid UserId { get; set; }
 
     [Column("roleid")]
-    public int RoleId { get; set; }
+    public long RoleId { get; set; }
 }

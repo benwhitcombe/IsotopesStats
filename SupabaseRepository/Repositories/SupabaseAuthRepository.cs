@@ -4,6 +4,7 @@ using SupabaseRepository.Mappings;
 using Supabase;
 using Postgrest;
 using Postgrest.Responses;
+using static Postgrest.Constants;
 using System.Security.Claims;
 using IsotopesStats.Domain.Interfaces;
 
@@ -25,14 +26,12 @@ public class SupabaseAuthRepository : IAuthRepository
             Supabase.Gotrue.Session? session = await _supabase.Auth.SignIn(email, password);
             if (session != null && session.User != null && !string.IsNullOrEmpty(session.User.Id))
             {
-                User user = new User
+                return new User
                 {
                     Id = session.User.Id,
                     Email = session.User.Email ?? email,
                     CreatedAt = session.User.CreatedAt
                 };
-                user.Roles = await GetUserRolesForUserAsync(session.User.Id);
-                return user;
             }
         }
         catch (Exception ex)
@@ -57,11 +56,16 @@ public class SupabaseAuthRepository : IAuthRepository
 
     public async Task<bool> IsEmailUniqueAsync(string email, string excludeUserId = "")
     {
-        ModeledResponse<UserDto> response = await _supabase.From<UserDto>()
-            .Where(x => x.Email == email)
-            .Where(x => x.Id != excludeUserId)
-            .Where(x => x.IsDeleted == false)
-            .Get();
+        Postgrest.Table<UserDto> query = _supabase.From<UserDto>()
+            .Filter("email", Operator.Equals, email)
+            .Filter("isdeleted", Operator.Equals, false);
+
+        if (!string.IsNullOrEmpty(excludeUserId))
+        {
+            query = query.Filter("id", Operator.NotEqual, excludeUserId);
+        }
+
+        ModeledResponse<UserDto> response = await query.Get();
         return response.Models.Count == 0;
     }
 
@@ -96,7 +100,7 @@ public class SupabaseAuthRepository : IAuthRepository
 
     public async Task UpdateUserAsync(User user, List<int> newRoleIds)
     {
-        await _supabase.From<UserUserRolesDto>().Where(x => x.UserId == user.Id).Delete();
+        await _supabase.From<UserUserRolesDto>().Filter("userid", Operator.Equals, user.Id).Delete();
         foreach (int roleId in newRoleIds)
         {
             UserUserRoles link = new UserUserRoles { UserId = user.Id, RoleId = roleId };
@@ -113,8 +117,20 @@ public class SupabaseAuthRepository : IAuthRepository
     public async Task<User?> GetUserByIdAsync(string userId)
     {
         if (string.IsNullOrEmpty(userId)) return null;
-        ModeledResponse<UserDto> response = await _supabase.From<UserDto>().Where(x => x.Id == userId).Get();
-        return response.Models.FirstOrDefault()?.ToModel();
+        
+        try
+        {
+            ModeledResponse<UserDto> response = await _supabase.From<UserDto>().Filter("id", Operator.Equals, userId).Get();
+            
+            if (response.Models == null) return null;
+
+            return response.Models.FirstOrDefault()?.ToModel();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"GetUserByIdAsync Exception: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task DeleteUserAsync(string userId)
@@ -124,7 +140,7 @@ public class SupabaseAuthRepository : IAuthRepository
         await _supabase.From<UserDto>().Update(user.ToDto());
 
         // 2. Revoke all roles immediately so they lose all permissions
-        await _supabase.From<UserUserRolesDto>().Where(x => x.UserId == userId).Delete();
+        await _supabase.From<UserUserRolesDto>().Filter("userid", Operator.Equals, userId).Delete();
     }
 
     public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
@@ -148,20 +164,22 @@ public class SupabaseAuthRepository : IAuthRepository
 
         if (roles.Any())
         {
-            ModeledResponse<RolePermissionDto> rpResponse = await _supabase.From<RolePermissionDto>().Get();
-            ModeledResponse<PermissionDto> permResponse = await _supabase.From<PermissionDto>().Get();
-            List<Permission> allPermissions = permResponse.Models.Select(x => x.ToModel()).ToList();
+            List<long> roleIds = roles.Select(r => (long)r.Id).ToList();
+            
+            // Get all permissions for these roles using Filter
+            ModeledResponse<RolePermissionDto> rpResponse = await _supabase.From<RolePermissionDto>()
+                .Filter("roleid", Operator.In, roleIds)
+                .Get();
 
-            foreach (UserRole role in roles)
+            if (rpResponse.Models != null)
             {
-                List<int> rolePermIds = rpResponse.Models
-                    .Where(rp => rp.RoleId == role.Id)
-                    .Select(rp => rp.PermissionId)
-                    .ToList();
-                
-                role.Permissions = allPermissions
-                    .Where(p => rolePermIds.Contains(p.Id))
-                    .ToList();
+                foreach (UserRole role in roles)
+                {
+                    role.Permissions = rpResponse.Models
+                        .Where(rp => rp.RoleId == role.Id && rp.Permission != null)
+                        .Select(rp => rp.Permission!.ToModel())
+                        .ToList();
+                }
             }
         }
 
@@ -174,34 +192,40 @@ public class SupabaseAuthRepository : IAuthRepository
 
         try 
         {
-            ModeledResponse<UserUserRolesDto> urResponse = await _supabase.From<UserUserRolesDto>().Where(x => x.UserId == supabaseUserId).Get();
-            List<int> roleIds = urResponse.Models.Select(x => x.RoleId).ToList();
+            // 1. Get role assignments for user
+            ModeledResponse<UserUserRolesDto> urResponse = await _supabase.From<UserUserRolesDto>()
+                .Filter("userid", Operator.Equals, supabaseUserId)
+                .Get();
+
+            if (urResponse.Models == null) return new List<UserRole>();
+
+            List<long> roleIds = urResponse.Models.Select(x => x.RoleId).ToList();
 
             if (!roleIds.Any()) return new List<UserRole>();
 
-            ModeledResponse<UserRoleDto> rolesResponse = await _supabase.From<UserRoleDto>().Get();
-            List<UserRole> roles = rolesResponse.Models.Where(r => roleIds.Contains(r.Id)).Select(x => x.ToModel()).ToList();
+            // 2. Get role details using Filter
+            ModeledResponse<UserRoleDto> rolesResponse = await _supabase.From<UserRoleDto>()
+                .Filter("id", Operator.In, roleIds)
+                .Get();
+            
+            if (rolesResponse.Models == null) return new List<UserRole>();
+            
+            List<UserRole> roles = rolesResponse.Models.Select(x => x.ToModel()).ToList();
 
-            ModeledResponse<RolePermissionDto> rpResponse = await _supabase.From<RolePermissionDto>().Get();
-            List<int> permissionIdsForTheseRoles = rpResponse.Models
-                .Where(rp => roleIds.Contains(rp.RoleId))
-                .Select(x => x.PermissionId)
-                .Distinct()
-                .ToList();
+            // 3. Get all permissions for these roles in one query using Filter
+            ModeledResponse<RolePermissionDto> rpResponse = await _supabase.From<RolePermissionDto>()
+                .Filter("roleid", Operator.In, roleIds)
+                .Get();
 
-            if (permissionIdsForTheseRoles.Any())
+            if (rpResponse.Models != null)
             {
-                ModeledResponse<PermissionDto> permResponse = await _supabase.From<PermissionDto>().Get();
-                List<Permission> perms = permResponse.Models.Select(x => x.ToModel()).ToList();
-
+                // 4. Map permissions to roles
                 foreach (UserRole role in roles)
                 {
-                    List<int> rolePermIds = rpResponse.Models
-                        .Where(rp => rp.RoleId == role.Id)
-                        .Select(rp => rp.PermissionId)
+                    role.Permissions = rpResponse.Models
+                        .Where(rp => rp.RoleId == role.Id && rp.Permission != null)
+                        .Select(rp => rp.Permission!.ToModel())
                         .ToList();
-                    
-                    role.Permissions = perms.Where(p => rolePermIds.Contains(p.Id)).ToList();
                 }
             }
 
@@ -212,8 +236,8 @@ public class SupabaseAuthRepository : IAuthRepository
             Console.WriteLine("Error fetching roles: " + ex.Message);
             return new List<UserRole>();
         }
-    }
-
+    }  
+    
     public async Task<List<UserLog>> GetUserLogsAsync(int limit = 100)
     {
         ModeledResponse<UserLogDto> response = await _supabase.From<UserLogDto>()
@@ -264,7 +288,7 @@ public class SupabaseAuthRepository : IAuthRepository
         {
             foreach (int permId in permissionIds)
             {
-                await _supabase.From<RolePermissionDto>().Insert(new RolePermission { RoleId = newRole.Id, PermissionId = permId }.ToDto());
+                await _supabase.From<RolePermissionDto>().Insert(new RolePermission { RoleId = (int)newRole.Id, PermissionId = permId }.ToDto());
             }
         }
     }
@@ -274,7 +298,7 @@ public class SupabaseAuthRepository : IAuthRepository
         await _supabase.From<UserRoleDto>().Update(role.ToDto());
         
         // Update permissions: delete all and re-add
-        await _supabase.From<RolePermissionDto>().Where(x => x.RoleId == role.Id).Delete();
+        await _supabase.From<RolePermissionDto>().Filter("roleid", Operator.Equals, role.Id).Delete();
         foreach (int permId in permissionIds)
         {
             await _supabase.From<RolePermissionDto>().Insert(new RolePermission { RoleId = role.Id, PermissionId = permId }.ToDto());

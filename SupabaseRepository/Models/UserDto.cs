@@ -8,7 +8,7 @@ namespace SupabaseRepository.Models;
 public class UserDto : BaseModel
 {
     [PrimaryKey("id", false)]
-    public string Id { get; set; } = string.Empty;
+    public Guid Id { get; set; }
 
     [Column("email")]
     public string Email { get; set; } = string.Empty;
