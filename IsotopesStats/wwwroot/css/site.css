@@ -491,84 +491,143 @@ tr:last-child td {
 /* Mobile Box Score Cards */
 .mobile-player-grid {
     display: none;
-    padding: 1rem;
-    gap: 1rem;
-    grid-template-columns: 1fr;
-}
-
-.mobile-player-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.mobile-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.mobile-card-name {
-    font-weight: 800;
-    color: var(--isotopes-accent);
-}
-
-.rank-badge {
-    background: #f0f0f0;
-    color: #666;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-right: 8px;
-    font-weight: bold;
-    border: 1px solid #ddd;
-}
-
-.m-stat.active {
-    background: #fff9f9;
-    border-radius: 8px;
-    border: 1px solid var(--isotopes-red);
-    padding: 2px;
-}
-
-.m-stat.active .m-stat-val {
-    color: var(--isotopes-red);
-}
-
-.mobile-card-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-}
-
-.m-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.m-stat-val {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.m-stat-label {
-    font-size: 0.65rem;
-    color: #999;
-    text-transform: uppercase;
 }
 
 @media (max-width: 768px) {
     .box-score-table-wrapper {
         display: none;
     }
-    .mobile-player-grid {
+    
+    .mobile-list-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        overflow: hidden;
+        margin-bottom: 80px;
+        border: 1px solid #eee;
+    }
+
+    .mobile-list-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 2px solid #eee;
+        background: #f8f9fa;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #666;
+    }
+
+    .mobile-list-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+    }
+
+    .mobile-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .team-totals-item {
+        background-color: #f0f7ff;
+        border-bottom: 2px solid var(--isotopes-accent);
+    }
+
+    .mobile-list-rank {
+        width: 30px;
+        color: #999;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .mobile-list-name {
+        flex: 1;
+        font-weight: bold;
+        color: var(--isotopes-dark);
+    }
+
+    .mobile-list-value {
+        font-weight: 900;
+        font-size: 1.1rem;
+        color: var(--isotopes-accent);
+        min-width: 50px;
+        text-align: right;
+    }
+
+    /* Bottom Stat Drawer */
+    .mobile-stat-drawer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+        transition: transform 0.3s ease;
+    }
+
+    .drawer-handle-container {
+        padding: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .drawer-handle {
+        width: 40px;
+        height: 5px;
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+    .stat-carousel {
+        display: flex;
+        overflow-x: auto;
+        padding: 0 16px 16px;
+        gap: 10px;
+        scrollbar-width: none;
+    }
+
+    .stat-carousel::-webkit-scrollbar { 
+        display: none; 
+    }
+
+    .stat-grid-full {
         display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 0 16px 16px;
+        overflow-y: auto;
+    }
+
+    .stat-btn {
+        background: #f4f6f8;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        color: #666;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+
+    .stat-btn.active {
+        background: var(--isotopes-accent);
+        color: white;
+    }
+
+    .stat-grid-full .stat-btn {
+        padding: 12px 8px;
+        text-align: center;
+        font-size: 0.85rem;
     }
 }
 
