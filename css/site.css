@@ -496,6 +496,82 @@ tr:last-child td {
 /* Mobile Box Score Cards */
 .mobile-player-grid {
     display: none;
+    padding: 1rem;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+    .mobile-player-grid {
+        display: grid;
+    }
+}
+
+.mobile-player-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-card-name {
+    font-weight: 800;
+    color: var(--isotopes-accent);
+}
+
+.rank-badge {
+    background: #f0f0f0;
+    color: #666;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 8px;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+.m-stat.active {
+    background: #fff9f9;
+    border-radius: 8px;
+    border: 1px solid var(--isotopes-red);
+    padding: 2px;
+}
+
+.m-stat.active .m-stat-val {
+    color: var(--isotopes-red);
+}
+
+.mobile-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.m-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.m-stat-val {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.m-stat-label {
+    font-size: 0.65rem;
+    color: #999;
+    text-transform: uppercase;
 }
 
 @media (max-width: 768px) {
