@@ -8,8 +8,8 @@ namespace SupabaseRepository.Models;
 [Table("v_game_stats_extended")]
 public class GameStatsExtendedViewDto : StatEntryDto
 {
-    [Column("extendedplayername")]
-    public string ExtendedPlayerName { get; set; } = string.Empty;
+    [Column("playername")]
+    public string PlayerName { get; set; } = string.Empty;
 
     [Column("seasonid")]
     public int SeasonId { get; set; }

@@ -207,8 +207,8 @@ else
                                             <tr>
                                                 <td class="@(uiState.SortColumn == "BO" ? "active-sort-col" : "")">@stat.BO</td>
                                                 <td class="player-name sticky-col @(uiState.SortColumn == "Player" ? "active-sort-col" : "")">
-                                                    <a href="/playerlogs/@Uri.EscapeDataString(stat.ExtendedPlayerName)" style="text-decoration: none; color: inherit;">
-                                                        @stat.ExtendedPlayerName
+                                                    <a href="/playerlogs/@Uri.EscapeDataString(stat.PlayerName)" style="text-decoration: none; color: inherit;">
+                                                        @stat.PlayerName
                                                     </a>
                                                 </td>
                                                 <td class="group-divider narrow-col @(uiState.SortColumn == "PA" ? "active-sort-col" : "")">@stat.PA</td>
@@ -267,7 +267,7 @@ else
                                 {
                                     <div class="mobile-player-card">
                                         <div class="mobile-card-header">
-                                            <span class="mobile-card-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.ExtendedPlayerName)}")' style="cursor: pointer;">@stat.BO. @stat.ExtendedPlayerName</span>
+                                            <span class="mobile-card-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.PlayerName)}")' style="cursor: pointer;">@stat.BO. @stat.PlayerName</span>
                                             <span class="badge bg-light text-dark">AVG: @stat.AVG.ToString(".000") | OBP: @stat.OBP.ToString(".000")</span>
                                         </div>
                                         <div class="mobile-card-stats">
@@ -453,7 +453,7 @@ else
     {
         return uiState.SortColumn switch
         {
-            "Player" => uiState.IsAscending ? stats.OrderBy(s => s.ExtendedPlayerName) : stats.OrderByDescending(s => s.ExtendedPlayerName),
+            "Player" => uiState.IsAscending ? stats.OrderBy(s => s.PlayerName) : stats.OrderByDescending(s => s.PlayerName),
             "BO" => uiState.IsAscending ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),
             "PA" => uiState.IsAscending ? stats.OrderBy(s => s.PA) : stats.OrderByDescending(s => s.PA),
             "AB" => uiState.IsAscending ? stats.OrderBy(s => s.AB) : stats.OrderByDescending(s => s.AB),

@@ -56,8 +56,8 @@ public record PlayerStatsSummary
     public double AVG => AB > 0 ? (double)H / AB : 0;
     
     [JsonIgnore]
-    public double OBP => (AB + BB + SF) > 0 
-        ? (double)(H + BB) / (AB + BB + SF) 
+    public double OBP => PA > 0 
+        ? (double)(H + BB) / PA 
         : 0;
 
     [JsonIgnore]

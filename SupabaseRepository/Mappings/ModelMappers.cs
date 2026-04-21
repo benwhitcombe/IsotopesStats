@@ -615,7 +615,7 @@ public static class ModelMappers
             RBI = dto.RBI,
             Player = dto.Player?.ToModel(),
             Game = dto.Game?.ToModel(),
-            ExtendedPlayerName = dto.ExtendedPlayerName,
+            PlayerName = dto.PlayerName,
             SeasonId = dto.SeasonId,
             GameNumber = dto.GameNumber,
             Date = dto.Date,

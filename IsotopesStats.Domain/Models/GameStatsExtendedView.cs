@@ -2,7 +2,7 @@ namespace IsotopesStats.Models;
 
 public record GameStatsExtendedView : StatEntry
 {
-    public string ExtendedPlayerName { get; set; } = string.Empty;
+    public new string PlayerName { get; set; } = string.Empty;
 
     public int SeasonId { get; set; }
 
