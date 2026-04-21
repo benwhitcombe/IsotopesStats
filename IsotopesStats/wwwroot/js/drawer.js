@@ -70,6 +70,23 @@ window.drawerDragging = {
     updateState: function(isExpanded) {
         this.isExpanded = isExpanded;
         this.applyStateTransform(false);
+        
+        if (!isExpanded) {
+            // Give CSS transition time to finish before scrolling
+            setTimeout(() => this.scrollToActive(), 400);
+        }
+    },
+
+    scrollToActive: function() {
+        const carousel = document.querySelector('.stat-carousel');
+        const activeBtn = carousel ? carousel.querySelector('.stat-btn.active') : null;
+        if (carousel && activeBtn) {
+            const scrollLeft = activeBtn.offsetLeft - (carousel.offsetWidth / 2) + (activeBtn.offsetWidth / 2);
+            carousel.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
     },
 
     applyStateTransform: function(immediate) {

@@ -259,11 +259,14 @@ else
                         }
                     </div>
                     
-                    <div class="stat-grid-full">
-                        @foreach (string stat in AllSortableStats)
-                        {
-                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
-                        }
+                    <div class="drawer-expanded-content">
+                        <div class="drawer-section-title">Hitting Stats</div>
+                        <div class="stat-grid-full">
+                            @foreach (string stat in AllSortableStats)
+                            {
+                                <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -290,7 +293,7 @@ else
     private PlayerStatsSummary? rbiLeader;
 
     private readonly string[] AllSortableStats = {
-        "AB", "AVG", "BB", "FC", "FO", "GO", "GP", "H", "1B", "2B", "3B", "4B", "HR", "K", "KF", "OBP", "OPS", "PA", "R", "RBI", "SF", "SLG"
+        "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "R", "H", "1B", "2B", "3B", "4B", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
     };
 
     protected override async Task OnInitializedAsync()
@@ -398,6 +401,7 @@ else
         Sort(column, false);
         isDrawerExpanded = false;
         await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", false);
+        await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive");
     }
 
     public void Dispose()

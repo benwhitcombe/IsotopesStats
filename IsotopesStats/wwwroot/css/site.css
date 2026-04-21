@@ -604,27 +604,62 @@ tr:last-child td {
         min-height: 60px;
         flex-shrink: 0;
         touch-action: pan-x; /* Allow horizontal scroll, vertical drag handled by JS */
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+    }
+
+    .mobile-stat-drawer.expanded .stat-carousel {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        pointer-events: none;
     }
 
     .stat-carousel::-webkit-scrollbar { 
         display: none; 
     }
 
+    .drawer-expanded-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s, visibility 0.4s;
+        margin-top: -60px; /* Offset the space taken by the hidden carousel */
+    }
+
+    .mobile-stat-drawer.expanded .drawer-expanded-content {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .drawer-section-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--isotopes-dark);
+        padding: 0 16px 16px;
+        text-align: left;
+    }
+
     .stat-grid-full {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        padding: 0 16px 30px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 0 16px 40px;
         overflow-y: auto;
         flex: 1;
-        touch-action: pan-y; /* Allow vertical scroll within the grid */
+        touch-action: pan-y;
     }
 
     /* Adjust button appearance in the grid */
     .stat-grid-full .stat-btn {
-        padding: 12px 8px;
+        padding: 16px 12px;
         text-align: center;
-        font-size: 0.85rem;
+        font-size: 1rem;
+        border-radius: 12px;
     }
 
     .stat-btn {
