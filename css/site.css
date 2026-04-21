@@ -634,16 +634,16 @@ tr:last-child td {
 /* Player Leaderboard Enhancements */
 .leader-highlights {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .leader-card {
     background: linear-gradient(135deg, var(--isotopes-accent), #002d5a);
     color: white;
-    padding: 1.5rem;
-    border-radius: 16px;
+    padding: 0.75rem;
+    border-radius: 12px;
     text-align: center;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     position: relative;
@@ -653,37 +653,77 @@ tr:last-child td {
 }
 
 .leader-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
 .leader-card::after {
     content: "🏆";
     position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 4rem;
+    top: -5px;
+    right: -5px;
+    font-size: 2.5rem;
     opacity: 0.1;
 }
 
 .leader-category {
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     opacity: 0.8;
 }
 
 .leader-name {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: 900;
-    margin: 0.5rem 0;
+    margin: 0.25rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .leader-value {
-    font-size: 2rem;
+    font-size: 1.25rem;
     font-weight: 300;
     display: inline-block;
     animation: pulse 4s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+    .leader-highlights {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .leader-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .leader-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+
+    .leader-card::after {
+        top: -10px;
+        right: -10px;
+        font-size: 4rem;
+    }
+
+    .leader-category {
+        font-size: 0.75rem;
+    }
+
+    .leader-name {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .leader-value {
+        font-size: 2rem;
+    }
 }
 
 .narrow-col {
