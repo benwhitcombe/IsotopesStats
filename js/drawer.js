@@ -70,6 +70,45 @@ window.drawerDragging = {
     updateState: function(isExpanded) {
         this.isExpanded = isExpanded;
         this.applyStateTransform(false);
+        
+        if (!isExpanded) {
+            // Give CSS transition time to finish before scrolling
+            setTimeout(() => this.scrollToActive(), 400);
+        }
+    },
+
+    scrollToActive: function(immediate) {
+        // Use requestAnimationFrame to ensure the browser has performed layout
+        requestAnimationFrame(() => {
+            const carousel = document.querySelector('.stat-carousel');
+            if (!carousel) return;
+            
+            const activeBtn = carousel.querySelector('.stat-btn.active');
+            if (!activeBtn) return;
+
+            // If dimensions aren't ready yet, try once more in the next frame
+            if (carousel.offsetWidth === 0 || activeBtn.offsetWidth === 0) {
+                requestAnimationFrame(() => this.scrollToActive(immediate));
+                return;
+            }
+
+            // Check if already fully visible to prevent disorienting jumps
+            const isVisible = (activeBtn.offsetLeft >= carousel.scrollLeft) && 
+                              (activeBtn.offsetLeft + activeBtn.offsetWidth <= carousel.scrollLeft + carousel.offsetWidth);
+
+            if (isVisible) return;
+
+            const scrollLeft = activeBtn.offsetLeft - (carousel.offsetWidth / 2) + (activeBtn.offsetWidth / 2);
+            
+            if (immediate) {
+                carousel.scrollLeft = scrollLeft;
+            } else {
+                carousel.scrollTo({
+                    left: scrollLeft,
+                    behavior: 'smooth'
+                });
+            }
+        });
     },
 
     applyStateTransform: function(immediate) {
