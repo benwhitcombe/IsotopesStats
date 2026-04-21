@@ -513,15 +513,16 @@ tr:last-child td {
         padding: 12px 16px;
         border-bottom: 2px solid #eee;
         background: #f8f9fa;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        color: #666;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #888;
+        letter-spacing: 0.5px;
     }
 
     .mobile-list-item {
         display: flex;
-        align-items: center;
-        padding: 12px 16px;
+        align-items: stretch;
+        padding: 18px 16px;
         border-bottom: 1px solid #f0f0f0;
         cursor: pointer;
     }
@@ -536,24 +537,36 @@ tr:last-child td {
     }
 
     .mobile-list-rank {
-        width: 30px;
-        color: #999;
-        font-weight: bold;
-        font-size: 0.9rem;
+        width: 45px;
+        color: #888;
+        font-weight: 600;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        line-height: 1;
     }
 
     .mobile-list-name {
         flex: 1;
-        font-weight: bold;
+        font-weight: 700;
+        font-size: 1.15rem;
         color: var(--isotopes-dark);
+        display: flex;
+        align-items: center;
+        line-height: 1;
     }
 
     .mobile-list-value {
-        font-weight: 900;
-        font-size: 1.1rem;
+        font-weight: 800;
+        font-size: 1.25rem;
         color: var(--isotopes-accent);
-        min-width: 50px;
+        min-width: 85px;
         text-align: right;
+        padding-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        line-height: 1;
     }
 
     /* Bottom Stat Drawer */
@@ -563,15 +576,14 @@ tr:last-child td {
         left: 0;
         right: 0;
         background: white;
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-        border-top-left-radius: 20px;
-        border-top-right-radius: 20px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
         z-index: 1000;
         display: flex;
         flex-direction: column;
         max-height: 85vh;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        /* Don't set touch-action: none on the whole drawer as it blocks carousel scrolling */
         touch-action: pan-y; 
     }
 
@@ -580,37 +592,37 @@ tr:last-child td {
     }
 
     .drawer-handle-container {
-        padding: 12px;
+        padding: 10px;
         display: flex;
         justify-content: center;
         align-items: center;
         cursor: pointer;
-        touch-action: none; /* Handle is vertical drag only */
+        touch-action: none;
     }
 
     .drawer-handle {
-        width: 40px;
-        height: 5px;
-        background: #ddd;
-        border-radius: 3px;
+        width: 36px;
+        height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
     }
 
     .stat-carousel {
         display: flex;
         overflow-x: auto;
-        padding: 0 16px 16px;
-        gap: 10px;
+        padding: 0 16px 12px;
+        gap: 8px;
         scrollbar-width: none;
-        min-height: 60px;
+        min-height: 52px;
         flex-shrink: 0;
-        touch-action: pan-x; /* Allow horizontal scroll, vertical drag handled by JS */
+        touch-action: pan-x;
         transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
     }
 
     .mobile-stat-drawer.expanded .stat-carousel {
         opacity: 0;
         visibility: hidden;
-        transform: translateY(-20px);
+        transform: translateY(-10px);
         pointer-events: none;
     }
 
@@ -625,9 +637,9 @@ tr:last-child td {
         overflow: hidden;
         opacity: 0;
         visibility: hidden;
-        transform: translateY(20px);
+        transform: translateY(10px);
         transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s, visibility 0.4s;
-        margin-top: -60px; /* Offset the space taken by the hidden carousel */
+        margin-top: -52px;
     }
 
     .mobile-stat-drawer.expanded .drawer-expanded-content {
@@ -637,17 +649,17 @@ tr:last-child td {
     }
 
     .drawer-section-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 800;
         color: var(--isotopes-dark);
-        padding: 0 16px 16px;
-        text-align: left;
+        padding: 4px 16px 16px;
+        text-align: center;
     }
 
     .stat-grid-full {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
         padding: 0 16px 40px;
         overflow-y: auto;
         flex: 1;
@@ -656,32 +668,28 @@ tr:last-child td {
 
     /* Adjust button appearance in the grid */
     .stat-grid-full .stat-btn {
-        padding: 16px 12px;
+        padding: 14px 10px;
         text-align: center;
-        font-size: 1rem;
+        font-size: 0.9rem;
         border-radius: 12px;
     }
 
     .stat-btn {
         background: #f4f6f8;
         border: none;
-        padding: 10px 16px;
-        border-radius: 20px;
-        font-weight: bold;
+        padding: 8px 14px;
+        border-radius: 18px;
+        font-weight: 700;
+        font-size: 0.85rem;
         color: #666;
         white-space: nowrap;
-        transition: all 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .stat-btn.active {
         background: var(--isotopes-accent);
         color: white;
-    }
-
-    .stat-grid-full .stat-btn {
-        padding: 12px 8px;
-        text-align: center;
-        font-size: 0.85rem;
+        box-shadow: 0 4px 10px rgba(0, 70, 132, 0.2);
     }
 }
 
