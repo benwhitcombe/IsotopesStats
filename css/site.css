@@ -691,7 +691,7 @@ tr:last-child td {
     .stat-carousel {
         display: flex;
         overflow-x: auto;
-        padding: 0 16px 12px;
+        padding: 8px 16px 12px;
         gap: 8px;
         scrollbar-width: none;
         min-height: 52px;
