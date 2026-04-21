@@ -37,4 +37,8 @@ public record GameSummaryView
     public int TeamPA { get; set; }
 
     public int TeamRBI { get; set; }
+
+    public int? VisitingTeamScore { get; set; }
+
+    public int? HomeTeamScore { get; set; }
 }

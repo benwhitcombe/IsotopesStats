@@ -103,7 +103,9 @@ public static class ModelMappers
             TeamBBs = dto.TeamBBs,
             TeamAB = dto.TeamAB,
             TeamPA = dto.TeamPA,
-            TeamRBI = dto.TeamRBI
+            TeamRBI = dto.TeamRBI,
+            VisitingTeamScore = dto.VisitingTeamScore,
+            HomeTeamScore = dto.HomeTeamScore
         };
     }
 
@@ -129,7 +131,9 @@ public static class ModelMappers
             TeamBBs = model.TeamBBs,
             TeamAB = model.TeamAB,
             TeamPA = model.TeamPA,
-            TeamRBI = model.TeamRBI
+            TeamRBI = model.TeamRBI,
+            VisitingTeamScore = model.VisitingTeamScore,
+            HomeTeamScore = model.HomeTeamScore
         };
     }
 

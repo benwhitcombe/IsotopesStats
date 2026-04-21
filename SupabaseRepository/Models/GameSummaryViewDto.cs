@@ -60,4 +60,10 @@ public class GameSummaryViewDto : BaseModel
 
     [Column("teamrbi")]
     public int TeamRBI { get; set; }
+
+    [Column("visitingteamscore")]
+    public int? VisitingTeamScore { get; set; }
+
+    [Column("hometeamscore")]
+    public int? HomeTeamScore { get; set; }
 }
