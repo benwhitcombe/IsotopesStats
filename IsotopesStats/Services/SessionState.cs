@@ -44,6 +44,39 @@ public class PlayerStatsState
         set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
     }
 
+    private string _currentSortColumn = "AVG";
+    public string CurrentSortColumn 
+    { 
+        get => _currentSortColumn; 
+        set { if (_currentSortColumn != value) { _currentSortColumn = value; OnChanged?.Invoke(); } } 
+    }
+
+    private bool _isAscending = false;
+    public bool IsAscending 
+    { 
+        get => _isAscending; 
+        set { if (_isAscending != value) { _isAscending = value; OnChanged?.Invoke(); } } 
+    }
+
+    public event Action? OnChanged;
+
+    public void LoadFrom(PlayerStatsState other)
+    {
+        _filterText = other.FilterText;
+        _currentSortColumn = other.CurrentSortColumn;
+        _isAscending = other.IsAscending;
+    }
+}
+
+public class PlayerStatsLegacyState
+{
+    private string _filterText = string.Empty;
+    public string FilterText 
+    { 
+        get => _filterText; 
+        set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
+    }
+
     private string _activeView = "Standard";
     public string ActiveView 
     { 
@@ -109,7 +142,7 @@ public class PlayerStatsState
 
     public event Action? OnChanged;
 
-    public void LoadFrom(PlayerStatsState other)
+    public void LoadFrom(PlayerStatsLegacyState other)
     {
         _filterText = other.FilterText;
         _activeView = other.ActiveView;

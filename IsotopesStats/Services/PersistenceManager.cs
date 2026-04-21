@@ -5,25 +5,30 @@ public class PersistenceManager : IDisposable
     private readonly SessionStorageService _sessionStorage;
     private readonly SharedSessionState _sharedState;
     private readonly PlayerStatsState _playerStatsState;
+    private readonly PlayerStatsLegacyState _playerStatsLegacyState;
     private readonly GameStatsState _gameStatsState;
 
     private const string SharedStateKey = "isotopes_shared_state";
     private const string PlayerStatsKey = "isotopes_player_stats_state";
+    private const string PlayerStatsLegacyKey = "isotopes_player_stats_legacy_state";
     private const string GameStatsKey = "isotopes_game_stats_state";
 
     public PersistenceManager(
         SessionStorageService sessionStorage,
         SharedSessionState sharedState,
         PlayerStatsState playerStatsState,
+        PlayerStatsLegacyState playerStatsLegacyState,
         GameStatsState gameStatsState)
     {
         _sessionStorage = sessionStorage;
         _sharedState = sharedState;
         _playerStatsState = playerStatsState;
+        _playerStatsLegacyState = playerStatsLegacyState;
         _gameStatsState = gameStatsState;
 
         _sharedState.OnChanged += SaveSharedState;
         _playerStatsState.OnChanged += SavePlayerStatsState;
+        _playerStatsLegacyState.OnChanged += SavePlayerStatsLegacyState;
         _gameStatsState.OnChanged += SaveGameStatsState;
     }
 
@@ -35,18 +40,23 @@ public class PersistenceManager : IDisposable
         PlayerStatsState? player = await _sessionStorage.GetItemAsync<PlayerStatsState>(PlayerStatsKey);
         if (player != null) _playerStatsState.LoadFrom(player);
 
+        PlayerStatsLegacyState? legacy = await _sessionStorage.GetItemAsync<PlayerStatsLegacyState>(PlayerStatsLegacyKey);
+        if (legacy != null) _playerStatsLegacyState.LoadFrom(legacy);
+
         GameStatsState? game = await _sessionStorage.GetItemAsync<GameStatsState>(GameStatsKey);
         if (game != null) _gameStatsState.LoadFrom(game);
     }
 
     private async void SaveSharedState() => await _sessionStorage.SetItemAsync(SharedStateKey, _sharedState);
     private async void SavePlayerStatsState() => await _sessionStorage.SetItemAsync(PlayerStatsKey, _playerStatsState);
+    private async void SavePlayerStatsLegacyState() => await _sessionStorage.SetItemAsync(PlayerStatsLegacyKey, _playerStatsLegacyState);
     private async void SaveGameStatsState() => await _sessionStorage.SetItemAsync(GameStatsKey, _gameStatsState);
 
     public void Dispose()
     {
         _sharedState.OnChanged -= SaveSharedState;
         _playerStatsState.OnChanged -= SavePlayerStatsState;
+        _playerStatsLegacyState.OnChanged -= SavePlayerStatsLegacyState;
         _gameStatsState.OnChanged -= SaveGameStatsState;
     }
 }

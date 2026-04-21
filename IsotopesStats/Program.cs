@@ -53,6 +53,7 @@ builder.Services.AddAuthorizationCore(options =>
 // State Management
 builder.Services.AddScoped<SharedSessionState>();
 builder.Services.AddScoped<PlayerStatsState>();
+builder.Services.AddScoped<PlayerStatsLegacyState>();
 builder.Services.AddScoped<GameStatsState>();
 builder.Services.AddScoped<PersistenceManager>();
 
