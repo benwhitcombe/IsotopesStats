@@ -352,6 +352,31 @@ tr:last-child td {
     margin-bottom: 4px;
 }
 
+.game-result-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: fit-content;
+    margin-bottom: 4px;
+}
+
+.game-result-badge.win {
+    background: #28a745;
+    color: white;
+}
+
+.game-result-badge.loss {
+    background: #dc3545;
+    color: white;
+}
+
+.game-result-badge.tie {
+    background: #6c757d;
+    color: white;
+}
+
 .game-date {
     font-size: 0.85rem;
     color: #666;
