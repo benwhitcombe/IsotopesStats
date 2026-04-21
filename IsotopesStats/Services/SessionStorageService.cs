@@ -15,7 +15,10 @@ public class SessionStorageService
         _settings = new JsonSerializerSettings
         {
             ContractResolver = new DefaultContractResolver(),
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            // Ensure that when we persist models (which already have Whitby time), 
+            // we don't accidentally shift them again based on the browser's zone.
+            DateTimeZoneHandling = DateTimeZoneHandling.Unspecified
         };
     }
 

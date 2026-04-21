@@ -5,6 +5,45 @@ namespace SupabaseRepository.Mappings;
 
 public static class ModelMappers
 {
+    private static DateTime ToWhitbyTime(DateTime utcTime)
+    {
+        // If the browser already converted the UTC string (+00) to a local DateTime,
+        // ToUniversalTime() will shift it back to UTC correctly based on the browser's offset.
+        // If it's already UTC or Unspecified, it will be treated as UTC.
+        DateTime utcSource = utcTime.ToUniversalTime();
+        
+        try
+        {
+            // Attempt to find Eastern Time Zone (Windows or IANA names)
+            TimeZoneInfo easternZone;
+            try
+            {
+                // Most reliable ID for modern systems and WASM
+                easternZone = TimeZoneInfo.FindSystemTimeZoneById("America/Toronto");
+            }
+            catch
+            {
+                try
+                {
+                    // Windows legacy ID
+                    easternZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+                }
+                catch
+                {
+                    // Fallback to a fixed -4 hour offset for Eastern Daylight Time 
+                    // if the system timezone database is entirely unavailable.
+                    return DateTime.SpecifyKind(utcSource.AddHours(-4), DateTimeKind.Local);
+                }
+            }
+            
+            return TimeZoneInfo.ConvertTimeFromUtc(utcSource, easternZone);
+        }
+        catch
+        {
+            // Ultimate fallback
+            return DateTime.SpecifyKind(utcSource.AddHours(-4), DateTimeKind.Local);
+        }
+    }
 
     public static Game ToModel(this GameDto dto)
     {
@@ -14,7 +53,7 @@ public static class ModelMappers
             Id = dto.Id,
             SeasonId = dto.SeasonId,
             GameNumber = dto.GameNumber,
-            Date = dto.Date,
+            Date = ToWhitbyTime(dto.Date),
             Diamond = dto.Diamond,
             IsHome = dto.IsHome,
             OpponentId = dto.OpponentId,
@@ -53,7 +92,7 @@ public static class ModelMappers
             Id = dto.Id,
             SeasonId = dto.SeasonId,
             GameNumber = dto.GameNumber,
-            Date = dto.Date,
+            Date = ToWhitbyTime(dto.Date),
             Diamond = dto.Diamond,
             IsHome = dto.IsHome,
             OpponentId = dto.OpponentId,
@@ -89,7 +128,7 @@ public static class ModelMappers
             GameId = dto.GameId,
             SeasonId = dto.SeasonId,
             GameNumber = dto.GameNumber,
-            Date = dto.Date,
+            Date = ToWhitbyTime(dto.Date),
             Diamond = dto.Diamond,
             IsHome = dto.IsHome,
             OpponentId = dto.OpponentId,
@@ -442,7 +481,7 @@ public static class ModelMappers
             Id = dto.Id.ToString(),
             Email = dto.Email,
             PasswordHash = dto.PasswordHash,
-            CreatedAt = dto.CreatedAt,
+            CreatedAt = ToWhitbyTime(dto.CreatedAt),
             IsDeleted = dto.IsDeleted
         };
     }
@@ -472,7 +511,7 @@ public static class ModelMappers
             EntityType = dto.EntityType,
             EntityId = dto.EntityId,
             Description = dto.Description,
-            Timestamp = dto.Timestamp
+            Timestamp = ToWhitbyTime(dto.Timestamp)
         };
     }
 
@@ -531,7 +570,7 @@ public static class ModelMappers
         {
             Id = dto.Id,
             Email = dto.Email,
-            CreatedAt = dto.CreatedAt,
+            CreatedAt = ToWhitbyTime(dto.CreatedAt),
             RoleNames = dto.RoleNames,
             IsDeleted = dto.IsDeleted
         };
@@ -622,7 +661,7 @@ public static class ModelMappers
             PlayerName = dto.PlayerName,
             SeasonId = dto.SeasonId,
             GameNumber = dto.GameNumber,
-            Date = dto.Date,
+            Date = ToWhitbyTime(dto.Date),
             Diamond = dto.Diamond,
             IsHome = dto.IsHome,
             OpponentId = dto.OpponentId,
