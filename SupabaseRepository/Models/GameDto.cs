@@ -34,6 +34,12 @@ public class GameDto : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 
+    [Column("visitingteamscore")]
+    public int? VisitingTeamScore { get; set; }
+
+    [Column("hometeamscore")]
+    public int? HomeTeamScore { get; set; }
+
     [Reference(typeof(OpponentDto))]
     public OpponentDto? Opponent { get; set; }
 }

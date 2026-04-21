@@ -20,6 +20,8 @@ public static class ModelMappers
             OpponentId = dto.OpponentId,
             Type = dto.Type,
             IsDeleted = dto.IsDeleted,
+            VisitingTeamScore = dto.VisitingTeamScore,
+            HomeTeamScore = dto.HomeTeamScore,
             Opponent = dto.Opponent?.ToModel()
         };
     }
@@ -38,7 +40,8 @@ public static class ModelMappers
             OpponentId = model.OpponentId,
             Type = model.Type,
             IsDeleted = model.IsDeleted,
-            Opponent = model.Opponent?.ToDto()
+            VisitingTeamScore = model.VisitingTeamScore,
+            HomeTeamScore = model.HomeTeamScore
         };
     }
 

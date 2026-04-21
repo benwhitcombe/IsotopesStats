@@ -28,5 +28,13 @@ public record Game : IEntity
     
     public bool IsDeleted { get; set; } = false;
 
+    public int? VisitingTeamScore { get; set; }
+    public int? HomeTeamScore { get; set; }
+
+    public int? OurScore => IsHome ? HomeTeamScore : VisitingTeamScore;
+    public int? OpponentScore => IsHome ? VisitingTeamScore : HomeTeamScore;
+    public bool? IsWin => (OurScore != null && OpponentScore != null) ? (OurScore > OpponentScore) : null;
+    public bool? IsTie => (OurScore != null && OpponentScore != null) ? (OurScore == OpponentScore) : null;
+
     public Opponent? Opponent { get; set; }
 }
