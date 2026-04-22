@@ -164,7 +164,8 @@ public class SupabaseStatsRepository : IStatsRepository
         {
             opponents.Add(new Opponent { 
                 Id = sov.OpponentId, 
-                Name = sov.OpponentName 
+                Name = sov.OpponentName,
+                ShortName = sov.OpponentShortName
             });
         }
         return opponents.OrderBy(o => o.Name).ToList();
@@ -190,14 +191,18 @@ public class SupabaseStatsRepository : IStatsRepository
 
     public async Task UpdateOpponentAsync(Opponent opponent)
     {
-        Opponent update = new Opponent { Id = opponent.Id, Name = opponent.Name, IsDeleted = opponent.IsDeleted };
+        Opponent update = new Opponent { Id = opponent.Id, Name = opponent.Name, ShortName = opponent.ShortName, IsDeleted = opponent.IsDeleted };
         await _supabase.From<OpponentDto>().Update(update.ToDto());
     }
 
     public async Task DeleteOpponentAsync(int opponentId)
     {
-        Opponent opponent = new Opponent { Id = opponentId, IsDeleted = true };
-        await _supabase.From<OpponentDto>().Update(opponent.ToDto());
+        OpponentDto? existing = await _supabase.From<OpponentDto>().Where(x => x.Id == opponentId).Single();
+        if (existing != null)
+        {
+            existing.IsDeleted = true;
+            await _supabase.From<OpponentDto>().Update(existing);
+        }
     }
 
     public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeId = 0)

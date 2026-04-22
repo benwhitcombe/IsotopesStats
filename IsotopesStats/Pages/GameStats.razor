@@ -493,32 +493,102 @@ else
 
                     <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s">
                         <div class="game-card-header" style="padding: 1.25rem; cursor: default; display: block;">
-                            <!-- Desktop Header -->
-                            <div class="desktop-only" style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="game-info-main" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-                                    <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div class="game-number-badge" style="margin: 0; white-space: nowrap; background: #999;">GAME #@summary.GameNumber</div>
-                                        <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: #888;">@(summary.IsHome ? "vs" : "@") @summary.OpponentName</div>
+                            <!-- Desktop Header (Scoreboard Style) -->
+                            <div class="desktop-only" style="width: 100%; opacity: 0.7;">
+                                <div class="mobile-scoreboard">
+                                    <div class="scoreboard-meta">
+                                        <span style="color: #999;">GAME #@summary.GameNumber</span>
+                                        <span style="color: #999;">@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
+                                        <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 0.75rem; padding: 2px 8px;">Win</span>
                                     </div>
-                                    <div class="game-row-2" style="display: flex; align-items: center; gap: 1rem; color: #999; font-size: 0.85rem;">
-                                        <div class="game-date">📅 @summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</div>
-                                        <div class="diamond-name">📍 @summary.Diamond</div>
+                                    <div class="scoreboard-matchup">
+                                        <div class="scoreboard-team visitor smart-name-container" style="color: #888;">
+                                            <span class="full-name">@(summary.IsHome ? summary.OpponentName : "Isotopes")</span>
+                                            @if (summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (!summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                        <div class="scoreboard-scores" style="background: transparent; border: 1px dashed #ddd;">
+                                            <span class="scoreboard-score" style="color: #999;">-</span>
+                                            <span class="scoreboard-divider" style="color: #ccc; font-size: 0.9rem;">vs</span>
+                                            <span class="scoreboard-score" style="color: #999;">-</span>
+                                        </div>
+                                        <div class="scoreboard-team home smart-name-container" style="color: #888;">
+                                            <span class="full-name">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</span>
+                                            @if (!summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="scoreboard-location">
+                                        <span>📍 @summary.Diamond</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Mobile Header -->
-                            <div class="mobile-only" style="width: 100%;">
-                                <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; width: 100%;">
-                                    <div class="game-number-badge" style="margin: 0; white-space: nowrap; font-size: 0.75rem; padding: 0.2rem 0.5rem; background: #999;">#@summary.GameNumber</div>
-                                    <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: #888; flex: 1;">@(summary.IsHome ? "vs" : "@") @summary.OpponentName</div>
-                                </div>
-                                <div class="game-row-2" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
-                                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; color: #999; font-size: 0.8rem; align-items: center;">
-                                        <div class="game-date">📅 @summary.Date.ToString("MMM dd @ h:mm tt")</div>
-                                        <div class="diamond-name">📍 @summary.Diamond</div>
+                            <!-- Mobile Header (Scoreboard Style) -->
+                            <div class="mobile-only" style="width: 100%; opacity: 0.7;">
+                                <div class="mobile-scoreboard">
+                                    <div class="scoreboard-meta">
+                                        <span style="color: #999;">GAME #@summary.GameNumber</span>
+                                        <span style="color: #999;">@summary.Date.ToString("MMM dd @ h:mm tt")</span>
+                                        <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 0.65rem; padding: 2px 6px;">Win</span>
+                                    </div>
+                                    <div class="scoreboard-matchup">
+                                        <div class="scoreboard-team visitor smart-name-container" style="color: #888;">
+                                            <span class="full-name">@(summary.IsHome ? summary.OpponentName : "Isotopes")</span>
+                                            @if (summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (!summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                        <div class="scoreboard-scores" style="background: transparent; border: 1px dashed #ddd;">
+                                            <span class="scoreboard-score" style="color: #999;">-</span>
+                                            <span class="scoreboard-divider" style="color: #ccc; font-size: 0.9rem;">vs</span>
+                                            <span class="scoreboard-score" style="color: #999;">-</span>
+                                        </div>
+                                        <div class="scoreboard-team home smart-name-container" style="color: #888;">
+                                            <span class="full-name">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</span>
+                                            @if (!summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="scoreboard-location">
+                                        <span>📍 @summary.Diamond</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="game-card-footer" style="opacity: 0.7;">
+                            <div class="footer-stat">
+                                <span class="footer-stat-label">AVG:</span> -
+                            </div>
+                            <div class="footer-stat">
+                                <span class="footer-stat-label">H:</span> -
+                            </div>
+                            <div class="footer-stat">
+                                <span class="footer-stat-label">HR:</span> -
                             </div>
                         </div>
                     </div>

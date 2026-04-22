@@ -34,7 +34,7 @@
         CheckUniqueAsync="CheckUniqueOpponent"
         OnSave="SaveOpponent"
         OnDelete="DeleteOpponent"
-        ExtraState="@(new { Ids = assignedSeasonIds, Names = assignedSeasonNames, Shorts = assignedSeasonShortNames })"
+        ExtraState="@(new OpponentExtraState { Ids = assignedSeasonIds, Names = assignedSeasonNames, Shorts = assignedSeasonShortNames })"
         HasCustomChanges="HasExtraStateChanges">
 
         <div class="form-group">
@@ -371,14 +371,13 @@ else
             Opponent? persisted = await SessionStorage.GetItemAsync<Opponent>($"EditState_Opponent_{Id ?? 0}");
             if (persisted != null) editingOpponent = persisted;
 
-            HashSet<int>? persistedIds = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Opponent_{Id ?? 0}_Extra_Ids");
-            if (persistedIds != null) assignedSeasonIds = persistedIds;
-
-            Dictionary<int, string?>? persistedNames = await SessionStorage.GetItemAsync<Dictionary<int, string?>>($"EditState_Opponent_{Id ?? 0}_Extra_Names");
-            if (persistedNames != null) assignedSeasonNames = persistedNames;
-
-            Dictionary<int, string?>? persistedShorts = await SessionStorage.GetItemAsync<Dictionary<int, string?>>($"EditState_Opponent_{Id ?? 0}_Extra_Shorts");
-            if (persistedShorts != null) assignedSeasonShortNames = persistedShorts;
+            OpponentExtraState? extra = await SessionStorage.GetItemAsync<OpponentExtraState>($"EditState_Opponent_{Id ?? 0}_Extra");
+            if (extra != null)
+            {
+                if (extra.Ids != null) assignedSeasonIds = extra.Ids;
+                if (extra.Names != null) assignedSeasonNames = extra.Names;
+                if (extra.Shorts != null) assignedSeasonShortNames = extra.Shorts;
+            }
 
             StateHasChanged();
         }
@@ -448,9 +447,7 @@ else
         }
         if (modelEditor != null) 
         {
-            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Ids", assignedSeasonIds);
-            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
-            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Shorts", assignedSeasonShortNames);
+            await modelEditor.SaveExtraState();
         }
     }
 
@@ -471,8 +468,7 @@ else
 
         if (modelEditor != null)
         {
-            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
-            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Shorts", assignedSeasonShortNames);
+            await modelEditor.SaveExtraState();
         }
     }
 
@@ -531,5 +527,12 @@ else
     {
         await StatsService.DeleteOpponentAsync(editingOpponent.Id);
         await LoadOpponents();
+    }
+
+    public class OpponentExtraState
+    {
+        public HashSet<int> Ids { get; set; } = new();
+        public Dictionary<int, string?> Names { get; set; } = new();
+        public Dictionary<int, string?> Shorts { get; set; } = new();
     }
 }
