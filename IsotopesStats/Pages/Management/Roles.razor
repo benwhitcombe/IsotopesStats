@@ -34,7 +34,7 @@
         OnSave="SaveRole"
         OnDelete="DeleteRole"
         CheckUniqueAsync="CheckRoleNameUnique"
-        ExtraState="selectedPermissionIds"
+        ExtraState="extraState"
         HasCustomChanges="HasPermissionsChanged">
 
         <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
@@ -52,7 +52,7 @@
                         <CheckboxButton 
                             Id="@($"perm-{permission.Id}")" 
                             Text="@permission.Name" 
-                            Checked="@selectedPermissionIds.Contains(permission.Id)" 
+                            Checked="@extraState.Ids.Contains(permission.Id)" 
                             CheckedChanged="@((bool val) => TogglePermission(permission.Id, val))" />
                     }
                 </div>
@@ -145,11 +145,18 @@ else
     private ModelEditor<UserRole> modelEditor = null!;
     private List<UserRole> roles = new();
     private List<Permission> availablePermissions = new();
-    private List<int> selectedPermissionIds = new();
-    private List<int> originalPermissionIds = new();
     private UserRole editingRole = new();
     private UserRole originalRole = new();
     private bool isEditing = false;
+    private PermissionsExtraState extraState = new();
+    private PermissionsExtraState originalExtraState = new();
+
+    public record PermissionsExtraState {
+        public List<int> Ids { get; set; } = new();
+        public virtual bool Equals(PermissionsExtraState? other) => 
+            other != null && Ids.OrderBy(id => id).SequenceEqual(other.Ids.OrderBy(id => id));
+        public override int GetHashCode() => Ids.Count;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -164,13 +171,10 @@ else
 
         if (nextEditing)
         {
-            if (Action == "edit" && Id.HasValue && Id != 0)
+            if (Action == "edit" && Id.HasValue && Id != editingRole.Id)
             {
-                if (!wasEditing || Id != editingRole.Id)
-                {
-                    isEditing = false;
-                    await LoadEditingRole();
-                }
+                isEditing = false;
+                await LoadEditingRole();
             }
             else if (Action == "add" && !wasEditing)
             {
@@ -182,8 +186,8 @@ else
         {
             editingRole = new UserRole();
             originalRole = new UserRole();
-            selectedPermissionIds.Clear();
-            originalPermissionIds.Clear();
+            extraState = new();
+            originalExtraState = new();
         }
 
         isEditing = nextEditing;
@@ -194,8 +198,8 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         editingRole = new UserRole();
         originalRole = new UserRole();
-        selectedPermissionIds.Clear();
-        originalPermissionIds.Clear();
+        extraState = new();
+        originalExtraState = new();
         await HydrateTempState();
     }
 
@@ -213,8 +217,8 @@ else
         {
             editingRole = role with { };
             originalRole = role with { };
-            selectedPermissionIds = role.Permissions.Select(p => p.Id).ToList();
-            originalPermissionIds = new List<int>(selectedPermissionIds);
+            extraState = new PermissionsExtraState { Ids = role.Permissions.Select(p => p.Id).ToList() };
+            originalExtraState = extraState with { Ids = new List<int>(extraState.Ids) };
         }
         await HydrateTempState();
     }
@@ -224,16 +228,11 @@ else
         try
         {
             UserRole? persisted = await SessionStorage.GetItemAsync<UserRole>($"EditState_UserRole_{Id ?? 0}");
-            if (persisted != null)
-            {
-                editingRole = persisted;
-            }
+            if (persisted != null) editingRole = persisted;
 
-            List<int>? persistedExtra = await SessionStorage.GetItemAsync<List<int>>($"EditState_UserRole_{Id ?? 0}_Extra");
-            if (persistedExtra != null)
-            {
-                selectedPermissionIds = persistedExtra;
-            }
+            PermissionsExtraState? persistedExtra = await SessionStorage.GetItemAsync<PermissionsExtraState>($"EditState_UserRole_{Id ?? 0}_Extra");
+            if (persistedExtra != null) extraState = persistedExtra;
+            
             StateHasChanged();
         }
         catch { }
@@ -254,19 +253,16 @@ else
     {
         if (isChecked)
         {
-            if (!selectedPermissionIds.Contains(permissionId)) selectedPermissionIds.Add(permissionId);
+            if (!extraState.Ids.Contains(permissionId)) extraState.Ids.Add(permissionId);
         }
         else
         {
-            selectedPermissionIds.Remove(permissionId);
+            extraState.Ids.Remove(permissionId);
         }
         if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
-    private bool HasPermissionsChanged()
-    {
-        return !selectedPermissionIds.OrderBy(id => id).SequenceEqual(originalPermissionIds.OrderBy(id => id));
-    }
+    private bool HasPermissionsChanged() => !extraState.Equals(originalExtraState);
 
     private async Task<string?> CheckRoleNameUnique(UserRole role)
     {
@@ -278,11 +274,11 @@ else
     {
         if (editingRole.Id == 0)
         {
-            await AuthService.AddUserRoleAsync(editingRole, selectedPermissionIds);
+            await AuthService.AddUserRoleAsync(editingRole, extraState.Ids);
         }
         else
         {
-            await AuthService.UpdateUserRoleAsync(editingRole, selectedPermissionIds);
+            await AuthService.UpdateUserRoleAsync(editingRole, extraState.Ids);
         }
 
         await LoadData();

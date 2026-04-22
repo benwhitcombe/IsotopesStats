@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace IsotopesStats.Services;
 
-public class SharedSessionState
+public record SharedSessionState
 {
     private int _selectedSeasonId = 0;
     public int SelectedSeasonId 
@@ -35,7 +35,7 @@ public class SharedSessionState
     }
 }
 
-public class PlayerStatsState
+public record PlayerStatsState
 {
     private string _filterText = string.Empty;
     public string FilterText 
@@ -68,7 +68,7 @@ public class PlayerStatsState
     }
 }
 
-public class PlayerStatsLegacyState
+public record PlayerStatsLegacyState
 {
     private string _filterText = string.Empty;
     public string FilterText 
@@ -126,6 +126,7 @@ public class PlayerStatsLegacyState
         set { if (_outcomesIsAscending != value) { _outcomesIsAscending = value; OnChanged?.Invoke(); } } 
     }
 
+    [JsonIgnore]
     public string CurrentSortColumn => ActiveView switch {
         "Standard" => StandardSortColumn,
         "Hits" => HitsSortColumn,
@@ -133,6 +134,7 @@ public class PlayerStatsLegacyState
         _ => "AVG"
     };
 
+    [JsonIgnore]
     public bool IsAscending => ActiveView switch {
         "Standard" => StandardIsAscending,
         "Hits" => HitsIsAscending,
@@ -155,29 +157,23 @@ public class PlayerStatsLegacyState
     }
 }
 
-public class GameUIState
+public record GameUIState
 {
-    [JsonInclude]
     public int GameId { get; set; }
-    [JsonInclude]
     public bool IsExpanded { get; set; }
-    [JsonInclude]
     public string SortColumn { get; set; } = "BO";
-    [JsonInclude]
     public bool IsAscending { get; set; } = true;
 }
 
-public class GameStatsState
+public record GameStatsState
 {
     private string _filterText = string.Empty;
-    [JsonInclude]
     public string FilterText 
     { 
         get => _filterText; 
         set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
     }
     
-    [JsonInclude]
     public Dictionary<int, GameUIState> GameUIStates { get; set; } = new();
 
     public GameUIState GetState(int gameId)

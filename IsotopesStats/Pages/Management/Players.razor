@@ -34,8 +34,8 @@
         CheckUniqueAsync="CheckUniquePlayer"
         OnSave="SavePlayer"
         OnDelete="DeletePlayer"
-        ExtraState="assignedSeasonIds"
-        HasCustomChanges="@(() => !assignedSeasonIds.SetEquals(originalSeasonIds))">
+        ExtraState="extraState"
+        HasCustomChanges="@(() => !extraState.Equals(originalExtraState))">
 
         <div class="form-group">
             <label>Player Name</label>
@@ -51,7 +51,7 @@
                     <CheckboxButton 
                         Id="@($"s-{season.Id}")" 
                         Text="@season.Name" 
-                        Checked="@assignedSeasonIds.Contains(season.Id)" 
+                        Checked="@extraState.SeasonIds.Contains(season.Id)" 
                         CheckedChanged="@((bool val) => ToggleSeason(season.Id, val))" />
                 }
             </div>
@@ -111,14 +111,21 @@ else
 
     private List<Player> players = new();
     private List<Season> allSeasons = new();
-    private HashSet<int> assignedSeasonIds = new();
-    private HashSet<int> originalSeasonIds = new();
     private Player editingPlayer = new();
     private Player originalPlayer = new();
     private bool isAdding = false;
     private bool isEditing = false;
     private ModelEditor<Player> modelEditor = null!;
     private DeleteManager<Player, int> deleteManager = null!;
+    private PlayerExtraState extraState = new();
+    private PlayerExtraState originalExtraState = new();
+
+    public record PlayerExtraState {
+        public List<int> SeasonIds { get; set; } = new();
+        public virtual bool Equals(PlayerExtraState? other) => 
+            other != null && SeasonIds.OrderBy(id => id).SequenceEqual(other.SeasonIds.OrderBy(id => id));
+        public override int GetHashCode() => SeasonIds.Count;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,8 +160,8 @@ else
         {
             editingPlayer = new Player();
             originalPlayer = new Player();
-            assignedSeasonIds.Clear();
-            originalSeasonIds.Clear();
+            extraState = new();
+            originalExtraState = new();
         }
 
         isAdding = nextAdding;
@@ -166,8 +173,8 @@ else
         try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
         editingPlayer = new Player();
         originalPlayer = new Player();
-        assignedSeasonIds.Clear();
-        originalSeasonIds.Clear();
+        extraState = new();
+        originalExtraState = new();
         await HydrateTempState();
     }
 
@@ -187,23 +194,20 @@ else
             {
                 editingPlayer = player with { };
                 originalPlayer = player with { };
-                assignedSeasonIds.Clear();
-                originalSeasonIds.Clear();
+                extraState = new();
+                originalExtraState = new();
 
                 List<Season> playerSeasons = await StatsService.GetSeasonsForPlayerAsync(player.Id);
-                foreach (Season s in playerSeasons)
-                {
-                    assignedSeasonIds.Add(s.Id);
-                    originalSeasonIds.Add(s.Id);
-                }
+                extraState.SeasonIds = playerSeasons.Select(s => s.Id).ToList();
+                originalExtraState = extraState with { SeasonIds = new List<int>(extraState.SeasonIds) };
             }
         }
         else
         {
             editingPlayer = new Player();
             originalPlayer = new Player();
-            assignedSeasonIds.Clear();
-            originalSeasonIds.Clear();
+            extraState = new();
+            originalExtraState = new();
         }
         await HydrateTempState();
     }
@@ -213,16 +217,11 @@ else
         try
         {
             Player? persisted = await SessionStorage.GetItemAsync<Player>($"EditState_Player_{Id ?? 0}");
-            if (persisted != null)
-            {
-                editingPlayer = persisted;
-            }
+            if (persisted != null) editingPlayer = persisted;
             
-            HashSet<int>? persistedExtra = await SessionStorage.GetItemAsync<HashSet<int>>($"EditState_Player_{Id ?? 0}_Extra");
-            if (persistedExtra != null)
-            {
-                assignedSeasonIds = persistedExtra;
-            }
+            PlayerExtraState? extra = await SessionStorage.GetItemAsync<PlayerExtraState>($"EditState_Player_{Id ?? 0}_Extra");
+            if (extra != null) extraState = extra;
+
             StateHasChanged();
         }
         catch { }
@@ -249,8 +248,12 @@ else
 
     private async Task ToggleSeason(int seasonId, bool isChecked)
     {
-        if (isChecked) assignedSeasonIds.Add(seasonId);
-        else assignedSeasonIds.Remove(seasonId);
+        if (isChecked) 
+        {
+            if (!extraState.SeasonIds.Contains(seasonId)) extraState.SeasonIds.Add(seasonId);
+        }
+        else extraState.SeasonIds.Remove(seasonId);
+        
         if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
@@ -259,18 +262,18 @@ else
         int playerId;
         if (editingPlayer.Id == 0)
         {
-            int firstSeasonId = assignedSeasonIds.FirstOrDefault();
+            int firstSeasonId = extraState.SeasonIds.FirstOrDefault();
             playerId = await StatsService.AddPlayerAsync(editingPlayer, firstSeasonId);
-            foreach (int sid in assignedSeasonIds.Where(id => id != firstSeasonId))
+            foreach (int sid in extraState.SeasonIds.Where(id => id != firstSeasonId))
                 await StatsService.AddPlayerToSeasonAsync(playerId, sid);
         }
         else
         {
             playerId = editingPlayer.Id;
             await StatsService.UpdatePlayerAsync(editingPlayer);
-            foreach (int sid in assignedSeasonIds.Except(originalSeasonIds))
+            foreach (int sid in extraState.SeasonIds.Except(originalExtraState.SeasonIds))
                 await StatsService.AddPlayerToSeasonAsync(playerId, sid);
-            foreach (int sid in originalSeasonIds.Except(assignedSeasonIds))
+            foreach (int sid in originalExtraState.SeasonIds.Except(extraState.SeasonIds))
                 await StatsService.DeletePlayerFromSeasonAsync(playerId, sid);
         }
         await LoadPlayers();

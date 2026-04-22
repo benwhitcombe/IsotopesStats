@@ -28,6 +28,7 @@
 {
     <ModelEditor 
         TItem="UserEditViewModel"
+        @ref="modelEditor"
         Title="@($"{(string.IsNullOrEmpty(editViewModel.Id) ? "Add New" : "Edit")} User")"
         Item="editViewModel"
         OriginalItem="originalViewModel"
@@ -202,12 +203,7 @@ else
                     .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
                     .Where(id => id != 0).ToList() ?? new List<int>()
             };
-            originalViewModel = new UserEditViewModel
-            {
-                Id = editViewModel.Id,
-                Email = editViewModel.Email,
-                RoleIds = new List<int>(editViewModel.RoleIds)
-            };
+            originalViewModel = editViewModel with { RoleIds = new List<int>(editViewModel.RoleIds) };
         }
         await HydrateTempState();
     }
@@ -238,7 +234,7 @@ else
         else Navigation.NavigateTo($"/management/users/edit/{id}");
     }
 
-    private void ToggleRole(int roleId, bool isChecked)
+    private async Task ToggleRole(int roleId, bool isChecked)
     {
         if (isChecked)
         {
@@ -248,6 +244,7 @@ else
         {
             editViewModel.RoleIds.Remove(roleId);
         }
+        await modelEditor.SaveTempState();
     }
 
     private async Task<string?> CheckEmailUnique(UserEditViewModel model)
@@ -288,7 +285,9 @@ else
         await AuthService.DeleteUserAsync(id);
     }
 
-    public class UserEditViewModel : IEntity<string>
+    private ModelEditor<UserEditViewModel> modelEditor = null!;
+
+    public record UserEditViewModel : IEntity<string>
     {
         public string Id { get; set; } = string.Empty;
 
@@ -298,12 +297,12 @@ else
 
         public List<int> RoleIds { get; set; } = new();
 
-        public override bool Equals(object? obj)
+        public virtual bool Equals(UserEditViewModel? other)
         {
-            if (obj is not UserEditViewModel other) return false;
+            if (other is null) return false;
             return Id == other.Id && 
                    Email == other.Email && 
-                   RoleIds.SequenceEqual(other.RoleIds);
+                   RoleIds.OrderBy(id => id).SequenceEqual(other.RoleIds.OrderBy(id => id));
         }
 
         public override int GetHashCode() => Id?.GetHashCode() ?? 0;

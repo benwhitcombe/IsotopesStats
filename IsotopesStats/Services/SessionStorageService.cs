@@ -1,24 +1,19 @@
 using Microsoft.JSInterop;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
 
 namespace IsotopesStats.Services;
 
 public class SessionStorageService
 {
     private readonly IJSRuntime _jsRuntime;
-    private readonly JsonSerializerSettings _settings;
+    private readonly JsonSerializerOptions _options;
 
     public SessionStorageService(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
-        _settings = new JsonSerializerSettings
+        _options = new JsonSerializerOptions
         {
-            ContractResolver = new DefaultContractResolver(),
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            // Ensure that when we persist models (which already have Whitby time), 
-            // we don't accidentally shift them again based on the browser's zone.
-            DateTimeZoneHandling = DateTimeZoneHandling.Unspecified
+            PropertyNameCaseInsensitive = true
         };
     }
 
@@ -26,7 +21,7 @@ public class SessionStorageService
     {
         try
         {
-            string json = JsonConvert.SerializeObject(value, _settings);
+            string json = JsonSerializer.Serialize(value, _options);
             await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", key, json);
         }
         catch (Exception ex)
@@ -43,7 +38,7 @@ public class SessionStorageService
             if (string.IsNullOrEmpty(json))
                 return default;
 
-            return JsonConvert.DeserializeObject<T>(json, _settings);
+            return JsonSerializer.Deserialize<T>(json, _options);
         }
         catch (Exception ex)
         {

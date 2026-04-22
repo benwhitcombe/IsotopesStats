@@ -86,12 +86,6 @@
     [Parameter] public object? ExtraState { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private static readonly Newtonsoft.Json.JsonSerializerSettings _compareSettings = new() 
-    { 
-        ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver(),
-        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore 
-    };
-
     private EditContext? _internalContext;
     private TItem? _lastItem;
     private object? _lastExtraState;
@@ -129,28 +123,7 @@
         {
             if (Item == null || OriginalItem == null) return false;
             if (HasCustomChanges?.Invoke() ?? false) return true;
-
-            // 1. If the type overrides Equals, use it (e.g. UserEditViewModel)
-            // Note: Classes from Postgrest.Models usually don't override Equals for value comparison
-            bool overridesEquals = typeof(TItem).GetMethod("Equals", new[] { typeof(object) })?.DeclaringType != typeof(object);
-            
-            if (overridesEquals)
-            {
-                return !Item.Equals(OriginalItem);
-            }
-
-            // 2. Fallback: JSON-based value comparison for plain POCOs
-            try 
-            {
-                string itemJson = Newtonsoft.Json.JsonConvert.SerializeObject(Item, _compareSettings);
-                string originalJson = Newtonsoft.Json.JsonConvert.SerializeObject(OriginalItem, _compareSettings);
-                return itemJson != originalJson;
-            }
-            catch 
-            {
-                // If serialization fails, we can't reliably detect changes this way
-                return false; 
-            }
+            return !Item.Equals(OriginalItem);
         }
     }
 
@@ -186,7 +159,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SaveTempState()
+    public async Task SaveTempState()
     {
         try
         {
