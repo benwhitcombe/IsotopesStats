@@ -183,21 +183,28 @@ else
     protected override async Task OnInitializedAsync()
     {
         int targetSeasonId = SeasonId ?? SharedState.SelectedSeasonId;
-        if (targetSeasonId == 0)
-        {
-            List<Season> seasons = await StatsService.GetSeasonsAsync();
-            if (seasons.Any()) targetSeasonId = seasons.First().Id;
-        }
 
-        if (targetSeasonId != 0)
+        if (targetSeasonId == SharedSessionState.AllSeasonsId)
+        {
+            logs = await StatsService.GetAllPlayerGameLogAsync(PlayerName);
+        }
+        else if (targetSeasonId != 0)
         {
             logs = await StatsService.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
         }
         else
         {
-            logs = new List<GameStatsExtendedView>();
+            List<Season> seasons = await StatsService.GetSeasonsAsync();
+            if (seasons.Any())
+            {
+                targetSeasonId = seasons.First().Id;
+                logs = await StatsService.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
+            }
+            else
+            {
+                logs = new List<GameStatsExtendedView>();
+            }
         }
-        
         isLoading = false;
     }
 

@@ -45,15 +45,24 @@ public class StatsService : IStatsService
     public Task<Game?> GetGameAsync(int gameId) => _repository.GetGameAsync(gameId);
     public Task<List<Game>> GetGamesBySeasonAsync(int seasonId) => _repository.GetGamesBySeasonAsync(seasonId);
     public Task<List<StatEntry>> GetGameStatsAsync(int gameId) => _repository.GetGameStatsAsync(gameId);
+    
     public Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId) => _repository.GetStatsSummaryAsync(seasonId);
+    public Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync() => _repository.GetAllStatsSummaryAsync();
+    
     public Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId) => _repository.GetTeamTotalsAsync(seasonId);
+    public Task<PlayerStatsSummary> GetAllTeamTotalsAsync() => _repository.GetAllTeamTotalsAsync();
+    
     public Task<int> GetMostRecentStatsSeasonIdAsync() => _repository.GetMostRecentStatsSeasonIdAsync();
     public Task AddGameWithStatsAsync(Game game, List<StatEntry> stats) => _repository.AddGameWithStatsAsync(game, stats);
     public Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats) => _repository.UpdateGameWithStatsAsync(game, stats);
     public Task DeleteGameAsync(int gameId) => _repository.DeleteGameAsync(gameId);
     public Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId) => _repository.GetAllGameStatsAsync(seasonId);
     public Task<List<GameStatsExtendedView>> GetPlayerGameLogAsync(string playerName, int seasonId) => _repository.GetPlayerGameLogAsync(playerName, seasonId);
+    public Task<List<GameStatsExtendedView>> GetAllPlayerGameLogAsync(string playerName) => _repository.GetAllPlayerGameLogAsync(playerName);
     public Task<int> GetNextGameNumberAsync(int seasonId) => _repository.GetNextGameNumberAsync(seasonId);
+    
     public Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId) => _repository.GetGameSummariesAsync(seasonId);
+    public Task<List<GameSummaryView>> GetAllGameSummariesAsync() => _repository.GetAllGameSummariesAsync();
+    
     public Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId) => _repository.GetExtendedGameStatsAsync(gameId);
 }

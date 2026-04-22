@@ -17,7 +17,7 @@
         <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
             <label style="margin:0; font-weight: bold;">Season:</label>
             <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
-                <option value="-1">All Seasons</option>
+                <option value="@SharedSessionState.AllSeasonsId">All Seasons</option>
                 @foreach (Season season in seasons)
                 {
                     <option value="@season.Id">@season.Name</option>
@@ -26,7 +26,7 @@
         </div>
         <div class="mobile-only">
              <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal"> 
-                🗓️ @(SharedState.SelectedSeasonId == -1 ? "All Seasons" : seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name)
+                🗓️ @(SharedState.SelectedSeasonId == SharedSessionState.AllSeasonsId ? "All Seasons" : seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name)
             </button>
         </div>
     </div>
@@ -41,7 +41,7 @@
                 <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
             </div>
             <div class="sort-grid">
-                <div class="sort-option @(SharedState.SelectedSeasonId == -1 ? "active" : "")" @onclick="() => SelectMobileSeason(-1)">
+                <div class="sort-option @(SharedState.SelectedSeasonId == SharedSessionState.AllSeasonsId ? "active" : "")" @onclick="() => SelectMobileSeason(SharedSessionState.AllSeasonsId)">
                     All Seasons
                 </div>
                 @foreach (Season season in seasons)
@@ -418,8 +418,16 @@ else
         isLoading = true;
         try
         {
-            allStats = await StatsService.GetStatsSummaryAsync(SharedState.SelectedSeasonId);
-            teamTotals = await StatsService.GetTeamTotalsAsync(SharedState.SelectedSeasonId);
+            if (SharedState.SelectedSeasonId == -1)
+            {
+                allStats = await StatsService.GetAllStatsSummaryAsync();
+                teamTotals = await StatsService.GetAllTeamTotalsAsync();
+            }
+            else
+            {
+                allStats = await StatsService.GetStatsSummaryAsync(SharedState.SelectedSeasonId);
+                teamTotals = await StatsService.GetTeamTotalsAsync(SharedState.SelectedSeasonId);
+            }
             CalculateLeaders();
             Sort(currentSortColumn, false);
         }

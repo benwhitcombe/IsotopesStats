@@ -37,8 +37,13 @@ public interface IStatsService
     Task<Game?> GetGameAsync(int gameId);
     Task<List<Game>> GetGamesBySeasonAsync(int seasonId);
     Task<List<StatEntry>> GetGameStatsAsync(int gameId);
+    
     Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId);
+    Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync();
+    
     Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId);
+    Task<PlayerStatsSummary> GetAllTeamTotalsAsync();
+    
     Task<int> GetMostRecentStatsSeasonIdAsync();
     Task AddGameWithStatsAsync(Game game, List<StatEntry> stats);
     Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats);
@@ -46,6 +51,10 @@ public interface IStatsService
     Task<int> GetNextGameNumberAsync(int seasonId);
     Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId);
     Task<List<GameStatsExtendedView>> GetPlayerGameLogAsync(string playerName, int seasonId);
+    Task<List<GameStatsExtendedView>> GetAllPlayerGameLogAsync(string playerName);
+    
     Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId);
+    Task<List<GameSummaryView>> GetAllGameSummariesAsync();
+    
     Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId);
 }

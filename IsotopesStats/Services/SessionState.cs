@@ -4,6 +4,7 @@ namespace IsotopesStats.Services;
 
 public record SharedSessionState
 {
+    public const int AllSeasonsId = -1;
     private int _selectedSeasonId = 0;
     public int SelectedSeasonId 
     { 

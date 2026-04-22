@@ -289,8 +289,6 @@ public class SupabaseStatsRepository : IStatsRepository
 
     public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
     {
-        if (seasonId == -1) return await GetAllStatsSummaryAsync();
-        
         List<Player> players = await GetPlayersAsync(seasonId);
         
         ModeledResponse<PlayerStatsSummaryDto> response = await _supabase.From<PlayerStatsSummaryDto>()
@@ -304,32 +302,16 @@ public class SupabaseStatsRepository : IStatsRepository
             .ToList();
     }
 
-    private async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
+    public async Task<List<PlayerStatsSummary>> GetAllStatsSummaryAsync()
     {
         List<Player> players = await GetAllPlayersAsync();
         
-        ModeledResponse<PlayerStatsSummaryDto> response = await _supabase.From<PlayerStatsSummaryDto>().Get();
-        
-        List<PlayerStatsSummary> aggregatedStats = response.Models.GroupBy(p => p.PlayerName)
-            .Select(g => new PlayerStatsSummary
-            {
-                PlayerName = g.Key,
-                GamesPlayed = g.Sum(x => x.GamesPlayed),
-                H1B = g.Sum(x => x.H1B),
-                H2B = g.Sum(x => x.H2B),
-                H3B = g.Sum(x => x.H3B),
-                H4B = g.Sum(x => x.H4B),
-                HR = g.Sum(x => x.HR),
-                FC = g.Sum(x => x.FC),
-                BB = g.Sum(x => x.BB),
-                SF = g.Sum(x => x.SF),
-                K = g.Sum(x => x.K),
-                KF = g.Sum(x => x.KF),
-                GO = g.Sum(x => x.GO),
-                FO = g.Sum(x => x.FO),
-                R = g.Sum(x => x.R),
-                RBI = g.Sum(x => x.RBI)
-            }).ToList();
+        BaseResponse response = await _supabase.Rpc("get_player_stats_summary_all", null);
+        List<PlayerStatsSummaryDto> dtos = string.IsNullOrEmpty(response.Content) 
+            ? new List<PlayerStatsSummaryDto>() 
+            : JsonConvert.DeserializeObject<List<PlayerStatsSummaryDto>>(response.Content) ?? new List<PlayerStatsSummaryDto>();
+
+        List<PlayerStatsSummary> aggregatedStats = dtos.Select(x => x.ToModel()).ToList();
             
         return players.Where(p => p.Name != "Spare")
             .Select(p => aggregatedStats.FirstOrDefault(s => s.PlayerName == p.Name) ?? new PlayerStatsSummary { PlayerName = p.Name })
@@ -338,37 +320,20 @@ public class SupabaseStatsRepository : IStatsRepository
 
     public async Task<PlayerStatsSummary> GetTeamTotalsAsync(int seasonId)
     {
-        if (seasonId == -1) return await GetAllTeamTotalsAsync();
-
         TeamStatsSummaryDto? result = await _supabase.From<TeamStatsSummaryDto>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Single();
         return result?.ToModel() ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
-    private async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
+    public async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
     {
-        ModeledResponse<TeamStatsSummaryDto> response = await _supabase.From<TeamStatsSummaryDto>().Get();
-        
-        return new PlayerStatsSummary
-        {
-            PlayerName = "TEAM TOTALS",
-            GamesPlayed = response.Models.Sum(x => x.GamesPlayed),
-            H1B = response.Models.Sum(x => x.H1B),
-            H2B = response.Models.Sum(x => x.H2B),
-            H3B = response.Models.Sum(x => x.H3B),
-            H4B = response.Models.Sum(x => x.H4B),
-            HR = response.Models.Sum(x => x.HR),
-            FC = response.Models.Sum(x => x.FC),
-            BB = response.Models.Sum(x => x.BB),
-            SF = response.Models.Sum(x => x.SF),
-            K = response.Models.Sum(x => x.K),
-            KF = response.Models.Sum(x => x.KF),
-            GO = response.Models.Sum(x => x.GO),
-            FO = response.Models.Sum(x => x.FO),
-            R = response.Models.Sum(x => x.R),
-            RBI = response.Models.Sum(x => x.RBI)
-        };
+        BaseResponse response = await _supabase.Rpc("get_team_stats_summary_all", null);
+        List<PlayerStatsSummaryDto> dtos = string.IsNullOrEmpty(response.Content) 
+            ? new List<PlayerStatsSummaryDto>() 
+            : JsonConvert.DeserializeObject<List<PlayerStatsSummaryDto>>(response.Content) ?? new List<PlayerStatsSummaryDto>();
+            
+        return dtos.FirstOrDefault()?.ToModel() ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
     public async Task<int> GetMostRecentStatsSeasonIdAsync()
@@ -445,6 +410,16 @@ public class SupabaseStatsRepository : IStatsRepository
         return response.Models.Select(x => x.ToModel()).ToList();
     }
 
+    public async Task<List<GameStatsExtendedView>> GetAllPlayerGameLogAsync(string playerName)
+    {
+        ModeledResponse<GameStatsExtendedViewDto> response = await _supabase.From<GameStatsExtendedViewDto>()
+            .Filter("playername", Postgrest.Constants.Operator.Equals, playerName)
+            .Where(x => x.GameIsDeleted == false)
+            .Order("date", Postgrest.Constants.Ordering.Descending)
+            .Get();
+        return response.Models.Select(x => x.ToModel()).ToList();
+    }
+
     public async Task<int> GetNextGameNumberAsync(int seasonId)
     {
         ModeledResponse<GameDto> response = await _supabase.From<GameDto>()
@@ -461,6 +436,14 @@ public class SupabaseStatsRepository : IStatsRepository
     {
         ModeledResponse<GameSummaryViewDto> response = await _supabase.From<GameSummaryViewDto>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
+            .Order("date", Postgrest.Constants.Ordering.Descending)
+            .Get();
+        return response.Models.Select(x => x.ToModel()).ToList();
+    }
+
+    public async Task<List<GameSummaryView>> GetAllGameSummariesAsync()
+    {
+        ModeledResponse<GameSummaryViewDto> response = await _supabase.From<GameSummaryViewDto>()
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
         return response.Models.Select(x => x.ToModel()).ToList();
