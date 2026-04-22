@@ -114,60 +114,56 @@ else
                             }
                         }
                         <div class="game-card-header" @onclick="() => ToggleGame(summary)" style="padding: 1.25rem; cursor: pointer; display: block;">
-                            <!-- Desktop Header (Side-by-Side) -->
-                            <div class="desktop-only" style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="game-info-main" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-                                    <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div class="game-number-badge" style="margin: 0; white-space: nowrap;">GAME #@summary.GameNumber</div>
+                            <!-- Desktop Header (Scoreboard Style) -->
+                            <div class="desktop-only" style="width: 100%;">
+                                <div class="mobile-scoreboard">
+                                    <div class="scoreboard-meta">
+                                        <span>GAME #@summary.GameNumber</span>
+                                        <span>@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
                                         @if (!string.IsNullOrEmpty(resultText))
                                         {
-                                            <div class="game-result-badge @resultClass" style="margin: 0;">@resultText</div>
+                                            <span class="game-result-badge @resultClass" style="margin: 0; font-size: 0.75rem; padding: 2px 8px;">@resultText</span>
                                         }
-                                        <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: var(--isotopes-dark);">@(summary.IsHome ? "vs" : "@") @summary.OpponentName</div>
                                     </div>
-                                    <div class="game-row-2" style="display: flex; align-items: center; gap: 1rem; color: #666; font-size: 0.85rem;">
-                                        <div class="game-date">📅 @summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</div>
-                                        <div class="diamond-name">📍 @summary.Diamond</div>
+                                    <div class="scoreboard-matchup">
+                                        <div class="scoreboard-team visitor">@(summary.IsHome ? summary.OpponentName : "Isotopes")</div>
+                                        <div class="scoreboard-scores">
+                                            <span class="scoreboard-score">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
+                                            <span class="scoreboard-divider">-</span>
+                                            <span class="scoreboard-score">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
+                                        </div>
+                                        <div class="scoreboard-team home">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</div>
                                     </div>
-                                </div>
-                                <div class="game-score-summary" style="display: flex; align-items: center; gap: 1.5rem; margin-left: 1rem;">
-                                    <div class="score-item" style="text-align: center;">
-                                        <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900;">
-                                            <span style="color: @(summary.IsHome ? "black" : "var(--isotopes-red)")">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
-                                            <span style="color: black"> - </span>
-                                            <span style="color: @(summary.IsHome ? "var(--isotopes-red)" : "black")">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
-                                        </span>
-                                        <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Final Score</span>
+                                    <div class="scoreboard-location">
+                                        <span>📍 @summary.Diamond</span>
+                                        <div class="expand-icon" style="margin-left: auto; color: #ccc; font-size: 0.8rem; width: 20px; text-align: center;">@(uiState.IsExpanded ? "▲" : "▼")</div>
                                     </div>
-                                    <div class="expand-icon" style="color: #ccc; font-size: 0.8rem;">@(uiState.IsExpanded ? "▲" : "▼")</div>
                                 </div>
                             </div>
 
-                            <!-- Mobile Header (Stacked) -->
+                            <!-- Mobile Header (Scoreboard Style) -->
                             <div class="mobile-only" style="width: 100%;">
-                                <div class="game-row-1" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; width: 100%;">
-                                    <div class="game-number-badge" style="margin: 0; white-space: nowrap; font-size: 0.75rem; padding: 0.2rem 0.5rem;">#@summary.GameNumber</div>
-                                    @if (!string.IsNullOrEmpty(resultText))
-                                    {
-                                        <div class="game-result-badge @resultClass" style="margin: 0; font-size: 0.75rem; padding: 0.2rem 0.5rem;">@resultText</div>
-                                    }
-                                    <div class="opponent-name" style="font-size: 1.1rem; font-weight: bold; color: var(--isotopes-dark); flex: 1;">@(summary.IsHome ? "vs" : "@") @summary.OpponentName</div>
-                                    <div class="expand-icon" style="color: #ccc; font-size: 0.7rem; width: 20px; text-align: center;">@(uiState.IsExpanded ? "▲" : "▼")</div>
-                                </div>
-                                <div class="game-row-2" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
-                                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; color: #666; font-size: 0.8rem; align-items: center;">
-                                        <div class="game-date">📅 @summary.Date.ToString("MMM dd @ h:mm tt")</div>
-                                        <div class="diamond-name">📍 @summary.Diamond</div>
+                                <div class="mobile-scoreboard">
+                                    <div class="scoreboard-meta">
+                                        <span>GAME #@summary.GameNumber</span>
+                                        <span>@summary.Date.ToString("MMM dd @ h:mm tt")</span>
+                                        @if (!string.IsNullOrEmpty(resultText))
+                                        {
+                                            <span class="game-result-badge @resultClass" style="margin: 0; font-size: 0.65rem; padding: 2px 6px;">@resultText</span>
+                                        }
                                     </div>
-                                    <div class="game-score-summary" style="display: flex; gap: 0.75rem; margin-left: auto;">
-                                        <div class="score-item" style="text-align: center; min-width: 80px;">
-                                            <span class="score-value" style="display: block; font-size: 1.5rem; font-weight: 900; line-height: 1;">
-                                                <span style="color: @(summary.IsHome ? "black" : "var(--isotopes-red)")">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
-                                                <span style="color: black"> - </span>
-                                                <span style="color: @(summary.IsHome ? "var(--isotopes-red)" : "black")">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
-                                            </span>
-                                            <span class="score-label" style="display: block; font-size: 0.7rem; text-transform: uppercase; color: #999; font-weight: bold;">Final Score</span>
+                                    <div class="scoreboard-matchup">
+                                        <div class="scoreboard-team visitor">@(summary.IsHome ? summary.OpponentName : "Isotopes")</div>
+                                        <div class="scoreboard-scores">
+                                            <span class="scoreboard-score">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
+                                            <span class="scoreboard-divider">-</span>
+                                            <span class="scoreboard-score">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
                                         </div>
+                                        <div class="scoreboard-team home">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</div>
+                                    </div>
+                                    <div class="scoreboard-location">
+                                        <span>📍 @summary.Diamond</span>
+                                        <div class="expand-icon" style="margin-left: auto; color: #ccc; font-size: 0.7rem; width: 20px; text-align: center;">@(uiState.IsExpanded ? "▲" : "▼")</div>
                                     </div>
                                 </div>
                             </div>
@@ -186,16 +182,17 @@ else
                                 IEnumerable<GameStatsExtendedView> sortedStats = ApplyInnerSorting(uiState, expandedStats[gameId]);
 
                                 <div class="game-card-detail expanded view-fade-in" style="padding: 0; border-top: 1px solid #eee; background: white;">
-                                    <div class="box-score-table-wrapper" style="padding: 0; width: 100%; overflow-x: auto;">
+                                    <!-- Desktop View: Table -->
+                                    <div class="desktop-only box-score-table-wrapper" style="padding: 0; width: 100%; overflow-x: auto;">
                                         <table class="box-score-table table-sm" style="margin-bottom: 0; border: none; border-radius: 0 !important; width: 100%;">
                                         <thead>
                                             <tr>
-                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 30px;">
+                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 45px;">
                                                     <span style="position: relative; display: inline-block;">
                                                         BO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "BO"))</span>
                                                     </span>
                                                 </th>
-                                                <th @onclick='() => Sort(gameId, "Player")' class="sortable-header sticky-col @(uiState.SortColumn == "Player" ? "active-sort-header" : "")">
+                                                <th @onclick='() => Sort(gameId, "Player")' class="player-name sortable-header sticky-col @(uiState.SortColumn == "Player" ? "active-sort-header" : "")">
                                                     <span style="position: relative; display: inline-block;">
                                                         Player<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "Player"))</span>
                                                     </span>
@@ -376,44 +373,51 @@ else
                                         </tbody>
                                     </table>
                                     </div>
-                                </div>
 
-                                <div class="mobile-player-grid">
-                                    @foreach (GameStatsExtendedView stat in sortedStats)
-                                    {
-                                        <div class="mobile-player-card">
-                                            <div class="mobile-card-header">
-                                                <span class="mobile-card-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.PlayerName)}")' style="cursor: pointer;">@stat.BO. @stat.PlayerName</span>
-                                                <span class="badge bg-light text-dark">AVG: @stat.AVG.ToString(".000") | OBP: @stat.OBP.ToString(".000")</span>
+                                    <!-- Mobile View: Activity Feed -->
+                                    <div class="mobile-only mobile-player-list">
+                                        @foreach (GameStatsExtendedView stat in sortedStats)
+                                        {
+                                            <div class="mobile-player-row">
+                                                <div class="player-row-header">
+                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.PlayerName)}")' style="cursor: pointer;">
+                                                        @stat.BO. @stat.PlayerName
+                                                    </span>
+                                                    <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000")</span>
+                                                </div>
+                                                <div class="stat-badge-list">
+                                                    <div class="stat-badge primary-stat @(uiState.SortColumn == "PA" ? "active" : "")">
+                                                        <span class="stat-badge-val">@stat.PA</span>
+                                                        <span class="stat-badge-lbl">PA</span>
+                                                    </div>
+                                                    @if (stat.AB > 0) { <div class="stat-badge @(uiState.SortColumn == "AB" ? "active" : "")"><span class="stat-badge-val">@stat.AB</span><span class="stat-badge-lbl">AB</span></div> }
+                                                    @if (stat.R > 0) { <div class="stat-badge @(uiState.SortColumn == "R" ? "active" : "")"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
+                                                    @if (stat.H > 0) { <div class="stat-badge @(uiState.SortColumn == "H" ? "active" : "")"><span class="stat-badge-val">@stat.H</span><span class="stat-badge-lbl">H</span></div> }
+                                                    @if (stat.H2B > 0) { <div class="stat-badge @(uiState.SortColumn == "2B" ? "active" : "")"><span class="stat-badge-val">@stat.H2B</span><span class="stat-badge-lbl">2B</span></div> }
+                                                    @if (stat.H3B > 0) { <div class="stat-badge @(uiState.SortColumn == "3B" ? "active" : "")"><span class="stat-badge-val">@stat.H3B</span><span class="stat-badge-lbl">3B</span></div> }
+                                                    @if (stat.H4B > 0) { <div class="stat-badge @(uiState.SortColumn == "4B" ? "active" : "")"><span class="stat-badge-val">@stat.H4B</span><span class="stat-badge-lbl">4B</span></div> }
+                                                    @if (stat.HR > 0) { <div class="stat-badge @(uiState.SortColumn == "HR" ? "active" : "")"><span class="stat-badge-val">@stat.HR</span><span class="stat-badge-lbl">HR</span></div> }
+                                                    @if (stat.RBI > 0) { <div class="stat-badge @(uiState.SortColumn == "RBI" ? "active" : "")"><span class="stat-badge-val">@stat.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
+                                                    @if (stat.BB > 0) { <div class="stat-badge @(uiState.SortColumn == "BB" ? "active" : "")"><span class="stat-badge-val">@stat.BB</span><span class="stat-badge-lbl">BB</span></div> }
+                                                    @if (stat.K > 0) { <div class="stat-badge @(uiState.SortColumn == "K" ? "active" : "")"><span class="stat-badge-val">@stat.K</span><span class="stat-badge-lbl">K</span></div> }
+                                                    @if (stat.SF > 0) { <div class="stat-badge @(uiState.SortColumn == "SF" ? "active" : "")"><span class="stat-badge-val">@stat.SF</span><span class="stat-badge-lbl">SF</span></div> }
+                                                </div>
                                             </div>
-                                            <div class="mobile-card-stats">
-                                                @if (stat.PA > 0) { <div class="m-stat @(uiState.SortColumn == "PA" ? "active" : "")"><span class="m-stat-val">@stat.PA</span><span class="m-stat-label">PA</span></div> }
-                                                @if (stat.AB > 0) { <div class="m-stat @(uiState.SortColumn == "AB" ? "active" : "")"><span class="m-stat-val">@stat.AB</span><span class="m-stat-label">AB</span></div> }
-                                                @if (stat.R > 0) { <div class="m-stat @(uiState.SortColumn == "R" ? "active" : "")"><span class="m-stat-val">@stat.R</span><span class="m-stat-label">R</span></div> }
-                                                @if (stat.H > 0) { <div class="m-stat @(uiState.SortColumn == "H" ? "active" : "")"><span class="m-stat-val">@stat.H</span><span class="m-stat-label">H</span></div> }
-                                                @if (stat.H2B > 0) { <div class="m-stat @(uiState.SortColumn == "2B" ? "active" : "")"><span class="m-stat-val">@stat.H2B</span><span class="m-stat-label">2B</span></div> }
-                                                @if (stat.H3B > 0) { <div class="m-stat @(uiState.SortColumn == "3B" ? "active" : "")"><span class="m-stat-val">@stat.H3B</span><span class="m-stat-label">3B</span></div> }
-                                                @if (stat.H4B > 0) { <div class="m-stat @(uiState.SortColumn == "4B" ? "active" : "")"><span class="m-stat-val">@stat.H4B</span><span class="m-stat-label">4B</span></div> }
-                                                @if (stat.HR > 0) { <div class="m-stat @(uiState.SortColumn == "HR" ? "active" : "")"><span class="m-stat-val">@stat.HR</span><span class="m-stat-label">HR</span></div> }
-                                                @if (stat.RBI > 0) { <div class="m-stat @(uiState.SortColumn == "RBI" ? "active" : "")"><span class="m-stat-val">@stat.RBI</span><span class="m-stat-label">RBI</span></div> }
-                                                @if (stat.BB > 0) { <div class="m-stat @(uiState.SortColumn == "BB" ? "active" : "")"><span class="m-stat-val">@stat.BB</span><span class="m-stat-label">BB</span></div> }
-                                                @if (stat.SF > 0) { <div class="m-stat @(uiState.SortColumn == "SF" ? "active" : "")"><span class="m-stat-val">@stat.SF</span><span class="m-stat-label">SF</span></div> }
+                                        }
+                                        <div class="mobile-player-row" style="background: #f0f7ff; border-top: 2px solid var(--isotopes-accent);">
+                                            <div class="player-row-header">
+                                                <span class="player-row-name" style="color: var(--isotopes-dark)">TEAM TOTALS</span>
+                                                <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000")</span>
                                             </div>
-                                        </div>
-                                    }
-                                    <div class="mobile-player-card" style="border: 2px solid var(--isotopes-accent); background: #f0f7ff; margin-top: 1rem;">
-                                        <div class="mobile-card-header">
-                                            <span class="mobile-card-name">TEAM TOTALS</span>
-                                            <span class="badge bg-light text-dark">AVG: @teamAVG.ToString(".000") | OBP: @teamOBP.ToString(".000")</span>
-                                        </div>
-                                        <div class="mobile-card-stats">
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamPA</span><span class="m-stat-label">PA</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamAB</span><span class="m-stat-label">AB</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamRuns</span><span class="m-stat-label">R</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamHits</span><span class="m-stat-label">H</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamHRs</span><span class="m-stat-label">HR</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamRBI</span><span class="m-stat-label">RBI</span></div>
-                                            <div class="m-stat"><span class="m-stat-val">@summary.TeamBBs</span><span class="m-stat-label">BB</span></div>
+                                            <div class="stat-badge-list">
+                                                <div class="stat-badge primary-stat"><span class="stat-badge-val">@summary.TeamPA</span><span class="stat-badge-lbl">PA</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamAB</span><span class="stat-badge-lbl">AB</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRuns</span><span class="stat-badge-lbl">R</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHits</span><span class="stat-badge-lbl">H</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHRs</span><span class="stat-badge-lbl">HR</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRBI</span><span class="stat-badge-lbl">RBI</span></div>
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamBBs</span><span class="stat-badge-lbl">BB</span></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -717,5 +721,8 @@ else
         position: sticky;
         left: 0;
         z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
     }
 </style>

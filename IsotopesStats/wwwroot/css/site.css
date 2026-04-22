@@ -519,87 +519,169 @@ tr:last-child td {
 }
 
 /* Mobile Box Score Cards */
-.mobile-player-grid {
-    display: none;
-    padding: 1rem;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+/* Scoreboard Header */
+.mobile-scoreboard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
-@media (max-width: 768px) {
-    .mobile-player-grid {
-        display: grid;
-    }
-}
-
-.mobile-player-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    border: 1px solid #eee;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.mobile-card-header {
+.scoreboard-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    font-weight: 700;
 }
 
-.mobile-card-name {
+.scoreboard-matchup {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.15rem 0;
+}
+
+.scoreboard-team {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--isotopes-dark);
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
+    letter-spacing: -0.5px;
+}
+
+.scoreboard-team.visitor { justify-content: flex-end; text-align: right; }
+.scoreboard-team.home { justify-content: flex-start; text-align: left; }
+
+.scoreboard-scores {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f1f3f5;
+    padding: 2px 12px;
+    border-radius: 12px;
+    /* Use standard font for better vertical alignment with team names */
+}
+
+.scoreboard-score {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #333;
+    min-width: 1.2rem;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.scoreboard-divider {
+    color: #adb5bd;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.scoreboard-location {
+    font-size: 0.75rem;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+}
+
+/* Desktop Overrides for Scoreboard */
+@media (min-width: 769px) {
+    .mobile-scoreboard {
+        gap: 0.5rem;
+    }
+    
+    .scoreboard-matchup {
+        gap: 1.5rem;
+    }
+    
+    .scoreboard-team {
+        font-size: 1.35rem;
+    }
+    
+    .scoreboard-scores {
+        padding: 4px 18px;
+        gap: 0.75rem;
+    }
+    
+    .scoreboard-score {
+        font-size: 1.7rem;
+    }
+    
+    .scoreboard-divider {
+        font-size: 1.2rem;
+    }
+}
+
+/* Player Activity Feed */
+.mobile-player-row {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mobile-player-row:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.player-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+}
+
+.player-row-name {
     font-weight: 800;
     color: var(--isotopes-accent);
+    font-size: 1rem;
 }
 
-.rank-badge {
-    background: #f0f0f0;
-    color: #666;
+.player-row-avg {
     font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-right: 8px;
-    font-weight: bold;
-    border: 1px solid #ddd;
-}
-
-.m-stat.active {
-    background: #fff9f9;
-    border-radius: 8px;
-    border: 1px solid var(--isotopes-red);
-    padding: 2px;
-}
-
-.m-stat.active .m-stat-val {
-    color: var(--isotopes-red);
-}
-
-.mobile-card-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-}
-
-.m-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.m-stat-val {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.m-stat-label {
-    font-size: 0.65rem;
     color: #999;
-    text-transform: uppercase;
+    font-weight: 600;
 }
 
-@media (max-width: 768px) {
+.stat-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.stat-badge {
+    background: white;
+    border: 1px solid #e0e0e0;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #666;
+    display: flex;
+    gap: 3px;
+}
+
+.stat-badge-val { color: #333; }
+.stat-badge-lbl { color: #999; font-weight: 400; font-size: 0.6rem; text-transform: uppercase; }
+
+.stat-badge.active {
+    border-color: var(--isotopes-red);
+    background: #fff5f5;
+}
+
+.stat-badge.active .stat-badge-val { color: var(--isotopes-red); }
+
+.stat-badge.primary-stat {
+    background: #f8f9fa;
+    border-color: #ddd;
+}
+}@media (max-width: 768px) {
     .box-score-table-wrapper {
         display: none;
     }
@@ -695,6 +777,137 @@ tr:last-child td {
 
     .mobile-stat-drawer.expanded {
         transform: translateY(0);
+    }
+
+    /* Scoreboard Header */
+    .mobile-scoreboard {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .scoreboard-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #999;
+        font-weight: 700;
+    }
+
+    .scoreboard-matchup {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.25rem 0;
+    }
+
+    .scoreboard-team {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--isotopes-dark);
+        line-height: 1.1;
+    }
+
+    .scoreboard-team.visitor { text-align: right; }
+    .scoreboard-team.home { text-align: left; }
+
+    .scoreboard-scores {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #f4f6f8;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .scoreboard-score {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #333;
+        min-width: 1.2rem;
+        text-align: center;
+    }
+
+    
+
+    .scoreboard-divider {
+        color: #ccc;
+        font-weight: 400;
+    }
+
+    .scoreboard-location {
+        font-size: 0.75rem;
+        color: #888;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Player Activity Feed */
+    .mobile-player-row {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .mobile-player-row:nth-child(even) {
+        background-color: #fafafa;
+    }
+
+    .player-row-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 0.5rem;
+    }
+
+    .player-row-name {
+        font-weight: 800;
+        color: var(--isotopes-accent);
+        font-size: 1rem;
+    }
+
+    .player-row-avg {
+        font-size: 0.7rem;
+        color: #999;
+        font-weight: 600;
+    }
+
+    .stat-badge-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .stat-badge {
+        background: white;
+        border: 1px solid #e0e0e0;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #666;
+        display: flex;
+        gap: 3px;
+    }
+
+    .stat-badge-val { color: #333; }
+    .stat-badge-lbl { color: #999; font-weight: 400; font-size: 0.6rem; text-transform: uppercase; }
+
+    .stat-badge.active {
+        border-color: var(--isotopes-red);
+        background: #fff5f5;
+    }
+
+    .stat-badge.active .stat-badge-val { color: var(--isotopes-red); }
+
+    .stat-badge.primary-stat {
+        background: #f8f9fa;
+        border-color: #ddd;
     }
 
     .drawer-handle-container {
