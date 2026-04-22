@@ -27,11 +27,13 @@ window.drawerDragging = {
 
     setupListeners: function() {
         window.addEventListener('touchstart', (e) => {
-            const handle = e.target.closest('#drawer-handle');
+            const isDrawer = e.target.closest('.mobile-stat-drawer');
+            const isGrid = e.target.closest('.stat-grid-full');
             const carousel = e.target.closest('.stat-carousel');
-            const grid = e.target.closest('.stat-grid-full');
 
-            if (handle || carousel || (grid && grid.scrollTop <= 0)) {
+            // Drag works on anything in the drawer except the vertically scrollable grid
+            // This includes handle, title, and the peek area
+            if (isDrawer && !isGrid) {
                 this.handleTouchStart(e, !!carousel);
             }
         }, { passive: true });
