@@ -197,26 +197,32 @@ window.drawerDragging = {
     
     // Utility to swap full names for short names when they wrap
     initOpponentNames: function() {
-        const observer = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const container = entry.target;
-                const full = container.querySelector('.full-name');
-                const short = container.querySelector('.short-name');
-                
-                if (!full || !short) continue;
+        if (!window.ResizeObserver) return;
 
-                // Force measure full name height if it were allowed to wrap
-                const isWrapped = full.offsetHeight > 25;
-                
-                if (isWrapped) {
-                    container.classList.add('use-short-name');
-                } else {
-                    container.classList.remove('use-short-name');
+        if (!this.nameObserver) {
+            this.nameObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const container = entry.target;
+                    const full = container.querySelector('.full-name');
+                    const short = container.querySelector('.short-name');
+                    
+                    if (!full || !short) continue;
+
+                    // Force measure full name height if it were allowed to wrap
+                    const isWrapped = full.offsetHeight > 25;
+                    
+                    if (isWrapped) {
+                        container.classList.add('use-short-name');
+                    } else {
+                        container.classList.remove('use-short-name');
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        // Observe all smart name containers
-        document.querySelectorAll('.smart-name-container').forEach(el => observer.observe(el));
+        // Observe all smart name containers that aren't already being observed
+        document.querySelectorAll('.smart-name-container').forEach(el => {
+            this.nameObserver.observe(el);
+        });
     }
 };
