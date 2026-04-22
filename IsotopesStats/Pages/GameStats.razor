@@ -190,28 +190,116 @@ else
                                         <table class="box-score-table table-sm" style="margin-bottom: 0; border: none; border-radius: 0 !important; width: 100%;">
                                         <thead>
                                             <tr>
-                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 30px;">BO<span class="sort-icon">@(GetSortIcon(gameId, "BO"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "Player")' class="sortable-header sticky-col @(uiState.SortColumn == "Player" ? "active-sort-header" : "")">Player<span class="sort-icon">@(GetSortIcon(gameId, "Player"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "PA")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "PA" ? "active-sort-header" : "")">PA<span class="sort-icon">@(GetSortIcon(gameId, "PA"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "AB")' class="sortable-header narrow-col @(uiState.SortColumn == "AB" ? "active-sort-header" : "")">AB<span class="sort-icon">@(GetSortIcon(gameId, "AB"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "R")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-header" : "")">R<span class="sort-icon">@(GetSortIcon(gameId, "R"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "H")' class="sortable-header narrow-col @(uiState.SortColumn == "H" ? "active-sort-header" : "")">H<span class="sort-icon">@(GetSortIcon(gameId, "H"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "2B")' class="sortable-header narrow-col @(uiState.SortColumn == "2B" ? "active-sort-header" : "")">2B<span class="sort-icon">@(GetSortIcon(gameId, "2B"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "3B")' class="sortable-header narrow-col @(uiState.SortColumn == "3B" ? "active-sort-header" : "")">3B<span class="sort-icon">@(GetSortIcon(gameId, "3B"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "4B")' class="sortable-header narrow-col @(uiState.SortColumn == "4B" ? "active-sort-header" : "")">4B<span class="sort-icon">@(GetSortIcon(gameId, "4B"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "HR")' class="sortable-header narrow-col @(uiState.SortColumn == "HR" ? "active-sort-header" : "")">HR<span class="sort-icon">@(GetSortIcon(gameId, "HR"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "RBI")' class="sortable-header narrow-col @(uiState.SortColumn == "RBI" ? "active-sort-header" : "")">RBI<span class="sort-icon">@(GetSortIcon(gameId, "RBI"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "BB")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "BB" ? "active-sort-header" : "")">BB<span class="sort-icon">@(GetSortIcon(gameId, "BB"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "K")' class="sortable-header narrow-col @(uiState.SortColumn == "K" ? "active-sort-header" : "")">K<span class="sort-icon">@(GetSortIcon(gameId, "K"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "KF")' class="sortable-header narrow-col @(uiState.SortColumn == "KF" ? "active-sort-header" : "")">KF<span class="sort-icon">@(GetSortIcon(gameId, "KF"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "SF")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "SF" ? "active-sort-header" : "")">SF<span class="sort-icon">@(GetSortIcon(gameId, "SF"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "FC")' class="sortable-header narrow-col @(uiState.SortColumn == "FC" ? "active-sort-header" : "")">FC<span class="sort-icon">@(GetSortIcon(gameId, "FC"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "GO")' class="sortable-header narrow-col @(uiState.SortColumn == "GO" ? "active-sort-header" : "")">GO<span class="sort-icon">@(GetSortIcon(gameId, "GO"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "FO")' class="sortable-header narrow-col @(uiState.SortColumn == "FO" ? "active-sort-header" : "")">FO<span class="sort-icon">@(GetSortIcon(gameId, "FO"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "AVG")' class="sortable-header group-divider @(uiState.SortColumn == "AVG" ? "active-sort-header" : "")">AVG<span class="sort-icon">@(GetSortIcon(gameId, "AVG"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "OBP")' class="sortable-header @(uiState.SortColumn == "OBP" ? "active-sort-header" : "")">OBP<span class="sort-icon">@(GetSortIcon(gameId, "OBP"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "SLG")' class="sortable-header @(uiState.SortColumn == "SLG" ? "active-sort-header" : "")">SLG<span class="sort-icon">@(GetSortIcon(gameId, "SLG"))</span></th>
-                                                <th @onclick='() => Sort(gameId, "OPS")' class="sortable-header @(uiState.SortColumn == "OPS" ? "active-sort-header" : "")">OPS<span class="sort-icon">@(GetSortIcon(gameId, "OPS"))</span></th>
+                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 30px;">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        BO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "BO"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "Player")' class="sortable-header sticky-col @(uiState.SortColumn == "Player" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        Player<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "Player"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "PA")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "PA" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "PA"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "AB")' class="sortable-header narrow-col @(uiState.SortColumn == "AB" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "AB"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "R")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "R"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "H")' class="sortable-header narrow-col @(uiState.SortColumn == "H" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "H"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "2B")' class="sortable-header narrow-col @(uiState.SortColumn == "2B" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "2B"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "3B")' class="sortable-header narrow-col @(uiState.SortColumn == "3B" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        3B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "3B"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "4B")' class="sortable-header narrow-col @(uiState.SortColumn == "4B" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        4B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "4B"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "HR")' class="sortable-header narrow-col @(uiState.SortColumn == "HR" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        HR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "HR"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "RBI")' class="sortable-header narrow-col @(uiState.SortColumn == "RBI" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "RBI"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "BB")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "BB" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "BB"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "K")' class="sortable-header narrow-col @(uiState.SortColumn == "K" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        K<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "K"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "KF")' class="sortable-header narrow-col @(uiState.SortColumn == "KF" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        KF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "KF"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "SF")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "SF" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        SF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "SF"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "FC")' class="sortable-header narrow-col @(uiState.SortColumn == "FC" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        FC<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "FC"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "GO")' class="sortable-header narrow-col @(uiState.SortColumn == "GO" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        GO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "GO"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "FO")' class="sortable-header narrow-col @(uiState.SortColumn == "FO" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "FO"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "AVG")' class="sortable-header group-divider @(uiState.SortColumn == "AVG" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        AVG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "AVG"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "OBP")' class="sortable-header @(uiState.SortColumn == "OBP" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        OBP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "OBP"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "SLG")' class="sortable-header @(uiState.SortColumn == "SLG" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        SLG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "SLG"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "OPS")' class="sortable-header @(uiState.SortColumn == "OPS" ? "active-sort-header" : "")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "OPS"))</span>
+                                                    </span>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -519,7 +607,7 @@ else
     {
         GameUIState state = SessionState.GetState(gameId);
         if (state.SortColumn != column) return "";
-        return state.IsAscending ? "▴" : "▾";
+        return state.IsAscending ? "▲" : "▼";
     }
 
     private IEnumerable<GameStatsExtendedView> ApplyInnerSorting(GameUIState uiState, IEnumerable<GameStatsExtendedView> stats)
