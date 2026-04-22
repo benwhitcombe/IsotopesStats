@@ -15,4 +15,7 @@ public class SeasonOpponentsDto : BaseModel
 
     [Column("name")]
     public string? Name { get; set; }
+
+    [Column("short_name")]
+    public string? ShortName { get; set; }
 }

@@ -126,13 +126,33 @@ else
                                         }
                                     </div>
                                     <div class="scoreboard-matchup">
-                                        <div class="scoreboard-team visitor">@(summary.IsHome ? summary.OpponentName : "Isotopes")</div>
+                                        <div class="scoreboard-team visitor smart-name-container">
+                                            <span class="full-name">@(summary.IsHome ? summary.OpponentName : "Isotopes")</span>
+                                            @if (summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (!summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
                                         <div class="scoreboard-scores">
                                             <span class="scoreboard-score">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
                                             <span class="scoreboard-divider">-</span>
                                             <span class="scoreboard-score">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
                                         </div>
-                                        <div class="scoreboard-team home">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</div>
+                                        <div class="scoreboard-team home smart-name-container">
+                                            <span class="full-name">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</span>
+                                            @if (!summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
                                     </div>
                                     <div class="scoreboard-location">
                                         <span>📍 @summary.Diamond</span>
@@ -153,13 +173,33 @@ else
                                         }
                                     </div>
                                     <div class="scoreboard-matchup">
-                                        <div class="scoreboard-team visitor">@(summary.IsHome ? summary.OpponentName : "Isotopes")</div>
+                                        <div class="scoreboard-team visitor smart-name-container">
+                                            <span class="full-name">@(summary.IsHome ? summary.OpponentName : "Isotopes")</span>
+                                            @if (summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (!summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
                                         <div class="scoreboard-scores">
                                             <span class="scoreboard-score">@(summary.VisitingTeamScore?.ToString() ?? "0")</span>
                                             <span class="scoreboard-divider">-</span>
                                             <span class="scoreboard-score">@(summary.HomeTeamScore?.ToString() ?? "0")</span>
                                         </div>
-                                        <div class="scoreboard-team home">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</div>
+                                        <div class="scoreboard-team home smart-name-container">
+                                            <span class="full-name">@(summary.IsHome ? "Isotopes" : summary.OpponentName)</span>
+                                            @if (!summary.IsHome && !string.IsNullOrEmpty(summary.OpponentShortName))
+                                            {
+                                                <span class="short-name">@summary.OpponentShortName</span>
+                                            }
+                                            else if (summary.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
                                     </div>
                                     <div class="scoreboard-location">
                                         <span>📍 @summary.Diamond</span>
@@ -516,6 +556,11 @@ else
 
         filterText = SessionState.FilterText;
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("drawerDragging.initOpponentNames");
     }
 
     private async Task LoadData()

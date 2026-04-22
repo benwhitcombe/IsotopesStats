@@ -21,4 +21,6 @@ public record GameStatsExtendedView : StatEntry
     public bool GameIsDeleted { get; set; }
 
     public string OpponentName { get; set; } = string.Empty;
+
+    public string OpponentShortName { get; set; } = string.Empty;
 }

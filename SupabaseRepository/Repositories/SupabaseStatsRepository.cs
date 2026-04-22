@@ -218,14 +218,14 @@ public class SupabaseStatsRepository : IStatsRepository
         return response.Models.Select(x => x.ToModel()).ToList();
     }
 
-    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null)
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null, string? shortName = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
             OpponentDto? master = await _supabase.From<OpponentDto>().Where(x => x.Id == opponentId).Single();
             name = master?.Name;
         }
-        SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = name };
+        SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = name, ShortName = shortName };
         await _supabase.From<SeasonOpponentsDto>().Insert(link.ToDto());
     }
 

@@ -82,7 +82,15 @@ else
                             {
                                 <tr>
                                     <td style="color: #666;">@log.Date.ToString("MMM dd")</td>
-                                    <td style="font-weight: bold; text-align: left;">@log.OpponentName</td>
+                                    <td style="font-weight: bold; text-align: left;">
+                                        <div class="smart-name-container">
+                                            <span class="full-name">@log.OpponentName</span>
+                                            @if (!string.IsNullOrEmpty(log.OpponentShortName))
+                                            {
+                                                <span class="short-name">@log.OpponentShortName</span>
+                                            }
+                                        </div>
+                                    </td>
                                     <td>@log.PA</td>
                                     <td>@log.AB</td>
                                     <td style="font-weight: bold; color: var(--isotopes-accent);">@log.H</td>
@@ -118,7 +126,13 @@ else
                             </div>
 
                             <div class="game-matchup">
-                                <div class="opponent-name">@(log.IsHome ? "vs" : "@") @log.OpponentName</div>
+                                <div class="opponent-name smart-name-container">
+                                    <span class="full-name">@(log.IsHome ? "vs" : "@") @log.OpponentName</span>
+                                    @if (!string.IsNullOrEmpty(log.OpponentShortName))
+                                    {
+                                        <span class="short-name">@(log.IsHome ? "vs" : "@") @log.OpponentShortName</span>
+                                    }
+                                </div>
                                 <div class="diamond-name">📍 @log.Diamond</div>
                             </div>
 
@@ -185,6 +199,11 @@ else
         }
         
         isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("drawerDragging.initOpponentNames");
     }
 
     private void GoBack()

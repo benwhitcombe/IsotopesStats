@@ -38,7 +38,7 @@ public class StatsService : IStatsService
     public Task DeleteOpponentAsync(int opponentId) => _repository.DeleteOpponentAsync(opponentId);
     public Task<bool> IsOpponentNameUniqueAsync(string name, int excludeId = 0) => _repository.IsOpponentNameUniqueAsync(name, excludeId);
     public Task<List<SeasonOpponents>> GetSeasonsForOpponentAsync(int opponentId) => _repository.GetSeasonsForOpponentAsync(opponentId);
-    public Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null) => _repository.AddOpponentToSeasonAsync(opponentId, seasonId, name);
+    public Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string name, string? shortName = null) => _repository.AddOpponentToSeasonAsync(opponentId, seasonId, name, shortName);
     public Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId) => _repository.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
 
     // --- GAMES & STATS ---

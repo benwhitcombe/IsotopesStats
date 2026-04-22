@@ -37,4 +37,7 @@ public class GameStatsExtendedViewDto : StatEntryDto
 
     [Column("opponentname")]
     public string OpponentName { get; set; } = string.Empty;
+
+    [Column("opponentshortname")]
+    public string OpponentShortName { get; set; } = string.Empty;
 }

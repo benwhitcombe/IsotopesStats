@@ -327,7 +327,11 @@ else
             foreach (int playerId in assignedPlayerIds)
                 await StatsService.AddPlayerToSeasonAsync(playerId, seasonId);
             foreach (int opponentId in assignedOpponentIds)
-                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId);
+            {
+                string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
+                string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
+                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
+            }
         }
         else
         {
@@ -340,7 +344,11 @@ else
                 await StatsService.DeletePlayerFromSeasonAsync(playerId, seasonId);
 
             foreach (int opponentId in assignedOpponentIds.Except(originalOpponentIds))
-                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId);
+            {
+                string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
+                string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
+                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
+            }
             foreach (int opponentId in originalOpponentIds.Except(assignedOpponentIds))
                 await StatsService.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
         }

@@ -37,6 +37,9 @@ public class GameSummaryViewDto : BaseModel
     [Column("opponentname")]
     public string OpponentName { get; set; } = string.Empty;
 
+    [Column("opponentshortname")]
+    public string OpponentShortName { get; set; } = string.Empty;
+
     [Column("playercount")]
     public int PlayerCount { get; set; }
 

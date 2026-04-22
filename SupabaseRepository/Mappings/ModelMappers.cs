@@ -98,7 +98,8 @@ public static class ModelMappers
             OpponentId = dto.OpponentId,
             GameType = dto.GameType,
             IsDeleted = dto.IsDeleted,
-            OpponentName = dto.OpponentName
+            OpponentName = dto.OpponentName,
+            OpponentShortName = dto.OpponentShortName
         };
     }
 
@@ -116,7 +117,8 @@ public static class ModelMappers
             OpponentId = model.OpponentId,
             GameType = model.GameType,
             IsDeleted = model.IsDeleted,
-            OpponentName = model.OpponentName
+            OpponentName = model.OpponentName,
+            OpponentShortName = model.OpponentShortName
         };
     }
 
@@ -135,6 +137,7 @@ public static class ModelMappers
             GameType = dto.GameType,
             GameIsDeleted = dto.GameIsDeleted,
             OpponentName = dto.OpponentName,
+            OpponentShortName = dto.OpponentShortName,
             PlayerCount = dto.PlayerCount,
             TeamRuns = dto.TeamRuns,
             TeamHits = dto.TeamHits,
@@ -163,6 +166,7 @@ public static class ModelMappers
             GameType = model.GameType,
             GameIsDeleted = model.GameIsDeleted,
             OpponentName = model.OpponentName,
+            OpponentShortName = model.OpponentShortName,
             PlayerCount = model.PlayerCount,
             TeamRuns = model.TeamRuns,
             TeamHits = model.TeamHits,
@@ -183,6 +187,7 @@ public static class ModelMappers
         {
             Id = dto.Id,
             Name = dto.Name,
+            ShortName = dto.ShortName,
             IsDeleted = dto.IsDeleted
         };
     }
@@ -194,6 +199,7 @@ public static class ModelMappers
         {
             Id = model.Id,
             Name = model.Name,
+            ShortName = model.ShortName,
             IsDeleted = model.IsDeleted
         };
     }
@@ -338,7 +344,8 @@ public static class ModelMappers
         {
             SeasonId = dto.SeasonId,
             OpponentId = dto.OpponentId,
-            Name = dto.Name
+            Name = dto.Name,
+            ShortName = dto.ShortName
         };
     }
 
@@ -349,7 +356,8 @@ public static class ModelMappers
         {
             SeasonId = model.SeasonId,
             OpponentId = model.OpponentId,
-            Name = model.Name
+            Name = model.Name,
+            ShortName = model.ShortName
         };
     }
 
@@ -360,7 +368,8 @@ public static class ModelMappers
         {
             SeasonId = dto.SeasonId,
             OpponentId = dto.OpponentId,
-            OpponentName = dto.OpponentName
+            OpponentName = dto.OpponentName,
+            OpponentShortName = dto.OpponentShortName
         };
     }
 
@@ -667,7 +676,8 @@ public static class ModelMappers
             OpponentId = dto.OpponentId,
             GameType = dto.GameType,
             GameIsDeleted = dto.GameIsDeleted,
-            OpponentName = dto.OpponentName
+            OpponentName = dto.OpponentName,
+            OpponentShortName = dto.OpponentShortName
         };
     }
 

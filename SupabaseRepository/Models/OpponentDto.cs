@@ -13,6 +13,9 @@ public class OpponentDto : BaseModel
     [Column("name")]
     public string Name { get; set; } = string.Empty;
 
+    [Column("short_name")]
+    public string ShortName { get; set; } = string.Empty;
+
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 }

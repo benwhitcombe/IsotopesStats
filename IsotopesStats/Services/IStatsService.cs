@@ -30,7 +30,7 @@ public interface IStatsService
     Task DeleteOpponentAsync(int opponentId);
     Task<bool> IsOpponentNameUniqueAsync(string name, int excludeId = 0);
     Task<List<SeasonOpponents>> GetSeasonsForOpponentAsync(int opponentId);
-    Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null);
+    Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string name, string? shortName = null);
     Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId);
 
     // Games & Stats

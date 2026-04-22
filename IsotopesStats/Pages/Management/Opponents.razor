@@ -34,13 +34,19 @@
         CheckUniqueAsync="CheckUniqueOpponent"
         OnSave="SaveOpponent"
         OnDelete="DeleteOpponent"
-        ExtraState="@(new { Ids = assignedSeasonIds, Names = assignedSeasonNames })"
+        ExtraState="@(new { Ids = assignedSeasonIds, Names = assignedSeasonNames, Shorts = assignedSeasonShortNames })"
         HasCustomChanges="HasExtraStateChanges">
 
         <div class="form-group">
-            <label>Name</label>
+            <label>Full Name</label>
             <InputText class="form-control" @bind-Value="editingOpponent.Name" placeholder="e.g. Springfield Atoms" />
             <ValidationMessage For="@(() => editingOpponent.Name)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label>Short Name (Optional)</label>
+            <InputText class="form-control" @bind-Value="editingOpponent.ShortName" placeholder="e.g. Atoms" />
+            <span style="font-size: 0.75rem; color: #888;">Used in scoreboards when space is limited.</span>
         </div>
         
         <div class="form-group" style="margin-top: 2rem;">
@@ -54,6 +60,7 @@
                                 <th style="width: 50px; text-align: center;">Active</th>
                                 <th>Season</th>
                                 <th>Name in Season</th>
+                                <th>Short Name in Season</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -77,7 +84,21 @@
                                                    class="form-control form-control-sm" 
                                                    placeholder="Enter season name..." 
                                                    value="@GetSeasonName(season.Id)" 
-                                                   @oninput="@((e) => UpdateSeasonName(season.Id, e.Value?.ToString()))" />
+                                                   @oninput='@((e) => UpdateSeasonOverride(season.Id, e.Value?.ToString(), "name"))' />
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #ccc; font-style: italic; font-size: 0.9rem;">Not in season</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="Enter short name..." 
+                                                   value="@GetSeasonShortName(season.Id)" 
+                                                   @oninput='@((e) => UpdateSeasonOverride(season.Id, e.Value?.ToString(), "short"))' />
                                         }
                                         else
                                         {
@@ -108,13 +129,21 @@
                         </div>
                         @if (isActive)
                         {
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group" style="margin-bottom: 0.75rem;">
                                 <label style="font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: bold; margin-bottom: 0.25rem;">Name in Season</label>
                                 <input type="text" 
                                        class="form-control" 
                                        placeholder="Enter season name..." 
                                        value="@GetSeasonName(season.Id)" 
-                                       @oninput="@((e) => UpdateSeasonName(season.Id, e.Value?.ToString()))" />
+                                       @oninput='@((e) => UpdateSeasonOverride(season.Id, e.Value?.ToString(), "name"))' />
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.7rem; color: #999; text-transform: uppercase; font-weight: bold; margin-bottom: 0.25rem;">Short Name in Season</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Enter short name..." 
+                                       value="@GetSeasonShortName(season.Id)" 
+                                       @oninput='@((e) => UpdateSeasonOverride(season.Id, e.Value?.ToString(), "short"))' />
                             </div>
                         }
                     </div>
@@ -140,7 +169,13 @@ else
                         @foreach (Opponent opponent in opponents)
                         {
                             <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</td>
+                                <td style="text-align: left; cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>
+                                    <div style="font-weight: bold; color: var(--isotopes-accent);">@opponent.Name</div>
+                                    @if (!string.IsNullOrEmpty(opponent.ShortName))
+                                    {
+                                        <div style="font-size: 0.75rem; color: #888;">Short: @opponent.ShortName</div>
+                                    }
+                                </td>
                                 <td style="text-align: left; font-size: 0.85rem; color: #666;">
                                     @GetSeasonSummary(opponent.Id)
                                 </td>
@@ -163,6 +198,10 @@ else
                 <div class="mobile-player-card">
                     <div class="mobile-card-header" style="flex-direction: column; align-items: flex-start;">
                         <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", opponent.Id)'>@opponent.Name</div>
+                        @if (!string.IsNullOrEmpty(opponent.ShortName))
+                        {
+                            <div style="font-size: 0.7rem; color: #888; font-weight: bold; text-transform: uppercase;">Short: @opponent.ShortName</div>
+                        }
                         <div style="font-size: 0.75rem; color: #888; margin-top: 0.2rem;">@GetSeasonSummary(opponent.Id)</div>
                     </div>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
@@ -187,6 +226,8 @@ else
     private HashSet<int> originalSeasonIds = new();
     private Dictionary<int, string?> assignedSeasonNames = new();
     private Dictionary<int, string?> originalSeasonNames = new();
+    private Dictionary<int, string?> assignedSeasonShortNames = new();
+    private Dictionary<int, string?> originalSeasonShortNames = new();
     private Opponent editingOpponent = new();
     private Opponent originalOpponent = new Opponent();
     private bool isAdding = false;
@@ -200,6 +241,14 @@ else
         foreach (KeyValuePair<int, string?> kvp in assignedSeasonNames)
         {
             if (!originalSeasonNames.TryGetValue(kvp.Key, out string? originalValue) || originalValue != kvp.Value)
+            {
+                return true;
+            }
+        }
+
+        foreach (KeyValuePair<int, string?> kvp in assignedSeasonShortNames)
+        {
+            if (!originalSeasonShortNames.TryGetValue(kvp.Key, out string? originalValue) || originalValue != kvp.Value)
             {
                 return true;
             }
@@ -244,6 +293,8 @@ else
             originalSeasonIds.Clear();
             assignedSeasonNames.Clear();
             originalSeasonNames.Clear();
+            assignedSeasonShortNames.Clear();
+            originalSeasonShortNames.Clear();
         }
 
         isAdding = nextAdding;
@@ -259,6 +310,8 @@ else
         originalSeasonIds.Clear();
         assignedSeasonNames.Clear();
         originalSeasonNames.Clear();
+        assignedSeasonShortNames.Clear();
+        originalSeasonShortNames.Clear();
         await HydrateTempState();
     }
 
@@ -282,6 +335,8 @@ else
                 originalSeasonIds.Clear();
                 assignedSeasonNames.Clear();
                 originalSeasonNames.Clear();
+                assignedSeasonShortNames.Clear();
+                originalSeasonShortNames.Clear();
 
                 List<SeasonOpponents> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
                 foreach (SeasonOpponents s in opponentSeasons)
@@ -290,6 +345,8 @@ else
                     originalSeasonIds.Add(s.SeasonId);
                     assignedSeasonNames[s.SeasonId] = s.Name;
                     originalSeasonNames[s.SeasonId] = s.Name;
+                    assignedSeasonShortNames[s.SeasonId] = s.ShortName;
+                    originalSeasonShortNames[s.SeasonId] = s.ShortName;
                 }
             }
         }
@@ -301,6 +358,8 @@ else
             originalSeasonIds.Clear();
             assignedSeasonNames.Clear();
             originalSeasonNames.Clear();
+            assignedSeasonShortNames.Clear();
+            originalSeasonShortNames.Clear();
         }
         await HydrateTempState();
     }
@@ -317,6 +376,9 @@ else
 
             Dictionary<int, string?>? persistedNames = await SessionStorage.GetItemAsync<Dictionary<int, string?>>($"EditState_Opponent_{Id ?? 0}_Extra_Names");
             if (persistedNames != null) assignedSeasonNames = persistedNames;
+
+            Dictionary<int, string?>? persistedShorts = await SessionStorage.GetItemAsync<Dictionary<int, string?>>($"EditState_Opponent_{Id ?? 0}_Extra_Shorts");
+            if (persistedShorts != null) assignedSeasonShortNames = persistedShorts;
 
             StateHasChanged();
         }
@@ -375,6 +437,10 @@ else
             {
                 assignedSeasonNames[seasonId] = editingOpponent.Name;
             }
+            if (!assignedSeasonShortNames.ContainsKey(seasonId))
+            {
+                assignedSeasonShortNames[seasonId] = editingOpponent.ShortName;
+            }
         }
         else 
         {
@@ -384,6 +450,7 @@ else
         {
             await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Ids", assignedSeasonIds);
             await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
+            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Shorts", assignedSeasonShortNames);
         }
     }
 
@@ -392,12 +459,20 @@ else
         return assignedSeasonNames.TryGetValue(seasonId, out string? name) ? name : editingOpponent.Name;
     }
 
-    private async Task UpdateSeasonName(int seasonId, string? name)
+    private string? GetSeasonShortName(int seasonId)
     {
-        assignedSeasonNames[seasonId] = name;
+        return assignedSeasonShortNames.TryGetValue(seasonId, out string? name) ? name : editingOpponent.ShortName;
+    }
+
+    private async Task UpdateSeasonOverride(int seasonId, string? value, string type)
+    {
+        if (type == "name") assignedSeasonNames[seasonId] = value;
+        else assignedSeasonShortNames[seasonId] = value;
+
         if (modelEditor != null)
         {
             await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Names", assignedSeasonNames);
+            await SessionStorage.SetItemAsync($"EditState_Opponent_{Id ?? 0}_Extra_Shorts", assignedSeasonShortNames);
         }
     }
 
@@ -410,7 +485,8 @@ else
             foreach (int sid in assignedSeasonIds)
             {
                 assignedSeasonNames.TryGetValue(sid, out string? name);
-                await StatsService.AddOpponentToSeasonAsync(opponentId, sid, name ?? editingOpponent.Name);
+                assignedSeasonShortNames.TryGetValue(sid, out string? sname);
+                await StatsService.AddOpponentToSeasonAsync(opponentId, sid, name ?? editingOpponent.Name, sname ?? editingOpponent.ShortName);
             }
         }
         else
@@ -421,20 +497,25 @@ else
             foreach (int sid in assignedSeasonIds)
             {
                 assignedSeasonNames.TryGetValue(sid, out string? name);
+                assignedSeasonShortNames.TryGetValue(sid, out string? sname);
                 string currentName = name ?? editingOpponent.Name;
+                string? currentShortName = sname ?? editingOpponent.ShortName;
 
+                bool hasChanged = true;
                 if (originalSeasonIds.Contains(sid))
                 {
                     originalSeasonNames.TryGetValue(sid, out string? oldName);
-                    if (currentName != oldName)
+                    originalSeasonShortNames.TryGetValue(sid, out string? oldShortName);
+                    if (currentName == oldName && currentShortName == oldShortName)
                     {
-                        await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
-                        await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName);
+                        hasChanged = false;
                     }
                 }
-                else
+
+                if (hasChanged)
                 {
-                    await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName);
+                    await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
+                    await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName, currentShortName);
                 }
             }
             
