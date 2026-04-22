@@ -206,6 +206,7 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
 }
 
 .table-sm th, .table-sm td {
@@ -537,8 +538,22 @@ tr:last-child td {
 }
 
 /* Short Name Swap Logic */
+.smart-name-container {
+    position: relative;
+}
+
 .smart-name-container .short-name { display: none; }
-.smart-name-container.use-short-name .full-name { display: none; }
+
+.smart-name-container .full-name {
+    white-space: nowrap;
+}
+
+.smart-name-container.use-short-name .full-name { 
+    visibility: hidden; 
+    position: absolute;
+    pointer-events: none;
+}
+
 .smart-name-container.use-short-name .short-name { display: inline; }
 
 .scoreboard-team.visitor { justify-content: flex-end; text-align: right; }

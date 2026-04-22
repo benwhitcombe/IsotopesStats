@@ -208,8 +208,11 @@ window.drawerDragging = {
                     
                     if (!full || !short) continue;
 
-                    // Force measure full name height if it were allowed to wrap
-                    const isWrapped = full.offsetHeight > 25;
+                    // If elements aren't fully rendered, skip
+                    if (container.clientWidth === 0 || full.scrollWidth === 0) continue;
+
+                    // Check if the full name's natural width exceeds the container's available width
+                    const isWrapped = full.scrollWidth > container.clientWidth;
                     
                     if (isWrapped) {
                         container.classList.add('use-short-name');
