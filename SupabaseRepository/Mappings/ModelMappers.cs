@@ -6,30 +6,30 @@ namespace SupabaseRepository.Mappings;
 
 public static class ModelMappers
 {
-    public static Game ToModel(this GameDto dto)
+    public static Game ToModel(this GameDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new Game
         {
-            Id = dto.Id,
-            SeasonId = dto.SeasonId,
-            GameNumber = dto.GameNumber,
-            Date = DateTimeService.ToWhitbyTime(dto.Date),
-            Diamond = dto.Diamond,
-            IsHome = dto.IsHome,
-            OpponentId = dto.OpponentId,
-            Type = dto.Type,
-            IsDeleted = dto.IsDeleted,
-            VisitingTeamScore = dto.VisitingTeamScore,
-            HomeTeamScore = dto.HomeTeamScore,
-            Opponent = dto.Opponent?.ToModel()
+            Id = DTO.Id,
+            SeasonId = DTO.SeasonId,
+            GameNumber = DTO.GameNumber,
+            Date = DateTimeService.ToWhitbyTime(DTO.Date),
+            Diamond = DTO.Diamond,
+            IsHome = DTO.IsHome,
+            OpponentId = DTO.OpponentId,
+            Type = DTO.Type,
+            IsDeleted = DTO.IsDeleted,
+            VisitingTeamScore = DTO.VisitingTeamScore,
+            HomeTeamScore = DTO.HomeTeamScore,
+            Opponent = DTO.Opponent?.ToModel()
         };
     }
 
-    public static GameDto ToDto(this Game model)
+    public static GameDTO ToDTO(this Game model)
     {
         if (model == null) return null!;
-        return new GameDto
+        return new GameDTO
         {
             Id = model.Id,
             SeasonId = model.SeasonId,
@@ -45,29 +45,29 @@ public static class ModelMappers
         };
     }
 
-    public static GameManagementView ToModel(this GameManagementViewDto dto)
+    public static GameManagementView ToModel(this GameManagementViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new GameManagementView
         {
-            Id = dto.Id,
-            SeasonId = dto.SeasonId,
-            GameNumber = dto.GameNumber,
-            Date = DateTimeService.ToWhitbyTime(dto.Date),
-            Diamond = dto.Diamond,
-            IsHome = dto.IsHome,
-            OpponentId = dto.OpponentId,
-            GameType = dto.GameType,
-            IsDeleted = dto.IsDeleted,
-            OpponentName = dto.OpponentName,
-            OpponentShortName = dto.OpponentShortName
+            Id = DTO.Id,
+            SeasonId = DTO.SeasonId,
+            GameNumber = DTO.GameNumber,
+            Date = DateTimeService.ToWhitbyTime(DTO.Date),
+            Diamond = DTO.Diamond,
+            IsHome = DTO.IsHome,
+            OpponentId = DTO.OpponentId,
+            GameType = DTO.GameType,
+            IsDeleted = DTO.IsDeleted,
+            OpponentName = DTO.OpponentName,
+            OpponentShortName = DTO.OpponentShortName
         };
     }
 
-    public static GameManagementViewDto ToDto(this GameManagementView model)
+    public static GameManagementViewDTO ToDTO(this GameManagementView model)
     {
         if (model == null) return null!;
-        return new GameManagementViewDto
+        return new GameManagementViewDTO
         {
             Id = model.Id,
             SeasonId = model.SeasonId,
@@ -83,39 +83,39 @@ public static class ModelMappers
         };
     }
 
-    public static GameSummaryView ToModel(this GameSummaryViewDto dto)
+    public static GameSummaryView ToModel(this GameSummaryViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new GameSummaryView
         {
-            GameId = dto.GameId,
-            SeasonId = dto.SeasonId,
-            GameNumber = dto.GameNumber,
-            Date = DateTimeService.ToWhitbyTime(dto.Date),
-            Diamond = dto.Diamond,
-            IsHome = dto.IsHome,
-            OpponentId = dto.OpponentId,
-            GameType = dto.GameType,
-            GameIsDeleted = dto.GameIsDeleted,
-            OpponentName = dto.OpponentName,
-            OpponentShortName = dto.OpponentShortName,
-            PlayerCount = dto.PlayerCount,
-            TeamRuns = dto.TeamRuns,
-            TeamHits = dto.TeamHits,
-            TeamHRs = dto.TeamHRs,
-            TeamBBs = dto.TeamBBs,
-            TeamAB = dto.TeamAB,
-            TeamPA = dto.TeamPA,
-            TeamRBI = dto.TeamRBI,
-            VisitingTeamScore = dto.VisitingTeamScore,
-            HomeTeamScore = dto.HomeTeamScore
+            GameId = DTO.GameId,
+            SeasonId = DTO.SeasonId,
+            GameNumber = DTO.GameNumber,
+            Date = DateTimeService.ToWhitbyTime(DTO.Date),
+            Diamond = DTO.Diamond,
+            IsHome = DTO.IsHome,
+            OpponentId = DTO.OpponentId,
+            GameType = DTO.GameType,
+            GameIsDeleted = DTO.GameIsDeleted,
+            OpponentName = DTO.OpponentName,
+            OpponentShortName = DTO.OpponentShortName,
+            PlayerCount = DTO.PlayerCount,
+            TeamRuns = DTO.TeamRuns,
+            TeamHits = DTO.TeamHits,
+            TeamHRs = DTO.TeamHRs,
+            TeamBBs = DTO.TeamBBs,
+            TeamAB = DTO.TeamAB,
+            TeamPA = DTO.TeamPA,
+            TeamRBI = DTO.TeamRBI,
+            VisitingTeamScore = DTO.VisitingTeamScore,
+            HomeTeamScore = DTO.HomeTeamScore
         };
     }
 
-    public static GameSummaryViewDto ToDto(this GameSummaryView model)
+    public static GameSummaryViewDTO ToDTO(this GameSummaryView model)
     {
         if (model == null) return null!;
-        return new GameSummaryViewDto
+        return new GameSummaryViewDTO
         {
             GameId = model.GameId,
             SeasonId = model.SeasonId,
@@ -141,22 +141,22 @@ public static class ModelMappers
         };
     }
 
-    public static Opponent ToModel(this OpponentDto dto)
+    public static Opponent ToModel(this OpponentDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new Opponent
         {
-            Id = dto.Id,
-            Name = dto.Name,
-            ShortName = dto.ShortName,
-            IsDeleted = dto.IsDeleted
+            Id = DTO.Id,
+            Name = DTO.Name,
+            ShortName = DTO.ShortName,
+            IsDeleted = DTO.IsDeleted
         };
     }
 
-    public static OpponentDto ToDto(this Opponent model)
+    public static OpponentDTO ToDTO(this Opponent model)
     {
         if (model == null) return null!;
-        return new OpponentDto
+        return new OpponentDTO
         {
             Id = model.Id,
             Name = model.Name,
@@ -165,41 +165,41 @@ public static class ModelMappers
         };
     }
 
-    public static Permission ToModel(this PermissionDto dto)
+    public static Permission ToModel(this PermissionDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new Permission
         {
-            Id = (int)dto.Id,
-            Name = dto.Name
+            Id = (int)DTO.Id,
+            Name = DTO.Name
         };
     }
 
-    public static PermissionDto ToDto(this Permission model)
+    public static PermissionDTO ToDTO(this Permission model)
     {
         if (model == null) return null!;
-        return new PermissionDto
+        return new PermissionDTO
         {
             Id = model.Id,
             Name = model.Name
         };
     }
 
-    public static Player ToModel(this PlayerDto dto)
+    public static Player ToModel(this PlayerDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new Player
         {
-            Id = dto.Id,
-            Name = dto.Name,
-            IsDeleted = dto.IsDeleted
+            Id = DTO.Id,
+            Name = DTO.Name,
+            IsDeleted = DTO.IsDeleted
         };
     }
 
-    public static PlayerDto ToDto(this Player model)
+    public static PlayerDTO ToDTO(this Player model)
     {
         if (model == null) return null!;
-        return new PlayerDto
+        return new PlayerDTO
         {
             Id = model.Id,
             Name = model.Name,
@@ -207,34 +207,34 @@ public static class ModelMappers
         };
     }
 
-    public static PlayerStatsSummary ToModel(this PlayerStatsSummaryDto dto)
+    public static PlayerStatsSummary ToModel(this PlayerStatsSummaryDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new PlayerStatsSummary
         {
-            PlayerName = dto.PlayerName,
-            GamesPlayed = dto.GamesPlayed,
-            H1B = dto.H1B,
-            H2B = dto.H2B,
-            H3B = dto.H3B,
-            H4B = dto.H4B,
-            HR = dto.HR,
-            FC = dto.FC,
-            BB = dto.BB,
-            SF = dto.SF,
-            K = dto.K,
-            KF = dto.KF,
-            GO = dto.GO,
-            FO = dto.FO,
-            R = dto.R,
-            RBI = dto.RBI
+            PlayerName = DTO.PlayerName,
+            GamesPlayed = DTO.GamesPlayed,
+            H1B = DTO.H1B,
+            H2B = DTO.H2B,
+            H3B = DTO.H3B,
+            H4B = DTO.H4B,
+            HR = DTO.HR,
+            FC = DTO.FC,
+            BB = DTO.BB,
+            SF = DTO.SF,
+            K = DTO.K,
+            KF = DTO.KF,
+            GO = DTO.GO,
+            FO = DTO.FO,
+            R = DTO.R,
+            RBI = DTO.RBI
         };
     }
 
-    public static PlayerStatsSummaryDto ToDto(this PlayerStatsSummary model)
+    public static PlayerStatsSummaryDTO ToDTO(this PlayerStatsSummary model)
     {
         if (model == null) return null!;
-        return new PlayerStatsSummaryDto
+        return new PlayerStatsSummaryDTO
         {
             PlayerName = model.PlayerName,
             GamesPlayed = model.GamesPlayed,
@@ -255,42 +255,42 @@ public static class ModelMappers
         };
     }
 
-    public static RolePermission ToModel(this RolePermissionDto dto)
+    public static RolePermission ToModel(this RolePermissionDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new RolePermission
         {
-            RoleId = (int)dto.RoleId,
-            PermissionId = (int)dto.PermissionId,
-            Permission = dto.Permission?.ToModel()
+            RoleId = (int)DTO.RoleId,
+            PermissionId = (int)DTO.PermissionId,
+            Permission = DTO.Permission?.ToModel()
         };
     }
 
-    public static RolePermissionDto ToDto(this RolePermission model)
+    public static RolePermissionDTO ToDTO(this RolePermission model)
     {
         if (model == null) return null!;
-        return new RolePermissionDto
+        return new RolePermissionDTO
         {
             RoleId = model.RoleId,
             PermissionId = model.PermissionId
         };
     }
 
-    public static Season ToModel(this SeasonDto dto)
+    public static Season ToModel(this SeasonDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new Season
         {
-            Id = dto.Id,
-            Name = dto.Name,
-            IsDeleted = dto.IsDeleted
+            Id = DTO.Id,
+            Name = DTO.Name,
+            IsDeleted = DTO.IsDeleted
         };
     }
 
-    public static SeasonDto ToDto(this Season model)
+    public static SeasonDTO ToDTO(this Season model)
     {
         if (model == null) return null!;
-        return new SeasonDto
+        return new SeasonDTO
         {
             Id = model.Id,
             Name = model.Name,
@@ -298,22 +298,22 @@ public static class ModelMappers
         };
     }
 
-    public static SeasonOpponents ToModel(this SeasonOpponentsDto dto)
+    public static SeasonOpponents ToModel(this SeasonOpponentsDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new SeasonOpponents
         {
-            SeasonId = dto.SeasonId,
-            OpponentId = dto.OpponentId,
-            Name = dto.Name,
-            ShortName = dto.ShortName
+            SeasonId = DTO.SeasonId,
+            OpponentId = DTO.OpponentId,
+            Name = DTO.Name,
+            ShortName = DTO.ShortName
         };
     }
 
-    public static SeasonOpponentsDto ToDto(this SeasonOpponents model)
+    public static SeasonOpponentsDTO ToDTO(this SeasonOpponents model)
     {
         if (model == null) return null!;
-        return new SeasonOpponentsDto
+        return new SeasonOpponentsDTO
         {
             SeasonId = model.SeasonId,
             OpponentId = model.OpponentId,
@@ -322,22 +322,22 @@ public static class ModelMappers
         };
     }
 
-    public static SeasonOpponentView ToModel(this SeasonOpponentViewDto dto)
+    public static SeasonOpponentView ToModel(this SeasonOpponentViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new SeasonOpponentView
         {
-            SeasonId = dto.SeasonId,
-            OpponentId = dto.OpponentId,
-            OpponentName = dto.OpponentName,
-            OpponentShortName = dto.OpponentShortName
+            SeasonId = DTO.SeasonId,
+            OpponentId = DTO.OpponentId,
+            OpponentName = DTO.OpponentName,
+            OpponentShortName = DTO.OpponentShortName
         };
     }
 
-    public static SeasonOpponentViewDto ToDto(this SeasonOpponentView model)
+    public static SeasonOpponentViewDTO ToDTO(this SeasonOpponentView model)
     {
         if (model == null) return null!;
-        return new SeasonOpponentViewDto
+        return new SeasonOpponentViewDTO
         {
             SeasonId = model.SeasonId,
             OpponentId = model.OpponentId,
@@ -345,41 +345,41 @@ public static class ModelMappers
         };
     }
 
-    public static SeasonPlayers ToModel(this SeasonPlayersDto dto)
+    public static SeasonPlayers ToModel(this SeasonPlayersDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new SeasonPlayers
         {
-            SeasonId = dto.SeasonId,
-            PlayerId = dto.PlayerId
+            SeasonId = DTO.SeasonId,
+            PlayerId = DTO.PlayerId
         };
     }
 
-    public static SeasonPlayersDto ToDto(this SeasonPlayers model)
+    public static SeasonPlayersDTO ToDTO(this SeasonPlayers model)
     {
         if (model == null) return null!;
-        return new SeasonPlayersDto
+        return new SeasonPlayersDTO
         {
             SeasonId = model.SeasonId,
             PlayerId = model.PlayerId
         };
     }
 
-    public static SeasonPlayerView ToModel(this SeasonPlayerViewDto dto)
+    public static SeasonPlayerView ToModel(this SeasonPlayerViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new SeasonPlayerView
         {
-            SeasonId = dto.SeasonId,
-            PlayerId = dto.PlayerId,
-            PlayerName = dto.PlayerName
+            SeasonId = DTO.SeasonId,
+            PlayerId = DTO.PlayerId,
+            PlayerName = DTO.PlayerName
         };
     }
 
-    public static SeasonPlayerViewDto ToDto(this SeasonPlayerView model)
+    public static SeasonPlayerViewDTO ToDTO(this SeasonPlayerView model)
     {
         if (model == null) return null!;
-        return new SeasonPlayerViewDto
+        return new SeasonPlayerViewDTO
         {
             SeasonId = model.SeasonId,
             PlayerId = model.PlayerId,
@@ -387,38 +387,38 @@ public static class ModelMappers
         };
     }
 
-    public static StatEntry ToModel(this StatEntryDto dto)
+    public static StatEntry ToModel(this StatEntryDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new StatEntry
         {
-            Id = dto.Id,
-            PlayerId = dto.PlayerId,
-            GameId = dto.GameId,
-            BO = dto.BO,
-            H1B = dto.H1B,
-            H2B = dto.H2B,
-            H3B = dto.H3B,
-            H4B = dto.H4B,
-            HR = dto.HR,
-            FC = dto.FC,
-            BB = dto.BB,
-            SF = dto.SF,
-            K = dto.K,
-            KF = dto.KF,
-            GO = dto.GO,
-            FO = dto.FO,
-            R = dto.R,
-            RBI = dto.RBI,
-            Player = dto.Player?.ToModel(),
-            Game = dto.Game?.ToModel()
+            Id = DTO.Id,
+            PlayerId = DTO.PlayerId,
+            GameId = DTO.GameId,
+            BO = DTO.BO,
+            H1B = DTO.H1B,
+            H2B = DTO.H2B,
+            H3B = DTO.H3B,
+            H4B = DTO.H4B,
+            HR = DTO.HR,
+            FC = DTO.FC,
+            BB = DTO.BB,
+            SF = DTO.SF,
+            K = DTO.K,
+            KF = DTO.KF,
+            GO = DTO.GO,
+            FO = DTO.FO,
+            R = DTO.R,
+            RBI = DTO.RBI,
+            Player = DTO.Player?.ToModel(),
+            Game = DTO.Game?.ToModel()
         };
     }
 
-    public static StatEntryDto ToDto(this StatEntry model)
+    public static StatEntryDTO ToDTO(this StatEntry model)
     {
         if (model == null) return null!;
-        return new StatEntryDto
+        return new StatEntryDTO
         {
             Id = model.Id,
             PlayerId = model.PlayerId,
@@ -438,28 +438,28 @@ public static class ModelMappers
             FO = model.FO,
             R = model.R,
             RBI = model.RBI,
-            Player = model.Player?.ToDto(),
-            Game = model.Game?.ToDto()
+            Player = model.Player?.ToDTO(),
+            Game = model.Game?.ToDTO()
         };
     }
 
-    public static User ToModel(this UserDto dto)
+    public static User ToModel(this UserDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new User
         {
-            Id = dto.Id.ToString(),
-            Email = dto.Email,
-            PasswordHash = dto.PasswordHash,
-            CreatedAt = DateTimeService.ToWhitbyTime(dto.CreatedAt),
-            IsDeleted = dto.IsDeleted
+            Id = DTO.Id.ToString(),
+            Email = DTO.Email,
+            PasswordHash = DTO.PasswordHash,
+            CreatedAt = DateTimeService.ToWhitbyTime(DTO.CreatedAt),
+            IsDeleted = DTO.IsDeleted
         };
     }
 
-    public static UserDto ToDto(this User model)
+    public static UserDTO ToDTO(this User model)
     {
         if (model == null) return null!;
-        return new UserDto
+        return new UserDTO
         {
             Id = string.IsNullOrEmpty(model.Id) ? Guid.Empty : Guid.Parse(model.Id),
             Email = model.Email,
@@ -469,26 +469,26 @@ public static class ModelMappers
         };
     }
 
-    public static UserLog ToModel(this UserLogDto dto)
+    public static UserLog ToModel(this UserLogDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new UserLog
         {
-            Id = dto.Id,
-            UserId = dto.UserId,
-            UserEmail = dto.UserEmail,
-            Action = dto.Action,
-            EntityType = dto.EntityType,
-            EntityId = dto.EntityId,
-            Description = dto.Description,
-            Timestamp = DateTimeService.ToWhitbyTime(dto.Timestamp)
+            Id = DTO.Id,
+            UserId = DTO.UserId,
+            UserEmail = DTO.UserEmail,
+            Action = DTO.Action,
+            EntityType = DTO.EntityType,
+            EntityId = DTO.EntityId,
+            Description = DTO.Description,
+            Timestamp = DateTimeService.ToWhitbyTime(DTO.Timestamp)
         };
     }
 
-    public static UserLogDto ToDto(this UserLog model)
+    public static UserLogDTO ToDTO(this UserLog model)
     {
         if (model == null) return null!;
-        return new UserLogDto
+        return new UserLogDTO
         {
             Id = model.Id,
             UserId = model.UserId,
@@ -501,19 +501,19 @@ public static class ModelMappers
         };
     }
 
-    public static UserRole ToModel(this UserRoleDto dto)
+    public static UserRole ToModel(this UserRoleDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         UserRole model = new UserRole
         {
-            Id = (int)dto.Id,
-            Name = dto.Name,
-            IsDeleted = dto.IsDeleted
+            Id = (int)DTO.Id,
+            Name = DTO.Name,
+            IsDeleted = DTO.IsDeleted
         };
 
-        if (dto.RolePermissions != null && dto.RolePermissions.Any())
+        if (DTO.RolePermissions != null && DTO.RolePermissions.Any())
         {
-            model.Permissions = dto.RolePermissions
+            model.Permissions = DTO.RolePermissions
                 .Where(rp => rp.Permission != null)
                 .Select(rp => rp.Permission!.ToModel())
                 .ToList();
@@ -522,10 +522,10 @@ public static class ModelMappers
         return model;
     }
 
-    public static UserRoleDto ToDto(this UserRole model)
+    public static UserRoleDTO ToDTO(this UserRole model)
     {
         if (model == null) return null!;
-        return new UserRoleDto
+        return new UserRoleDTO
         {
             Id = model.Id,
             Name = model.Name,
@@ -533,23 +533,23 @@ public static class ModelMappers
         };
     }
 
-    public static UserRolesSummaryView ToModel(this UserRolesSummaryViewDto dto)
+    public static UserRolesSummaryView ToModel(this UserRolesSummaryViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new UserRolesSummaryView
         {
-            Id = dto.Id,
-            Email = dto.Email,
-            CreatedAt = DateTimeService.ToWhitbyTime(dto.CreatedAt),
-            RoleNames = dto.RoleNames,
-            IsDeleted = dto.IsDeleted
+            Id = DTO.Id,
+            Email = DTO.Email,
+            CreatedAt = DateTimeService.ToWhitbyTime(DTO.CreatedAt),
+            RoleNames = DTO.RoleNames,
+            IsDeleted = DTO.IsDeleted
         };
     }
 
-    public static UserRolesSummaryViewDto ToDto(this UserRolesSummaryView model)
+    public static UserRolesSummaryViewDTO ToDTO(this UserRolesSummaryView model)
     {
         if (model == null) return null!;
-        return new UserRolesSummaryViewDto
+        return new UserRolesSummaryViewDTO
         {
             Id = model.Id,
             Email = model.Email,
@@ -559,86 +559,86 @@ public static class ModelMappers
         };
     }
 
-    public static UserUserRoles ToModel(this UserUserRolesDto dto)
+    public static UserUserRoles ToModel(this UserUserRolesDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new UserUserRoles
         {
-            UserId = dto.UserId.ToString(),
-            RoleId = (int)dto.RoleId
+            UserId = DTO.UserId.ToString(),
+            RoleId = (int)DTO.RoleId
         };
     }
 
-    public static UserUserRolesDto ToDto(this UserUserRoles model)
+    public static UserUserRolesDTO ToDTO(this UserUserRoles model)
     {
         if (model == null) return null!;
-        return new UserUserRolesDto
+        return new UserUserRolesDTO
         {
             UserId = Guid.Parse(model.UserId),
             RoleId = model.RoleId
         };
     }
 
-    public static TeamStatsSummary ToModel(this TeamStatsSummaryDto dto)
+    public static TeamStatsSummary ToModel(this TeamStatsSummaryDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new TeamStatsSummary
         {
-            PlayerName = dto.PlayerName,
-            GamesPlayed = dto.GamesPlayed,
-            H1B = dto.H1B,
-            H2B = dto.H2B,
-            H3B = dto.H3B,
-            H4B = dto.H4B,
-            HR = dto.HR,
-            FC = dto.FC,
-            BB = dto.BB,
-            SF = dto.SF,
-            K = dto.K,
-            KF = dto.KF,
-            GO = dto.GO,
-            FO = dto.FO,
-            R = dto.R,
-            RBI = dto.RBI
+            PlayerName = DTO.PlayerName,
+            GamesPlayed = DTO.GamesPlayed,
+            H1B = DTO.H1B,
+            H2B = DTO.H2B,
+            H3B = DTO.H3B,
+            H4B = DTO.H4B,
+            HR = DTO.HR,
+            FC = DTO.FC,
+            BB = DTO.BB,
+            SF = DTO.SF,
+            K = DTO.K,
+            KF = DTO.KF,
+            GO = DTO.GO,
+            FO = DTO.FO,
+            R = DTO.R,
+            RBI = DTO.RBI
         };
     }
 
-    public static GameStatsExtendedView ToModel(this GameStatsExtendedViewDto dto)
+    public static GameStatsExtendedView ToModel(this GameStatsExtendedViewDTO DTO)
     {
-        if (dto == null) return null!;
+        if (DTO == null) return null!;
         return new GameStatsExtendedView
         {
-            Id = dto.Id,
-            PlayerId = dto.PlayerId,
-            GameId = dto.GameId,
-            BO = dto.BO,
-            H1B = dto.H1B,
-            H2B = dto.H2B,
-            H3B = dto.H3B,
-            H4B = dto.H4B,
-            HR = dto.HR,
-            FC = dto.FC,
-            BB = dto.BB,
-            SF = dto.SF,
-            K = dto.K,
-            KF = dto.KF,
-            GO = dto.GO,
-            FO = dto.FO,
-            R = dto.R,
-            RBI = dto.RBI,
-            Player = dto.Player?.ToModel(),
-            Game = dto.Game?.ToModel(),
-            PlayerName = dto.PlayerName,
-            SeasonId = dto.SeasonId,
-            GameNumber = dto.GameNumber,
-            Date = DateTimeService.ToWhitbyTime(dto.Date),
-            Diamond = dto.Diamond,
-            IsHome = dto.IsHome,
-            OpponentId = dto.OpponentId,
-            GameType = dto.GameType,
-            GameIsDeleted = dto.GameIsDeleted,
-            OpponentName = dto.OpponentName,
-            OpponentShortName = dto.OpponentShortName
+            Id = DTO.Id,
+            PlayerId = DTO.PlayerId,
+            GameId = DTO.GameId,
+            BO = DTO.BO,
+            H1B = DTO.H1B,
+            H2B = DTO.H2B,
+            H3B = DTO.H3B,
+            H4B = DTO.H4B,
+            HR = DTO.HR,
+            FC = DTO.FC,
+            BB = DTO.BB,
+            SF = DTO.SF,
+            K = DTO.K,
+            KF = DTO.KF,
+            GO = DTO.GO,
+            FO = DTO.FO,
+            R = DTO.R,
+            RBI = DTO.RBI,
+            Player = DTO.Player?.ToModel(),
+            Game = DTO.Game?.ToModel(),
+            PlayerName = DTO.PlayerName,
+            SeasonId = DTO.SeasonId,
+            GameNumber = DTO.GameNumber,
+            Date = DateTimeService.ToWhitbyTime(DTO.Date),
+            Diamond = DTO.Diamond,
+            IsHome = DTO.IsHome,
+            OpponentId = DTO.OpponentId,
+            GameType = DTO.GameType,
+            GameIsDeleted = DTO.GameIsDeleted,
+            OpponentName = DTO.OpponentName,
+            OpponentShortName = DTO.OpponentShortName
         };
     }
 

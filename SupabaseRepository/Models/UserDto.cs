@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("users")]
-public class UserDto : BaseModel
+public class UserDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public Guid Id { get; set; }

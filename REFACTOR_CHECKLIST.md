@@ -4,7 +4,7 @@
 - [ ] **Consolidate Mapping Logic:** Replace manual mapping in `ModelMappers.cs` with a more maintainable approach (e.g., source-generated mappers or refined generic mapping).
 - [x] **Optimize Aggregate Queries:** Moved in-memory LINQ aggregations to Supabase **Database Functions** (`get_player_stats_summary_all`, `get_team_stats_summary_all`) and updated repository to use RPC.
 - [x] **Unify Filter Logic:** Replaced magic numbers (`-1`) with explicit `GetAll*Async` methods across all layers to improve clarity and reduce branching.
-- [ ] **DTO/Model Alignment:** Audit DTOs and Domain models to ensure properties are only duplicated where strictly necessary for the separation of layers.
+- [x] **DTO/Model Alignment:** Renamed all occurrences of `Dto` to `DTO` and verified alignment between Domain models and Repository DTOs for consistency.
 
 ## 2. Service Layer & Abstraction
 - [ ] **Evaluate Pass-Through Services:** Decide whether to keep `StatsService` and `AuthService` as abstractions or inject repositories directly into UI components for simplicity.
@@ -16,6 +16,7 @@
 - [x] **Generic Sorting:** Refactored large `switch` statements for sorting into a dynamic system using the `SortByColumn` extension method.
 - [x] **Loading State Consolidation:** Created a shared `LoadingIndicator` component and standardized loading UI across all pages. Improved `ModelEditor` reactivity with immediate feedback during save operations.
 - [x] **Consistent Result Handling:** Created a reusable `GameResultBadge` component to unify "Win/Loss/Tie" logic and styling across all stats views.
+- [x] **Restore Checkbox Styling:** Restored original CSS for selectable button checkboxes to fix double checkboxes and non-uniform sizing.
 
 ## 4. Technical Debt & Consistency
 - [x] **Centralize Timezone Logic:** Moved `ToWhitbyTime` logic from the mapper into a dedicated `DateTimeService` in the Domain project to ensure consistent timezone handling across all layers.

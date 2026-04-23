@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("useruserroles")]
-public class UserUserRolesDto : BaseModel
+public class UserUserRolesDTO : BaseModel
 {
     [PrimaryKey("userid", false)]
     [Column("userid")]

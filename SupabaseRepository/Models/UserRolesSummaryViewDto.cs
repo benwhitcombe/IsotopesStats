@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_user_roles_summary")]
-public class UserRolesSummaryViewDto : BaseModel
+public class UserRolesSummaryViewDTO : BaseModel
 {
     [PrimaryKey("userid", false)]
     public string Id { get; set; } = string.Empty;

@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("userlogs")]
-public class UserLogDto : BaseModel
+public class UserLogDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
