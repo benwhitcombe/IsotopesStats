@@ -9,11 +9,11 @@ public class RolePermissionDTO : BaseModel
 {
     [PrimaryKey("roleid", false)]
     [Column("roleid")]
-    public long RoleId { get; set; }
+    public int RoleId { get; set; }
 
     [PrimaryKey("permissionid", false)]
     [Column("permissionid")]
-    public long PermissionId { get; set; }
+    public int PermissionId { get; set; }
 
     [Reference(typeof(PermissionDTO), useInnerJoin: false)]
     public PermissionDTO? Permission { get; set; }

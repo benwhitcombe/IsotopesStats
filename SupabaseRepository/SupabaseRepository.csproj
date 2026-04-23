@@ -3,6 +3,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.JSInterop" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
     <PackageReference Include="supabase-csharp" Version="0.16.2" />
   </ItemGroup>
 

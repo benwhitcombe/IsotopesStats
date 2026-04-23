@@ -9,8 +9,8 @@ public class UserUserRolesDTO : BaseModel
 {
     [PrimaryKey("userid", false)]
     [Column("userid")]
-    public Guid UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
 
     [Column("roleid")]
-    public long RoleId { get; set; }
+    public int RoleId { get; set; }
 }

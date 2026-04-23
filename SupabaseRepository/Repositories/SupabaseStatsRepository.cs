@@ -16,6 +16,7 @@ namespace SupabaseRepository.Repositories;
 public class SupabaseStatsRepository : IStatsRepository
 {
     private readonly Supabase.Client _supabase;
+    private readonly SupabaseMapper _mapper = new();
 
     public SupabaseStatsRepository(Supabase.Client supabase)
     {
@@ -29,25 +30,24 @@ public class SupabaseStatsRepository : IStatsRepository
             .Where(x => x.IsDeleted == false)
             .Order("name", Postgrest.Constants.Ordering.Descending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<int> AddSeasonAsync(Season season)
     {
-        ModeledResponse<SeasonDTO> response = await _supabase.From<SeasonDTO>().Insert(season.ToDTO());
+        ModeledResponse<SeasonDTO> response = await _supabase.From<SeasonDTO>().Insert(_mapper.ToDTO(season));
         return response.Model?.Id ?? 0;
     }
 
     public async Task UpdateSeasonAsync(Season season)
     {
-        Season update = new Season { Id = season.Id, Name = season.Name, IsDeleted = season.IsDeleted };
-        await _supabase.From<SeasonDTO>().Update(update.ToDTO());
+        await _supabase.From<SeasonDTO>().Update(_mapper.ToDTO(season));
     }
 
     public async Task DeleteSeasonAsync(int seasonId)
     {
         Season season = new Season { Id = seasonId, IsDeleted = true };
-        await _supabase.From<SeasonDTO>().Update(season.ToDTO());
+        await _supabase.From<SeasonDTO>().Update(_mapper.ToDTO(season));
     }
 
     public async Task<bool> IsSeasonNameUniqueAsync(string name, int excludeId = 0)
@@ -67,7 +67,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Where(x => x.IsDeleted == false)
             .Order("name", Postgrest.Constants.Ordering.Ascending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<Player>> GetPlayersAsync(int seasonId)
@@ -75,56 +75,51 @@ public class SupabaseStatsRepository : IStatsRepository
         ModeledResponse<SeasonPlayerViewDTO> response = await _supabase.From<SeasonPlayerViewDTO>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Get();
-        
-        List<Player> players = new List<Player>();
-        foreach (SeasonPlayerViewDTO sp in response.Models)
-        {
-            players.Add(new Player { Id = sp.PlayerId, Name = sp.PlayerName });
-        }
-        return players;
+            
+        // Map manually because domain Player model doesn't match the view model property names
+        return response.Models.Select(sp => new Player { Id = sp.PlayerId, Name = sp.PlayerName }).OrderBy(p => p.Name).ToList();
     }
 
     public async Task<int> AddPlayerAsync(Player player, int seasonId)
     {
-        if (seasonId == 0)
+        int playerId = player.Id;
+        if (player.Id == 0)
         {
-            ModeledResponse<PlayerDTO> insertResponse = await _supabase.From<PlayerDTO>().Insert(player.ToDTO());
-            return insertResponse.Model?.Id ?? 0;
+            ModeledResponse<PlayerDTO> insertResponse = await _supabase.From<PlayerDTO>().Insert(_mapper.ToDTO(player));
+            playerId = insertResponse.Model?.Id ?? 0;
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>
+        if (seasonId != 0 && playerId != 0)
         {
-            { "p_name", player.Name },
-            { "p_season_id", seasonId }
-        };
+            SeasonPlayers link = new SeasonPlayers { SeasonId = seasonId, PlayerId = playerId };
+            await _supabase.From<SeasonPlayersDTO>().Insert(_mapper.ToDTO(link));
+        }
 
-        BaseResponse rpcResponse = await _supabase.Rpc("add_player_to_season", parameters);
-        return string.IsNullOrEmpty(rpcResponse.Content) ? 0 : JsonConvert.DeserializeObject<int>(rpcResponse.Content);
+        return playerId;
     }
 
     public async Task UpdatePlayerAsync(Player player)
     {
-        Player update = new Player { Id = player.Id, Name = player.Name, IsDeleted = player.IsDeleted };
-        await _supabase.From<PlayerDTO>().Update(update.ToDTO());
+        await _supabase.From<PlayerDTO>().Update(_mapper.ToDTO(player));
     }
 
     public async Task DeletePlayerAsync(int playerId)
     {
         Player player = new Player { Id = playerId, IsDeleted = true };
-        await _supabase.From<PlayerDTO>().Update(player.ToDTO());
+        await _supabase.From<PlayerDTO>().Update(_mapper.ToDTO(player));
     }
 
     public async Task AddPlayerToSeasonAsync(int playerId, int seasonId)
     {
-        SeasonPlayers link = new SeasonPlayers { PlayerId = playerId, SeasonId = seasonId };
-        await _supabase.From<SeasonPlayersDTO>().Insert(link.ToDTO());
+        SeasonPlayers link = new SeasonPlayers { SeasonId = seasonId, PlayerId = playerId };
+        await _supabase.From<SeasonPlayersDTO>().Insert(_mapper.ToDTO(link));
     }
 
     public async Task DeletePlayerFromSeasonAsync(int playerId, int seasonId)
     {
         await _supabase.From<SeasonPlayersDTO>()
-            .Filter("playerid", Postgrest.Constants.Operator.Equals, playerId)
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
+            .Filter("playerid", Postgrest.Constants.Operator.Equals, playerId)
             .Delete();
     }
 
@@ -150,7 +145,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Where(x => x.IsDeleted == false)
             .Order("name", Postgrest.Constants.Ordering.Ascending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<Opponent>> GetOpponentsAsync(int seasonId)
@@ -158,51 +153,38 @@ public class SupabaseStatsRepository : IStatsRepository
         ModeledResponse<SeasonOpponentViewDTO> response = await _supabase.From<SeasonOpponentViewDTO>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Get();
-        
-        List<Opponent> opponents = new List<Opponent>();
-        foreach (SeasonOpponentViewDTO sov in response.Models)
-        {
-            opponents.Add(new Opponent { 
-                Id = sov.OpponentId, 
-                Name = sov.OpponentName,
-                ShortName = sov.OpponentShortName
-            });
-        }
-        return opponents.OrderBy(o => o.Name).ToList();
+
+        // Map manually because domain Opponent model doesn't match the view model property names
+        return response.Models.Select(sov => new Opponent { Id = sov.OpponentId, Name = sov.OpponentName, ShortName = sov.OpponentShortName }).OrderBy(o => o.Name).ToList();
     }
 
     public async Task<int> AddOpponentAsync(Opponent opponent, int seasonId)
     {
-        if (seasonId == 0)
+        int opponentId = opponent.Id;
+        if (opponent.Id == 0)
         {
-            ModeledResponse<OpponentDTO> insertResponse = await _supabase.From<OpponentDTO>().Insert(opponent.ToDTO());
-            return insertResponse.Model?.Id ?? 0;
+            ModeledResponse<OpponentDTO> insertResponse = await _supabase.From<OpponentDTO>().Insert(_mapper.ToDTO(opponent));
+            opponentId = insertResponse.Model?.Id ?? 0;
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>
+        if (seasonId != 0 && opponentId != 0)
         {
-            { "p_name", opponent.Name },
-            { "p_season_id", seasonId }
-        };
+            SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = opponent.Name, ShortName = opponent.ShortName };
+            await _supabase.From<SeasonOpponentsDTO>().Insert(_mapper.ToDTO(link));
+        }
 
-        BaseResponse rpcResponse = await _supabase.Rpc("add_opponent_to_season", parameters);
-        return string.IsNullOrEmpty(rpcResponse.Content) ? 0 : JsonConvert.DeserializeObject<int>(rpcResponse.Content);
+        return opponentId;
     }
 
     public async Task UpdateOpponentAsync(Opponent opponent)
     {
-        Opponent update = new Opponent { Id = opponent.Id, Name = opponent.Name, ShortName = opponent.ShortName, IsDeleted = opponent.IsDeleted };
-        await _supabase.From<OpponentDTO>().Update(update.ToDTO());
+        await _supabase.From<OpponentDTO>().Update(_mapper.ToDTO(opponent));
     }
 
     public async Task DeleteOpponentAsync(int opponentId)
     {
-        OpponentDTO? existing = await _supabase.From<OpponentDTO>().Where(x => x.Id == opponentId).Single();
-        if (existing != null)
-        {
-            existing.IsDeleted = true;
-            await _supabase.From<OpponentDTO>().Update(existing);
-        }
+        Opponent opponent = new Opponent { Id = opponentId, IsDeleted = true };
+        await _supabase.From<OpponentDTO>().Update(_mapper.ToDTO(opponent));
     }
 
     public async Task<bool> IsOpponentNameUniqueAsync(string name, int excludeId = 0)
@@ -220,25 +202,26 @@ public class SupabaseStatsRepository : IStatsRepository
         ModeledResponse<SeasonOpponentsDTO> response = await _supabase.From<SeasonOpponentsDTO>()
             .Filter("opponentid", Postgrest.Constants.Operator.Equals, opponentId)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null, string? shortName = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (string.IsNullOrEmpty(name))
         {
             OpponentDTO? master = await _supabase.From<OpponentDTO>().Where(x => x.Id == opponentId).Single();
-            name = master?.Name;
+            name = master?.Name ?? "Unknown";
+            shortName = master?.ShortName;
         }
         SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = name, ShortName = shortName };
-        await _supabase.From<SeasonOpponentsDTO>().Insert(link.ToDTO());
+        await _supabase.From<SeasonOpponentsDTO>().Insert(_mapper.ToDTO(link));
     }
 
     public async Task DeleteOpponentFromSeasonAsync(int opponentId, int seasonId)
     {
         await _supabase.From<SeasonOpponentsDTO>()
-            .Filter("opponentid", Postgrest.Constants.Operator.Equals, opponentId)
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
+            .Filter("opponentid", Postgrest.Constants.Operator.Equals, opponentId)
             .Delete();
     }
 
@@ -248,43 +231,26 @@ public class SupabaseStatsRepository : IStatsRepository
         GameDTO? gameDTO = await _supabase.From<GameDTO>()
             .Filter("id", Postgrest.Constants.Operator.Equals, gameId)
             .Single();
-        return gameDTO?.ToModel();
+        return gameDTO != null ? _mapper.ToModel(gameDTO) : null;
     }
 
     public async Task<List<Game>> GetGamesBySeasonAsync(int seasonId)
     {
-        ModeledResponse<GameManagementViewDTO> response = await _supabase.From<GameManagementViewDTO>()
+        ModeledResponse<GameDTO> response = await _supabase.From<GameDTO>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
+            .Where(x => x.IsDeleted == false)
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
-        
-        List<Game> games = new List<Game>();
-        foreach (GameManagementViewDTO v in response.Models)
-        {
-            games.Add(new Game {
-                Id = v.Id,
-                SeasonId = v.SeasonId,
-                GameNumber = v.GameNumber,
-                Date = v.Date,
-                Diamond = v.Diamond,
-                IsHome = v.IsHome,
-                OpponentId = v.OpponentId,
-                Type = v.GameType,
-                IsDeleted = v.IsDeleted,
-                Opponent = new Opponent { Id = v.OpponentId, Name = v.OpponentName }
-            });
-        }
-        return games;
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<StatEntry>> GetGameStatsAsync(int gameId)
     {
         ModeledResponse<StatEntryDTO> response = await _supabase.From<StatEntryDTO>()
-            .Select("*, Player:players(*)")
-            .Where(x => x.GameId == gameId)
+            .Filter("gameid", Postgrest.Constants.Operator.Equals, gameId)
             .Order("bo", Postgrest.Constants.Ordering.Ascending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<PlayerStatsSummary>> GetStatsSummaryAsync(int seasonId)
@@ -295,7 +261,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Get();
             
-        List<PlayerStatsSummary> stats = response.Models.Select(x => x.ToModel()).ToList();
+        List<PlayerStatsSummary> stats = response.Models.Select(x => _mapper.ToModel(x)).ToList();
         
         return players.Where(p => p.Name != "Spare")
             .Select(p => stats.FirstOrDefault(s => s.PlayerName == p.Name) ?? new PlayerStatsSummary { PlayerName = p.Name })
@@ -307,11 +273,11 @@ public class SupabaseStatsRepository : IStatsRepository
         List<Player> players = await GetAllPlayersAsync();
         
         BaseResponse response = await _supabase.Rpc("get_player_stats_summary_all", null);
-        List<PlayerStatsSummaryDTO> DTOs = string.IsNullOrEmpty(response.Content) 
+        List<PlayerStatsSummaryDTO> dtos = string.IsNullOrEmpty(response.Content) 
             ? new List<PlayerStatsSummaryDTO>() 
             : JsonConvert.DeserializeObject<List<PlayerStatsSummaryDTO>>(response.Content) ?? new List<PlayerStatsSummaryDTO>();
 
-        List<PlayerStatsSummary> aggregatedStats = DTOs.Select(x => x.ToModel()).ToList();
+        List<PlayerStatsSummary> aggregatedStats = dtos.Select(x => _mapper.ToModel(x)).ToList();
             
         return players.Where(p => p.Name != "Spare")
             .Select(p => aggregatedStats.FirstOrDefault(s => s.PlayerName == p.Name) ?? new PlayerStatsSummary { PlayerName = p.Name })
@@ -323,26 +289,35 @@ public class SupabaseStatsRepository : IStatsRepository
         TeamStatsSummaryDTO? result = await _supabase.From<TeamStatsSummaryDTO>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Single();
-        return result?.ToModel() ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
+        return result != null ? _mapper.ToModel(result) : new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
     }
 
     public async Task<PlayerStatsSummary> GetAllTeamTotalsAsync()
     {
         BaseResponse response = await _supabase.Rpc("get_team_stats_summary_all", null);
-        List<PlayerStatsSummaryDTO> DTOs = string.IsNullOrEmpty(response.Content) 
+        List<PlayerStatsSummaryDTO> dtos = string.IsNullOrEmpty(response.Content) 
             ? new List<PlayerStatsSummaryDTO>() 
             : JsonConvert.DeserializeObject<List<PlayerStatsSummaryDTO>>(response.Content) ?? new List<PlayerStatsSummaryDTO>();
             
-        return DTOs.FirstOrDefault()?.ToModel() ?? new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
+        return dtos.Any() ? _mapper.ToModel(dtos.First()) : new TeamStatsSummary { PlayerName = "TEAM TOTALS" };
+    }
+
+    public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)
+    {
+        ModeledResponse<GameStatsExtendedViewDTO> response = await _supabase.From<GameStatsExtendedViewDTO>()
+            .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
+            .Where(x => x.GameIsDeleted == false)
+            .Order("date", Postgrest.Constants.Ordering.Descending)
+            .Get();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<int> GetMostRecentStatsSeasonIdAsync()
     {
-        ModeledResponse<GameStatsExtendedViewDTO> response = await _supabase.From<GameStatsExtendedViewDTO>()
-            .Order("gameid", Postgrest.Constants.Ordering.Descending)
+        ModeledResponse<GameDTO> response = await _supabase.From<GameDTO>()
+            .Order("date", Postgrest.Constants.Ordering.Descending)
             .Limit(1)
             .Get();
-        
         return response.Model?.SeasonId ?? 0;
     }
 
@@ -357,7 +332,7 @@ public class SupabaseStatsRepository : IStatsRepository
             { "p_ishome", game.IsHome },
             { "p_opponent_id", game.OpponentId },
             { "p_type", (int)game.Type },
-            { "p_stats", stats.Select(s => s.ToDTO()).ToList() }
+            { "p_stats", stats.Select(s => _mapper.ToDTO(s)).ToList() }
         };
 
         await _supabase.Rpc("create_game_with_stats", parameters);
@@ -375,28 +350,27 @@ public class SupabaseStatsRepository : IStatsRepository
             { "p_ishome", game.IsHome },
             { "p_opponent_id", game.OpponentId },
             { "p_type", (int)game.Type },
-            { "p_is_deleted", game.IsDeleted },
-            { "p_stats", stats.Select(s => s.ToDTO()).ToList() }
+            { "p_stats", stats.Select(s => _mapper.ToDTO(s)).ToList() }
         };
 
         await _supabase.Rpc("update_game_with_stats", parameters);
+        await _supabase.From<GameDTO>().Update(_mapper.ToDTO(game));
     }
 
     public async Task DeleteGameAsync(int gameId)
     {
         Game game = new Game { Id = gameId, IsDeleted = true };
-        await _supabase.From<GameDTO>().Update(game.ToDTO());
+        await _supabase.From<GameDTO>().Update(_mapper.ToDTO(game));
     }
 
-    public async Task<List<GameStatsExtendedView>> GetAllGameStatsAsync(int seasonId)
+    public async Task<int> GetNextGameNumberAsync(int seasonId)
     {
-        ModeledResponse<GameStatsExtendedViewDTO> response = await _supabase.From<GameStatsExtendedViewDTO>()
+        ModeledResponse<GameDTO> response = await _supabase.From<GameDTO>()
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
-            .Where(x => x.GameIsDeleted == false)
-            .Order("date", Postgrest.Constants.Ordering.Descending)
-            .Order("bo", Postgrest.Constants.Ordering.Ascending)
+            .Order("gamenumber", Postgrest.Constants.Ordering.Descending)
+            .Limit(1)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return (response.Model?.GameNumber ?? 0) + 1;
     }
 
     public async Task<List<GameStatsExtendedView>> GetPlayerGameLogAsync(string playerName, int seasonId)
@@ -407,7 +381,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Where(x => x.GameIsDeleted == false)
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<GameStatsExtendedView>> GetAllPlayerGameLogAsync(string playerName)
@@ -417,19 +391,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Where(x => x.GameIsDeleted == false)
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
-    }
-
-    public async Task<int> GetNextGameNumberAsync(int seasonId)
-    {
-        ModeledResponse<GameDTO> response = await _supabase.From<GameDTO>()
-            .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
-            .Where(x => x.IsDeleted == false)
-            .Order("gamenumber", Postgrest.Constants.Ordering.Descending)
-            .Limit(1)
-            .Get();
-        
-        return (response.Model?.GameNumber ?? 0) + 1;
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<GameSummaryView>> GetGameSummariesAsync(int seasonId)
@@ -438,7 +400,7 @@ public class SupabaseStatsRepository : IStatsRepository
             .Filter("seasonid", Postgrest.Constants.Operator.Equals, seasonId)
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<GameSummaryView>> GetAllGameSummariesAsync()
@@ -446,7 +408,7 @@ public class SupabaseStatsRepository : IStatsRepository
         ModeledResponse<GameSummaryViewDTO> response = await _supabase.From<GameSummaryViewDTO>()
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId)
@@ -455,6 +417,6 @@ public class SupabaseStatsRepository : IStatsRepository
             .Filter("gameid", Postgrest.Constants.Operator.Equals, gameId)
             .Order("bo", Postgrest.Constants.Ordering.Ascending)
             .Get();
-        return response.Models.Select(x => x.ToModel()).ToList();
+        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 }
