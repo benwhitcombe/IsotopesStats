@@ -939,16 +939,75 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !important; margin: 0 !important; }
 
 /* Selectable Button Checkboxes */
-.selectable-grid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important; gap: 0.75rem !important; }
-.selectable-label {
-    display: flex !important; align-items: center !important; justify-content: center !important;
-    padding: 0.75rem 50px !important; background: #fff !important; border: 2px solid #eee !important; border-radius: 12px !important;
-    cursor: pointer !important; font-weight: 600 !important; text-align: center !important; user-select: none !important;
-    min-height: 50px !important; width: 100% !important; position: relative !important;
+.selectable-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    grid-auto-rows: 1fr !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
 }
-.selectable-label::before { position: absolute !important; left: 8px !important; content: '\2610' !important; font-size: 1.2rem !important; color: #ccc !important; }
-.selectable-item input[type="checkbox"]:checked + .selectable-label { background: var(--isotopes-accent) !important; color: white !important; }
-.selectable-item input[type="checkbox"]:checked + .selectable-label::before { content: '\2611' !important; color: white !important; }
+
+.selectable-item {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.selectable-item input[type="checkbox"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+}
+
+.selectable-label {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.75rem 50px !important;
+    background: #fff !important;
+    border: 2px solid #eee !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    transition: all 0.2s !important;
+    user-select: none !important;
+    font-size: 0.85rem !important;
+    margin: 0 !important;
+    min-height: 50px !important;
+    height: 100% !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+.selectable-label::before {
+    position: absolute !important;
+    left: 8px !important;
+    content: '\2610' !important;
+    font-size: 1.2rem !important;
+    color: #ccc !important;
+    font-weight: normal !important;
+    transition: all 0.2s !important;
+}
+
+.selectable-item input[type="checkbox"]:checked + .selectable-label {
+    background: var(--isotopes-accent) !important;
+    border-color: var(--isotopes-accent) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 70, 132, 0.3) !important;
+}
+
+.selectable-item input[type="checkbox"]:checked + .selectable-label::before {
+    content: '\2611' !important;
+    color: white !important;
+}
+
+.selectable-label:hover {
+    border-color: var(--isotopes-accent) !important;
+}
 
 /* Hamburger Menu & Mobile Drawer */
 .hamburger-btn {
