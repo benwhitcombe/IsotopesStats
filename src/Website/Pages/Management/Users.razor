@@ -1,0 +1,311 @@
+@page "/management/users"
+@page "/management/users/{Action}"
+@page "/management/users/{Action}/{Id}"
+@using IsotopesStats.Website.Services
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Shared
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize(Policy = "Manage Users")]
+@inject IAuthRepository IAuthRepository
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject SessionStorageService SessionStorage
+
+<PageTitle>Isotopes - Manage Users</PageTitle>
+
+<DeleteManager TItem="UserRolesSummaryView" TId="string" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="DeleteUserByIdAsync" />
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Manage Users</h3>
+    @if (!isEditing)
+    {
+        <button class="view-btn active" @onclick='() => StartEdit("add", "")'>Add New User</button>
+    }
+</div>
+
+@if (isEditing)
+{
+    <ModelEditor 
+        TItem="UserEditViewModel"
+        @ref="modelEditor"
+        Title="@($"{(string.IsNullOrEmpty(editViewModel.Id) ? "Add New" : "Edit")} User")"
+        Item="editViewModel"
+        OriginalItem="originalViewModel"
+        BasePath="/management/users"
+        OnSave="SaveUser"
+        OnDelete="DeleteUser"
+        CheckUniqueAsync="CheckEmailUnique">
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label>Email Address</label>
+                <InputText class="form-control" @bind-Value="editViewModel.Email" placeholder="user@example.com" />
+                <ValidationMessage For="@(() => editViewModel.Email)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
+            </div>
+
+            @if (string.IsNullOrEmpty(editViewModel.Id))
+            {
+                <div class="stat-card" style="background: #e7f3ff; border: 1px solid #bde0ff; padding: 1.25rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="font-size: 1.5rem;">Ã°Å¸â€œÂ§</div>
+                        <div>
+                            <h6 style="margin: 0 0 0.25rem 0; font-weight: bold; color: #004085;">Invitation Email</h6>
+                            <p style="margin: 0; font-size: 0.8rem; color: #004085; line-height: 1.4;">
+                                A Supabase invitation email will be sent to this address. 
+                                The user will be prompted to set their own password upon clicking the link.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Assigned Roles</label>
+                <div class="selectable-grid">
+                    @foreach (UserRole role in availableRoles)
+                    {
+                        <CheckboxButton 
+                            Id="@($"role-{role.Id}")" 
+                            Text="@role.Name" 
+                            Checked="@editViewModel.RoleIds.Contains(role.Id)" 
+                            CheckedChanged="@((bool val) => ToggleRole(role.Id, val))" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(saveError))
+        {
+            <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
+                @saveError
+            </div>
+        }
+    </ModelEditor>
+}
+else
+{
+    <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Email</th>
+                        <th style="text-align: left;">Roles</th>
+                        <th style="text-align: left;">Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (UserRolesSummaryView user in users)
+                    {
+                        <tr>
+                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
+                            <td style="text-align: left;">
+                                @if (string.IsNullOrEmpty(user.RoleNames))
+                                {
+                                    <span style="color: #ccc; font-style: italic;">No roles assigned</span>
+                                }
+                                else
+                                {
+                                    @foreach (string role in user.RoleNames.Split(", "))
+                                    {
+                                        <span class="badge bg-light text-dark" style="margin-right: 4px; border: 1px solid #eee;">@role</span>
+                                    }
+                                }
+                            </td>
+                            <td style="text-align: left; font-size: 0.85rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+                            <td style="text-align: right;">
+                                <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
+                                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Action { get; set; }
+    [Parameter] public string? Id { get; set; }
+
+    private DeleteManager<UserRolesSummaryView, string> deleteManager = null!;
+    private List<UserRolesSummaryView> users = new();
+    private List<UserRole> availableRoles = new();
+    private UserEditViewModel editViewModel = new UserEditViewModel();
+    private UserEditViewModel originalViewModel = new UserEditViewModel();
+    private bool isEditing = false;
+    private string? saveError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableRoles = await IAuthRepository.GetUserRolesAsync(true);
+        await LoadData();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        bool wasEditing = isEditing;
+        bool nextEditing = Action == "add" || Action == "edit";
+
+        if (nextEditing)
+        {
+            if (Action == "edit" && !string.IsNullOrEmpty(Id))
+            {
+                if (!wasEditing || Id != editViewModel.Id)
+                {
+                    isEditing = false;
+                    await LoadEditingUser();
+                }
+            }
+            else if (Action == "add" && !wasEditing)
+            {
+                isEditing = false;
+                await LoadNewUser();
+            }
+        }
+        else
+        {
+            editViewModel = new UserEditViewModel();
+            originalViewModel = new UserEditViewModel();
+        }
+
+        isEditing = nextEditing;
+    }
+
+    private async Task LoadNewUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        editViewModel = new UserEditViewModel();
+        originalViewModel = new UserEditViewModel();
+        await HydrateTempState();
+    }
+
+    private async Task LoadEditingUser()
+    {
+        try { await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+        
+        UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
+        if (userView == null)
+        {
+            userView = (await IAuthRepository.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
+        }
+
+        if (userView != null)
+        {
+            editViewModel = new UserEditViewModel
+            {
+                Id = userView.Id,
+                Email = userView.Email,
+                RoleIds = userView.RoleNames?.Split(", ")
+                    .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
+                    .Where(id => id != 0).ToList() ?? new List<int>()
+            };
+            originalViewModel = editViewModel with { RoleIds = new List<int>(editViewModel.RoleIds) };
+        }
+        await HydrateTempState();
+    }
+
+    private async Task HydrateTempState()
+    {
+        try
+        {
+            UserEditViewModel? persisted = await SessionStorage.GetItemAsync<UserEditViewModel>($"EditState_UserEdit_{Id ?? "0"}");
+            if (persisted != null)
+            {
+                editViewModel = persisted;
+                StateHasChanged();
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadData()
+    {
+        users = await IAuthRepository.GetUsersAsync();
+    }
+
+    private void StartEdit(string action, string id)
+    {
+        saveError = null;
+        if (action == "add") Navigation.NavigateTo("/management/users/add");
+        else Navigation.NavigateTo($"/management/users/edit/{id}");
+    }
+
+    private async Task ToggleRole(int roleId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!editViewModel.RoleIds.Contains(roleId)) editViewModel.RoleIds.Add(roleId);
+        }
+        else
+        {
+            editViewModel.RoleIds.Remove(roleId);
+        }
+        await modelEditor.SaveTempState();
+    }
+
+    private async Task<string?> CheckEmailUnique(UserEditViewModel model)
+    {
+        bool isUnique = await IAuthRepository.IsEmailUniqueAsync(model.Email, model.Id);
+        return isUnique ? null : "This email address is already in use.";
+    }
+
+    private async Task SaveUser()
+    {
+        saveError = null;
+        if (string.IsNullOrEmpty(editViewModel.Id))
+        {
+            bool success = await IAuthRepository.RegisterAsync(editViewModel.Email, editViewModel.RoleIds);
+            if (!success)
+            {
+                saveError = "Failed to create user. Please check if the email is valid and try again.";
+                return;
+            }
+        }
+        else
+        {
+            User user = new User { Id = editViewModel.Id, Email = editViewModel.Email };
+            await IAuthRepository.UpdateUserAsync(user, editViewModel.RoleIds);
+        }
+
+        await LoadData();
+    }
+
+    private async Task DeleteUser()
+    {
+        await IAuthRepository.DeleteUserAsync(editViewModel.Id);
+        await LoadData();
+    }
+
+    private async Task DeleteUserByIdAsync(string id)
+    {
+        await IAuthRepository.DeleteUserAsync(id);
+    }
+
+    private ModelEditor<UserEditViewModel> modelEditor = null!;
+
+    public record UserEditViewModel : IEntity<string>
+    {
+        public string Id { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = "";
+
+        public List<int> RoleIds { get; set; } = new();
+
+        public virtual bool Equals(UserEditViewModel? other)
+        {
+            if (other is null) return false;
+            return Id == other.Id && 
+                   Email == other.Email && 
+                   RoleIds.OrderBy(id => id).SequenceEqual(other.RoleIds.OrderBy(id => id));
+        }
+
+        public override int GetHashCode() => Id?.GetHashCode() ?? 0;
+    }
+}
+

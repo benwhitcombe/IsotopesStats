@@ -1,13 +1,13 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36109.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IsotopesStats", "IsotopesStats\IsotopesStats.csproj", "{C030088D-DDF0-03CD-3DEC-267E7BB033FA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Website", "src\Website\Website.csproj", "{C030088D-DDF0-03CD-3DEC-267E7BB033FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupabaseRepository", "SupabaseRepository\SupabaseRepository.csproj", "{86E25F01-3BA0-4E88-AF3E-82B7CF8348AB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupabaseRepository", "src\SupabaseRepository\SupabaseRepository.csproj", "{86E25F01-3BA0-4E88-AF3E-82B7CF8348AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IsotopesStats.Domain", "IsotopesStats.Domain\IsotopesStats.Domain.csproj", "{824E7860-F099-4114-8FD9-451EF77903E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{824E7860-F099-4114-8FD9-451EF77903E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

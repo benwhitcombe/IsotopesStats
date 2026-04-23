@@ -1,0 +1,120 @@
+@page "/account/login"
+@using IsotopesStats.Website.Services
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Shared
+@inject IAuthRepository IAuthRepository
+@inject CustomAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject SharedSessionState SharedState
+
+<PageTitle>Isotopes - Login</PageTitle>
+
+<div style="max-width: 450px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="stat-card view-fade-in" style="padding: 2.5rem; position: relative; overflow: hidden;">
+        @if (isAuthorizing)
+        {
+            <div class="view-fade-in" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
+                <div class="spinner-border text-danger" style="width: 3rem; height: 3rem; border-width: 0.35rem;" role="status"></div>
+                <h5 style="color: var(--isotopes-dark); font-weight: 800; letter-spacing: 1px; margin: 0;">AUTHORIZING...</h5>
+            </div>
+        }
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔑</div>
+            <h3 style="margin:0; color: var(--isotopes-dark); font-weight: 800; letter-spacing: 1px;">ISOTOPES LOGIN</h3>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Sign in to your account</p>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
+                @errorMessage
+            </div>
+        }
+
+        <div class="form-group">
+            <label style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #888;">Email Address</label>
+            <input type="email" class="form-control" @bind="email" disabled="@isAuthorizing" placeholder="email@isotopes.com" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s;" />
+        </div>
+
+        <div class="form-group" style="margin-top: 1.5rem; position: relative;">
+            <label style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #888;">Password</label>
+            <div style="position: relative;">
+                <input type="@(showPassword ? "text" : "password")" class="form-control" @bind="password" disabled="@isAuthorizing" @onkeyup="HandleKeyUp" style="padding: 1rem; border-radius: 12px; border: 2px solid #eee; transition: border-color 0.3s; padding-right: 3rem;" />
+                <button type="button" @onclick="() => showPassword = !showPassword" disabled="@isAuthorizing" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center;">
+                    <PasswordToggleIcon IsVisible="@showPassword" />
+                </button>
+            </div>
+        </div>
+
+        <button class="view-btn active @(isAuthorizing ? "loading" : "")" @onclick="HandleLogin" disabled="@isAuthorizing" style="margin-top: 2rem; width: 100%; padding: 1rem; font-size: 1.1rem; background-color: var(--isotopes-accent); border-color: var(--isotopes-accent);">
+            @(isAuthorizing ? "Signing in..." : "Sign In")
+        </button>
+        
+        <div style="text-align: center; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <a href="/account/forgot-password" style="font-size: 0.9rem; color: #888; text-decoration: none; font-weight: 600; pointer-events: @(isAuthorizing ? "none" : "auto"); opacity: @(isAuthorizing ? "0.5" : "1");">Forgot your password?</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private string email = "";
+    private string password = "";
+    private string errorMessage = "";
+    private bool showPassword = false;
+    private bool isAuthorizing = false;
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password))
+        {
+            errorMessage = "Please enter your email and password.";
+            return;
+        }
+
+        errorMessage = "";
+        isAuthorizing = true;
+        
+        try
+        {
+            User? user = await IAuthRepository.LoginAsync(email, password);
+            
+            if (user != null)
+            {
+                SharedState.OpenMenuOnLoad = true;
+
+                if (!string.IsNullOrEmpty(ReturnUrl))
+                {
+                    Navigation.NavigateTo(ReturnUrl);
+                }
+                else
+                {
+                    Navigation.NavigateTo("/");
+                }
+            }
+            else
+            {
+                errorMessage = "Invalid email or password.";
+                isAuthorizing = false;
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "An unexpected error occurred. Please try again.";
+            isAuthorizing = false;
+        }
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !isAuthorizing)
+        {
+            await HandleLogin();
+        }
+    }
+}
+

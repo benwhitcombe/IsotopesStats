@@ -1,0 +1,167 @@
+@page "/account/profile"
+@using IsotopesStats.Website.Services
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Shared
+@attribute [Authorize]
+@inject IAuthRepository IAuthRepository
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Isotopes - My Profile</PageTitle>
+
+@if (currentUser == null)
+{
+    <div style="text-align: center; padding: 5rem;">
+        <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="stat-card view-fade-in" style="max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="width: 80px; height: 80px; background: var(--isotopes-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; margin: 0 auto 1rem auto; box-shadow: 0 10px 20px rgba(237, 28, 36, 0.2);">
+                @currentUser.Email[0].ToString().ToUpper()
+            </div>
+            <h3 style="margin: 0;">My Profile</h3>
+            <p style="color: #666; margin-top: 0.5rem;">@currentUser.Email</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">Email Address</label>
+                <div class="form-control" style="background: #f8f9fa; border-color: #eee; color: #666;">@currentUser.Email</div>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">Account Created</label>
+                <div class="form-control" style="background: #f8f9fa; border-color: #eee; color: #666;">@currentUser.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")</div>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">My Roles</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.25rem 0;">
+                    @if (string.IsNullOrEmpty(currentUser.RoleNames))
+                    {
+                        <span style="color: #ccc; font-style: italic;">No roles assigned</span>
+                    }
+                    else
+                    {
+                        @foreach (string role in currentUser.RoleNames.Split(", "))
+                        {
+                            <span class="badge bg-light text-dark" style="padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #eee; font-weight: 600;">@role</span>
+                        }
+                    }
+                </div>
+            </div>
+
+            <hr style="margin: 1rem 0; border-color: #eee;" />
+
+            <div style="background: #fffcf0; border: 1px solid #ffeeba; padding: 1.5rem; border-radius: 12px;">
+                <h5 style="margin: 0 0 1rem 0; font-weight: bold; color: #856404;">Change Password</h5>
+                
+                @if (isChangingPassword)
+                {
+                    <EditForm Model="passwordModel" OnValidSubmit="UpdatePassword">
+                        <DataAnnotationsValidator />
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="passwordModel.NewPassword" />
+                                <ValidationMessage For="@(() => passwordModel.NewPassword)" style="color: var(--isotopes-red); font-size: 0.8rem;" />
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">Confirm New Password</label>
+                                <InputText type="password" class="form-control" @bind-Value="passwordModel.ConfirmPassword" />
+                                <ValidationMessage For="@(() => passwordModel.ConfirmPassword)" style="color: var(--isotopes-red); font-size: 0.8rem;" />
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(passwordError))
+                            {
+                                <div style="color: var(--isotopes-red); font-size: 0.85rem; font-weight: bold; text-align: center;">@passwordError</div>
+                            }
+
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <button type="submit" class="view-btn active" style="flex: 1;">Save Password</button>
+                                <button type="button" class="view-btn" style="flex: 1;" @onclick="() => isChangingPassword = false">Cancel</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <p style="font-size: 0.85rem; color: #856404; margin-bottom: 1.25rem;">For your security, please use a strong password that you don't use elsewhere.</p>
+                    <button type="button" class="view-btn" style="width: 100%;" @onclick="() => isChangingPassword = true">Update Password</button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (showSuccess)
+{
+    <div class="view-fade-in" style="position: fixed; bottom: 2rem; right: 2rem; background: #155724; color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 3000;">
+        ✨ Password updated successfully!
+    </div>
+}
+
+@code {
+    [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+    
+    private UserRolesSummaryView? currentUser;
+    private bool isChangingPassword = false;
+    private bool showSuccess = false;
+    private string? passwordError;
+    private PasswordChangeModel passwordModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthStateTask;
+        System.Security.Claims.ClaimsPrincipal user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            string? email = user.Identity.Name;
+            if (!string.IsNullOrEmpty(email))
+            {
+                List<UserRolesSummaryView> users = await IAuthRepository.GetUsersAsync();
+                currentUser = users.FirstOrDefault(u => u.Email == email);
+            }
+        }
+    }
+
+    private async Task UpdatePassword()
+    {
+        passwordError = null;
+        try
+        {
+            if (currentUser != null)
+            {
+                await IAuthRepository.UpdateUserPasswordAsync(currentUser.Id, passwordModel.NewPassword);
+                isChangingPassword = false;
+                passwordModel = new();
+                showSuccess = true;
+                StateHasChanged();
+                await Task.Delay(3000);
+                showSuccess = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            passwordError = "Failed to update password: " + ex.Message;
+        }
+    }
+
+    public class PasswordChangeModel
+    {
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
+        public string NewPassword { get; set; } = "";
+
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}
+

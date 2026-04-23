@@ -1,0 +1,327 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Services
+@using System.Security.Claims
+@typeparam TItem where TItem : class, new()
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject IAuthRepository IAuthRepository
+@inject SessionStorageService SessionStorage
+
+@if (ActualEditContext != null)
+{
+    <EditForm EditContext="ActualEditContext" OnValidSubmit="HandleSave" id="@Id">
+        <DataAnnotationsValidator />
+        <CascadingValue Value="ActualEditContext">
+            <div class="stat-card view-fade-in" style="margin-bottom: 2rem; position: relative;">
+                <button type="button" @onclick="HandleCancel" 
+                        style="position: absolute; top: 0.25rem; right: 0.5rem; background: none; border: none; font-size: 3.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; height: 60px; width: 60px;" 
+                        title="Cancel changes">&times;</button>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-right: 4.5rem;">
+                    <h4 style="margin: 0;">@Title</h4>
+                    @if (IsEdit)
+                    {
+                        <button type="button" class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.4rem 1rem; font-size: 0.85rem;" 
+                                @onclick="() => showDeleteConfirm = true">Delete</button>
+                    }
+                </div>
+
+                @ChildContent
+
+                @if (!string.IsNullOrEmpty(_saveError))
+                {
+                    <div class="view-fade-in" style="background: #fff5f5; color: var(--isotopes-red); padding: 1rem; border-radius: 12px; margin-top: 1.5rem; font-size: 0.9rem; border: 1px solid #ffebeb; text-align: center; font-weight: 600;">
+                        @_saveError
+                    </div>
+                }
+
+                <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem; align-items: center; min-height: 4.5rem;">
+                    @if (isSaving)
+                    {
+                        <div class="spinner-border text-danger" role="status">
+                            <span class="visually-hidden">Saving...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem; opacity: @(IsFormValid ? "1" : "0.5"); cursor: @(IsFormValid ? "pointer" : "not-allowed");" disabled="@(!IsFormValid)">@SaveText</button>
+                        <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
+                    }
+                </div>
+            </div>
+        </CascadingValue>
+    </EditForm>
+}
+
+<ConfirmDialog 
+    IsVisible="showDeleteConfirm" 
+    Title="@($"Delete {TypeName}")" 
+    Message="@($"Are you sure you want to delete this {TypeName.ToLower()}?")"
+    Warning="@DeleteWarning"
+    OnConfirm="HandleDelete"
+    OnCancel="() => showDeleteConfirm = false" />
+
+<ConfirmDialog 
+    IsVisible="showDiscardConfirm" 
+    Title="Discard Changes" 
+    Message="You have unsaved changes. Are you sure you want to discard them?"
+    ConfirmText="Discard"
+    OnConfirm="DiscardChanges"
+    OnCancel="() => showDiscardConfirm = false" />
+
+@if (showSuccess)
+{
+    <div class="view-fade-in" style="position: fixed; bottom: 2rem; right: 2rem; background: #155724; color: white; padding: 1rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 3000;">
+        ✨ @TypeName saved successfully!
+    </div>
+}
+
+@code {
+    private bool isSaving = false;
+    [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
+    [Parameter] public string Id { get; set; } = string.Empty;
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public TItem? Item { get; set; }
+    [Parameter] public TItem? OriginalItem { get; set; }
+    [Parameter] public string SaveText { get; set; } = "Save";
+    [Parameter] public string BasePath { get; set; } = string.Empty;
+    [Parameter] public string? DeleteWarning { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public Func<Task>? OnBeforeInternalSave { get; set; }
+    [Parameter] public Func<bool>? HasCustomChanges { get; set; }
+    [Parameter] public Func<TItem, Task<string?>>? CheckUniqueAsync { get; set; }
+    [Parameter] public object? ExtraState { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private EditContext? _internalContext;
+    private TItem? _lastItem;
+    private object? _lastExtraState;
+    private bool showDeleteConfirm = false;
+    private bool showDiscardConfirm = false;
+    private bool showSuccess = false;
+    private string TypeName => typeof(TItem).Name.Replace("ViewModel", "");
+    private string StorageKey => $"EditState_{TypeName}_{GetItemId()}";
+    private string ExtraStorageKey => $"EditState_{TypeName}_{GetItemId()}_Extra";
+
+    private string GetItemId()
+    {
+        if (Item is IEntity<int> intEntity) return intEntity.Id.ToString();
+        if (Item is IEntity<string> stringEntity) return stringEntity.Id;
+        return "0";
+    }
+
+    private EditContext? ActualEditContext => _internalContext;
+    private bool IsFormValid => ActualEditContext != null && !ActualEditContext.GetValidationMessages().Any();
+    
+    private bool IsEdit
+    {
+        get
+        {
+            if (Item == null) return false;
+            if (Item is IEntity<int> intEntity) return intEntity.Id != 0;
+            if (Item is IEntity<string> stringEntity) return !string.IsNullOrEmpty(stringEntity.Id);
+            return true;
+        }
+    }
+
+    private bool HasChanges
+    {
+        get
+        {
+            if (Item == null || OriginalItem == null) return false;
+            if (HasCustomChanges?.Invoke() ?? false) return true;
+            return !Item.Equals(OriginalItem);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Item != null && Item != _lastItem)
+        {
+            if (_internalContext != null)
+            {
+                _internalContext.OnFieldChanged -= HandleFieldChanged;
+            }
+            _internalContext = new EditContext(Item);
+            _lastItem = Item;
+            _internalContext.OnFieldChanged += HandleFieldChanged;
+        }
+    }
+
+    private async void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
+    {
+        ActualEditContext?.Validate();
+        await SaveTempState();
+        await SaveExtraState();
+
+        if (CheckUniqueAsync != null && Item != null)
+        {
+            _uniqueError = await CheckUniqueAsync(Item);
+        }
+        else
+        {
+            _uniqueError = null;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task SaveTempState()
+    {
+        try
+        {
+            if (Item != null)
+            {
+                await SessionStorage.SetItemAsync(StorageKey, Item);
+            }
+        }
+        catch { }
+    }
+
+    public async Task SaveExtraState()
+    {
+        try
+        {
+            if (ExtraState != null)
+            {
+                await SessionStorage.SetItemAsync(ExtraStorageKey, ExtraState);
+                _lastExtraState = ExtraState;
+            }
+        }
+        catch { }
+    }
+
+    private string? _saveError;
+    private string? _uniqueError;
+
+    private async Task HandleSave()
+    {
+        _saveError = null;
+
+        if (CheckUniqueAsync != null && Item != null)
+        {
+            _uniqueError = await CheckUniqueAsync(Item);
+            if (!string.IsNullOrEmpty(_uniqueError)) return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        bool wasEdit = IsEdit;
+        if (OnBeforeInternalSave != null)
+        {
+            await OnBeforeInternalSave.Invoke();
+        }
+
+        try
+        {
+            await OnSave.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _saveError = "An unexpected error occurred: " + ex.Message;
+            isSaving = false;
+            StateHasChanged();
+            return;
+        }
+        
+        await CreateLog(wasEdit ? UserLogAction.Updated : UserLogAction.Created);
+
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
+        showSuccess = true;
+        isSaving = false;
+        StateHasChanged();
+        _ = Task.Run(async () => {
+            await Task.Delay(3000);
+            showSuccess = false;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        Navigation.NavigateTo(BasePath);
+    }
+
+    private async Task HandleCancel()
+    {
+        if (HasChanges) showDiscardConfirm = true;
+        else await DiscardChanges();
+    }
+
+    private async Task DiscardChanges()
+    {
+        showDiscardConfirm = false;
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
+        Navigation.NavigateTo(BasePath);
+    }
+
+    private async Task HandleDelete()
+    {
+        showDeleteConfirm = false;
+        await OnDelete.InvokeAsync();
+        await CreateLog(UserLogAction.Deleted);
+        await SessionStorage.RemoveItemAsync(StorageKey);
+        await SessionStorage.RemoveItemAsync(ExtraStorageKey);
+        Navigation.NavigateTo(BasePath);
+    }
+
+    public async Task<TItem?> GetPersistedStateAsync()
+    {
+        return await SessionStorage.GetItemAsync<TItem>(StorageKey);
+    }
+
+    public async Task<TExtra?> GetPersistedExtraStateAsync<TExtra>()
+    {
+        return await SessionStorage.GetItemAsync<TExtra>(ExtraStorageKey);
+    }
+
+
+    private async Task CreateLog(UserLogAction action)
+    {
+        if (AuthStateTask == null) return;
+        AuthenticationState authState = await AuthStateTask;
+        ClaimsPrincipal user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            string? userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            
+            string desc = GetLogDescription(action);
+            await IAuthRepository.AddLogAsync(new UserLog
+            {
+                UserEmail = userEmail ?? "unknown",
+                Action = action,
+                EntityType = TypeName,
+                EntityId = GetItemId(),
+                Description = desc,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    private string GetLogDescription(UserLogAction action)
+    {
+        string identifier = "";
+        System.Reflection.PropertyInfo? nameProp = typeof(TItem).GetProperty("Name");
+        System.Reflection.PropertyInfo? emailProp = typeof(TItem).GetProperty("Email");
+        
+        if (nameProp != null && Item != null) identifier = nameProp.GetValue(Item)?.ToString() ?? "";
+        else if (emailProp != null && Item != null) identifier = emailProp.GetValue(Item)?.ToString() ?? "";
+        
+        if (string.IsNullOrEmpty(identifier)) identifier = $"ID: {GetItemId()}";
+        return $"{action} {TypeName}: {identifier}";
+    }
+
+    public void Dispose()
+    {
+        if (_internalContext != null)
+        {
+            _internalContext.OnFieldChanged -= HandleFieldChanged;
+        }
+    }
+}
+

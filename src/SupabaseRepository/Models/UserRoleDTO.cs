@@ -1,0 +1,22 @@
+using Postgrest.Attributes;
+using Postgrest.Models;
+using IsotopesStats.Domain.Models;
+
+namespace IsotopesStats.SupabaseRepository.Models;
+
+[Table("userroles")]
+internal class UserRoleDTO : BaseModel
+{
+    [PrimaryKey("id", false)]
+    public int Id { get; set; }
+
+    [Column("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [Column("isdeleted")]
+    public bool IsDeleted { get; set; } = false;
+
+    [Reference(typeof(RolePermissionDTO), useInnerJoin: false)]
+    public List<RolePermissionDTO> RolePermissions { get; set; } = new();
+}
+
