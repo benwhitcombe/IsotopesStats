@@ -12,42 +12,13 @@
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Game Stats</h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
-        <div class="desktop-only" style="display: flex; gap: 1rem; align-items: center;">
-            <label style="margin:0; font-weight: bold;">Season:</label>
-            <select class="form-control" style="width: auto;" value="@SharedState.SelectedSeasonId" @onchange="OnSeasonChange">
-                @foreach (Season season in seasons)
-                {
-                    <option value="@season.Id">@season.Name</option>
-                }
-            </select>
-        </div>
-        <div class="mobile-only">
-             <button class="view-btn" style="background: var(--isotopes-accent); color: white; border: none; padding: 0.5rem 1rem;" @onclick="ToggleSeasonModal"> 
-                🗓️ @seasons.FirstOrDefault(s => s.Id == SharedState.SelectedSeasonId)?.Name
-            </button>
-        </div>
+        <SeasonSelector 
+            Seasons="@seasons" 
+            SelectedSeasonId="@SharedState.SelectedSeasonId" 
+            OnSeasonSelected="OnSeasonSelected"
+            AllowAllSeasons="false" />
     </div>
 </div>
-
-@if (showSeasonModal)
-{
-    <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
-        <div class="sort-modal" @onclick:stopPropagation="true">
-            <div class="sort-modal-header">
-                <h4 style="margin:0">Select Season</h4>
-                <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
-            </div>
-            <div class="sort-grid">
-                @foreach (Season season in seasons)
-                {
-                    <div class="sort-option @(SharedState.SelectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
-                        @season.Name
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-}
 
 <div class="stat-card" style="margin-bottom: 1.5rem;">
     <div class="filter-container" style="max-width: 100%;">
@@ -659,21 +630,9 @@ else
         }
     }
 
-    private async Task OnSeasonChange(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            SharedState.SelectedSeasonId = id;
-            await LoadData();
-        }
-    }
-
-    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
-
-    private async Task SelectMobileSeason(int id)
+    private async Task OnSeasonSelected(int id)
     {
         SharedState.SelectedSeasonId = id;
-        showSeasonModal = false;
         await LoadData();
     }
 

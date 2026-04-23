@@ -12,7 +12,7 @@
 - [ ] **Standardize Logging:** Refine the `DeleteManager` and other logging points to use a more consistent, type-safe approach for identifying entities (e.g., an `INameable` interface).
 
 ## 3. UI & Shared Components
-- [ ] **Extract Shared UI Logic:** Create a reusable `SeasonSelector` component to replace the redundant season modal/dropdown logic in `PlayerStats.razor` and `GameStats.razor`.
+- [x] **Extract Shared UI Logic:** Created a reusable `SeasonSelector` component with centered text and anti-layout-shift logic to replace redundant selection UI in stats pages.
 - [ ] **Generic Sorting:** Refactor the large `switch` statements for sorting in `PlayerStats.razor` into a more dynamic, property-based sorting system.
 - [ ] **Loading State Consolidation:** Standardize the "Skeleton" or "Spinner" loading UI across all main views.
 - [ ] **Consistent Result Handling:** Unify the "Win/Loss/Tie" badge and logic used in `GameStats.razor` and `PlayerLogs.razor`.
