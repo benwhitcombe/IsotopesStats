@@ -18,6 +18,6 @@
 - [ ] **Consistent Result Handling:** Unify the "Win/Loss/Tie" badge and logic used in `GameStats.razor` and `PlayerLogs.razor`.
 
 ## 4. Technical Debt & Consistency
-- [ ] **Centralize Timezone Logic:** Move the `ToWhitbyTime` logic from the mapper into a dedicated `DateTimeService` or utility class.
+- [x] **Centralize Timezone Logic:** Moved `ToWhitbyTime` logic from the mapper into a dedicated `DateTimeService` in the Domain project to ensure consistent timezone handling across all layers.
 - [ ] **Standardize Nullable Usage:** Audit the codebase to ensure consistent use of C# 12 nullable features and suppressions (avoiding `null!` where possible).
 - [ ] **Clean Up Styles:** Audit `site.css` and component-specific CSS to remove any remaining unused classes from the migration.
