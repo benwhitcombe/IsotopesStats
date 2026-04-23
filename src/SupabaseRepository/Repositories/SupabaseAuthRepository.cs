@@ -7,27 +7,30 @@ using Postgrest.Responses;
 using static Postgrest.Constants;
 using System.Security.Claims;
 using IsotopesStats.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Supabase.Gotrue;
+using static Supabase.Gotrue.Constants;
+using DomainUser = IsotopesStats.Domain.Models.User;
 
 namespace IsotopesStats.SupabaseRepository.Repositories;
 
-internal class SupabaseAuthRepository : IAuthRepository
+internal class SupabaseAuthRepository : BaseRepository, IAuthRepository
 {
-    private readonly Supabase.Client _supabase;
-    private readonly SupabaseMapper _mapper = new();
-
-    public SupabaseAuthRepository(Supabase.Client supabase)
+    public SupabaseAuthRepository(Supabase.Client supabase) : base(supabase, new SupabaseMapper())
     {
-        _supabase = supabase;
     }
 
-    public async Task<User?> LoginAsync(string email, string password)
+    public async Task<DomainUser?> LoginAsync(string email, string password)
     {
         try
         {
-            Supabase.Gotrue.Session? session = await _supabase.Auth.SignIn(email, password);
+            Session? session = await Supabase.Auth.SignIn(email, password);
             if (session != null && session.User != null && !string.IsNullOrEmpty(session.User.Id))
             {
-                return new User
+                return new DomainUser
                 {
                     Id = session.User.Id,
                     Email = session.User.Email ?? email,
@@ -44,20 +47,15 @@ internal class SupabaseAuthRepository : IAuthRepository
 
     public async Task LogoutAsync()
     {
-        await _supabase.Auth.SignOut();
+        await Supabase.Auth.SignOut();
     }
 
-    public async Task<List<UserRolesSummaryView>> GetUsersAsync()
-    {
-        ModeledResponse<UserRolesSummaryViewDTO> response = await _supabase.From<UserRolesSummaryViewDTO>()
-            .Order("email", Postgrest.Constants.Ordering.Ascending)
-            .Get();
-        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
-    }
+    public Task<List<UserRolesSummaryView>> GetUsersAsync() => 
+        GetListAsync<UserRolesSummaryView, UserRolesSummaryViewDTO>(Mapper.ToModel, "email");
 
     public async Task<bool> IsEmailUniqueAsync(string email, string excludeUserId = "")
     {
-        Postgrest.Table<UserDTO> query = _supabase.From<UserDTO>()
+        Table<UserDTO> query = Supabase.From<UserDTO>()
             .Filter("email", Operator.Equals, email)
             .Filter("isdeleted", Operator.Equals, false);
 
@@ -75,15 +73,15 @@ internal class SupabaseAuthRepository : IAuthRepository
         try
         {
             string temporaryPassword = Guid.NewGuid().ToString("N") + "!";
-            Supabase.Gotrue.Session? response = await _supabase.Auth.SignUp(email, temporaryPassword);
+            Session? response = await Supabase.Auth.SignUp(email, temporaryPassword);
             if (response?.User != null && !string.IsNullOrEmpty(response.User.Id))
             {
                 foreach (int roleId in roleIds)
                 {
                     UserUserRoles link = new UserUserRoles { UserId = response.User.Id, RoleId = roleId };
-                    await _supabase.From<UserUserRolesDTO>().Insert(_mapper.ToDTO(link));
+                    await Supabase.From<UserUserRolesDTO>().Insert(Mapper.ToDTO(link));
                 }
-                await _supabase.Auth.ResetPasswordForEmail(email);
+                await Supabase.Auth.ResetPasswordForEmail(email);
                 return true;
             }
         }
@@ -94,32 +92,32 @@ internal class SupabaseAuthRepository : IAuthRepository
         return false;
     }
 
-    public async Task UpdateUserAsync(User user, List<int> newRoleIds)
+    public async Task UpdateUserAsync(DomainUser user, List<int> newRoleIds)
     {
-        await _supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, user.Id).Delete();
+        await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, user.Id).Delete();
         foreach (int roleId in newRoleIds)
         {
             UserUserRoles link = new UserUserRoles { UserId = user.Id, RoleId = roleId };
-            await _supabase.From<UserUserRolesDTO>().Insert(_mapper.ToDTO(link));
+            await Supabase.From<UserUserRolesDTO>().Insert(Mapper.ToDTO(link));
         }
         
-        await _supabase.From<UserDTO>().Update(_mapper.ToDTO(user));
+        await UpdateAsync(user, Mapper.ToDTO);
     }
 
     public async Task UpdateUserPasswordAsync(string userId, string newPassword)
     {
-        Supabase.Gotrue.UserAttributes attrs = new Supabase.Gotrue.UserAttributes { Password = newPassword };
-        await _supabase.Auth.Update(attrs);
+        UserAttributes attrs = new UserAttributes { Password = newPassword };
+        await Supabase.Auth.Update(attrs);
     }
 
-    public async Task<User?> GetUserByIdAsync(string userId)
+    public async Task<DomainUser?> GetUserByIdAsync(string userId)
     {
         if (string.IsNullOrEmpty(userId)) return null;
         try
         {
-            ModeledResponse<UserDTO> response = await _supabase.From<UserDTO>().Filter("id", Operator.Equals, userId).Get();
+            ModeledResponse<UserDTO> response = await Supabase.From<UserDTO>().Filter("id", Operator.Equals, userId).Get();
             UserDTO? dto = response.Models.FirstOrDefault();
-            return dto != null ? _mapper.ToModel(dto) : null;
+            return dto != null ? Mapper.ToModel(dto) : null;
         }
         catch (Exception ex)
         {
@@ -130,60 +128,47 @@ internal class SupabaseAuthRepository : IAuthRepository
 
     public async Task DeleteUserAsync(string userId)
     {
-        User user = new User { Id = userId, IsDeleted = true };
-        await _supabase.From<UserDTO>().Update(_mapper.ToDTO(user));
-        await _supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, userId).Delete();
+        DomainUser user = new DomainUser { Id = userId, IsDeleted = true };
+        await Supabase.From<UserDTO>().Update(Mapper.ToDTO(user));
+        await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, userId).Delete();
     }
 
-    public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
-    {
-        ModeledResponse<UserRoleDTO> response;
-        if (onlyActive)
-        {
-            response = await _supabase.From<UserRoleDTO>().Where(x => x.IsDeleted == false).Order("name", Ordering.Ascending).Get();
-        }
-        else
-        {
-            response = await _supabase.From<UserRoleDTO>().Order("name", Ordering.Ascending).Get();
-        }
-        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
-    }
+    public Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false) => 
+        GetListAsync<UserRole, UserRoleDTO>(Mapper.ToModel, "name", ordering: Ordering.Ascending, onlyActive: onlyActive);
 
     public async Task<List<UserRole>> GetUserRolesForUserAsync(string userId)
     {
-        ModeledResponse<UserUserRolesDTO> urResponse = await _supabase.From<UserUserRolesDTO>()
+        ModeledResponse<UserUserRolesDTO> urResponse = await Supabase.From<UserUserRolesDTO>()
             .Filter("userid", Operator.Equals, userId)
             .Get();
 
         if (!urResponse.Models.Any()) return new List<UserRole>();
 
         List<int> roleIds = urResponse.Models.Select(x => x.RoleId).ToList();
-
-        ModeledResponse<UserRoleDTO> rolesResponse = await _supabase.From<UserRoleDTO>()
+        ModeledResponse<UserRoleDTO> rolesResponse = await Supabase.From<UserRoleDTO>()
             .Filter("id", Operator.In, roleIds)
             .Get();
-        return rolesResponse.Models.Select(x => _mapper.ToModel(x)).ToList();
+
+        return rolesResponse.Models.Select(x => Mapper.ToModel(x)).ToList();
     }
 
     public async Task<List<UserLog>> GetUserLogsAsync(int limit = 100)
     {
-        ModeledResponse<UserLogDTO> response = await _supabase.From<UserLogDTO>()
+        ModeledResponse<UserLogDTO> response = await Supabase.From<UserLogDTO>()
             .Order("timestamp", Ordering.Descending)
             .Limit(limit)
             .Get();
-        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
+        return response.Models.Select(x => Mapper.ToModel(x)).ToList();
     }
 
-    public async Task AddLogAsync(UserLog log)
-    {
-        await _supabase.From<UserLogDTO>().Insert(_mapper.ToDTO(log));
-    }
+    public Task AddLogAsync(UserLog log) => 
+        InsertAsync(log, Mapper.ToDTO);
 
     public async Task<bool> GeneratePasswordResetTokenAsync(string email)
     {
         try
         {
-            await _supabase.Auth.ResetPasswordForEmail(email);
+            await Supabase.Auth.ResetPasswordForEmail(email);
             return true;
         }
         catch (Exception ex)
@@ -197,9 +182,9 @@ internal class SupabaseAuthRepository : IAuthRepository
     {
         try
         {
-            await _supabase.Auth.VerifyOTP(email, token, Supabase.Gotrue.Constants.EmailOtpType.Recovery);
-            Supabase.Gotrue.UserAttributes attrs = new Supabase.Gotrue.UserAttributes { Password = newPassword };
-            await _supabase.Auth.Update(attrs);
+            await Supabase.Auth.VerifyOTP(email, token, EmailOtpType.Recovery);
+            UserAttributes attrs = new UserAttributes { Password = newPassword };
+            await Supabase.Auth.Update(attrs);
             return true;
         }
         catch (Exception ex)
@@ -209,55 +194,38 @@ internal class SupabaseAuthRepository : IAuthRepository
         }
     }
 
-    public async Task<List<Permission>> GetPermissionsAsync()
-    {
-        ModeledResponse<PermissionDTO> response = await _supabase.From<PermissionDTO>()
-            .Order("name", Ordering.Ascending)
-            .Get();
-        return response.Models.Select(x => _mapper.ToModel(x)).ToList();
-    }
+    public Task<List<Permission>> GetPermissionsAsync() => 
+        GetListAsync<Permission, PermissionDTO>(Mapper.ToModel, "name");
 
-    public async Task<bool> IsRoleNameUniqueAsync(string name, int excludeId = 0)
-    {
-        ModeledResponse<UserRoleDTO> response = await _supabase.From<UserRoleDTO>()
-            .Where(x => x.Name == name)
-            .Where(x => x.Id != excludeId)
-            .Where(x => x.IsDeleted == false)
-            .Get();
-        return response.Models.Count == 0;
-    }
+    public Task<bool> IsRoleNameUniqueAsync(string name, int excludeId = 0) => 
+        IsUniqueAsync<UserRoleDTO>("name", name, excludeId);
 
     public async Task AddUserRoleAsync(UserRole role, List<int> permissionIds)
     {
-        ModeledResponse<UserRoleDTO> response = await _supabase.From<UserRoleDTO>().Insert(_mapper.ToDTO(role));
-        UserRoleDTO? newRole = response.Models.FirstOrDefault();
+        int roleId = await InsertAsync(role, Mapper.ToDTO);
 
-        if (newRole != null)
+        if (roleId != 0)
         {
             foreach (int permId in permissionIds)
             {
-                RolePermission link = new RolePermission { RoleId = newRole.Id, PermissionId = permId };
-                await _supabase.From<RolePermissionDTO>().Insert(_mapper.ToDTO(link));
+                RolePermission link = new RolePermission { RoleId = roleId, PermissionId = permId };
+                await Supabase.From<RolePermissionDTO>().Insert(Mapper.ToDTO(link));
             }
         }
     }
 
     public async Task UpdateUserRoleAsync(UserRole role, List<int> permissionIds)
     {
-        await _supabase.From<UserRoleDTO>().Update(_mapper.ToDTO(role));
-        await _supabase.From<RolePermissionDTO>().Filter("roleid", Operator.Equals, role.Id).Delete();
+        await UpdateAsync(role, Mapper.ToDTO);
+        await Supabase.From<RolePermissionDTO>().Filter("roleid", Operator.Equals, role.Id).Delete();
 
         foreach (int permId in permissionIds)
         {
             RolePermission link = new RolePermission { RoleId = role.Id, PermissionId = permId };
-            await _supabase.From<RolePermissionDTO>().Insert(_mapper.ToDTO(link));
+            await Supabase.From<RolePermissionDTO>().Insert(Mapper.ToDTO(link));
         }
     }
 
-    public async Task DeleteUserRoleAsync(int roleId)
-    {
-        UserRole role = new UserRole { Id = roleId, IsDeleted = true };
-        await _supabase.From<UserRoleDTO>().Update(_mapper.ToDTO(role));
-    }
+    public Task DeleteUserRoleAsync(int roleId) => 
+        SoftDeleteAsync<UserRoleDTO>(roleId);
 }
-
