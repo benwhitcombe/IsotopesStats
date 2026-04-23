@@ -4,7 +4,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @typeparam TItem where TItem : class, IEntity<TId>
 @typeparam TId
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 
 <ConfirmDialog 
     IsVisible="isVisible" 
@@ -61,7 +61,7 @@
             
             string identifier = GetItemIdentifier(item);
 
-            await AuthService.AddLogAsync(new UserLog
+            await IAuthRepository.AddLogAsync(new UserLog
             {
                 // We're leaving UserId as int? in the log for now if it's an internal ID, 
                 // but we should probably store the string Supabase ID in the logs too if we want to track who did what.
@@ -87,3 +87,4 @@
         return $"ID: {item.Id}";
     }
 }
+

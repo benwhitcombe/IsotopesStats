@@ -7,34 +7,19 @@ using IsotopesStats.Services;
 using IsotopesStats.Models;
 using Supabase;
 using IsotopesStats.Domain.Interfaces;
-using SupabaseRepository.Repositories;
-using SupabaseRepository.Auth;
+using SupabaseRepository.Extensions;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Add Supabase Client
+// Add Supabase Repositories (Isolated)
 string supabaseUrl = builder.Configuration["Supabase:Url"] ?? throw new Exception("Supabase URL is missing");
 string supabaseKey = builder.Configuration["Supabase:Key"] ?? throw new Exception("Supabase Key is missing");
-
-builder.Services.AddScoped(sp => 
-{
-    SupabaseOptions options = new SupabaseOptions
-    {
-        AutoRefreshToken = true,
-        AutoConnectRealtime = true,
-        SessionHandler = new SupabaseSessionPersistence(sp.GetRequiredService<IJSRuntime>())
-    };
-    return new Supabase.Client(supabaseUrl, supabaseKey, options);
-});
+builder.Services.AddSupabaseRepositories(supabaseUrl, supabaseKey);
 
 // Core Services
 builder.Services.AddScoped<SessionStorageService>();
-builder.Services.AddScoped<IStatsRepository, SupabaseStatsRepository>();
-builder.Services.AddScoped<IAuthRepository, SupabaseAuthRepository>();
-builder.Services.AddScoped<IStatsService, StatsService>();
-builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
@@ -84,3 +69,4 @@ CustomAuthenticationStateProvider authProvider = (CustomAuthenticationStateProvi
 authProvider.NotifyStateChanged();
 
 await host.RunAsync();
+

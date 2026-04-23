@@ -2,7 +2,7 @@
 @page "/playerstats"
 @using IsotopesStats.Models
 @using IsotopesStats.Services
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject SharedSessionState SharedState
 @inject PlayerStatsState SessionState
 @inject NavigationManager NavigationManager
@@ -354,11 +354,11 @@ else
     protected override async Task OnInitializedAsync()
     {
         SharedState.ReturnUrl = "playerstats";
-        seasons = await StatsService.GetSeasonsAsync();
+        seasons = await StatsRepository.GetSeasonsAsync();
 
         if (SharedState.SelectedSeasonId == 0)
         {
-            int recentSeasonId = await StatsService.GetMostRecentStatsSeasonIdAsync();
+            int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
             if (recentSeasonId != 0)
             {
                 SharedState.SelectedSeasonId = recentSeasonId;
@@ -382,13 +382,13 @@ else
         {
             if (SharedState.SelectedSeasonId == -1)
             {
-                allStats = await StatsService.GetAllStatsSummaryAsync();
-                teamTotals = await StatsService.GetAllTeamTotalsAsync();
+                allStats = await StatsRepository.GetAllStatsSummaryAsync();
+                teamTotals = await StatsRepository.GetAllTeamTotalsAsync();
             }
             else
             {
-                allStats = await StatsService.GetStatsSummaryAsync(SharedState.SelectedSeasonId);
-                teamTotals = await StatsService.GetTeamTotalsAsync(SharedState.SelectedSeasonId);
+                allStats = await StatsRepository.GetStatsSummaryAsync(SharedState.SelectedSeasonId);
+                teamTotals = await StatsRepository.GetTeamTotalsAsync(SharedState.SelectedSeasonId);
             }
             CalculateLeaders();
             Sort(currentSortColumn, false);

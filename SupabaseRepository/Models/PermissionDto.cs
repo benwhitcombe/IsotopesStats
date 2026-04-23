@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("permissions")]
-public class PermissionDTO : BaseModel
+internal class PermissionDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -13,3 +13,4 @@ public class PermissionDTO : BaseModel
     [Column("name")]
     public string Name { get; set; } = string.Empty;
 }
+

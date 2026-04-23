@@ -1,7 +1,7 @@
 @page "/gamestats"
 @using IsotopesStats.Models
 @using IsotopesStats.Services
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject SharedSessionState SharedState
 @inject GameStatsState SessionState
 @inject NavigationManager Navigation
@@ -569,7 +569,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         SharedState.ReturnUrl = "gamestats";
-        seasons = await StatsService.GetSeasonsAsync();
+        seasons = await StatsRepository.GetSeasonsAsync();
 
         if (SharedState.SelectedSeasonId == 0 && seasons.Any())
         {
@@ -590,14 +590,14 @@ else
         isLoading = true;
         try
         {
-            summaries = await StatsService.GetGameSummariesAsync(SharedState.SelectedSeasonId);
+            summaries = await StatsRepository.GetGameSummariesAsync(SharedState.SelectedSeasonId);
             
             // Re-fetch expanded games if needed
             foreach (KeyValuePair<int, GameUIState> state in SessionState.GameUIStates.Where(s => s.Value.IsExpanded))
             {
                 if (summaries.Any(s => s.GameId == state.Key))
                 {
-                    expandedStats[state.Key] = await StatsService.GetExtendedGameStatsAsync(state.Key);
+                    expandedStats[state.Key] = await StatsRepository.GetExtendedGameStatsAsync(state.Key);
                 }
             }
         }
@@ -638,7 +638,7 @@ else
         if (state.IsExpanded && (!expandedStats.ContainsKey(gameId) || expandedStats[gameId] == null))
         {
             StateHasChanged();
-            expandedStats[gameId] = await StatsService.GetExtendedGameStatsAsync(gameId);
+            expandedStats[gameId] = await StatsRepository.GetExtendedGameStatsAsync(gameId);
         }
 
         StateHasChanged();
@@ -756,3 +756,4 @@ else
         justify-content: flex-start;
     }
 </style>
+

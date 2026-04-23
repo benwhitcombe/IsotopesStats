@@ -5,7 +5,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "Manage Players")]
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject SessionStorageService SessionStorage
@@ -20,7 +20,7 @@
     }
 </div>
 
-<DeleteManager TItem="Player" TId="int" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsService.DeletePlayerAsync" />
+<DeleteManager TItem="Player" TId="int" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsRepository.DeletePlayerAsync" />
 
 @if (isLoading)
 {
@@ -133,7 +133,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        allSeasons = await StatsService.GetSeasonsAsync();
+        allSeasons = await StatsRepository.GetSeasonsAsync();
         await LoadPlayers();
     }
 
@@ -191,7 +191,7 @@ else
             Player? player = players.FirstOrDefault(p => p.Id == Id);
             if (player == null)
             {
-                player = (await StatsService.GetAllPlayersAsync()).FirstOrDefault(p => p.Id == Id);
+                player = (await StatsRepository.GetAllPlayersAsync()).FirstOrDefault(p => p.Id == Id);
             }
 
             if (player != null)
@@ -201,7 +201,7 @@ else
                 extraState = new();
                 originalExtraState = new();
 
-                List<Season> playerSeasons = await StatsService.GetSeasonsForPlayerAsync(player.Id);
+                List<Season> playerSeasons = await StatsRepository.GetSeasonsForPlayerAsync(player.Id);
                 extraState.SeasonIds = playerSeasons.Select(s => s.Id).ToList();
                 originalExtraState = extraState with { SeasonIds = new List<int>(extraState.SeasonIds) };
             }
@@ -238,7 +238,7 @@ else
         isLoading = true;
         try
         {
-            players = await StatsService.GetAllPlayersAsync();
+            players = await StatsRepository.GetAllPlayersAsync();
         }
         finally
         {
@@ -256,7 +256,7 @@ else
     {
         if (model.Id == 0) return null; // Creation reuses players if name exists
         if (string.IsNullOrWhiteSpace(model.Name)) return null;
-        bool isUnique = await StatsService.IsPlayerNameUniqueAsync(model.Name, model.Id);
+        bool isUnique = await StatsRepository.IsPlayerNameUniqueAsync(model.Name, model.Id);
         return isUnique ? null : "Another player with this name already exists.";
     }
 
@@ -277,25 +277,26 @@ else
         if (editingPlayer.Id == 0)
         {
             int firstSeasonId = extraState.SeasonIds.FirstOrDefault();
-            playerId = await StatsService.AddPlayerAsync(editingPlayer, firstSeasonId);
+            playerId = await StatsRepository.AddPlayerAsync(editingPlayer, firstSeasonId);
             foreach (int sid in extraState.SeasonIds.Where(id => id != firstSeasonId))
-                await StatsService.AddPlayerToSeasonAsync(playerId, sid);
+                await StatsRepository.AddPlayerToSeasonAsync(playerId, sid);
         }
         else
         {
             playerId = editingPlayer.Id;
-            await StatsService.UpdatePlayerAsync(editingPlayer);
+            await StatsRepository.UpdatePlayerAsync(editingPlayer);
             foreach (int sid in extraState.SeasonIds.Except(originalExtraState.SeasonIds))
-                await StatsService.AddPlayerToSeasonAsync(playerId, sid);
+                await StatsRepository.AddPlayerToSeasonAsync(playerId, sid);
             foreach (int sid in originalExtraState.SeasonIds.Except(extraState.SeasonIds))
-                await StatsService.DeletePlayerFromSeasonAsync(playerId, sid);
+                await StatsRepository.DeletePlayerFromSeasonAsync(playerId, sid);
         }
         await LoadPlayers();
     }
 
     private async Task DeletePlayer()
     {
-        await StatsService.DeletePlayerAsync(editingPlayer.Id);
+        await StatsRepository.DeletePlayerAsync(editingPlayer.Id);
         await LoadPlayers();
     }
 }
+

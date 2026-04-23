@@ -2,7 +2,7 @@
 @page "/playerlogs/{PlayerName}"
 @using IsotopesStats.Services
 @using IsotopesStats.Models
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject SharedSessionState SharedState
@@ -182,19 +182,19 @@ else
 
         if (targetSeasonId == SharedSessionState.AllSeasonsId)
         {
-            logs = await StatsService.GetAllPlayerGameLogAsync(PlayerName);
+            logs = await StatsRepository.GetAllPlayerGameLogAsync(PlayerName);
         }
         else if (targetSeasonId != 0)
         {
-            logs = await StatsService.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
+            logs = await StatsRepository.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
         }
         else
         {
-            List<Season> seasons = await StatsService.GetSeasonsAsync();
+            List<Season> seasons = await StatsRepository.GetSeasonsAsync();
             if (seasons.Any())
             {
                 targetSeasonId = seasons.First().Id;
-                logs = await StatsService.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
+                logs = await StatsRepository.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
             }
             else
             {
@@ -214,3 +214,4 @@ else
         NavigationManager.NavigateTo("/" + SharedState.ReturnUrl);
     }
 }
+

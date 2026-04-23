@@ -6,15 +6,15 @@
 @using IsotopesStats.Shared
 @using Microsoft.AspNetCore.Components.Forms
 @attribute [Authorize(Policy = "Manage Games")]
-@inject IStatsService StatsService
-@inject AuthService AuthSvc
+@inject IStatsRepository StatsRepository
+@inject IAuthRepository AuthSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
-<DeleteManager TItem="Game" TId="int" @ref="deleteManager" OnDeleted="LoadGames" DeleteAction="StatsService.DeleteGameAsync" />
+<DeleteManager TItem="Game" TId="int" @ref="deleteManager" OnDeleted="LoadGames" DeleteAction="StatsRepository.DeleteGameAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Games</h3>
@@ -417,7 +417,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        allSeasons = await StatsService.GetSeasonsAsync();
+        allSeasons = await StatsRepository.GetSeasonsAsync();
         if (activeSeasons.Any())
         {
             selectedSeasonId = activeSeasons.First().Id;
@@ -457,14 +457,14 @@ else
         
         if (Action == "edit" && Id.HasValue && Id != 0)
         {
-            Game? game = await StatsService.GetGameAsync(Id.Value);
+            Game? game = await StatsRepository.GetGameAsync(Id.Value);
             if (game != null)
             {
                 editingGame = game with { };
                 originalGame = game with { };
                 await LoadSeasonRoster();
                 await LoadAvailableOpponents();
-                playerStats = await StatsService.GetGameStatsAsync(game.Id);
+                playerStats = await StatsRepository.GetGameStatsAsync(game.Id);
                 playerStats = playerStats.OrderBy(s => s.BO).ToList();
                 originalStats = playerStats.Select(s => s with { }).Cast<StatEntry>().ToList();
             }
@@ -474,7 +474,7 @@ else
             editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
             originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId };
             
-            editingGame.GameNumber = await StatsService.GetNextGameNumberAsync(editingGame.SeasonId);
+            editingGame.GameNumber = await StatsRepository.GetNextGameNumberAsync(editingGame.SeasonId);
 
             await LoadSeasonRoster();
             await LoadAvailableOpponents();
@@ -511,7 +511,7 @@ else
         isLoading = true;
         try
         {
-            games = await StatsService.GetGamesBySeasonAsync(selectedSeasonId);
+            games = await StatsRepository.GetGamesBySeasonAsync(selectedSeasonId);
         }
         finally
         {
@@ -537,14 +537,14 @@ else
 
         if (editingGame.Id == 0)
         {
-            editingGame.GameNumber = await StatsService.GetNextGameNumberAsync(editingGame.SeasonId);
+            editingGame.GameNumber = await StatsRepository.GetNextGameNumberAsync(editingGame.SeasonId);
         }
 
         if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
-    private async Task LoadSeasonRoster() => seasonRoster = await StatsService.GetPlayersAsync(editingGame.SeasonId);
-    private async Task LoadAvailableOpponents() => availableOpponents = await StatsService.GetOpponentsAsync(editingGame.SeasonId);
+    private async Task LoadSeasonRoster() => seasonRoster = await StatsRepository.GetPlayersAsync(editingGame.SeasonId);
+    private async Task LoadAvailableOpponents() => availableOpponents = await StatsRepository.GetOpponentsAsync(editingGame.SeasonId);
     private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
 
     private async Task SelectMobileSeason(int id)
@@ -617,15 +617,16 @@ else
 
     private async Task SaveGame()
     {
-        if (editingGame.Id == 0) await StatsService.AddGameWithStatsAsync(editingGame, playerStats);
-        else await StatsService.UpdateGameWithStatsAsync(editingGame, playerStats);
+        if (editingGame.Id == 0) await StatsRepository.AddGameWithStatsAsync(editingGame, playerStats);
+        else await StatsRepository.UpdateGameWithStatsAsync(editingGame, playerStats);
         await LoadGames();
     }
 
     private async Task DeleteGame()
     {
         await AuthSvc.AddLogAsync(new UserLog { Action = UserLogAction.Deleted, EntityType = "Game", EntityId = editingGame.Id.ToString(), Description = $"Deleted game {editingGame.GameNumber}" });
-        await StatsService.DeleteGameAsync(editingGame.Id);
+        await StatsRepository.DeleteGameAsync(editingGame.Id);
         await LoadGames();
     }
 }
+

@@ -5,6 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_team_stats_summary")]
-public class TeamStatsSummaryDTO : PlayerStatsSummaryDTO
+internal class TeamStatsSummaryDTO : PlayerStatsSummaryDTO
 {
 }
+

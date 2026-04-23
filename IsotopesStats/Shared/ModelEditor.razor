@@ -6,7 +6,7 @@
 @implements IDisposable
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 @inject SessionStorageService SessionStorage
 
 @if (ActualEditContext != null)
@@ -291,7 +291,7 @@
             string? userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
             
             string desc = GetLogDescription(action);
-            await AuthService.AddLogAsync(new UserLog
+            await IAuthRepository.AddLogAsync(new UserLog
             {
                 UserEmail = userEmail ?? "unknown",
                 Action = action,
@@ -324,3 +324,4 @@
         }
     }
 }
+

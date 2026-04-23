@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace SupabaseRepository.Repositories;
 
-public class SupabaseStatsRepository : IStatsRepository
+internal class SupabaseStatsRepository : IStatsRepository
 {
     private readonly Supabase.Client _supabase;
     private readonly SupabaseMapper _mapper = new();
@@ -423,3 +423,4 @@ public class SupabaseStatsRepository : IStatsRepository
         return response.Models.Select(x => _mapper.ToModel(x)).ToList();
     }
 }
+

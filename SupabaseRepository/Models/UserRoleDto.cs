@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("userroles")]
-public class UserRoleDTO : BaseModel
+internal class UserRoleDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -19,3 +19,4 @@ public class UserRoleDTO : BaseModel
     [Reference(typeof(RolePermissionDTO), useInnerJoin: false)]
     public List<RolePermissionDTO> RolePermissions { get; set; } = new();
 }
+

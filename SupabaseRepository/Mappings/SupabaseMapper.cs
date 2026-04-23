@@ -7,7 +7,7 @@ using Postgrest.Models;
 namespace SupabaseRepository.Mappings;
 
 [Mapper(PropertyNameMappingStrategy = PropertyNameMappingStrategy.CaseInsensitive)]
-public partial class SupabaseMapper
+internal partial class SupabaseMapper
 {
     // --- Custom Configuration ---
     private DateTime MapToWhitbyTime(DateTime source) => DateTimeService.ToWhitbyTime(source);
@@ -114,3 +114,4 @@ public partial class SupabaseMapper
     [MapperRequiredMapping(RequiredMappingStrategy.None)]
     public partial RolePermissionDTO ToDTO(RolePermission model);
 }
+

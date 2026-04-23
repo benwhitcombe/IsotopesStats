@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("opponents")]
-public class OpponentDTO : BaseModel
+internal class OpponentDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -19,3 +19,4 @@ public class OpponentDTO : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 }
+

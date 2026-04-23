@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_games_management")]
-public class GameManagementViewDTO : BaseModel
+internal class GameManagementViewDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -40,3 +40,4 @@ public class GameManagementViewDTO : BaseModel
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
 }
+

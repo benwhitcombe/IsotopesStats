@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("seasonplayers")]
-public class SeasonPlayersDTO : BaseModel
+internal class SeasonPlayersDTO : BaseModel
 {
     [Column("seasonid")]
     public int SeasonId { get; set; }
@@ -13,3 +13,4 @@ public class SeasonPlayersDTO : BaseModel
     [Column("playerid")]
     public int PlayerId { get; set; }
 }
+

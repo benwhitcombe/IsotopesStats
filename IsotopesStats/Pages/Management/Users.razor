@@ -7,7 +7,7 @@
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Policy = "Manage Users")]
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject SessionStorageService SessionStorage
@@ -141,7 +141,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        availableRoles = await AuthService.GetUserRolesAsync(true);
+        availableRoles = await IAuthRepository.GetUserRolesAsync(true);
         await LoadData();
     }
 
@@ -190,7 +190,7 @@ else
         UserRolesSummaryView? userView = users.FirstOrDefault(u => u.Id == Id);
         if (userView == null)
         {
-            userView = (await AuthService.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
+            userView = (await IAuthRepository.GetUsersAsync()).FirstOrDefault(u => u.Id == Id);
         }
 
         if (userView != null)
@@ -224,7 +224,7 @@ else
 
     private async Task LoadData()
     {
-        users = await AuthService.GetUsersAsync();
+        users = await IAuthRepository.GetUsersAsync();
     }
 
     private void StartEdit(string action, string id)
@@ -249,7 +249,7 @@ else
 
     private async Task<string?> CheckEmailUnique(UserEditViewModel model)
     {
-        bool isUnique = await AuthService.IsEmailUniqueAsync(model.Email, model.Id);
+        bool isUnique = await IAuthRepository.IsEmailUniqueAsync(model.Email, model.Id);
         return isUnique ? null : "This email address is already in use.";
     }
 
@@ -258,7 +258,7 @@ else
         saveError = null;
         if (string.IsNullOrEmpty(editViewModel.Id))
         {
-            bool success = await AuthService.RegisterAsync(editViewModel.Email, editViewModel.RoleIds);
+            bool success = await IAuthRepository.RegisterAsync(editViewModel.Email, editViewModel.RoleIds);
             if (!success)
             {
                 saveError = "Failed to create user. Please check if the email is valid and try again.";
@@ -268,7 +268,7 @@ else
         else
         {
             User user = new User { Id = editViewModel.Id, Email = editViewModel.Email };
-            await AuthService.UpdateUserAsync(user, editViewModel.RoleIds);
+            await IAuthRepository.UpdateUserAsync(user, editViewModel.RoleIds);
         }
 
         await LoadData();
@@ -276,13 +276,13 @@ else
 
     private async Task DeleteUser()
     {
-        await AuthService.DeleteUserAsync(editViewModel.Id);
+        await IAuthRepository.DeleteUserAsync(editViewModel.Id);
         await LoadData();
     }
 
     private async Task DeleteUserByIdAsync(string id)
     {
-        await AuthService.DeleteUserAsync(id);
+        await IAuthRepository.DeleteUserAsync(id);
     }
 
     private ModelEditor<UserEditViewModel> modelEditor = null!;
@@ -308,3 +308,4 @@ else
         public override int GetHashCode() => Id?.GetHashCode() ?? 0;
     }
 }
+

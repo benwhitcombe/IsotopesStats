@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace SupabaseRepository.Auth;
 
-public class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
+internal class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
 {
     private readonly IJSRuntime _jsRuntime;
     private const string SessionKey = "supabase_session";
@@ -75,3 +75,4 @@ public class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
         return null;
     }
 }
+

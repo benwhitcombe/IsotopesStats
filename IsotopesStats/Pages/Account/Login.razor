@@ -2,7 +2,7 @@
 @using IsotopesStats.Services
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
@@ -81,7 +81,7 @@
         
         try
         {
-            User? user = await AuthService.LoginAsync(email, password);
+            User? user = await IAuthRepository.LoginAsync(email, password);
             
             if (user != null)
             {
@@ -117,3 +117,4 @@
         }
     }
 }
+

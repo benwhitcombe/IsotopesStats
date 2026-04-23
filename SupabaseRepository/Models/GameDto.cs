@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("games")]
-public class GameDTO : BaseModel
+internal class GameDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -43,3 +43,4 @@ public class GameDTO : BaseModel
     [Reference(typeof(OpponentDTO))]
     public OpponentDTO? Opponent { get; set; }
 }
+

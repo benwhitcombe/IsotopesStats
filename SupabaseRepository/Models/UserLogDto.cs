@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("userlogs")]
-public class UserLogDTO : BaseModel
+internal class UserLogDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public int Id { get; set; }
@@ -31,3 +31,4 @@ public class UserLogDTO : BaseModel
     [Column("timestamp")]
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
+

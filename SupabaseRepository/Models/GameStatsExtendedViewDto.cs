@@ -6,7 +6,7 @@ using System;
 namespace SupabaseRepository.Models;
 
 [Table("v_game_stats_extended")]
-public class GameStatsExtendedViewDTO : StatEntryDTO
+internal class GameStatsExtendedViewDTO : StatEntryDTO
 {
     [Column("playername")]
     public string PlayerName { get; set; } = string.Empty;
@@ -41,3 +41,4 @@ public class GameStatsExtendedViewDTO : StatEntryDTO
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
 }
+

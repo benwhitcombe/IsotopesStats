@@ -5,14 +5,14 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "Manage Seasons")]
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Seasons</PageTitle>
 
-<DeleteManager TItem="Season" TId="int" @ref="deleteManager" OnDeleted="LoadSeasons" DeleteAction="StatsService.DeleteSeasonAsync" />
+<DeleteManager TItem="Season" TId="int" @ref="deleteManager" OnDeleted="LoadSeasons" DeleteAction="StatsRepository.DeleteSeasonAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Seasons</h3>
@@ -159,8 +159,8 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadSeasons();
-        allPlayers = await StatsService.GetAllPlayersAsync();
-        allOpponents = await StatsService.GetAllOpponentsAsync();
+        allPlayers = await StatsRepository.GetAllPlayersAsync();
+        allOpponents = await StatsRepository.GetAllOpponentsAsync();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -217,7 +217,7 @@ else
             Season? season = seasons.FirstOrDefault(s => s.Id == Id);
             if (season == null)
             {
-                season = (await StatsService.GetSeasonsAsync()).FirstOrDefault(s => s.Id == Id);
+                season = (await StatsRepository.GetSeasonsAsync()).FirstOrDefault(s => s.Id == Id);
             }
 
             if (season != null)
@@ -225,8 +225,8 @@ else
                 editingSeason = season with { };
                 originalSeason = season with { };
 
-                List<Player> seasonPlayers = await StatsService.GetPlayersAsync(season.Id);
-                List<Opponent> seasonOpponents = await StatsService.GetOpponentsAsync(season.Id);
+                List<Player> seasonPlayers = await StatsRepository.GetPlayersAsync(season.Id);
+                List<Opponent> seasonOpponents = await StatsRepository.GetOpponentsAsync(season.Id);
                 
                 extraState = new SeasonExtraState { 
                     PlayerIds = seasonPlayers.Select(p => p.Id).ToList(), 
@@ -275,7 +275,7 @@ else
         isLoading = true;
         try
         {
-            seasons = await StatsService.GetSeasonsAsync();
+            seasons = await StatsRepository.GetSeasonsAsync();
         }
         finally
         {
@@ -292,7 +292,7 @@ else
     private async Task<string?> CheckUniqueSeason(Season model)
     {
         if (string.IsNullOrWhiteSpace(model.Name)) return null;
-        bool isUnique = await StatsService.IsSeasonNameUniqueAsync(model.Name, model.Id);
+        bool isUnique = await StatsRepository.IsSeasonNameUniqueAsync(model.Name, model.Id);
         return isUnique ? null : "A season with this name already exists.";
     }
 
@@ -323,41 +323,42 @@ else
         int seasonId;
         if (editingSeason.Id == 0)
         {
-            seasonId = await StatsService.AddSeasonAsync(editingSeason);
+            seasonId = await StatsRepository.AddSeasonAsync(editingSeason);
             foreach (int playerId in extraState.PlayerIds)
-                await StatsService.AddPlayerToSeasonAsync(playerId, seasonId);
+                await StatsRepository.AddPlayerToSeasonAsync(playerId, seasonId);
             foreach (int opponentId in extraState.OpponentIds)
             {
                 string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
                 string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
-                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
+                await StatsRepository.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
             }
         }
         else
         {
             seasonId = editingSeason.Id;
-            await StatsService.UpdateSeasonAsync(editingSeason);
+            await StatsRepository.UpdateSeasonAsync(editingSeason);
             
             foreach (int playerId in extraState.PlayerIds.Except(originalExtraState.PlayerIds))
-                await StatsService.AddPlayerToSeasonAsync(playerId, seasonId);
+                await StatsRepository.AddPlayerToSeasonAsync(playerId, seasonId);
             foreach (int playerId in originalExtraState.PlayerIds.Except(extraState.PlayerIds))
-                await StatsService.DeletePlayerFromSeasonAsync(playerId, seasonId);
+                await StatsRepository.DeletePlayerFromSeasonAsync(playerId, seasonId);
 
             foreach (int opponentId in extraState.OpponentIds.Except(originalExtraState.OpponentIds))
             {
                 string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
                 string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
-                await StatsService.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
+                await StatsRepository.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
             }
             foreach (int opponentId in originalExtraState.OpponentIds.Except(extraState.OpponentIds))
-                await StatsService.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
+                await StatsRepository.DeleteOpponentFromSeasonAsync(opponentId, seasonId);
         }
         await LoadSeasons();
     }
 
     private async Task DeleteSeason()
     {
-        await StatsService.DeleteSeasonAsync(editingSeason.Id);
+        await StatsRepository.DeleteSeasonAsync(editingSeason.Id);
         await LoadSeasons();
     }
 }
+

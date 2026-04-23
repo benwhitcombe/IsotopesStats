@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_user_roles_summary")]
-public class UserRolesSummaryViewDTO : BaseModel
+internal class UserRolesSummaryViewDTO : BaseModel
 {
     [PrimaryKey("userid", false)]
     public string Id { get; set; } = string.Empty;
@@ -22,3 +22,4 @@ public class UserRolesSummaryViewDTO : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 }
+

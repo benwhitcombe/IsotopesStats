@@ -7,7 +7,7 @@
 - [x] **DTO/Model Alignment:** Renamed all occurrences of `Dto` to `DTO` and verified alignment between Domain models and Repository DTOs for consistency.
 
 ## 2. Service Layer & Abstraction
-- [ ] **Evaluate Pass-Through Services:** Decide whether to keep `StatsService` and `AuthService` as abstractions or inject repositories directly into UI components for simplicity.
+- [x] **Evaluate Pass-Through Services:** Deleted the redundant service layer and redirected the UI to use the repository interfaces directly. Isolated the `SupabaseRepository` project by making implementations `internal`.
 - [ ] **Generic CRUD Operations:** Implement a base repository or helper to handle standard Add/Update/Delete patterns for Players, Seasons, and Opponents.
 - [ ] **Standardize Logging:** Refine the `DeleteManager` and other logging points to use a more consistent, type-safe approach for identifying entities (e.g., an `INameable` interface).
 

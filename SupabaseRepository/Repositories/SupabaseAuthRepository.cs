@@ -10,7 +10,7 @@ using IsotopesStats.Domain.Interfaces;
 
 namespace SupabaseRepository.Repositories;
 
-public class SupabaseAuthRepository : IAuthRepository
+internal class SupabaseAuthRepository : IAuthRepository
 {
     private readonly Supabase.Client _supabase;
     private readonly SupabaseMapper _mapper = new();
@@ -260,3 +260,4 @@ public class SupabaseAuthRepository : IAuthRepository
         await _supabase.From<UserRoleDTO>().Update(_mapper.ToDTO(role));
     }
 }
+

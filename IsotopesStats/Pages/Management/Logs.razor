@@ -3,7 +3,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "Manage Logs")]
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 
 <PageTitle>Isotopes - User Logs</PageTitle>
 
@@ -96,7 +96,7 @@
         try
         {
             errorMessage = null;
-            logs = await AuthService.GetUserLogsAsync(200);
+            logs = await IAuthRepository.GetUserLogsAsync(200);
         }
         catch (Exception ex)
         {
@@ -112,3 +112,4 @@
         _ => "bg-secondary"
     };
 }
+

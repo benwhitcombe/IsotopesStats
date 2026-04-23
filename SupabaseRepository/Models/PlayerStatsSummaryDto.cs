@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_player_stats_summary")]
-public class PlayerStatsSummaryDTO : BaseModel
+internal class PlayerStatsSummaryDTO : BaseModel
 {
     [Column("playername")]
     public string PlayerName { get; set; } = string.Empty;
@@ -55,3 +55,4 @@ public class PlayerStatsSummaryDTO : BaseModel
     [Column("rbi")]
     public int RBI { get; set; }
 }
+

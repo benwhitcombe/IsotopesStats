@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_season_opponents_list")]
-public class SeasonOpponentViewDTO : BaseModel
+internal class SeasonOpponentViewDTO : BaseModel
 {
     [Column("seasonid")]
     public int SeasonId { get; set; }
@@ -19,3 +19,4 @@ public class SeasonOpponentViewDTO : BaseModel
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
 }
+

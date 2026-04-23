@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("users")]
-public class UserDTO : BaseModel
+internal class UserDTO : BaseModel
 {
     [PrimaryKey("id", false)]
     public string Id { get; set; } = string.Empty;
@@ -22,3 +22,4 @@ public class UserDTO : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 }
+

@@ -5,14 +5,14 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize(Policy = "Manage Opponents")]
-@inject IStatsService StatsService
+@inject IStatsRepository StatsRepository
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject SessionStorageService SessionStorage
 
 <PageTitle>Isotopes - Manage Opponents</PageTitle>
 
-<DeleteManager TItem="Opponent" TId="int" @ref="deleteManager" OnDeleted="LoadOpponents" DeleteAction="StatsService.DeleteOpponentAsync" />
+<DeleteManager TItem="Opponent" TId="int" @ref="deleteManager" OnDeleted="LoadOpponents" DeleteAction="StatsRepository.DeleteOpponentAsync" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Opponents</h3>
@@ -238,7 +238,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        allSeasons = await StatsService.GetSeasonsAsync();
+        allSeasons = await StatsRepository.GetSeasonsAsync();
         await LoadOpponents();
     }
 
@@ -296,7 +296,7 @@ else
             Opponent? opponent = opponents.FirstOrDefault(o => o.Id == Id);
             if (opponent == null)
             {
-                opponent = (await StatsService.GetAllOpponentsAsync()).FirstOrDefault(o => o.Id == Id);
+                opponent = (await StatsRepository.GetAllOpponentsAsync()).FirstOrDefault(o => o.Id == Id);
             }
 
             if (opponent != null)
@@ -306,7 +306,7 @@ else
                 extraState = new();
                 originalExtraState = new();
 
-                List<SeasonOpponents> opponentSeasons = await StatsService.GetSeasonsForOpponentAsync(opponent.Id);
+                List<SeasonOpponents> opponentSeasons = await StatsRepository.GetSeasonsForOpponentAsync(opponent.Id);
                 foreach (SeasonOpponents s in opponentSeasons)
                 {
                     extraState.Ids.Add(s.SeasonId);
@@ -352,11 +352,11 @@ else
         isLoading = true;
         try
         {
-            opponents = await StatsService.GetAllOpponentsAsync();
+            opponents = await StatsRepository.GetAllOpponentsAsync();
             allMappings.Clear();
             foreach (Opponent o in opponents)
             {
-                List<SeasonOpponents> maps = await StatsService.GetSeasonsForOpponentAsync(o.Id);
+                List<SeasonOpponents> maps = await StatsRepository.GetSeasonsForOpponentAsync(o.Id);
                 allMappings.AddRange(maps);
             }
         }
@@ -393,7 +393,7 @@ else
     {
         if (model.Id == 0) return null;
         if (string.IsNullOrWhiteSpace(model.Name)) return null;
-        bool isUnique = await StatsService.IsOpponentNameUniqueAsync(model.Name, model.Id);
+        bool isUnique = await StatsRepository.IsOpponentNameUniqueAsync(model.Name, model.Id);
         return isUnique ? null : "Another opponent with this master name already exists.";
     }
 
@@ -447,18 +447,18 @@ else
         int opponentId;
         if (editingOpponent.Id == 0)
         {
-            opponentId = await StatsService.AddOpponentAsync(editingOpponent, 0);
+            opponentId = await StatsRepository.AddOpponentAsync(editingOpponent, 0);
             foreach (int sid in extraState.Ids)
             {
                 extraState.Names.TryGetValue(sid, out string? name);
                 extraState.Shorts.TryGetValue(sid, out string? sname);
-                await StatsService.AddOpponentToSeasonAsync(opponentId, sid, name ?? editingOpponent.Name, sname ?? editingOpponent.ShortName);
+                await StatsRepository.AddOpponentToSeasonAsync(opponentId, sid, name ?? editingOpponent.Name, sname ?? editingOpponent.ShortName);
             }
         }
         else
         {
             opponentId = editingOpponent.Id;
-            await StatsService.UpdateOpponentAsync(editingOpponent);
+            await StatsRepository.UpdateOpponentAsync(editingOpponent);
             
             foreach (int sid in extraState.Ids)
             {
@@ -480,14 +480,14 @@ else
 
                 if (hasChanged)
                 {
-                    await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
-                    await StatsService.AddOpponentToSeasonAsync(opponentId, sid, currentName, currentShortName);
+                    await StatsRepository.DeleteOpponentFromSeasonAsync(opponentId, sid);
+                    await StatsRepository.AddOpponentToSeasonAsync(opponentId, sid, currentName, currentShortName);
                 }
             }
             
             foreach (int sid in originalExtraState.Ids.Except(extraState.Ids))
             {
-                await StatsService.DeleteOpponentFromSeasonAsync(opponentId, sid);
+                await StatsRepository.DeleteOpponentFromSeasonAsync(opponentId, sid);
             }
         }
         await LoadOpponents();
@@ -495,7 +495,7 @@ else
 
     private async Task DeleteOpponent()
     {
-        await StatsService.DeleteOpponentAsync(editingOpponent.Id);
+        await StatsRepository.DeleteOpponentAsync(editingOpponent.Id);
         await LoadOpponents();
     }
 
@@ -525,3 +525,4 @@ else
         public override int GetHashCode() => Ids.Count ^ Names.Count ^ Shorts.Count;
     }
 }
+

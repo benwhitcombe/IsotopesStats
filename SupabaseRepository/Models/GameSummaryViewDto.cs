@@ -5,7 +5,7 @@ using IsotopesStats.Models;
 namespace SupabaseRepository.Models;
 
 [Table("v_game_summaries")]
-public class GameSummaryViewDTO : BaseModel
+internal class GameSummaryViewDTO : BaseModel
 {
     [PrimaryKey("gameid", false)]
     public int GameId { get; set; }
@@ -70,3 +70,4 @@ public class GameSummaryViewDTO : BaseModel
     [Column("hometeamscore")]
     public int? HomeTeamScore { get; set; }
 }
+

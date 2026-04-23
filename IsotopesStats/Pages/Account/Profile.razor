@@ -3,7 +3,7 @@
 @using IsotopesStats.Models
 @using IsotopesStats.Shared
 @attribute [Authorize]
-@inject AuthService AuthService
+@inject IAuthRepository IAuthRepository
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -125,7 +125,7 @@ else
             string? email = user.Identity.Name;
             if (!string.IsNullOrEmpty(email))
             {
-                List<UserRolesSummaryView> users = await AuthService.GetUsersAsync();
+                List<UserRolesSummaryView> users = await IAuthRepository.GetUsersAsync();
                 currentUser = users.FirstOrDefault(u => u.Email == email);
             }
         }
@@ -138,7 +138,7 @@ else
         {
             if (currentUser != null)
             {
-                await AuthService.UpdateUserPasswordAsync(currentUser.Id, passwordModel.NewPassword);
+                await IAuthRepository.UpdateUserPasswordAsync(currentUser.Id, passwordModel.NewPassword);
                 isChangingPassword = false;
                 passwordModel = new();
                 showSuccess = true;
@@ -164,3 +164,4 @@ else
         public string ConfirmPassword { get; set; } = "";
     }
 }
+
