@@ -314,10 +314,13 @@ public class SupabaseStatsRepository : IStatsRepository
 
     public async Task<int> GetMostRecentStatsSeasonIdAsync()
     {
-        ModeledResponse<GameDTO> response = await _supabase.From<GameDTO>()
+        // Use v_game_summaries to find the most recent game that actually has stats (playercount > 0)
+        ModeledResponse<GameSummaryViewDTO> response = await _supabase.From<GameSummaryViewDTO>()
+            .Where(x => x.PlayerCount > 0)
             .Order("date", Postgrest.Constants.Ordering.Descending)
             .Limit(1)
             .Get();
+            
         return response.Model?.SeasonId ?? 0;
     }
 
