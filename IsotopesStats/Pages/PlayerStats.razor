@@ -492,33 +492,7 @@ else
             isAscending = false;
         }
 
-        switch (column)
-        {
-            case "PlayerName": allStats = isAscending ? allStats.OrderBy(p => p.PlayerName).ToList() : allStats.OrderByDescending(p => p.PlayerName).ToList(); break;
-            case "GP": allStats = isAscending ? allStats.OrderBy(p => p.GamesPlayed).ToList() : allStats.OrderByDescending(p => p.GamesPlayed).ToList(); break;   
-            case "PA": allStats = isAscending ? allStats.OrderBy(p => p.PA).ToList() : allStats.OrderByDescending(p => p.PA).ToList(); break;
-            case "AB": allStats = isAscending ? allStats.OrderBy(p => p.AB).ToList() : allStats.OrderByDescending(p => p.AB).ToList(); break;
-            case "H": allStats = isAscending ? allStats.OrderBy(p => p.H).ToList() : allStats.OrderByDescending(p => p.H).ToList(); break;
-            case "H1B": case "1B": allStats = isAscending ? allStats.OrderBy(p => p.H1B).ToList() : allStats.OrderByDescending(p => p.H1B).ToList(); break;       
-            case "H2B": case "2B": allStats = isAscending ? allStats.OrderBy(p => p.H2B).ToList() : allStats.OrderByDescending(p => p.H2B).ToList(); break;       
-            case "H3B": case "3B": allStats = isAscending ? allStats.OrderBy(p => p.H3B).ToList() : allStats.OrderByDescending(p => p.H3B).ToList(); break;       
-            case "H4B": case "4B": allStats = isAscending ? allStats.OrderBy(p => p.H4B).ToList() : allStats.OrderByDescending(p => p.H4B).ToList(); break;       
-            case "HR": allStats = isAscending ? allStats.OrderBy(p => p.HR).ToList() : allStats.OrderByDescending(p => p.HR).ToList(); break;
-            case "RBI": allStats = isAscending ? allStats.OrderBy(p => p.RBI).ToList() : allStats.OrderByDescending(p => p.RBI).ToList(); break;
-            case "R": allStats = isAscending ? allStats.OrderBy(p => p.R).ToList() : allStats.OrderByDescending(p => p.R).ToList(); break;
-            case "AVG": allStats = isAscending ? allStats.OrderBy(p => p.AVG).ToList() : allStats.OrderByDescending(p => p.AVG).ToList(); break;
-            case "OPS": allStats = isAscending ? allStats.OrderBy(p => p.OPS).ToList() : allStats.OrderByDescending(p => p.OPS).ToList(); break;
-            case "SLG": allStats = isAscending ? allStats.OrderBy(p => p.SLG).ToList() : allStats.OrderByDescending(p => p.SLG).ToList(); break;
-            case "OBP": allStats = isAscending ? allStats.OrderBy(p => p.OBP).ToList() : allStats.OrderByDescending(p => p.OBP).ToList(); break;
-            case "BB": allStats = isAscending ? allStats.OrderBy(p => p.BB).ToList() : allStats.OrderByDescending(p => p.BB).ToList(); break;
-            case "SF": allStats = isAscending ? allStats.OrderBy(p => p.SF).ToList() : allStats.OrderByDescending(p => p.SF).ToList(); break;
-            case "FC": allStats = isAscending ? allStats.OrderBy(p => p.FC).ToList() : allStats.OrderByDescending(p => p.FC).ToList(); break;
-            case "K": allStats = isAscending ? allStats.OrderBy(p => p.K).ToList() : allStats.OrderByDescending(p => p.K).ToList(); break;
-            case "KF": allStats = isAscending ? allStats.OrderBy(p => p.KF).ToList() : allStats.OrderByDescending(p => p.KF).ToList(); break;
-            case "GO": allStats = isAscending ? allStats.OrderBy(p => p.GO).ToList() : allStats.OrderByDescending(p => p.GO).ToList(); break;
-            case "FO": allStats = isAscending ? allStats.OrderBy(p => p.FO).ToList() : allStats.OrderByDescending(p => p.FO).ToList(); break;
-        }
-
+        allStats = allStats.SortByColumn(column, isAscending).ToList();
         currentSortColumn = column;
         SessionState.CurrentSortColumn = column;
         SessionState.IsAscending = isAscending;

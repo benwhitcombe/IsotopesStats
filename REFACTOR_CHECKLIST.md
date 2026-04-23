@@ -13,7 +13,7 @@
 
 ## 3. UI & Shared Components
 - [x] **Extract Shared UI Logic:** Created a reusable `SeasonSelector` component with centered text and anti-layout-shift logic to replace redundant selection UI in stats pages.
-- [ ] **Generic Sorting:** Refactor the large `switch` statements for sorting in `PlayerStats.razor` into a more dynamic, property-based sorting system.
+- [x] **Generic Sorting:** Refactored large `switch` statements for sorting into a dynamic system using the `SortByColumn` extension method.
 - [ ] **Loading State Consolidation:** Standardize the "Skeleton" or "Spinner" loading UI across all main views.
 - [ ] **Consistent Result Handling:** Unify the "Win/Loss/Tie" badge and logic used in `GameStats.razor` and `PlayerLogs.razor`.
 

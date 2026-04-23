@@ -690,32 +690,7 @@ else
 
     private IEnumerable<GameStatsExtendedView> ApplyInnerSorting(GameUIState uiState, IEnumerable<GameStatsExtendedView> stats)
     {
-        return uiState.SortColumn switch
-        {
-            "Player" => uiState.IsAscending ? stats.OrderBy(s => s.PlayerName) : stats.OrderByDescending(s => s.PlayerName),
-            "BO" => uiState.IsAscending ? stats.OrderBy(s => s.BO) : stats.OrderByDescending(s => s.BO),
-            "PA" => uiState.IsAscending ? stats.OrderBy(s => s.PA) : stats.OrderByDescending(s => s.PA),
-            "AB" => uiState.IsAscending ? stats.OrderBy(s => s.AB) : stats.OrderByDescending(s => s.AB),
-            "R" => uiState.IsAscending ? stats.OrderBy(s => s.R) : stats.OrderByDescending(s => s.R),
-            "H" => uiState.IsAscending ? stats.OrderBy(s => s.H) : stats.OrderByDescending(s => s.H),
-            "2B" => uiState.IsAscending ? stats.OrderBy(s => s.H2B) : stats.OrderByDescending(s => s.H2B),
-            "3B" => uiState.IsAscending ? stats.OrderBy(s => s.H3B) : stats.OrderByDescending(s => s.H3B),
-            "4B" => uiState.IsAscending ? stats.OrderBy(s => s.H4B) : stats.OrderByDescending(s => s.H4B),
-            "HR" => uiState.IsAscending ? stats.OrderBy(s => s.HR) : stats.OrderByDescending(s => s.HR),
-            "RBI" => uiState.IsAscending ? stats.OrderBy(s => s.RBI) : stats.OrderByDescending(s => s.RBI),
-            "BB" => uiState.IsAscending ? stats.OrderBy(s => s.BB) : stats.OrderByDescending(s => s.BB),
-            "K" => uiState.IsAscending ? stats.OrderBy(s => s.K) : stats.OrderByDescending(s => s.K),
-            "KF" => uiState.IsAscending ? stats.OrderBy(s => s.KF) : stats.OrderByDescending(s => s.KF),
-            "SF" => uiState.IsAscending ? stats.OrderBy(s => s.SF) : stats.OrderByDescending(s => s.SF),
-            "FC" => uiState.IsAscending ? stats.OrderBy(s => s.FC) : stats.OrderByDescending(s => s.FC),
-            "GO" => uiState.IsAscending ? stats.OrderBy(s => s.GO) : stats.OrderByDescending(s => s.GO),
-            "FO" => uiState.IsAscending ? stats.OrderBy(s => s.FO) : stats.OrderByDescending(s => s.FO),
-            "AVG" => uiState.IsAscending ? stats.OrderBy(s => s.AVG) : stats.OrderByDescending(s => s.AVG),
-            "OBP" => uiState.IsAscending ? stats.OrderBy(s => s.OBP) : stats.OrderByDescending(s => s.OBP),
-            "SLG" => uiState.IsAscending ? stats.OrderBy(s => s.SLG) : stats.OrderByDescending(s => s.SLG),
-            "OPS" => uiState.IsAscending ? stats.OrderBy(s => s.OPS) : stats.OrderByDescending(s => s.OPS),
-            _ => stats.OrderBy(s => s.BO)
-        };
+        return stats.SortByColumn(uiState.SortColumn, uiState.IsAscending);
     }
 }
 
