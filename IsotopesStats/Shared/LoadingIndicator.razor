@@ -1,0 +1,50 @@
+<div class="loading-indicator-wrapper @(IsFullPage ? "full-page" : "")" style="padding: @(Padding)rem;">
+    <div class="spinner-container">
+        <div class="spinner-border @(ColorClass)" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <div class="loading-message">@Message</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsFullPage { get; set; } = false;
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string ColorClass { get; set; } = "text-danger";
+    [Parameter] public double Padding { get; set; } = 3;
+}
+
+<style>
+    .loading-indicator-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .loading-indicator-wrapper.full-page {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+    }
+
+    .spinner-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .loading-message {
+        font-weight: 600;
+        color: #666;
+        font-size: 1.1rem;
+    }
+</style>

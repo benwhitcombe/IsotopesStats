@@ -24,11 +24,7 @@
 
 @if (isLoading)
 {
-    <div style="text-align: center; padding: 5rem;">
-        <div class="spinner-border text-danger" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
+    <LoadingIndicator Message="Loading Player Statistics..." Padding="5" />
 }
 else
 {
@@ -340,7 +336,6 @@ else
     private PlayerStatsSummary teamTotals = new();
     private string currentSortColumn = "AVG";
     private bool isAscending = false;
-    private bool showSeasonModal = false;
     private bool isDrawerExpanded = false;
     private bool isLoading = true;
     private bool isFirstDataLoad = true;

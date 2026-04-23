@@ -1,0 +1,33 @@
+<span class="game-result-badge @(ResultClass)" style="@(Style)">
+    @ResultText
+</span>
+
+@code {
+    [Parameter] public int? OurScore { get; set; }
+    [Parameter] public int? OpponentScore { get; set; }
+    [Parameter] public string Style { get; set; } = "";
+
+    private string ResultClass => (OurScore, OpponentScore) switch
+    {
+        (null, _) => "hidden",
+        (_, null) => "hidden",
+        _ when OurScore > OpponentScore => "win",
+        _ when OurScore < OpponentScore => "loss",
+        _ => "tie"
+    };
+
+    private string ResultText => (OurScore, OpponentScore) switch
+    {
+        (null, _) => "",
+        (_, null) => "",
+        _ when OurScore > OpponentScore => "Win",
+        _ when OurScore < OpponentScore => "Loss",
+        _ => "Tie"
+    };
+}
+
+<style>
+    .game-result-badge.hidden {
+        visibility: hidden;
+    }
+</style>

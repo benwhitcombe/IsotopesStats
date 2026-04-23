@@ -16,13 +16,17 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Opponents</h3>
-    @if (!isAdding && !isEditing)
+    @if (!isLoading && !isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Opponent</button>
     }
 </div>
 
-@if (isAdding || isEditing)
+@if (isLoading)
+{
+    <LoadingIndicator Message="Loading Opponents..." Padding="5" />
+}
+else if (isAdding || isEditing)
 {
     <ModelEditor 
         TItem="Opponent"
@@ -341,15 +345,24 @@ else
         catch { }
     }
 
+    private bool isLoading = true;
+
     private async Task LoadOpponents()
     {
-        opponents = await StatsService.GetAllOpponentsAsync();
-        // Load all mappings to show summary in table
-        allMappings.Clear();
-        foreach (Opponent o in opponents)
+        isLoading = true;
+        try
         {
-            List<SeasonOpponents> maps = await StatsService.GetSeasonsForOpponentAsync(o.Id);
-            allMappings.AddRange(maps);
+            opponents = await StatsService.GetAllOpponentsAsync();
+            allMappings.Clear();
+            foreach (Opponent o in opponents)
+            {
+                List<SeasonOpponents> maps = await StatsService.GetSeasonsForOpponentAsync(o.Id);
+                allMappings.AddRange(maps);
+            }
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 

@@ -18,13 +18,17 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Games</h3>
-    @if (!isEditing)
+    @if (!isLoading && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Game</button>
     }
 </div>
 
-@if (isEditing)
+@if (isLoading)
+{
+    <LoadingIndicator Message="Loading Games..." Padding="5" />
+}
+else if (isEditing)
 {
     <ModelEditor 
         TItem="Game"
@@ -500,9 +504,19 @@ else
         catch { }
     }
 
+    private bool isLoading = true;
+
     private async Task LoadGames()
     {
-        games = await StatsService.GetGamesBySeasonAsync(selectedSeasonId);
+        isLoading = true;
+        try
+        {
+            games = await StatsService.GetGamesBySeasonAsync(selectedSeasonId);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task OnSeasonChange(ChangeEventArgs e)

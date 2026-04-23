@@ -22,7 +22,11 @@
 
 <DeleteManager TItem="Player" TId="int" @ref="deleteManager" OnDeleted="LoadPlayers" DeleteAction="StatsService.DeletePlayerAsync" />
 
-@if (isAdding || isEditing)
+@if (isLoading)
+{
+    <LoadingIndicator Message="Loading Players..." Padding="5" />
+}
+else if (isAdding || isEditing)
 {
     <ModelEditor 
         TItem="Player"
@@ -227,9 +231,19 @@ else
         catch { }
     }
 
+    private bool isLoading = true;
+
     private async Task LoadPlayers()
     {
-        players = await StatsService.GetAllPlayersAsync();
+        isLoading = true;
+        try
+        {
+            players = await StatsService.GetAllPlayersAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void StartEdit(string action, int id)

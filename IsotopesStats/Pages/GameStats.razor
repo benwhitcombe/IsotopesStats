@@ -20,28 +20,24 @@
     </div>
 </div>
 
-<div class="stat-card" style="margin-bottom: 1.5rem;">
-    <div class="filter-container" style="max-width: 100%;">
-        <div class="search-container">
-            <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Opponent..." />
-            @if (!string.IsNullOrEmpty(filterText))
-            {
-                <button class="clear-button" @onclick="ClearFilter">✕</button>
-            }
+@if (!isLoading)
+{
+    <div class="stat-card" style="margin-bottom: 1.5rem;">
+        <div class="filter-container" style="max-width: 100%;">
+            <div class="search-container">
+                <input type="text" class="form-control" @bind="filterText" @bind:event="oninput" @onkeyup="UpdateFilterState" placeholder="Search Opponent..." />
+                @if (!string.IsNullOrEmpty(filterText))
+                {
+                    <button class="clear-button" @onclick="ClearFilter">✕</button>
+                }
+            </div>
         </div>
     </div>
-</div>
+}
 
 @if (isLoading)
 {
-    <div class="game-cards-list">
-        @for (int i = 0; i < 3; i++)
-        {
-            <div class="game-card" style="padding: 1rem;">
-                <div class="spinner-border text-danger" role="status" style="margin: 2rem auto; display: block;"></div>
-            </div>
-        }
-    </div>
+    <LoadingIndicator Message="Fetching Games..." Padding="5" />
 }
 else
 {
@@ -75,14 +71,6 @@ else
                         @{
                             int? isotopesScore = summary.IsHome ? summary.HomeTeamScore : summary.VisitingTeamScore;
                             int? opponentScore = summary.IsHome ? summary.VisitingTeamScore : summary.HomeTeamScore;
-                            string resultClass = "";
-                            string resultText = "";
-                            if (isotopesScore != null && opponentScore != null)
-                            {
-                                if (isotopesScore > opponentScore) { resultClass = "win"; resultText = "Win"; }
-                                else if (isotopesScore < opponentScore) { resultClass = "loss"; resultText = "Loss"; }
-                                else { resultClass = "tie"; resultText = "Tie"; }
-                            }
                         }
                         <div class="game-card-header" @onclick="() => ToggleGame(summary)" style="padding: 1.25rem; cursor: pointer; display: block;">
                             <!-- Desktop Header (Scoreboard Style) -->
@@ -91,10 +79,7 @@ else
                                     <div class="scoreboard-meta">
                                         <span>GAME #@summary.GameNumber</span>
                                         <span>@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
-                                        @if (!string.IsNullOrEmpty(resultText))
-                                        {
-                                            <span class="game-result-badge @resultClass" style="margin: 0; font-size: 0.75rem; padding: 2px 8px;">@resultText</span>
-                                        }
+                                        <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 0.75rem; padding: 2px 8px;" />
                                     </div>
                                     <div class="scoreboard-matchup">
                                         <div class="scoreboard-team visitor smart-name-container">
@@ -138,10 +123,7 @@ else
                                     <div class="scoreboard-meta">
                                         <span>GAME #@summary.GameNumber</span>
                                         <span>@summary.Date.ToString("MMM dd @ h:mm tt")</span>
-                                        @if (!string.IsNullOrEmpty(resultText))
-                                        {
-                                            <span class="game-result-badge @resultClass" style="margin: 0; font-size: 0.65rem; padding: 2px 6px;">@resultText</span>
-                                        }
+                                        <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 6px;" />
                                     </div>
                                     <div class="scoreboard-matchup">
                                         <div class="scoreboard-team visitor smart-name-container">
@@ -574,7 +556,6 @@ else
     private Dictionary<int, List<GameStatsExtendedView>> expandedStats = new();
     private List<Season> seasons = new();
     private string filterText = "";
-    private bool showSeasonModal = false;
     private bool isLoading = true;
 
     private IEnumerable<GameSummaryView> FilteredSummaries =>

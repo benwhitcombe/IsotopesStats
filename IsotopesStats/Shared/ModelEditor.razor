@@ -37,9 +37,18 @@
                     </div>
                 }
 
-                <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem;">
-                    <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem; opacity: @(IsFormValid ? "1" : "0.5"); cursor: @(IsFormValid ? "pointer" : "not-allowed");" disabled="@(!IsFormValid)">@SaveText</button>
-                    <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
+                <div style="display: flex; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; justify-content: center; gap: 1rem; align-items: center; min-height: 4.5rem;">
+                    @if (isSaving)
+                    {
+                        <div class="spinner-border text-danger" role="status">
+                            <span class="visually-hidden">Saving...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <button type="submit" class="view-btn active" style="padding: 0.8rem 2rem; opacity: @(IsFormValid ? "1" : "0.5"); cursor: @(IsFormValid ? "pointer" : "not-allowed");" disabled="@(!IsFormValid)">@SaveText</button>
+                        <button type="button" class="view-btn" style="padding: 0.8rem 2rem;" @onclick="HandleCancel">Cancel</button>
+                    }
                 </div>
             </div>
         </CascadingValue>
@@ -70,6 +79,7 @@
 }
 
 @code {
+    private bool isSaving = false;
     [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
     [Parameter] public string Id { get; set; } = string.Empty;
     [Parameter] public string Title { get; set; } = string.Empty;
@@ -197,6 +207,9 @@
             if (!string.IsNullOrEmpty(_uniqueError)) return;
         }
 
+        isSaving = true;
+        StateHasChanged();
+
         bool wasEdit = IsEdit;
         if (OnBeforeInternalSave != null)
         {
@@ -210,6 +223,8 @@
         catch (Exception ex)
         {
             _saveError = "An unexpected error occurred: " + ex.Message;
+            isSaving = false;
+            StateHasChanged();
             return;
         }
         
@@ -218,6 +233,7 @@
         await SessionStorage.RemoveItemAsync(StorageKey);
         await SessionStorage.RemoveItemAsync(ExtraStorageKey);
         showSuccess = true;
+        isSaving = false;
         StateHasChanged();
         _ = Task.Run(async () => {
             await Task.Delay(3000);

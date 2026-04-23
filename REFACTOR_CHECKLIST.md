@@ -14,8 +14,8 @@
 ## 3. UI & Shared Components
 - [x] **Extract Shared UI Logic:** Created a reusable `SeasonSelector` component with centered text and anti-layout-shift logic to replace redundant selection UI in stats pages.
 - [x] **Generic Sorting:** Refactored large `switch` statements for sorting into a dynamic system using the `SortByColumn` extension method.
-- [ ] **Loading State Consolidation:** Standardize the "Skeleton" or "Spinner" loading UI across all main views.
-- [ ] **Consistent Result Handling:** Unify the "Win/Loss/Tie" badge and logic used in `GameStats.razor` and `PlayerLogs.razor`.
+- [x] **Loading State Consolidation:** Created a shared `LoadingIndicator` component and standardized loading UI across all pages. Improved `ModelEditor` reactivity with immediate feedback during save operations.
+- [x] **Consistent Result Handling:** Created a reusable `GameResultBadge` component to unify "Win/Loss/Tie" logic and styling across all stats views.
 
 ## 4. Technical Debt & Consistency
 - [x] **Centralize Timezone Logic:** Moved `ToWhitbyTime` logic from the mapper into a dedicated `DateTimeService` in the Domain project to ensure consistent timezone handling across all layers.

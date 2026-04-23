@@ -16,13 +16,17 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Seasons</h3>
-    @if (!isAdding && !isEditing)
+    @if (!isLoading && !isAdding && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Season</button>
     }
 </div>
 
-@if (isAdding || isEditing)
+@if (isLoading)
+{
+    <LoadingIndicator Message="Loading Seasons..." Padding="5" />
+}
+else if (isAdding || isEditing)
 {
     <ModelEditor 
         TItem="Season"
@@ -264,9 +268,19 @@ else
         catch { }
     }
 
+    private bool isLoading = true;
+
     private async Task LoadSeasons()
     {
-        seasons = await StatsService.GetSeasonsAsync();
+        isLoading = true;
+        try
+        {
+            seasons = await StatsService.GetSeasonsAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void StartEdit(string action, int id)

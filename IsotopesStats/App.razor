@@ -3,10 +3,7 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <Authorizing>
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 1.5rem;">
-                        <div class="spinner-border text-danger" style="width: 3rem; height: 3rem; border-width: 0.35rem;" role="status"></div>
-                        <h4 style="color: var(--isotopes-dark); font-weight: 800; letter-spacing: 2px;">AUTHORIZING...</h4>
-                    </div>
+                    <LoadingIndicator IsFullPage="true" Message="AUTHORIZING..." />
                 </Authorizing>
                 <NotAuthorized>
                     @if (context.User.Identity?.IsAuthenticated != true)
