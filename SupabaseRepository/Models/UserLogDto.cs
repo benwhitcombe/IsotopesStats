@@ -11,7 +11,7 @@ public class UserLogDTO : BaseModel
     public int Id { get; set; }
 
     [Column("userid")]
-    public int? UserId { get; set; }
+    public string? UserId { get; set; }
 
     [Column("useremail")]
     public string UserEmail { get; set; } = string.Empty;

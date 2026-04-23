@@ -448,7 +448,7 @@ public static class ModelMappers
         if (DTO == null) return null!;
         return new User
         {
-            Id = DTO.Id.ToString(),
+            Id = DTO.Id,
             Email = DTO.Email,
             PasswordHash = DTO.PasswordHash,
             CreatedAt = DateTimeService.ToWhitbyTime(DTO.CreatedAt),
@@ -461,7 +461,7 @@ public static class ModelMappers
         if (model == null) return null!;
         return new UserDTO
         {
-            Id = string.IsNullOrEmpty(model.Id) ? Guid.Empty : Guid.Parse(model.Id),
+            Id = model.Id,
             Email = model.Email,
             PasswordHash = model.PasswordHash,
             CreatedAt = model.CreatedAt,
