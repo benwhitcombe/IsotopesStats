@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "IsotopesStats",
   "resources": {
-    "hash": "sha256-AkMTGhGE3mxra+7x41GVudBu48uYzVXMZGLPmpF2lkk=",
+    "hash": "sha256-JMHqusNug0fDD1UY2gYfRjen6QcOS4d1Sjg9jVlt2fM=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -18,8 +18,8 @@
     },
     "coreAssembly": {},
     "assembly": {
-      "IsotopesStats.Domain.wasm": "sha256-XL2rJIpWIgqaN3DN6GnGCIcjqsS318/4Ubo+Ms24KQM=",
-      "IsotopesStats.wasm": "sha256-Ya/6UkvMXAleRWeiJZnI6og+oqt6VpOl7HsPqvOTqj0=",
+      "IsotopesStats.Domain.wasm": "sha256-COxFor3PatUG1pCndavBTHd6OdC0u81vbaqZfydvBpA=",
+      "IsotopesStats.wasm": "sha256-wrJP0JzDQRMXmkUBFJrvYbfeZhnVBqcsARYk3jrQxhk=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-xycdrBQyumqarGNuI1svxkaenBKxEn2+vKm83hkxTKA=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-JjiMiKAGWjsOGDM+k3hDQ5y3vEBdb451H1zOjZLpI00=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-1Pf2meEYacKdf5lRRfCJ3jzjKu/7EYzQG6kLDDSz5bA=",
@@ -45,6 +45,7 @@
       "Microsoft.JSInterop.wasm": "sha256-5YCTBeqPLBCgnNIAwn6sgKyBKS13Ooms1CiP1kN6el8=",
       "MimeMapping.wasm": "sha256-+kk84AGP4hqN1KjG/j3sWAZrbuS3oApS8lptkpjUK6g=",
       "Newtonsoft.Json.wasm": "sha256-GlXMWKvDs45M2pACoR3Y4Qh8mcrOZGljqmvJY+6JZ5s=",
+      "Riok.Mapperly.Abstractions.wasm": "sha256-9TSNYolMpvLzFQ5BzzwBORl9nUGCN7kifZvzQZqGQbI=",
       "Supabase.Core.wasm": "sha256-hus3qpImHX1pvDmhZf2r6u0YqmH8DlrE8Tzd9QthR10=",
       "Supabase.Functions.wasm": "sha256-cAmNEcl3ZkcTAcSFQY9ViicWaBQnCMxJGk7fcpxTwAg=",
       "Supabase.Gotrue.wasm": "sha256-IJVfKJFlwBXRb7fR+mTHf66WvrXDZnn+xI+7Oohb0uo=",
@@ -52,7 +53,7 @@
       "Supabase.Realtime.wasm": "sha256-x/ryPhmfvBR+idRmyzcty43CY91ggqdkMiwLH6dvz0w=",
       "Supabase.Storage.wasm": "sha256-/JlNpn7ZLA1o00UE4pLSM3swF93PqY+GW5DgMl4Fook=",
       "Supabase.wasm": "sha256-cDT4RpTWur8+PQKlMzkf+YSS86akr64XMkNGi4xZ8Ec=",
-      "SupabaseRepository.wasm": "sha256-7J9QmekwT4jJn/Dvf2AJP2aHI+Wdd2Ll82vmJo70Oew=",
+      "SupabaseRepository.wasm": "sha256-swx2EyMheRKYEjnKC98obcEoR6BTjH6FxP8GLeXdR+Y=",
       "System.Collections.Concurrent.wasm": "sha256-SgsHKz8OrAG9z/6voOFVuGA+l6Snp01yk0CYv6xQBGU=",
       "System.Collections.NonGeneric.wasm": "sha256-RFWENVc3hRt8DBD/ygrBysrbcKwxv2eQxdFTTiQQ58g=",
       "System.Collections.Specialized.wasm": "sha256-diT1weMackZNHnEKnmk31/cfGICFovqIGhZO2b9nLYo=",
@@ -112,7 +113,7 @@
       "System.Xml.XDocument.wasm": "sha256-On0uOogVGRbouck7dNyN7zWjHWBPTwjg7g0pCL5MqHI=",
       "System.wasm": "sha256-25KTxVbx+rD8S9iyUye7jmbj1e4TZ5Ca+elup4oegJA=",
       "Websocket.Client.wasm": "sha256-mK1Y69iaJIlCiwO57XP3JeGf+acH7UzuOz4D8ngEaSM=",
-      "netstandard.wasm": "sha256-qBhQpiKNF1ykVlV7yAWi8ZPMWf3fMf0j5etOkuszu3A="
+      "netstandard.wasm": "sha256-KX7GM1zO07a5kik/Y9ls+xI3nYM2zF4ditQofDPGLS4="
     }
   },
   "cacheBootResources": true,
