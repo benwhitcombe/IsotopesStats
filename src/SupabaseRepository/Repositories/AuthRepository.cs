@@ -17,9 +17,9 @@ using DomainUser = IsotopesStats.Domain.Models.User;
 
 namespace IsotopesStats.SupabaseRepository.Repositories;
 
-internal class SupabaseAuthRepository : BaseRepository, IAuthRepository
+internal class AuthRepository : BaseRepository, IAuthRepository
 {
-    public SupabaseAuthRepository(Supabase.Client supabase) : base(supabase, new SupabaseMapper())
+    public AuthRepository(Supabase.Client supabase) : base(supabase, new SupabaseMapper())
     {
     }
 

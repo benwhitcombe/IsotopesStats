@@ -24,8 +24,8 @@ public static class ServiceCollectionExtensions
         });
 
         // Register Repositories
-        services.AddScoped<IStatsRepository, SupabaseStatsRepository>();
-        services.AddScoped<IAuthRepository, SupabaseAuthRepository>();
+        services.AddScoped<IStatsRepository, StatsRepository>();
+        services.AddScoped<IAuthRepository, AuthRepository>();
 
         return services;
     }

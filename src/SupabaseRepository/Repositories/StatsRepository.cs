@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 
 namespace IsotopesStats.SupabaseRepository.Repositories;
 
-internal class SupabaseStatsRepository : BaseRepository, IStatsRepository
+internal class StatsRepository : BaseRepository, IStatsRepository
 {
-    public SupabaseStatsRepository(Supabase.Client supabase) : base(supabase, new SupabaseMapper())
+    public StatsRepository(Supabase.Client supabase) : base(supabase, new SupabaseMapper())
     {
     }
 
