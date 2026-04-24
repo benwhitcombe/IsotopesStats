@@ -364,3 +364,15 @@ MigrationBackup/
 FodyWeavers.xsd
 /access.txt
 /supabase/.temp
+/supabase
+.supabase/
+supabase_schema.sql
+secure_policies.sql
+*.sln.doccache
+*.sqlproj.user
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.env
+.env.*
