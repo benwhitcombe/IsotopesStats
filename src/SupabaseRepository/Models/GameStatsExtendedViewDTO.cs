@@ -40,5 +40,10 @@ internal class GameStatsExtendedViewDTO : StatEntryDTO
 
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
-}
 
+    [Column("visitingteamscore")]
+    public int? VisitingTeamScore { get; set; }
+
+    [Column("hometeamscore")]
+    public int? HomeTeamScore { get; set; }
+}

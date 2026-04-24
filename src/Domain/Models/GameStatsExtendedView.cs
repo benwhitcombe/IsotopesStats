@@ -1,3 +1,5 @@
+using System;
+
 namespace IsotopesStats.Domain.Models;
 
 public record GameStatsExtendedView : StatEntry
@@ -23,4 +25,12 @@ public record GameStatsExtendedView : StatEntry
     public string OpponentName { get; set; } = string.Empty;
 
     public string OpponentShortName { get; set; } = string.Empty;
+
+    public int? VisitingTeamScore { get; set; }
+
+    public int? HomeTeamScore { get; set; }
+
+    // Calculated properties from Isotopes perspective
+    public int? OurScore => IsHome ? HomeTeamScore : VisitingTeamScore;
+    public int? OpponentScore => IsHome ? VisitingTeamScore : HomeTeamScore;
 }
