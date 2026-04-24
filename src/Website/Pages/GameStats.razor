@@ -64,7 +64,7 @@ else
                     GameUIState uiState = SessionState.GetState(gameId);
 
                     double teamAVG = summary.TeamAB > 0 ? (double)summary.TeamHits / summary.TeamAB : 0;
-                    double currentDelay = index * 0.1;
+                    double currentDelay = Math.Min(index * 0.1, 0.5);
                     index++;
 
                     <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s">
