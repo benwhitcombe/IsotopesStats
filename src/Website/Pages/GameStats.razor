@@ -173,6 +173,7 @@ else
                             else
                             {
                                 IEnumerable<GameStatsExtendedView> sortedStats = ApplyInnerSorting(uiState, expandedStats[gameId]);
+                                IEnumerable<GameStatsExtendedView> mobileStats = expandedStats[gameId].OrderBy(s => s.BO);
 
                                 <div class="game-card-detail expanded view-fade-in" style="padding: 0; border-top: 1px solid #eee; background: white;">
                                     <!-- Desktop View: Table -->
@@ -370,7 +371,7 @@ else
 
                                     <!-- Mobile View: Activity Feed -->
                                     <div class="mobile-only mobile-player-list">
-                                        @foreach (GameStatsExtendedView stat in sortedStats)
+                                        @foreach (GameStatsExtendedView stat in mobileStats)
                                         {
                                             <div class="mobile-player-row">
                                                 <div class="player-row-header">
@@ -380,21 +381,21 @@ else
                                                     <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000")</span>
                                                 </div>
                                                 <div class="stat-badge-list">
-                                                    <div class="stat-badge primary-stat @(uiState.SortColumn == "PA" ? "active" : "")">
+                                                    <div class="stat-badge primary-stat">
                                                         <span class="stat-badge-val">@stat.PA</span>
                                                         <span class="stat-badge-lbl">PA</span>
                                                     </div>
-                                                    @if (stat.AB > 0) { <div class="stat-badge @(uiState.SortColumn == "AB" ? "active" : "")"><span class="stat-badge-val">@stat.AB</span><span class="stat-badge-lbl">AB</span></div> }
-                                                    @if (stat.R > 0) { <div class="stat-badge @(uiState.SortColumn == "R" ? "active" : "")"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
-                                                    @if (stat.H > 0) { <div class="stat-badge @(uiState.SortColumn == "H" ? "active" : "")"><span class="stat-badge-val">@stat.H</span><span class="stat-badge-lbl">H</span></div> }
-                                                    @if (stat.H2B > 0) { <div class="stat-badge @(uiState.SortColumn == "2B" ? "active" : "")"><span class="stat-badge-val">@stat.H2B</span><span class="stat-badge-lbl">2B</span></div> }
-                                                    @if (stat.H3B > 0) { <div class="stat-badge @(uiState.SortColumn == "3B" ? "active" : "")"><span class="stat-badge-val">@stat.H3B</span><span class="stat-badge-lbl">3B</span></div> }
-                                                    @if (stat.H4B > 0) { <div class="stat-badge @(uiState.SortColumn == "4B" ? "active" : "")"><span class="stat-badge-val">@stat.H4B</span><span class="stat-badge-lbl">4B</span></div> }
-                                                    @if (stat.HR > 0) { <div class="stat-badge @(uiState.SortColumn == "HR" ? "active" : "")"><span class="stat-badge-val">@stat.HR</span><span class="stat-badge-lbl">HR</span></div> }
-                                                    @if (stat.RBI > 0) { <div class="stat-badge @(uiState.SortColumn == "RBI" ? "active" : "")"><span class="stat-badge-val">@stat.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
-                                                    @if (stat.BB > 0) { <div class="stat-badge @(uiState.SortColumn == "BB" ? "active" : "")"><span class="stat-badge-val">@stat.BB</span><span class="stat-badge-lbl">BB</span></div> }
-                                                    @if (stat.K > 0) { <div class="stat-badge @(uiState.SortColumn == "K" ? "active" : "")"><span class="stat-badge-val">@stat.K</span><span class="stat-badge-lbl">K</span></div> }
-                                                    @if (stat.SF > 0) { <div class="stat-badge @(uiState.SortColumn == "SF" ? "active" : "")"><span class="stat-badge-val">@stat.SF</span><span class="stat-badge-lbl">SF</span></div> }
+                                                    @if (stat.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.AB</span><span class="stat-badge-lbl">AB</span></div> }
+                                                    @if (stat.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
+                                                    @if (stat.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H</span><span class="stat-badge-lbl">H</span></div> }
+                                                    @if (stat.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H2B</span><span class="stat-badge-lbl">2B</span></div> }
+                                                    @if (stat.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H3B</span><span class="stat-badge-lbl">3B</span></div> }
+                                                    @if (stat.H4B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H4B</span><span class="stat-badge-lbl">4B</span></div> }
+                                                    @if (stat.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.HR</span><span class="stat-badge-lbl">HR</span></div> }
+                                                    @if (stat.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
+                                                    @if (stat.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.BB</span><span class="stat-badge-lbl">BB</span></div> }
+                                                    @if (stat.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.K</span><span class="stat-badge-lbl">K</span></div> }
+                                                    @if (stat.SF > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.SF</span><span class="stat-badge-lbl">SF</span></div> }
                                                 </div>
                                             </div>
                                         }
