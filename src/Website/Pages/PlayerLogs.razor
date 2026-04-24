@@ -196,9 +196,19 @@ else
         else
         {
             List<Season> seasons = await StatsRepository.GetSeasonsAsync();
-            if (seasons.Any())
+            int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+            
+            if (recentSeasonId != 0)
+            {
+                targetSeasonId = recentSeasonId;
+            }
+            else if (seasons.Any())
             {
                 targetSeasonId = seasons.First().Id;
+            }
+
+            if (targetSeasonId != 0)
+            {
                 logs = await StatsRepository.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
             }
             else

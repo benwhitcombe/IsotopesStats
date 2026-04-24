@@ -576,9 +576,17 @@ else
         SharedState.ReturnUrl = "gamestats";
         seasons = await StatsRepository.GetSeasonsAsync();
 
-        if (SharedState.SelectedSeasonId == 0 && seasons.Any())
+        if (SharedState.SelectedSeasonId == 0)
         {
-            SharedState.SelectedSeasonId = seasons.First().Id;
+            int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+            if (recentSeasonId != 0)
+            {
+                SharedState.SelectedSeasonId = recentSeasonId;
+            }
+            else if (seasons.Any())
+            {
+                SharedState.SelectedSeasonId = seasons.First().Id;
+            }
         }
 
         filterText = SessionState.FilterText;

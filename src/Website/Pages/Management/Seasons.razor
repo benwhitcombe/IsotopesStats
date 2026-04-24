@@ -329,7 +329,7 @@ else
             foreach (int opponentId in extraState.OpponentIds)
             {
                 string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
-                string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
+                string opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName ?? string.Empty;
                 await StatsRepository.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
             }
         }
@@ -346,7 +346,7 @@ else
             foreach (int opponentId in extraState.OpponentIds.Except(originalExtraState.OpponentIds))
             {
                 string opponentName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.Name ?? string.Empty;
-                string? opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName;
+                string opponentShortName = allOpponents.FirstOrDefault(o => o.Id == opponentId)?.ShortName ?? string.Empty;
                 await StatsRepository.AddOpponentToSeasonAsync(opponentId, seasonId, opponentName, opponentShortName);
             }
             foreach (int opponentId in originalExtraState.OpponentIds.Except(extraState.OpponentIds))

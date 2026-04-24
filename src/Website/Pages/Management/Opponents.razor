@@ -465,7 +465,7 @@ else
                 extraState.Names.TryGetValue(sid, out string? name);
                 extraState.Shorts.TryGetValue(sid, out string? sname);
                 string currentName = name ?? editingOpponent.Name;
-                string? currentShortName = sname ?? editingOpponent.ShortName;
+                string currentShortName = sname ?? editingOpponent.ShortName;
 
                 bool hasChanged = true;
                 if (originalExtraState.Ids.Contains(sid))

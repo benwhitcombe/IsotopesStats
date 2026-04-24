@@ -138,14 +138,8 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         return response.Models.Select(x => Mapper.ToModel(x)).ToList();
     }
 
-    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string? name = null, string? shortName = null)
+    public async Task AddOpponentToSeasonAsync(int opponentId, int seasonId, string name, string shortName)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            OpponentDTO? master = await Supabase.From<OpponentDTO>().Where(x => x.Id == opponentId).Single();
-            name = master?.Name ?? "Unknown";
-            shortName = master?.ShortName;
-        }
         SeasonOpponents link = new SeasonOpponents { SeasonId = seasonId, OpponentId = opponentId, Name = name, ShortName = shortName };
         await Supabase.From<SeasonOpponentsDTO>().Insert(Mapper.ToDTO(link));
     }
