@@ -29,6 +29,5 @@ internal class UserLogDTO : BaseModel
     public string Description { get; set; } = string.Empty;
 
     [Column("timestamp")]
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public DateTime? Timestamp { get; set; } = DateTime.UtcNow;
 }
-

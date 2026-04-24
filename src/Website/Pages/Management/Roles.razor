@@ -215,8 +215,8 @@ else
 
         if (role != null)
         {
-            editingRole = role with { };
-            originalRole = role with { };
+            editingRole = role.DeepClone();
+            originalRole = role.DeepClone();
             extraState = new PermissionsExtraState { Ids = role.Permissions.Select(p => p.Id).ToList() };
             originalExtraState = extraState with { Ids = new List<int>(extraState.Ids) };
         }

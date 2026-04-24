@@ -17,19 +17,19 @@ internal class GameDTO : BaseModel
     public int GameNumber { get; set; }
 
     [Column("date")]
-    public DateTime Date { get; set; } = DateTime.Now;
+    public DateTime Date { get; set; }
 
     [Column("diamond")]
     public string Diamond { get; set; } = string.Empty;
 
     [Column("ishome")]
-    public bool IsHome { get; set; } = true;
+    public bool IsHome { get; set; }
 
     [Column("opponentid")]
     public int OpponentId { get; set; }
 
-    [Column("type")]
-    public GameType Type { get; set; } = GameType.League;
+    [Column("gametype")]
+    public GameType GameType { get; set; }
 
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
@@ -43,4 +43,3 @@ internal class GameDTO : BaseModel
     [Reference(typeof(OpponentDTO))]
     public OpponentDTO? Opponent { get; set; }
 }
-

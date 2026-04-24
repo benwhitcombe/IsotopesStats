@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace IsotopesStats.Domain.Models;
 
 public record User : IEntity<string>
@@ -14,5 +17,5 @@ public record User : IEntity<string>
 
     public List<UserRole> Roles { get; set; } = new();
 
-    // Added Clone method to support shallow copies used in the UI refactors
+    public User DeepClone() => this with { Roles = new List<UserRole>(Roles) };
 }

@@ -19,4 +19,3 @@ internal class OpponentDTO : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 }
-

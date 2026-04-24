@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+
 namespace IsotopesStats.Domain.Models;
 
 public record Opponent : IEntity

@@ -17,9 +17,8 @@ internal class UserDTO : BaseModel
     public string PasswordHash { get; set; } = string.Empty;
 
     [Column("createdat")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
 
     [Column("isdeleted")]
-    public bool IsDeleted { get; set; } = false;
+    public bool? IsDeleted { get; set; }
 }
-

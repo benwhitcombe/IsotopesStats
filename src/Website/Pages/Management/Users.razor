@@ -203,7 +203,7 @@ else
                     .Select(name => availableRoles.FirstOrDefault(r => r.Name == name)?.Id ?? 0)
                     .Where(id => id != 0).ToList() ?? new List<int>()
             };
-            originalViewModel = editViewModel with { RoleIds = new List<int>(editViewModel.RoleIds) };
+            originalViewModel = editViewModel.DeepClone();
         }
         await HydrateTempState();
     }
@@ -296,6 +296,8 @@ else
         public string Email { get; set; } = "";
 
         public List<int> RoleIds { get; set; } = new();
+
+        public UserEditViewModel DeepClone() => this with { RoleIds = new List<int>(RoleIds) };
 
         public virtual bool Equals(UserEditViewModel? other)
         {

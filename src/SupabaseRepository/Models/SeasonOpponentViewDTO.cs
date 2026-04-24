@@ -19,4 +19,3 @@ internal class SeasonOpponentViewDTO : BaseModel
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
 }
-

@@ -40,4 +40,3 @@ internal class GameManagementViewDTO : BaseModel
     [Column("opponentshortname")]
     public string OpponentShortName { get; set; } = string.Empty;
 }
-

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace IsotopesStats.Domain.Models;
 
 public record UserRole : IEntity
@@ -9,4 +11,6 @@ public record UserRole : IEntity
     public bool IsDeleted { get; set; } = false;
 
     public List<Permission> Permissions { get; set; } = new();
+
+    public UserRole DeepClone() => this with { Permissions = new List<Permission>(Permissions) };
 }
