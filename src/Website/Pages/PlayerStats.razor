@@ -244,7 +244,8 @@ else
                 </tbody>
                 <tfoot>
                     <tr class="game-summary-row">
-                        <td colspan="2" class="sticky-col">TEAM TOTALS</td>
+                        <td></td>
+                        <td class="player-name sticky-col">Team</td>
                         <td class="group-divider narrow-col">-</td>
                         <td class="narrow-col">@teamTotals.PA</td>
                         <td class="narrow-col">@teamTotals.AB</td>
@@ -279,7 +280,7 @@ else
                     <div class="mobile-list-name">Player</div>
                     <div class="mobile-list-value" @onclick="() => Sort(currentSortColumn, true)" style="cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center;">
                         @currentSortColumn 
-                        <span class="sort-icon" style="position: absolute; right: 12px;">
+                        <span class="sort-icon">
                             @(isAscending ? "▲" : "▼")
                         </span>
                     </div>
@@ -294,7 +295,8 @@ else
                     </div>
                 }
                 <div class="mobile-list-item team-totals-item">
-                    <div class="mobile-list-name" style="font-weight: 900; text-align: left;">@(new[] { "AVG", "OBP", "SLG", "OPS" }.Contains(currentSortColumn) ? "Team Average" : "Team Totals")</div>
+                    <div class="mobile-list-rank"></div>
+                    <div class="mobile-list-name" style="font-weight: 900; text-align: left;">Team</div>
                     <div class="mobile-list-value">@GetStatValue(teamTotals, currentSortColumn)</div>
                 </div>
             </div>
@@ -556,19 +558,49 @@ else
     .desktop-only .box-score-table th.player-name {
         padding-left: 10px !important;
         padding-right: 10px !important;
-        position: relative;
+        position: sticky;
+        top: 0;
         white-space: nowrap;
     }
 
     .desktop-only .box-score-table th.active-sort-header {
-        font-weight: bold !important;
-        color: var(--isotopes-accent);
+        font-weight: 900 !important;
+        text-decoration: underline !important;
     }
 
     .desktop-only .box-score-table .player-name {
         text-align: left !important;
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-        min-width: 110px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        min-width: 140px !important;
+    }
+
+    .group-divider {
+        border-left: 2px solid #bbb !important;
+    }
+
+    /* Refine dividers for blue backgrounds */
+    .box-score-table th.group-divider {
+        border-left: 2px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .game-summary-row td.group-divider {
+        border-left: 2px solid rgba(0, 70, 132, 0.2) !important;
+    }
+
+    .game-summary-row td {
+        background-color: #f0f7ff !important;
+        color: var(--isotopes-accent) !important;
+        font-weight: 900 !important;
+        border-top: 2px solid var(--isotopes-accent) !important;
+        border-bottom: 2px solid var(--isotopes-accent) !important;
+    }
+
+    .game-summary-row td.sticky-col {
+        background-color: #f0f7ff !important;
+    }
+
+    .game-summary-row td:first-child.sticky-col {
+        border-right: none !important;
     }
 </style>

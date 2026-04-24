@@ -114,7 +114,7 @@ body {
     }
     .header-content {
         justify-content: space-between;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
         width: 100%;
     }
@@ -125,7 +125,7 @@ body {
 
 .content {
     padding: 1rem;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     flex: 1;
 }
@@ -199,26 +199,27 @@ table {
 }
 
 th {
-    background-color: #f8f9fa;
+    background-color: var(--isotopes-accent) !important;
+    color: white !important;
     padding: 12px;
     text-align: center;
     font-size: 0.9rem;
-    color: #666;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid rgba(0,0,0,0.1);
 }
 
 td {
     padding: 12px;
     border-bottom: 1px solid #eee;
     text-align: center;
+    background-color: white;
 }
 
-tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+tbody tr:nth-child(even) td {
+    background-color: #f8f9fb;
 }
 
-tbody tr:hover {
-    background-color: #f1f1f1;
+tbody tr:hover td {
+    background-color: #f1f6fa !important;
 }
 
 tr:last-child td {
@@ -428,32 +429,35 @@ tr:last-child td {
 }
 
 .box-score-table th {
-    background: #f8f9fa;
+    background-color: #004684 !important;
+    color: #ffffff !important;
     position: sticky;
     top: 0;
     z-index: 10;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid rgba(0,0,0,0.2);
 }
 
 .box-score-table .sticky-col {
     position: sticky;
     left: 0;
-    background: #f8f9fa;
     z-index: 20;
-    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
-    min-width: 120px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    text-align: left !important;
 }
 
-.box-score-table tr:nth-child(even) td {
-    background-color: #fdfdfd;
+.box-score-table th.sticky-col {
+    background-color: #004684 !important;
+    color: #ffffff !important;
+    z-index: 30;
 }
 
 .box-score-table td.sticky-col {
-    background: white;
+    background-color: white !important;
+    color: #333 !important;
 }
 
 .box-score-table tr:nth-child(even) td.sticky-col {
-    background: #fdfdfd;
+    background-color: #f8f9fb !important;
 }
 
 .box-score-table tr:hover td {
@@ -636,12 +640,16 @@ tr:last-child td {
         display: flex;
         align-items: center;
         padding: 12px 16px;
-        border-bottom: 2px solid #eee;
-        background: #f8f9fa;
+        border-bottom: 2px solid rgba(0,0,0,0.1);
+        background: var(--isotopes-accent);
         font-size: 0.85rem;
         font-weight: 700;
-        color: #888;
+        color: white !important;
         letter-spacing: 0.5px;
+    }
+
+    .mobile-list-header div {
+        color: white !important;
     }
 
     .mobile-list-item {
@@ -650,11 +658,16 @@ tr:last-child td {
         padding: 18px 16px;
         border-bottom: 1px solid #f0f0f0;
         cursor: pointer;
+        background-color: white;
+    }
+
+    .mobile-list-item:nth-child(even) {
+        background-color: #f8f9fb;
     }
 
     .mobile-list-rank {
         width: 45px;
-        color: #888;
+        color: #999;
         font-weight: 600;
         font-size: 1.05rem;
         display: flex;
@@ -666,7 +679,7 @@ tr:last-child td {
         flex: 1;
         font-weight: 700;
         font-size: 1.15rem;
-        color: var(--isotopes-dark);
+        color: #333;
         display: flex;
         align-items: center;
         line-height: 1;
@@ -676,13 +689,26 @@ tr:last-child td {
         font-weight: 800;
         font-size: 1.25rem;
         color: var(--isotopes-accent);
-        min-width: 85px;
+        min-width: 100px;
         text-align: center;
         display: flex;
         align-items: center;
         justify-content: center;
         line-height: 1;
         position: relative;
+    }
+
+    .team-totals-item {
+        background-color: #f0f7ff !important;
+        color: var(--isotopes-accent) !important;
+        border-top: 2px solid var(--isotopes-accent) !important;
+        border-bottom: none !important;
+    }
+
+    .team-totals-item .mobile-list-name,
+    .team-totals-item .mobile-list-value {
+        color: var(--isotopes-accent) !important;
+        font-weight: 900;
     }
 
     .mobile-stat-drawer {
@@ -821,18 +847,36 @@ tr:last-child td {
 .form-control { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
 
 .active-sort-col { font-weight: bold; }
-.sortable-header { position: relative; padding: 10px 10px !important; cursor: pointer; white-space: nowrap; text-align: center !important; }
+
+.narrow-col {
+    min-width: 38px !important;
+}
+
+.sortable-header {
+    position: relative;
+    padding: 10px 6px !important;
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: center !important;
+    min-width: 32px;
+}
+
+/* Ensure stat columns (AVG, OBP, etc) have enough room for the sort icon */
+.box-score-table th.sortable-header:not(.player-name):not(.narrow-col) {
+    min-width: 65px;
+}
+
 .sort-icon {
     position: absolute;
-    right: 2px;
+    right: 0px;
     top: 50%;
     transform: translateY(-50%);
-    width: 10px;
+    width: 8px;
     text-align: center;
     pointer-events: none;
-    font-size: 0.6rem;
-    color: var(--isotopes-accent);
-    font-weight: bold;
+    font-size: 0.55rem;
+    color: white !important;
+    font-weight: 900;
 }
 
 .group-divider { border-left: 2px solid #ddd !important; }
@@ -893,7 +937,7 @@ tr:last-child td {
 
 /* Management Sub Nav */
 .management-sub-nav { background-color: #f1f1f1; border-bottom: 1px solid #ddd; padding: 0.5rem 0; position: sticky; top: 70px; z-index: 999; }
-.sub-nav-content { max-width: 1200px; margin: 0 auto; display: flex; gap: 2rem; padding: 0 1rem; }
+.sub-nav-content { max-width: 1400px; margin: 0 auto; display: flex; gap: 2rem; padding: 0 1rem; }
 .sub-nav-content a { color: #555; text-decoration: none; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; }
 .sub-nav-content a.active { color: var(--isotopes-red); border-bottom-color: var(--isotopes-red); }
 

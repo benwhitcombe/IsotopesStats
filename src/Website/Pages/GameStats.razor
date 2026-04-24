@@ -180,7 +180,7 @@ else
                                         <table class="box-score-table table-sm" style="margin-bottom: 0; border: none; border-radius: 0 !important; width: 100%;">
                                         <thead>
                                             <tr>
-                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 45px;">
+                                                <th @onclick='() => Sort(gameId, "BO")' class="sortable-header @(uiState.SortColumn == "BO" ? "active-sort-header" : "")" style="width: 40px;">
                                                     <span style="position: relative; display: inline-block;">
                                                         BO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "BO"))</span>
                                                     </span>
@@ -325,7 +325,8 @@ else
                                                 </tr>
                                             }
                                             <tr class="game-summary-row">
-                                                <td colspan="2" class="sticky-col">TOTALS</td>
+                                                <td></td>
+                                                <td class="player-name sticky-col">Team</td>
                                                 <td class="group-divider narrow-col">@summary.TeamPA</td>
                                                 <td class="narrow-col">@summary.TeamAB</td>
                                                 <td class="group-divider narrow-col">@summary.TeamRuns</td>
@@ -399,7 +400,7 @@ else
                                         }
                                         <div class="mobile-player-row" style="background: #f0f7ff; border-top: 2px solid var(--isotopes-accent);">
                                             <div class="player-row-header">
-                                                <span class="player-row-name" style="color: var(--isotopes-dark)">TEAM TOTALS</span>
+                                                <span class="player-row-name" style="color: var(--isotopes-dark)">Team</span>
                                                 <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000")</span>
                                             </div>
                                             <div class="stat-badge-list">
@@ -721,6 +722,8 @@ else
     /* Table Centering and Sort Icon Styles */
     .game-card-detail .box-score-table {
         font-size: 0.85rem;
+        table-layout: auto;
+        width: 100%;
     }
 
     .game-card-detail .box-score-table th, 
@@ -731,29 +734,68 @@ else
         padding-right: 2px !important;
     }
 
-    .game-card-detail .box-score-table th.sortable-header {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-        position: relative;
+    .game-card-detail .box-score-table th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
         white-space: nowrap;
     }
 
+    .game-card-detail .box-score-table th.sortable-header {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        cursor: pointer;
+    }
+
     .game-card-detail .box-score-table th.active-sort-header {
-        font-weight: bold !important;
-        color: var(--isotopes-accent);
+        font-weight: 900 !important;
+        text-decoration: underline !important;
     }
 
     .game-card-detail .box-score-table .player-name {
         text-align: left !important;
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-        min-width: 110px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        min-width: 150px !important;
+        width: 150px !important;
+        max-width: 150px !important;
         position: sticky;
         left: 0;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
+        z-index: 20;
+    }
+
+    .game-card-detail .box-score-table th.player-name {
+        z-index: 30;
+        border-bottom: 2px solid rgba(0,0,0,0.2) !important;
+    }
+
+    .group-divider {
+        border-left: 2px solid #bbb !important;
+    }
+
+    /* Refine dividers for blue backgrounds */
+    .game-card-detail .box-score-table th.group-divider {
+        border-left: 2px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .game-summary-row td.group-divider {
+        border-left: 2px solid rgba(0, 70, 132, 0.2) !important;
+    }
+
+    .game-summary-row td {
+        background-color: #f0f7ff !important;
+        color: var(--isotopes-accent) !important;
+        font-weight: 900 !important;
+        border-top: 2px solid var(--isotopes-accent) !important;
+        border-bottom: 2px solid var(--isotopes-accent) !important;
+    }
+
+    .game-summary-row td.sticky-col {
+        background-color: #f0f7ff !important;
+    }
+
+    .game-summary-row td:first-child.sticky-col {
+        border-right: none !important;
     }
 </style>
 
