@@ -475,8 +475,8 @@ tr:last-child td {
 }
 
 .scoreboard-meta {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -485,9 +485,30 @@ tr:last-child td {
     font-weight: 700;
 }
 
+.scoreboard-meta > *:nth-child(1) { text-align: left; min-width: 0; }
+.scoreboard-meta > *:nth-child(2) { text-align: center; }
+.scoreboard-meta > *:nth-child(3) { justify-self: end; min-width: 0; }
+
+.date-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 4px;
+    align-items: center;
+    min-width: 130px;
+}
+
+.date-container .at-sign {
+    color: #ccc;
+    font-weight: 400;
+    padding: 0 2px;
+}
+
+.date-container .date-part { text-align: right; }
+.date-container .time-part { text-align: left; }
+
 .scoreboard-matchup {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 0.75rem;
     margin: 0.15rem 0;
@@ -507,12 +528,15 @@ tr:last-child td {
 /* Short Name Swap Logic */
 .smart-name-container {
     position: relative;
+    width: 100%;
 }
 
 .smart-name-container .short-name { display: none; }
 
 .smart-name-container .full-name {
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .smart-name-container.use-short-name .full-name { 
@@ -529,17 +553,19 @@ tr:last-child td {
 .scoreboard-scores {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     background: #f1f3f5;
     padding: 2px 12px;
     border-radius: 12px;
+    min-width: 70px;
 }
 
 .scoreboard-score {
     font-size: 1.4rem;
     font-weight: 900;
     color: #333;
-    min-width: 1.2rem;
+    width: 1.5rem;
     text-align: center;
     line-height: 1.1;
 }
@@ -562,16 +588,19 @@ tr:last-child td {
 /* Desktop Overrides for Scoreboard */
 @media (min-width: 769px) {
     .mobile-scoreboard { gap: 0.5rem; }
+    .scoreboard-meta { font-size: 1rem; }
     .scoreboard-matchup { gap: 1.5rem; }
     .scoreboard-team { font-size: 1.35rem; }
-    .scoreboard-scores { padding: 4px 18px; gap: 0.75rem; }
-    .scoreboard-score { font-size: 1.7rem; }
+    .scoreboard-scores { padding: 4px 18px; gap: 0.75rem; min-width: 110px; }
+    .scoreboard-score { font-size: 1.7rem; width: 1.8rem; }
     .scoreboard-divider { font-size: 1.2rem; }
+    .scoreboard-location { font-size: 1.1rem; }
+    .date-container { min-width: 250px; }
 }
 
 /* Player Activity Feed */
 .mobile-player-row {
-    padding: 0.75rem 1rem;
+    padding: 1.5rem 1rem;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -904,6 +933,7 @@ tr:last-child td {
 @media (min-width: 768px) {
     .leader-highlights { grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     .leader-card { padding: 1.5rem; border-radius: 16px; }
+    .leader-category { font-size: 0.8rem; }
     .leader-name { font-size: 1.5rem; }
     .leader-value { font-size: 2rem; }
 }
@@ -1117,6 +1147,23 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
 #blazor-error-ui .dismiss {
     cursor: pointer;
     position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+lute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+-index: 10000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+lute;
     right: 0.75rem;
     top: 0.5rem;
 }

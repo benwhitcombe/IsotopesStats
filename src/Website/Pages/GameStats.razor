@@ -79,7 +79,7 @@ else
                                     <div class="scoreboard-meta">
                                         <span>GAME #@summary.GameNumber</span>
                                         <span>@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
-                                        <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 0.75rem; padding: 2px 8px;" />
+                                        <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 1rem; padding: 2px 12px;" />
                                     </div>
                                     <div class="scoreboard-matchup">
                                         <div class="scoreboard-team visitor smart-name-container">
@@ -453,7 +453,7 @@ else
                                     <div class="scoreboard-meta">
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
                                         <span style="color: #999;">@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
-                                        <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 0.75rem; padding: 2px 8px;">Win</span>
+                                        <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 1rem; padding: 2px 12px;">Win</span>
                                     </div>
                                     <div class="scoreboard-matchup">
                                         <div class="scoreboard-team visitor smart-name-container" style="color: #888;">
@@ -495,7 +495,11 @@ else
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
-                                        <span style="color: #999;">@summary.Date.ToString("MMM dd @ h:mm tt")</span>
+                                        <div class="date-container">
+                                            <span class="date-part" style="color: #999;">@summary.Date.ToString("MMM dd")</span>
+                                            <span class="at-sign">@("@")</span>
+                                            <span class="time-part" style="color: #999;">@summary.Date.ToString("h:mm tt")</span>
+                                        </div>
                                         <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 0.65rem; padding: 2px 6px;">Win</span>
                                     </div>
                                     <div class="scoreboard-matchup">
@@ -732,6 +736,8 @@ else
         vertical-align: middle;
         padding-left: 2px !important;
         padding-right: 2px !important;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
     }
 
     .game-card-detail .box-score-table th {
