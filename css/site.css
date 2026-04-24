@@ -107,6 +107,37 @@ body {
     border-color: rgba(255, 255, 255, 0.8);
 }
 
+/* Mobile Quick Nav */
+.mobile-quick-nav {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid #eee;
+    padding: 0;
+    justify-content: center;
+}
+
+.mobile-quick-nav a {
+    flex: 1;
+    text-align: center;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mobile-quick-nav a.active {
+    color: var(--isotopes-red);
+    border-bottom-color: var(--isotopes-red);
+    background-color: rgba(237, 28, 36, 0.03);
+}
+
 @media (min-width: 769px) {
     .header-content {
         justify-content: space-between;
@@ -1143,23 +1174,6 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
 #blazor-error-ui .dismiss {
     cursor: pointer;
     position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
-}
-lute;
-    right: 0.75rem;
-    top: 0.5rem;
-}
--index: 10000;
-}
-
-#blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
-}
-lute;
     right: 0.75rem;
     top: 0.5rem;
 }
