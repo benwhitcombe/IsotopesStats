@@ -3,7 +3,7 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <Authorizing>
-                    <LoadingIndicator IsFullPage="true" Message="AUTHORIZING..." />
+                    <LoadingIndicator IsFullPage="true" />
                 </Authorizing>
                 <NotAuthorized>
                     @if (context.User.Identity?.IsAuthenticated != true)

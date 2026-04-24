@@ -13,10 +13,7 @@
     <div class="stat-card view-fade-in" style="padding: 2.5rem; position: relative; overflow: hidden;">
         @if (isAuthorizing)
         {
-            <div class="view-fade-in" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
-                <div class="spinner-border text-danger" style="width: 3rem; height: 3rem; border-width: 0.35rem;" role="status"></div>
-                <h5 style="color: var(--isotopes-dark); font-weight: 800; letter-spacing: 1px; margin: 0;">AUTHORIZING...</h5>
-            </div>
+            <LoadingIndicator IsFullPage="true" />
         }
 
         <div style="text-align: center; margin-bottom: 2rem;">
@@ -48,7 +45,7 @@
         </div>
 
         <button class="view-btn active @(isAuthorizing ? "loading" : "")" @onclick="HandleLogin" disabled="@isAuthorizing" style="margin-top: 2rem; width: 100%; padding: 1rem; font-size: 1.1rem; background-color: var(--isotopes-accent); border-color: var(--isotopes-accent);">
-            @(isAuthorizing ? "Signing in..." : "Sign In")
+            Sign In
         </button>
         
         <div style="text-align: center; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
