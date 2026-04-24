@@ -754,6 +754,7 @@ tr:last-child td {
         min-height: 52px;
         flex-shrink: 0;
         touch-action: pan-x;
+        overscroll-behavior: contain;
     }
 
     .mobile-stat-drawer.expanded .stat-carousel {
@@ -794,6 +795,7 @@ tr:last-child td {
         overflow-y: auto;
         flex: 1;
         touch-action: pan-y;
+        overscroll-behavior: contain;
     }
 
     .stat-grid-full .stat-btn {
