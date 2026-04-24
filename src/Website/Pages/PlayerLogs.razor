@@ -9,7 +9,7 @@
 
 <PageTitle>Isotopes - @PlayerName Game Log</PageTitle>
 
-<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">@PlayerName - Game Log</h3>
     <button class="view-btn" @onclick="GoBack">Back to Stats</button>
 </div>
@@ -114,33 +114,41 @@ else
                     GameStatsExtendedView log = logs[i];
                     double currentDelay = i * 0.1;
 
-                    <div class="game-card stat-card view-fade-in" style="animation-delay: @(currentDelay)s; margin-bottom: 1rem;">
-                        <div class="game-card-header" style="cursor: default; padding: 1rem !important;">
+                    <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s; margin-bottom: 1rem;">
+                        <div class="game-card-header" style="cursor: default; padding: 1.25rem !important; display: block;">
                             <div class="mobile-scoreboard">
                                 <div class="scoreboard-meta">
                                     <span>GAME #@log.GameNumber</span>
-                                    <span>@log.Date.ToString("MMM dd, yyyy")</span>
-                                    <GameResultBadge OurScore="log.R" OpponentScore="log.OpponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 8px;" />
+                                    <span>@log.Date.ToString("MMM dd @ h:mm tt")</span>
+                                    <GameResultBadge OurScore="log.OurScore" OpponentScore="log.OpponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 6px;" />
                                 </div>
                                 <div class="scoreboard-matchup">
-                                    <div class="scoreboard-team visitor">
-                                        <div class="smart-name-container">
-                                            <span class="full-name">Isotopes</span>
-                                        </div>
+                                    <div class="scoreboard-team visitor smart-name-container">
+                                        <span class="full-name">@(log.IsHome ? log.OpponentName : "Isotopes")</span>
+                                        @if (log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
+                                        {
+                                            <span class="short-name">@log.OpponentShortName</span>
+                                        }
+                                        else if (!log.IsHome)
+                                        {
+                                            <span class="short-name">Isotopes</span>
+                                        }
                                     </div>
                                     <div class="scoreboard-scores">
-                                        <span class="scoreboard-score">@log.R</span>
+                                        <span class="scoreboard-score">@(log.VisitingTeamScore?.ToString() ?? "0")</span>
                                         <span class="scoreboard-divider">-</span>
-                                        <span class="scoreboard-score">@log.OpponentScore</span>
+                                        <span class="scoreboard-score">@(log.HomeTeamScore?.ToString() ?? "0")</span>
                                     </div>
-                                    <div class="scoreboard-team home">
-                                        <div class="smart-name-container">
-                                            <span class="full-name">@log.OpponentName</span>
-                                            @if (!string.IsNullOrEmpty(log.OpponentShortName))
-                                            {
-                                                <span class="short-name">@log.OpponentShortName</span>
-                                            }
-                                        </div>
+                                    <div class="scoreboard-team home smart-name-container">
+                                        <span class="full-name">@(log.IsHome ? "Isotopes" : log.OpponentName)</span>
+                                        @if (!log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
+                                        {
+                                            <span class="short-name">@log.OpponentShortName</span>
+                                        }
+                                        else if (log.IsHome)
+                                        {
+                                            <span class="short-name">Isotopes</span>
+                                        }
                                     </div>
                                 </div>
                                 <div class="scoreboard-location">
@@ -149,22 +157,24 @@ else
                             </div>
                         </div>
 
-                        <div class="game-card-detail expanded" style="border-top: 1px solid #f0f0f0; padding-top: 0.75rem;">
-                            <div class="mobile-card-stats">
-                                @if (log.PA > 0) { <div class="m-stat"><span class="m-stat-val">@log.PA</span><span class="m-stat-label">PA</span></div> }
-                                @if (log.AB > 0) { <div class="m-stat"><span class="m-stat-val">@log.AB</span><span class="m-stat-label">AB</span></div> }
-                                @if (log.H2B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H2B</span><span class="m-stat-label">2B</span></div> }
-                                @if (log.H3B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H3B</span><span class="m-stat-label">3B</span></div> }
-                                @if (log.H4B > 0) { <div class="m-stat"><span class="m-stat-val">@log.H4B</span><span class="m-stat-label">4B</span></div> }
-                                @if (log.HR > 0) { <div class="m-stat"><span class="m-stat-val" style="color: var(--isotopes-red); font-weight: bold;">@log.HR</span><span class="m-stat-label">HR</span></div> }
-                                @if (log.RBI > 0) { <div class="m-stat"><span class="m-stat-val">@log.RBI</span><span class="m-stat-label">RBI</span></div> }
-                                @if (log.BB > 0) { <div class="m-stat"><span class="m-stat-val">@log.BB</span><span class="m-stat-label">BB</span></div> }
-                                @if (log.K > 0) { <div class="m-stat"><span class="m-stat-val">@log.K</span><span class="m-stat-label">K</span></div> }
-                                @if (log.KF > 0) { <div class="m-stat"><span class="m-stat-val">@log.KF</span><span class="m-stat-label">KF</span></div> }
-                                @if (log.SF > 0) { <div class="m-stat"><span class="m-stat-val">@log.SF</span><span class="m-stat-label">SF</span></div> }
-                                @if (log.FC > 0) { <div class="m-stat"><span class="m-stat-val">@log.FC</span><span class="m-stat-label">FC</span></div> }
-                                @if (log.GO > 0) { <div class="m-stat"><span class="m-stat-val">@log.GO</span><span class="m-stat-label">GO</span></div> }
-                                @if (log.FO > 0) { <div class="m-stat"><span class="m-stat-val">@log.FO</span><span class="m-stat-label">FO</span></div> }
+                        <div class="game-card-detail expanded" style="border-top: 1px solid #eee; padding: 1.25rem; background: white;">
+                            <div class="stat-badge-list">
+                                @if (log.PA > 0) { <div class="stat-badge primary-stat"><span class="stat-badge-val">@log.PA</span><span class="stat-badge-lbl">PA</span></div> }
+                                @if (log.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.AB</span><span class="stat-badge-lbl">AB</span></div> }
+                                @if (log.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.R</span><span class="stat-badge-lbl">R</span></div> }
+                                @if (log.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H</span><span class="stat-badge-lbl">H</span></div> }
+                                @if (log.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H2B</span><span class="stat-badge-lbl">2B</span></div> }
+                                @if (log.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H3B</span><span class="stat-badge-lbl">3B</span></div> }
+                                @if (log.H4B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H4B</span><span class="stat-badge-lbl">4B</span></div> }
+                                @if (log.HR > 0) { <div class="stat-badge active"><span class="stat-badge-val">@log.HR</span><span class="stat-badge-lbl">HR</span></div> }
+                                @if (log.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
+                                @if (log.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.BB</span><span class="stat-badge-lbl">BB</span></div> }
+                                @if (log.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.K</span><span class="stat-badge-lbl">K</span></div> }
+                                @if (log.KF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.KF</span><span class="stat-badge-lbl">KF</span></div> }
+                                @if (log.SF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.SF</span><span class="stat-badge-lbl">SF</span></div> }
+                                @if (log.FC > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FC</span><span class="stat-badge-lbl">FC</span></div> }
+                                @if (log.GO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.GO</span><span class="stat-badge-lbl">GO</span></div> }
+                                @if (log.FO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FO</span><span class="stat-badge-lbl">FO</span></div> }
                             </div>
                         </div>
                     </div>
