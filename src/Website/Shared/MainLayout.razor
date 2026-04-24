@@ -52,6 +52,15 @@
         </div>
     </header>
 
+    <div class="mobile-quick-nav mobile-only">
+        <NavLink href="gamestats" Match="NavLinkMatch.All">
+            <span>⚾</span> Games
+        </NavLink>
+        <NavLink href="" Match="NavLinkMatch.All">
+            <JerseyIcon /> Players
+        </NavLink>
+    </div>
+
     @if (isMenuOpen)
     {
         <div class="mobile-drawer-overlay" @onclick="ToggleMenu"></div>
