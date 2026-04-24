@@ -114,4 +114,3 @@ internal partial class SupabaseMapper
     [MapperRequiredMapping(RequiredMappingStrategy.None)]
     public partial RolePermissionDTO ToDTO(RolePermission model);
 }
-

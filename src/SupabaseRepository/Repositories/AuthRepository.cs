@@ -133,8 +133,17 @@ internal class AuthRepository : BaseRepository, IAuthRepository
         await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, userId).Delete();
     }
 
-    public Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false) => 
-        GetListAsync<UserRole, UserRoleDTO>(Mapper.ToModel, "name", ordering: Ordering.Ascending, onlyActive: onlyActive);
+    public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
+    {
+        List<UserRole> roles = await GetListAsync<UserRole, UserRoleDTO>(Mapper.ToModel, "name", ordering: Ordering.Ascending, onlyActive: onlyActive);
+        
+        foreach (UserRole role in roles)
+        {
+            await PopulateRolePermissions(role);
+        }
+
+        return roles;
+    }
 
     public async Task<List<UserRole>> GetUserRolesForUserAsync(string userId)
     {
@@ -149,7 +158,26 @@ internal class AuthRepository : BaseRepository, IAuthRepository
             .Filter("id", Operator.In, roleIds)
             .Get();
 
-        return rolesResponse.Models.Select(x => Mapper.ToModel(x)).ToList();
+        List<UserRole> roles = rolesResponse.Models.Select(x => Mapper.ToModel(x)).ToList();
+        
+        foreach (UserRole role in roles)
+        {
+            await PopulateRolePermissions(role);
+        }
+
+        return roles;
+    }
+
+    private async Task PopulateRolePermissions(UserRole role)
+    {
+        ModeledResponse<RolePermissionDTO> response = await Supabase.From<RolePermissionDTO>()
+            .Filter("roleid", Operator.Equals, role.Id)
+            .Get();
+
+        role.Permissions = response.Models
+            .Where(rp => rp.Permission != null)
+            .Select(rp => Mapper.ToModel(rp.Permission!))
+            .ToList();
     }
 
     public async Task<List<UserLog>> GetUserLogsAsync(int limit = 100)
