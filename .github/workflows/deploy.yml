@@ -20,7 +20,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Publish application
-        run: dotnet publish IsotopesStats/IsotopesStats.csproj -c Release -o release
+        run: dotnet publish src/Website/Website.csproj -c Release -o release
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
