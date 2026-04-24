@@ -51,8 +51,8 @@ else
     }
     else
     {
-        var playedGames = FilteredSummaries.Where(s => s.PlayerCount > 0).OrderByDescending(s => s.GameNumber).ToList();
-        var upcomingGames = FilteredSummaries.Where(s => s.PlayerCount == 0).OrderBy(s => s.Date).ToList();
+        List<GameSummaryView> playedGames = FilteredSummaries.Where(s => s.PlayerCount > 0).OrderByDescending(s => s.GameNumber).ToList();
+        List<GameSummaryView> upcomingGames = FilteredSummaries.Where(s => s.PlayerCount == 0).OrderBy(s => s.Date).ToList();
 
         <div class="game-cards-list">
             @if (playedGames.Any())

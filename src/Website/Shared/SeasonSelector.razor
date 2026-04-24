@@ -10,7 +10,7 @@
                 {
                     <option value="@SharedSessionState.AllSeasonsId">All Seasons</option>
                 }
-                @foreach (var season in Seasons)
+                @foreach (Season season in Seasons)
                 {
                     <option value="@season.Id">@season.Name</option>
                 }
@@ -41,7 +41,7 @@
                                 All Seasons
                             </div>
                         }
-                        @foreach (var season in Seasons)
+                        @foreach (Season season in Seasons)
                         {
                             <div class="sort-option @(SelectedSeasonId == season.Id ? "active" : "")" 
                                  @onclick="() => SelectMobileSeason(season.Id)">
