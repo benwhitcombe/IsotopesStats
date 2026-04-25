@@ -4,54 +4,16 @@
 <div class="season-selector-container @(isReady ? "ready" : "loading")" style="min-width: @(MinWidth)px;">
     @if (isReady)
     {
-        <div class="desktop-only" style="width: 100%;">
-            <select class="form-control season-select" value="@SelectedSeasonId" @onchange="HandleSeasonChange">
-                @if (AllowAllSeasons)
-                {
-                    <option value="@SharedSessionState.AllSeasonsId">All Seasons</option>
-                }
-                @foreach (Season season in Seasons)
-                {
-                    <option value="@season.Id">@season.Name</option>
-                }
-            </select>
-        </div>
-
-        <div class="mobile-only" style="width: 100%;">
-            <button class="view-btn season-mobile-btn" @onclick="ToggleModal">
-                🗓️ @GetCurrentSeasonName()
-            </button>
-        </div>
-
-        @if (showModal)
-        {
-            <div class="sort-modal-overlay" @onclick="ToggleModal">
-                <div class="sort-modal" @onclick:stopPropagation="true">
-                    <div class="sort-modal-header" style="position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; width: 100%;">
-                        <h4 style="margin:0; font-weight: 800; color: var(--isotopes-dark);">Select Season</h4>
-                        <button type="button" @onclick="ToggleModal" 
-                                style="position: absolute; right: -0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 2.5rem; color: #ccc; cursor: pointer; line-height: 1; padding: 0.5rem; display: flex; align-items: center; justify-content: center;" 
-                                title="Close">&times;</button>
-                    </div>
-                    <div class="sort-grid">
-                        @if (AllowAllSeasons)
-                        {
-                            <div class="sort-option @(SelectedSeasonId == SharedSessionState.AllSeasonsId ? "active" : "")" 
-                                 @onclick="() => SelectMobileSeason(SharedSessionState.AllSeasonsId)">
-                                All Seasons
-                            </div>
-                        }
-                        @foreach (Season season in Seasons)
-                        {
-                            <div class="sort-option @(SelectedSeasonId == season.Id ? "active" : "")" 
-                                 @onclick="() => SelectMobileSeason(season.Id)">
-                                @season.Name
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
+        <select class="form-control season-select" value="@SelectedSeasonId" @onchange="HandleSeasonChange">
+            @if (AllowAllSeasons)
+            {
+                <option value="@SharedSessionState.AllSeasonsId">All Seasons</option>
+            }
+            @foreach (Season season in Seasons)
+            {
+                <option value="@season.Id">@season.Name</option>
+            }
+        </select>
     }
 </div>
 
@@ -62,7 +24,6 @@
     [Parameter] public bool AllowAllSeasons { get; set; } = false;
     [Parameter] public int MinWidth { get; set; } = 120;
 
-    private bool showModal = false;
     private bool isReady = false;
 
     protected override void OnParametersSet()
@@ -73,26 +34,12 @@
         }
     }
 
-    private string GetCurrentSeasonName()
-    {
-        if (SelectedSeasonId == SharedSessionState.AllSeasonsId) return "All Seasons";
-        return Seasons.FirstOrDefault(s => s.Id == SelectedSeasonId)?.Name ?? "Select Season";
-    }
-
     private async Task HandleSeasonChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
         {
             await OnSeasonSelected.InvokeAsync(id);
         }
-    }
-
-    private void ToggleModal() => showModal = !showModal;
-
-    private async Task SelectMobileSeason(int id)
-    {
-        showModal = false;
-        await OnSeasonSelected.InvokeAsync(id);
     }
 }
 
@@ -127,15 +74,6 @@
         background-position: calc(100% - 8px) center;
         background-size: 14px;
         width: 100%;
-    }
-
-    .season-mobile-btn {
-        background: var(--isotopes-accent); 
-        color: white; 
-        border: none; 
-        padding: 0.5rem 1rem;
-        width: 100%;
-        text-align: center;
     }
 
     select.season-select option {

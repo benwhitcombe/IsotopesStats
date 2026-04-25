@@ -270,45 +270,20 @@ else if (isEditing)
 else
 {
     <div class="stat-card view-fade-in">
-        <div class="desktop-only">
-            <div class="form-group" style="max-width: 300px; margin-bottom: 0;">
-                <label>Season</label>
-                <select class="form-control" @onchange="OnSeasonChange">
-                    @foreach (Season season in activeSeasons)
-                    {
-                        <option value="@season.Id" selected="@(selectedSeasonId == season.Id)">@season.Name</option>
-                    }
-                </select>
-            </div>
-        </div>
-        <div class="mobile-only">
-            <button class="view-btn" style="width: 100%; background: var(--isotopes-accent); color: white; border: none; padding: 0.75rem;" @onclick="ToggleSeasonModal">
-                🗓️ Season: @(activeSeasons.FirstOrDefault(s => s.Id == selectedSeasonId)?.Name ?? "Select Season")
-            </button>
+        <div class="form-group" style="max-width: 300px; margin-bottom: 0;">
+            <label>Season</label>
+            <select class="form-control" @onchange="OnSeasonChange">
+                @foreach (Season season in activeSeasons)
+                {
+                    <option value="@season.Id" selected="@(selectedSeasonId == season.Id)">@season.Name</option>
+                }
+            </select>
         </div>
     </div>
 
-    @if (showSeasonModal)
-    {
-        <div class="sort-modal-overlay" @onclick="ToggleSeasonModal">
-            <div class="sort-modal" @onclick:stopPropagation="true">
-                <div class="sort-modal-header">
-                    <h4 style="margin:0">Select Season</h4>
-                    <button class="view-btn" @onclick="ToggleSeasonModal">Close</button>
-                </div>
-                <div class="sort-grid">
-                    @foreach (Season season in activeSeasons)
-                    {
-                        <div class="sort-option @(selectedSeasonId == season.Id ? "active" : "")" @onclick="() => SelectMobileSeason(season.Id)">
-                            @season.Name
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    }
 
     <div class="desktop-only" style="margin-top: 1rem;">
+
         <div class="stat-card view-fade-in" style="animation-delay: 0.1s;">
             <div class="table-container">
                 <table class="table">
@@ -410,7 +385,6 @@ else
     private Game originalGame = new() { Date = DateTime.Now };
     private int selectedSeasonId;
     private bool isEditing = false;
-    private bool showSeasonModal = false;
 
     private StatEntry? draggedStat;
     private StatEntry? targetStat;
@@ -545,14 +519,6 @@ else
 
     private async Task LoadSeasonRoster() => seasonRoster = await StatsRepository.GetPlayersAsync(editingGame.SeasonId);
     private async Task LoadAvailableOpponents() => availableOpponents = await StatsRepository.GetOpponentsAsync(editingGame.SeasonId);
-    private void ToggleSeasonModal() => showSeasonModal = !showSeasonModal;
-
-    private async Task SelectMobileSeason(int id)
-    {
-        selectedSeasonId = id;
-        showSeasonModal = false;
-        await LoadGames();
-    }
 
     private void StartEdit(string action, int id)
     {
