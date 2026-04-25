@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @using IsotopesStats.Website.Services
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Shared
@@ -207,6 +208,11 @@
 @code {
     private bool isMenuOpen = false;
 
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (SharedState.OpenMenuOnLoad)
@@ -215,15 +221,32 @@
             if (width <= 768)
             {
                 isMenuOpen = true;
+                await JSRuntime.InvokeVoidAsync("setBodyScroll", false);
                 StateHasChanged();
             }
             SharedState.OpenMenuOnLoad = false;
         }
     }
 
-    private void ToggleMenu()
+    private async Task ToggleMenu()
     {
         isMenuOpen = !isMenuOpen;
+        await JSRuntime.InvokeVoidAsync("setBodyScroll", !isMenuOpen);
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (isMenuOpen)
+        {
+            isMenuOpen = false;
+            _ = JSRuntime.InvokeVoidAsync("setBodyScroll", true);
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
     }
 
     private string GetLoginUrl()

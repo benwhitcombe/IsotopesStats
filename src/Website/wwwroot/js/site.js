@@ -1,3 +1,15 @@
+window.getWindowWidth = function () {
+    return window.innerWidth;
+};
+
+window.setBodyScroll = function (allowScroll) {
+    if (allowScroll) {
+        document.body.style.overflow = '';
+    } else {
+        document.body.style.overflow = 'hidden';
+    }
+};
+
 window.drawerDragging = {
     isDragging: false,
     drawerElement: null,
