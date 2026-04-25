@@ -14,7 +14,7 @@
     <div style="display: flex; gap: 1rem; align-items: center;">
         <SeasonSelector 
             Seasons="@seasons" 
-            SelectedSeasonId="@SharedState.SelectedSeasonId" 
+            SelectedSeasonId="@effectiveSeasonId" 
             OnSeasonSelected="OnSeasonSelected"
             AllowAllSeasons="false" />
     </div>
@@ -563,6 +563,7 @@ else
     private List<Season> seasons = new();
     private string filterText = "";
     private bool isLoading = true;
+    private int effectiveSeasonId;
 
     private IEnumerable<GameSummaryView> FilteredSummaries =>
         (summaries ?? new List<GameSummaryView>())
@@ -577,17 +578,39 @@ else
         SharedState.ReturnUrl = "gamestats";
         seasons = await StatsRepository.GetSeasonsAsync();
 
-        if (SharedState.SelectedSeasonId == 0)
+        // Determine which season to DISPLAY, but don't necessarily update the GLOBAL preference yet
+        effectiveSeasonId = SharedState.SelectedSeasonId;
+
+        if (effectiveSeasonId <= 0 || effectiveSeasonId == SharedSessionState.AllSeasonsId)
         {
-            int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-            if (recentSeasonId != 0)
+            if (SessionState.LastValidSeasonId > 0)
             {
-                SharedState.SelectedSeasonId = recentSeasonId;
+                effectiveSeasonId = SessionState.LastValidSeasonId;
             }
-            else if (seasons.Any())
+            else
             {
-                SharedState.SelectedSeasonId = seasons.First().Id;
+                int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+                if (recentSeasonId != 0)
+                {
+                    effectiveSeasonId = recentSeasonId;
+                }
+                else if (seasons.Any())
+                {
+                    effectiveSeasonId = seasons.First().Id;
+                }
             }
+
+            // Only update global if it was uninitialized (0). 
+            // If it was -1 (All Seasons), we leave it as -1 so Player Stats stays on All Seasons.
+            if (SharedState.SelectedSeasonId == 0)
+            {
+                SharedState.SelectedSeasonId = effectiveSeasonId;
+            }
+        }
+
+        if (effectiveSeasonId > 0)
+        {
+            SessionState.LastValidSeasonId = effectiveSeasonId;
         }
 
         filterText = SessionState.FilterText;
@@ -604,12 +627,12 @@ else
         isLoading = true;
         try
         {
-            summaries = await StatsRepository.GetGameSummariesAsync(SharedState.SelectedSeasonId);
+            summaries = await StatsRepository.GetGameSummariesAsync(effectiveSeasonId);
             
             // Re-fetch expanded games if needed
             foreach (KeyValuePair<int, GameUIState> state in SessionState.GameUIStates.Where(s => s.Value.IsExpanded))
             {
-                if (summaries.Any(s => s.GameId == state.Key))
+                if (summaries != null && summaries.Any(s => s.GameId == state.Key))
                 {
                     expandedStats[state.Key] = await StatsRepository.GetExtendedGameStatsAsync(state.Key);
                 }
@@ -627,7 +650,12 @@ else
 
     private async Task OnSeasonSelected(int id)
     {
+        effectiveSeasonId = id;
         SharedState.SelectedSeasonId = id;
+        if (id > 0)
+        {
+            SessionState.LastValidSeasonId = id;
+        }
         await LoadData();
     }
 
