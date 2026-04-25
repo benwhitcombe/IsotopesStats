@@ -25,11 +25,8 @@
     </div>
 
     <script src="_framework/blazor.webassembly.js"></script>
-    <script src="js/drawer.js"></script>
+    <script src="js/site.js"></script>
     <script>
-        window.getWindowWidth = function () {
-            return window.innerWidth;
-        };
         document.addEventListener('dragover', function (e) {
             if (e.target.closest('.reorderable-row')) {
                 e.preventDefault();
