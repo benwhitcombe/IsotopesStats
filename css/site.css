@@ -56,11 +56,11 @@ body {
     to { transform: rotate(360deg); }
 }
 
-.isotopes-header h1 {
+.isotopes-header h1, .drawer-header h1 {
     margin: 0;
     font-weight: 800;
     letter-spacing: 2px;
-    font-size: 1.5rem;
+    font-size: 1.25rem !important;
     outline: none;
 }
 
@@ -1121,7 +1121,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
 .drawer-header {
     background: var(--isotopes-red);
     color: white;
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
