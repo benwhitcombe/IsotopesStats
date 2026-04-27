@@ -285,19 +285,21 @@ else
                         </span>
                     </div>
                 </div>
-                @for (int i = 0; i < allStats.Count; i++)
-                {
-                    PlayerStatsSummary player = allStats[i];
-                    <div class="mobile-list-item" @onclick='() => NavigateToLog(player.PlayerName)'>
-                        <div class="mobile-list-rank">@(i + 1)</div>
-                        <div class="mobile-list-name">@player.PlayerName</div>
-                        <div class="mobile-list-value">@GetStatValue(player, currentSortColumn)</div>
+                <div class="subtle-fade-in" @key="@(currentSortColumn + isAscending)">
+                    @for (int i = 0; i < allStats.Count; i++)
+                    {
+                        PlayerStatsSummary player = allStats[i];
+                        <div class="mobile-list-item" @onclick='() => NavigateToLog(player.PlayerName)'>
+                            <div class="mobile-list-rank">@(i + 1)</div>
+                            <div class="mobile-list-name">@player.PlayerName</div>
+                            <div class="mobile-list-value">@GetStatValue(player, currentSortColumn)</div>
+                        </div>
+                    }
+                    <div class="mobile-list-item team-totals-item">
+                        <div class="mobile-list-rank"></div>
+                        <div class="mobile-list-name" style="font-weight: 900; text-align: left;">Team</div>
+                        <div class="mobile-list-value">@GetStatValue(teamTotals, currentSortColumn)</div>
                     </div>
-                }
-                <div class="mobile-list-item team-totals-item">
-                    <div class="mobile-list-rank"></div>
-                    <div class="mobile-list-name" style="font-weight: 900; text-align: left;">Team</div>
-                    <div class="mobile-list-value">@GetStatValue(teamTotals, currentSortColumn)</div>
                 </div>
             </div>
 
