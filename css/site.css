@@ -785,6 +785,24 @@ tr:last-child td {
 
     .mobile-stat-drawer.expanded { transform: translateY(0); }
 
+    .stat-drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1490;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .stat-drawer-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
     .drawer-handle-container {
         padding: 10px;
         display: flex;
@@ -852,6 +870,7 @@ tr:last-child td {
         flex: 1;
         touch-action: pan-y;
         overscroll-behavior: contain;
+        position: relative;
     }
 
     .stat-grid-full .stat-btn {
