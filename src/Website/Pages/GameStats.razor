@@ -378,7 +378,7 @@ else
                                                     <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.PlayerName)}")' style="cursor: pointer;">
                                                         @stat.BO. @stat.PlayerName
                                                     </span>
-                                                    <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000")</span>
+                                                    <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
                                                 </div>
                                                 <div class="stat-badge-list">
                                                     <div class="stat-badge primary-stat">
@@ -395,16 +395,26 @@ else
                                                     @if (stat.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
                                                     @if (stat.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.BB</span><span class="stat-badge-lbl">BB</span></div> }
                                                     @if (stat.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.K</span><span class="stat-badge-lbl">K</span></div> }
+                                                    @if (stat.KF > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.KF</span><span class="stat-badge-lbl">KF</span></div> }
                                                     @if (stat.SF > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.SF</span><span class="stat-badge-lbl">SF</span></div> }
+                                                    @if (stat.FC > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.FC</span><span class="stat-badge-lbl">FC</span></div> }
+                                                    @if (stat.GO > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.GO</span><span class="stat-badge-lbl">GO</span></div> }
+                                                    @if (stat.FO > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.FO</span><span class="stat-badge-lbl">FO</span></div> }
                                                 </div>
                                             </div>
                                         }
                                         <div class="mobile-player-row" style="background: #f0f7ff; border-top: 2px solid var(--isotopes-accent);">
                                             <div class="player-row-header">
                                                 <span class="player-row-name" style="color: var(--isotopes-dark)">Team</span>
-                                                <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000")</span>
+                                                <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000") | OPS @teamOPS.ToString(".000")</span>
                                             </div>
                                             <div class="stat-badge-list">
+                                                @{
+                                                    int teamKF = expandedStats[gameId].Sum(s => s.KF);
+                                                    int teamFC = expandedStats[gameId].Sum(s => s.FC);
+                                                    int teamGO = expandedStats[gameId].Sum(s => s.GO);
+                                                    int teamFO = expandedStats[gameId].Sum(s => s.FO);
+                                                }
                                                 <div class="stat-badge primary-stat"><span class="stat-badge-val">@summary.TeamPA</span><span class="stat-badge-lbl">PA</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamAB</span><span class="stat-badge-lbl">AB</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRuns</span><span class="stat-badge-lbl">R</span></div>
@@ -412,6 +422,10 @@ else
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHRs</span><span class="stat-badge-lbl">HR</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRBI</span><span class="stat-badge-lbl">RBI</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamBBs</span><span class="stat-badge-lbl">BB</span></div>
+                                                @if (teamKF > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamKF</span><span class="stat-badge-lbl">KF</span></div> }
+                                                @if (teamFC > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamFC</span><span class="stat-badge-lbl">FC</span></div> }
+                                                @if (teamGO > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamGO</span><span class="stat-badge-lbl">GO</span></div> }
+                                                @if (teamFO > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamFO</span><span class="stat-badge-lbl">FO</span></div> }
                                             </div>
                                         </div>
                                     </div>
