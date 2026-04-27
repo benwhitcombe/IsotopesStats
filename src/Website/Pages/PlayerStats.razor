@@ -274,6 +274,7 @@ else
         </div>
 
         <div class="mobile-only view-fade-in" style="animation-delay: 0.2s;">
+            <div class="stat-drawer-overlay @(isDrawerExpanded ? "visible" : "")" @onclick="ToggleDrawer"></div>
             <div class="mobile-list-container">
                 <div class="mobile-list-header">
                     <div class="mobile-list-rank">#</div>

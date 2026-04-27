@@ -82,45 +82,68 @@ window.drawerDragging = {
     },
 
     updateState: function(isExpanded) {
+        const prevState = this.isExpanded;
         this.isExpanded = isExpanded;
+        
+        // If opening, scroll immediately (while drawer is sliding/mostly hidden)
+        // to prevent visible snapping later
+        if (isExpanded && !prevState) {
+            this.scrollToActive(true);
+        }
+
         this.applyStateTransform(false);
         
-        if (!isExpanded) {
-            // Give CSS transition time to finish before scrolling
-            setTimeout(() => this.scrollToActive(), 400);
-        }
+        // Give CSS transition time to finish before a final smooth check
+        setTimeout(() => this.scrollToActive(), 400);
     },
 
     scrollToActive: function(immediate) {
         // Use requestAnimationFrame to ensure the browser has performed layout
         requestAnimationFrame(() => {
+            // 1. Handle Carousel (horizontal) - used when collapsed
             const carousel = document.querySelector('.stat-carousel');
-            if (!carousel) return;
-            
-            const activeBtn = carousel.querySelector('.stat-btn.active');
-            if (!activeBtn) return;
+            if (carousel && (!this.isExpanded || immediate)) {
+                const activeBtn = carousel.querySelector('.stat-btn.active');
+                if (activeBtn) {
+                    if (carousel.offsetWidth > 0 && activeBtn.offsetWidth > 0) {
+                        const isVisible = (activeBtn.offsetLeft >= carousel.scrollLeft) && 
+                                          (activeBtn.offsetLeft + activeBtn.offsetWidth <= carousel.scrollLeft + carousel.offsetWidth);
 
-            // If dimensions aren't ready yet, try once more in the next frame
-            if (carousel.offsetWidth === 0 || activeBtn.offsetWidth === 0) {
-                requestAnimationFrame(() => this.scrollToActive(immediate));
-                return;
+                        if (!isVisible || immediate) {
+                            const scrollLeft = activeBtn.offsetLeft - (carousel.offsetWidth / 2) + (activeBtn.offsetWidth / 2);
+                            if (immediate) {
+                                carousel.scrollLeft = scrollLeft;
+                            } else {
+                                carousel.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                            }
+                        }
+                    }
+                }
             }
 
-            // Check if already fully visible to prevent disorienting jumps
-            const isVisible = (activeBtn.offsetLeft >= carousel.scrollLeft) && 
-                              (activeBtn.offsetLeft + activeBtn.offsetWidth <= carousel.scrollLeft + carousel.offsetWidth);
+            // 2. Handle Expanded Grid (vertical) - used when expanded
+            const grid = document.querySelector('.stat-grid-full');
+            if (grid && (this.isExpanded || immediate)) {
+                const activeBtn = grid.querySelector('.stat-btn.active');
+                if (activeBtn) {
+                    // Even if drawer is sliding up, the grid should have its dimensions
+                    if (grid.offsetHeight > 0 && activeBtn.offsetHeight > 0) {
+                        const isVisible = (activeBtn.offsetTop >= grid.scrollTop) && 
+                                          (activeBtn.offsetTop + activeBtn.offsetHeight <= grid.scrollTop + grid.offsetHeight);
 
-            if (isVisible) return;
-
-            const scrollLeft = activeBtn.offsetLeft - (carousel.offsetWidth / 2) + (activeBtn.offsetWidth / 2);
-            
-            if (immediate) {
-                carousel.scrollLeft = scrollLeft;
-            } else {
-                carousel.scrollTo({
-                    left: scrollLeft,
-                    behavior: 'smooth'
-                });
+                        if (!isVisible || immediate) {
+                            const scrollTop = activeBtn.offsetTop - (grid.offsetHeight / 2) + (activeBtn.offsetWidth / 2);
+                            if (immediate) {
+                                grid.scrollTop = scrollTop;
+                            } else {
+                                grid.scrollTo({ top: scrollTop, behavior: 'smooth' });
+                            }
+                        }
+                    } else if (immediate) {
+                        // If immediate and not ready, try one more frame
+                        requestAnimationFrame(() => this.scrollToActive(true));
+                    }
+                }
             }
         });
     },
@@ -195,16 +218,23 @@ window.drawerDragging = {
         
         const movedUp = this.currentDelta < -this.threshold;
         const movedDown = this.currentDelta > this.threshold;
+        const prevState = this.isExpanded;
 
         if (movedUp && !this.isExpanded) {
             this.isExpanded = true;
             this.dotNetHelper.invokeMethodAsync('SetDrawerState', true);
+            this.scrollToActive(true); // Immediate scroll as it starts opening
         } else if (movedDown && this.isExpanded) {
             this.isExpanded = false;
             this.dotNetHelper.invokeMethodAsync('SetDrawerState', false);
         }
         
         this.applyStateTransform(false);
+
+        // Final check after transition
+        if (this.isExpanded !== prevState) {
+            setTimeout(() => this.scrollToActive(), 400);
+        }
     },
     
     // Utility to swap full names for short names when they wrap
