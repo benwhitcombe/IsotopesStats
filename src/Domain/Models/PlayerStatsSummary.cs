@@ -9,7 +9,7 @@ public record PlayerStatsSummary
     public int GamesPlayed { get; set; }
     
     [JsonIgnore]
-    public int H => H1B + H2B + H3B + H4B + HR;
+    public int H => H1B + H2B + H3B + IPHR + HR;
     
     [JsonIgnore]
     public int AB => H + FC + K + KF + GO + FO;
@@ -23,7 +23,7 @@ public record PlayerStatsSummary
     
     public int H3B { get; set; }
     
-    public int H4B { get; set; }
+    public int IPHR { get; set; }
     
     public int HR { get; set; }
     
@@ -45,7 +45,7 @@ public record PlayerStatsSummary
     public int O => GO + FO;
     
     [JsonIgnore]
-    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
+    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (IPHR + HR));
     
     public int R { get; set; }
     

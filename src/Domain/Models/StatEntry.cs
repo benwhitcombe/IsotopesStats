@@ -18,7 +18,7 @@ public record StatEntry : IEntity
     
     public int H3B { get; set; }
     
-    public int H4B { get; set; }
+    public int IPHR { get; set; }
     
     public int HR { get; set; }
     
@@ -50,7 +50,7 @@ public record StatEntry : IEntity
     public string PlayerName => Player?.Name ?? string.Empty;
     
     [JsonIgnore]
-    public int H => H1B + H2B + H3B + H4B + HR;
+    public int H => H1B + H2B + H3B + IPHR + HR;
     
     [JsonIgnore]
     public int AB => H + FC + K + KF + GO + FO;
@@ -59,7 +59,7 @@ public record StatEntry : IEntity
     public int PA => AB + BB + SF;
     
     [JsonIgnore]
-    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (H4B + HR));
+    public int TB => H1B + (2 * H2B) + (3 * H3B) + (4 * (IPHR + HR));
     
     [JsonIgnore]
     public double AVG => AB > 0 ? (double)H / AB : 0;

@@ -100,107 +100,107 @@ else
                                 Player<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("PlayerName"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("GP")' class="sortable-header group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("GP")' class="sortable-header group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("GP")">
                             <span style="position: relative; display: inline-block;">
                                 GP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("GP"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("PA")' class="sortable-header narrow-col @(currentSortColumn == "PA" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("PA")' class="sortable-header narrow-col @(currentSortColumn == "PA" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("PA")">
                             <span style="position: relative; display: inline-block;">
                                 PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("PA"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("AB")' class="sortable-header narrow-col @(currentSortColumn == "AB" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("AB")' class="sortable-header narrow-col @(currentSortColumn == "AB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("AB")">
                             <span style="position: relative; display: inline-block;">
                                 AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("AB"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("R")' class="sortable-header group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("R")' class="sortable-header group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")">
                             <span style="position: relative; display: inline-block;">
                                 R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("R"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("H")' class="sortable-header narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("H")' class="sortable-header narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")">
                             <span style="position: relative; display: inline-block;">
                                 H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("H"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("2B")' class="sortable-header narrow-col @(currentSortColumn == "2B" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("2B")' class="sortable-header narrow-col @(currentSortColumn == "2B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("2B")">
                             <span style="position: relative; display: inline-block;">
                                 2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("2B"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("3B")' class="sortable-header narrow-col @(currentSortColumn == "3B" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("3B")' class="sortable-header narrow-col @(currentSortColumn == "3B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("3B")">
                             <span style="position: relative; display: inline-block;">
                                 3B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("3B"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("4B")' class="sortable-header narrow-col @(currentSortColumn == "4B" ? "active-sort-header" : "")">
-                            <span style="position: relative; display: inline-block;">
-                                4B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("4B"))</span>
-                            </span>
-                        </th>
-                        <th @onclick='() => Sort("HR")' class="sortable-header narrow-col @(currentSortColumn == "HR" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("HR")' class="sortable-header narrow-col @(currentSortColumn == "HR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("HR")">
                             <span style="position: relative; display: inline-block;">
                                 HR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("HR"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("RBI")' class="sortable-header narrow-col @(currentSortColumn == "RBI" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("IPHR")' class="sortable-header narrow-col @(currentSortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")">
+                            <span style="position: relative; display: inline-block;">
+                                IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("IPHR"))</span>
+                            </span>
+                        </th>
+                        <th @onclick='() => Sort("RBI")' class="sortable-header narrow-col @(currentSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")">
                             <span style="position: relative; display: inline-block;">
                                 RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("RBI"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("BB")">
                             <span style="position: relative; display: inline-block;">
                                 BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("BB"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("K")' class="sortable-header narrow-col @(currentSortColumn == "K" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("K")' class="sortable-header narrow-col @(currentSortColumn == "K" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("K")">
                             <span style="position: relative; display: inline-block;">
                                 K<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("K"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("KF")' class="sortable-header narrow-col @(currentSortColumn == "KF" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("KF")' class="sortable-header narrow-col @(currentSortColumn == "KF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("KF")">
                             <span style="position: relative; display: inline-block;">
                                 KF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("KF"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("SF")' class="sortable-header group-divider narrow-col @(currentSortColumn == "SF" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("SF")' class="sortable-header group-divider narrow-col @(currentSortColumn == "SF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("SF")">
                             <span style="position: relative; display: inline-block;">
                                 SF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("SF"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("FC")' class="sortable-header narrow-col @(currentSortColumn == "FC" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("FC")' class="sortable-header narrow-col @(currentSortColumn == "FC" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FC")">
                             <span style="position: relative; display: inline-block;">
                                 FC<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("FC"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("GO")' class="sortable-header narrow-col @(currentSortColumn == "GO" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("GO")' class="sortable-header narrow-col @(currentSortColumn == "GO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("GO")">
                             <span style="position: relative; display: inline-block;">
                                 GO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("GO"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("FO")' class="sortable-header narrow-col @(currentSortColumn == "FO" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("FO")' class="sortable-header narrow-col @(currentSortColumn == "FO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FO")">
                             <span style="position: relative; display: inline-block;">
                                 FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("FO"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("AVG")' class="sortable-header group-divider @(currentSortColumn == "AVG" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("AVG")' class="sortable-header group-divider @(currentSortColumn == "AVG" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("AVG")">
                             <span style="position: relative; display: inline-block;">
                                 AVG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("AVG"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("OBP")' class="sortable-header @(currentSortColumn == "OBP" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("OBP")' class="sortable-header @(currentSortColumn == "OBP" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("OBP")">
                             <span style="position: relative; display: inline-block;">
                                 OBP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("OBP"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("SLG")' class="sortable-header @(currentSortColumn == "SLG" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("SLG")' class="sortable-header @(currentSortColumn == "SLG" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("SLG")">
                             <span style="position: relative; display: inline-block;">
                                 SLG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("SLG"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("OPS")' class="sortable-header @(currentSortColumn == "OPS" ? "active-sort-header" : "")">
+                        <th @onclick='() => Sort("OPS")' class="sortable-header @(currentSortColumn == "OPS" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("OPS")">
                             <span style="position: relative; display: inline-block;">
                                 OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("OPS"))</span>
                             </span>
@@ -225,8 +225,8 @@ else
                             <td class="narrow-col @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
                             <td class="narrow-col @(currentSortColumn == "2B" ? "active-sort-col" : "")">@player.H2B</td>
                             <td class="narrow-col @(currentSortColumn == "3B" ? "active-sort-col" : "")">@player.H3B</td>
-                            <td class="narrow-col @(currentSortColumn == "4B" ? "active-sort-col" : "")">@player.H4B</td>
                             <td class="narrow-col @(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
+                            <td class="narrow-col @(currentSortColumn == "IPHR" ? "active-sort-col" : "")">@player.IPHR</td>
                             <td class="narrow-col @(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
                             <td class="group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-col" : "")">@player.BB</td>
                             <td class="narrow-col @(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
@@ -253,8 +253,8 @@ else
                         <td class="narrow-col">@teamTotals.H</td>
                         <td class="narrow-col">@teamTotals.H2B</td>
                         <td class="narrow-col">@teamTotals.H3B</td>
-                        <td class="narrow-col">@teamTotals.H4B</td>
                         <td class="narrow-col">@teamTotals.HR</td>
+                        <td class="narrow-col">@teamTotals.IPHR</td>
                         <td class="narrow-col">@teamTotals.RBI</td>
                         <td class="group-divider narrow-col">@teamTotals.BB</td>
                         <td class="narrow-col">@teamTotals.K</td>
@@ -319,7 +319,11 @@ else
                     <div class="stat-grid-full">
                         @foreach (string stat in AllSortableStats)
                         {
-                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">@stat</button>
+                            string definition = StatDefinitions.GetDefinition(stat);
+                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)" @onclick:stopPropagation="true">
+                                <span class="stat-abbr-circle">@stat</span>
+                                @(string.IsNullOrEmpty(definition) ? stat : definition)
+                            </button>
                         }
                     </div>
                 </div>
@@ -346,7 +350,7 @@ else
     private PlayerStatsSummary? rbiLeader;
 
     private readonly string[] AllSortableStats = {
-        "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "R", "H", "1B", "2B", "3B", "4B", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+        "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "R", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
     };
 
     protected override async Task OnInitializedAsync()
@@ -503,7 +507,7 @@ else
             "1B" => player.H1B.ToString(),
             "2B" => player.H2B.ToString(),
             "3B" => player.H3B.ToString(),
-            "4B" => player.H4B.ToString(),
+            "IPHR" => player.IPHR.ToString(),
             "HR" => player.HR.ToString(),
             "RBI" => player.RBI.ToString(),
             "R" => player.R.ToString(),

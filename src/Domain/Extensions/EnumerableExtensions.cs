@@ -16,7 +16,7 @@ public static class EnumerableExtensions
         { "PA", "PA" },
         { "2B", "H2B" },
         { "3B", "H3B" },
-        { "4B", "H4B" },
+        { "IPHR", "IPHR" },
         { "HR", "HR" },
         { "FC", "FC" },
         { "BB", "BB" },

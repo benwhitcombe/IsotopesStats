@@ -59,18 +59,18 @@ else
                             <tr>
                                 <th>Date</th>
                                 <th>Opponent</th>
-                                <th>PA</th>
-                                <th>AB</th>
-                                <th>H</th>
-                                <th>2B</th>
-                                <th>3B</th>
-                                <th>4B</th>
-                                <th>HR</th>
-                                <th>RBI</th>
-                                <th>BB</th>
-                                <th>K</th>
-                                <th>KF</th>
-                                <th>R</th>
+                                <th title="@StatDefinitions.GetDefinition("PA")">PA</th>
+                                <th title="@StatDefinitions.GetDefinition("AB")">AB</th>
+                                <th title="@StatDefinitions.GetDefinition("H")">H</th>
+                                <th title="@StatDefinitions.GetDefinition("2B")">2B</th>
+                                <th title="@StatDefinitions.GetDefinition("3B")">3B</th>
+                                <th title="@StatDefinitions.GetDefinition("HR")">HR</th>
+                                <th title="@StatDefinitions.GetDefinition("IPHR")">IPHR</th>
+                                <th title="@StatDefinitions.GetDefinition("RBI")">RBI</th>
+                                <th title="@StatDefinitions.GetDefinition("BB")">BB</th>
+                                <th title="@StatDefinitions.GetDefinition("K")">K</th>
+                                <th title="@StatDefinitions.GetDefinition("KF")">KF</th>
+                                <th title="@StatDefinitions.GetDefinition("R")">R</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -92,8 +92,8 @@ else
                                     <td>@log.H</td>
                                     <td>@log.H2B</td>
                                     <td>@log.H3B</td>
-                                    <td>@log.H4B</td>
                                     <td>@log.HR</td>
+                                    <td>@log.IPHR</td>
                                     <td>@log.RBI</td>
                                     <td>@log.BB</td>
                                     <td>@log.K</td>
@@ -165,8 +165,8 @@ else
                                 @if (log.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H</span><span class="stat-badge-lbl">H</span></div> }
                                 @if (log.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H2B</span><span class="stat-badge-lbl">2B</span></div> }
                                 @if (log.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H3B</span><span class="stat-badge-lbl">3B</span></div> }
-                                @if (log.H4B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H4B</span><span class="stat-badge-lbl">4B</span></div> }
                                 @if (log.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.HR</span><span class="stat-badge-lbl">HR</span></div> }
+                                @if (log.IPHR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.IPHR</span><span class="stat-badge-lbl">IPHR</span></div> }
                                 @if (log.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
                                 @if (log.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.BB</span><span class="stat-badge-lbl">BB</span></div> }
                                 @if (log.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.K</span><span class="stat-badge-lbl">K</span></div> }

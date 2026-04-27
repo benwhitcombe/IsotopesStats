@@ -28,8 +28,8 @@ internal class StatEntryDTO : BaseModel
     [Column("h3b")]
     public int H3B { get; set; }
 
-    [Column("h4b")]
-    public int H4B { get; set; }
+    [Column("iphr")]
+    public int IPHR { get; set; }
 
     [Column("hr")]
     public int HR { get; set; }
