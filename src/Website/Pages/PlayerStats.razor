@@ -1,5 +1,6 @@
 @page "/"
 @page "/playerstats"
+@page "/playerstats/{SeasonName}"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -214,7 +215,7 @@ else
                         <tr>
                             <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
                             <td class="player-name sticky-col">
-                                <a href="/playerlogs/@Uri.EscapeDataString(player.PlayerName)" style="text-decoration: none; color: inherit;">        
+                                <a href="/player/@Uri.EscapeDataString(player.PlayerName)/@Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))" style="text-decoration: none; color: inherit;">        
                                     @player.PlayerName
                                 </a>
                             </td>
@@ -336,6 +337,8 @@ else
 }
 
 @code {
+    [Parameter] public string? SeasonName { get; set; }
+
     private List<PlayerStatsSummary> allStats = new();
     private List<Season> seasons = new();
     private PlayerStatsSummary teamTotals = new();
@@ -361,23 +364,60 @@ else
         SharedState.ReturnUrl = "playerstats";
         seasons = await StatsRepository.GetSeasonsAsync();
 
-        if (SharedState.SelectedSeasonId == 0)
-        {
-            int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-            if (recentSeasonId != 0)
-            {
-                SharedState.SelectedSeasonId = recentSeasonId;
-            }
-            else if (seasons.Any())
-            {
-                SharedState.SelectedSeasonId = seasons.First().Id;
-            }
-        }
-
         currentSortColumn = SessionState.CurrentSortColumn;
         isAscending = SessionState.IsAscending;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(SeasonName))
+        {
+            int targetId = SharedState.SelectedSeasonId;
+            if (targetId == 0)
+            {
+                targetId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+                if (targetId == 0 && seasons.Any())
+                {
+                    targetId = seasons.First().Id;
+                }
+            }
+            
+            string name = GetSeasonName(targetId);
+            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}", replace: true);
+            return;
+        }
+
+        int seasonId = GetSeasonId(SeasonName);
+        if (seasonId == 0 && !string.Equals(SeasonName, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            int recentId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+            if (recentId == 0 && seasons.Any())
+            {
+                recentId = seasons.First().Id;
+            }
+            string name = GetSeasonName(recentId);
+            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}", replace: true);
+            return;
+        }
+
+        if (SharedState.SelectedSeasonId != seasonId)
+        {
+            SharedState.SelectedSeasonId = seasonId;
+        }
 
         await LoadData();
+    }
+
+    private string GetSeasonName(int id)
+    {
+        if (id == SharedSessionState.AllSeasonsId) return "all";
+        return seasons.FirstOrDefault(s => s.Id == id)?.Name ?? "all";
+    }
+
+    private int GetSeasonId(string name)
+    {
+        if (string.Equals(name, "all", StringComparison.OrdinalIgnoreCase)) return SharedSessionState.AllSeasonsId;
+        return seasons.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
     }
 
     private async Task LoadData()
@@ -421,7 +461,6 @@ else
             if (isFirstDataLoad)
             {
                 isFirstDataLoad = false;
-                // JavaScript now handles timing via requestAnimationFrame, no Task.Delay needed
                 await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive", true);
             }
         }
@@ -437,10 +476,11 @@ else
         }
     }
 
-    private async Task OnSeasonSelected(int id)
+    private void OnSeasonSelected(int id)
     {
         SharedState.SelectedSeasonId = id;
-        await LoadData();
+        string name = GetSeasonName(id);
+        NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}");
     }
 
     private void CalculateLeaders()
@@ -539,7 +579,7 @@ else
     {
         if (string.IsNullOrEmpty(playerName)) return;
         SharedState.ReturnUrl = "playerstats";
-        NavigationManager.NavigateTo($"/playerlogs/{Uri.EscapeDataString(playerName)}");
+        NavigationManager.NavigateTo($"/player/{Uri.EscapeDataString(playerName)}/{Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))}");
     }
 }
 

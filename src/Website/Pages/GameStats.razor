@@ -1,4 +1,5 @@
 @page "/gamestats"
+@page "/gamestats/{SeasonName}"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -299,7 +300,7 @@ else
                                                 <tr>
                                                     <td class="@(uiState.SortColumn == "BO" ? "active-sort-col" : "")">@stat.BO</td>
                                                     <td class="player-name sticky-col @(uiState.SortColumn == "Player" ? "active-sort-col" : "")">
-                                                        <a href="/playerlogs/@Uri.EscapeDataString(stat.PlayerName)" style="text-decoration: none; color: inherit;">
+                                                        <a href="/player/@Uri.EscapeDataString(stat.PlayerName)/@Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))" style="text-decoration: none; color: inherit;">
                                                             @stat.PlayerName
                                                         </a>
                                                     </td>
@@ -375,7 +376,7 @@ else
                                         {
                                             <div class="mobile-player-row">
                                                 <div class="player-row-header">
-                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/playerlogs/{Uri.EscapeDataString(stat.PlayerName)}")' style="cursor: pointer;">
+                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/player/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))}")' style="cursor: pointer;">
                                                         @stat.BO. @stat.PlayerName
                                                     </span>
                                                     <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
@@ -572,6 +573,8 @@ else
 }
 
 @code {
+    [Parameter] public string? SeasonName { get; set; }
+
     private List<GameSummaryView>? summaries;
     private Dictionary<int, List<GameStatsExtendedView>> expandedStats = new();
     private List<Season> seasons = new();
@@ -592,43 +595,79 @@ else
         SharedState.ReturnUrl = "gamestats";
         seasons = await StatsRepository.GetSeasonsAsync();
 
-        // Determine which season to DISPLAY, but don't necessarily update the GLOBAL preference yet
-        effectiveSeasonId = SharedState.SelectedSeasonId;
+        filterText = SessionState.FilterText;
+    }
 
-        if (effectiveSeasonId <= 0 || effectiveSeasonId == SharedSessionState.AllSeasonsId)
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(SeasonName))
+        {
+            int targetId = SharedState.SelectedSeasonId;
+            if (targetId <= 0 || targetId == SharedSessionState.AllSeasonsId)
+            {
+                if (SessionState.LastValidSeasonId > 0)
+                {
+                    targetId = SessionState.LastValidSeasonId;
+                }
+                else
+                {
+                    targetId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+                    if (targetId == 0 && seasons.Any())
+                    {
+                        targetId = seasons.First().Id;
+                    }
+                }
+            }
+            
+            string name = GetSeasonName(targetId);
+            Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}", replace: true);
+            return;
+        }
+
+        int seasonId = GetSeasonId(SeasonName);
+        
+        // Game stats doesn't support 'all'
+        if (seasonId <= 0 || seasonId == SharedSessionState.AllSeasonsId)
         {
             if (SessionState.LastValidSeasonId > 0)
             {
-                effectiveSeasonId = SessionState.LastValidSeasonId;
+                seasonId = SessionState.LastValidSeasonId;
             }
             else
             {
-                int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-                if (recentSeasonId != 0)
+                seasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+                if (seasonId == 0 && seasons.Any())
                 {
-                    effectiveSeasonId = recentSeasonId;
-                }
-                else if (seasons.Any())
-                {
-                    effectiveSeasonId = seasons.First().Id;
+                    seasonId = seasons.First().Id;
                 }
             }
-
-            // Only update global if it was uninitialized (0). 
-            // If it was -1 (All Seasons), we leave it as -1 so Player Stats stays on All Seasons.
-            if (SharedState.SelectedSeasonId == 0)
-            {
-                SharedState.SelectedSeasonId = effectiveSeasonId;
-            }
+            
+            string name = GetSeasonName(seasonId);
+            Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}", replace: true);
+            return;
         }
 
-        if (effectiveSeasonId > 0)
+        effectiveSeasonId = seasonId;
+        SessionState.LastValidSeasonId = seasonId;
+        
+        if (SharedState.SelectedSeasonId != seasonId && SharedState.SelectedSeasonId != SharedSessionState.AllSeasonsId)
         {
-            SessionState.LastValidSeasonId = effectiveSeasonId;
+            SharedState.SelectedSeasonId = seasonId;
         }
 
-        filterText = SessionState.FilterText;
         await LoadData();
+    }
+
+    private string GetSeasonName(int id)
+    {
+        if (id == SharedSessionState.AllSeasonsId) return "all";
+        return seasons.FirstOrDefault(s => s.Id == id)?.Name ?? "all";
+    }
+
+    private int GetSeasonId(string name)
+    {
+        if (string.Equals(name, "all", StringComparison.OrdinalIgnoreCase)) return SharedSessionState.AllSeasonsId;
+        return seasons.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -662,15 +701,11 @@ else
         }
     }
 
-    private async Task OnSeasonSelected(int id)
+    private void OnSeasonSelected(int id)
     {
-        effectiveSeasonId = id;
         SharedState.SelectedSeasonId = id;
-        if (id > 0)
-        {
-            SessionState.LastValidSeasonId = id;
-        }
-        await LoadData();
+        string name = GetSeasonName(id);
+        Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}");
     }
 
     private void ClearFilter()

@@ -1,5 +1,4 @@
-@page "/player/{PlayerName}/{SeasonId:int}"
-@page "/playerlogs/{PlayerName}"
+@page "/player/{PlayerName}/{SeasonName}"
 @using IsotopesStats.Website.Services
 @using IsotopesStats.Domain.Models
 @inject IStatsRepository StatsRepository
@@ -186,14 +185,21 @@ else
 
 @code {
     [Parameter] public string PlayerName { get; set; } = string.Empty;
-    [Parameter] public int? SeasonId { get; set; }
+    [Parameter] public string SeasonName { get; set; } = string.Empty;
 
     private List<GameStatsExtendedView>? logs;
     private bool isLoading = true;
+    private List<Season> seasons = new();
 
     protected override async Task OnInitializedAsync()
     {
-        int targetSeasonId = SeasonId ?? SharedState.SelectedSeasonId;
+        seasons = await StatsRepository.GetSeasonsAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        int targetSeasonId = GetSeasonId(SeasonName);
 
         if (targetSeasonId == SharedSessionState.AllSeasonsId)
         {
@@ -205,28 +211,40 @@ else
         }
         else
         {
-            List<Season> seasons = await StatsRepository.GetSeasonsAsync();
             int recentSeasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-            
-            if (recentSeasonId != 0)
+            if (recentSeasonId == 0 && seasons.Any())
             {
-                targetSeasonId = recentSeasonId;
-            }
-            else if (seasons.Any())
-            {
-                targetSeasonId = seasons.First().Id;
+                recentSeasonId = seasons.First().Id;
             }
 
-            if (targetSeasonId != 0)
+            if (recentSeasonId != 0)
             {
-                logs = await StatsRepository.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
+                string name = GetSeasonName(recentSeasonId);
+                NavigationManager.NavigateTo($"/player/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}", replace: true);
+                return;
             }
-            else
-            {
-                logs = new List<GameStatsExtendedView>();
-            }
+            
+            logs = new List<GameStatsExtendedView>();
         }
+
+        if (SharedState.SelectedSeasonId != targetSeasonId)
+        {
+            SharedState.SelectedSeasonId = targetSeasonId;
+        }
+
         isLoading = false;
+    }
+
+    private string GetSeasonName(int id)
+    {
+        if (id == SharedSessionState.AllSeasonsId) return "all";
+        return seasons.FirstOrDefault(s => s.Id == id)?.Name ?? "all";
+    }
+
+    private int GetSeasonId(string name)
+    {
+        if (string.Equals(name, "all", StringComparison.OrdinalIgnoreCase)) return SharedSessionState.AllSeasonsId;
+        return seasons.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -236,7 +254,18 @@ else
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/" + SharedState.ReturnUrl);
+        string baseReturn = SharedState.ReturnUrl;
+        if (baseReturn == "playerstats")
+        {
+            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(SeasonName)}");
+        }
+        else if (baseReturn == "gamestats")
+        {
+            NavigationManager.NavigateTo($"/gamestats/{Uri.EscapeDataString(SeasonName)}");
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(SeasonName)}");
+        }
     }
 }
-

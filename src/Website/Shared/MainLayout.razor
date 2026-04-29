@@ -6,7 +6,9 @@
 @using System.Security.Claims
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
+@inject GameStatsState GameSessionState
 @inject IJSRuntime JSRuntime
+@inject IStatsRepository StatsRepository
 
 <div class="page">
     <header class="isotopes-header">
@@ -26,8 +28,8 @@
                 <h1 style="margin:0; font-size: 1.25rem;">Isotopes Stats</h1>
                 
                 <nav class="desktop-nav">
-                    <NavLink href="gamestats" Match="NavLinkMatch.All" class="view-btn">Games</NavLink>
-                    <NavLink href="" Match="NavLinkMatch.All" class="view-btn">Players</NavLink>
+                    <NavLink href="@GetGamesUrl()" class="view-btn">Games</NavLink>
+                    <NavLink href="@GetPlayersUrl()" Match="NavLinkMatch.All" class="view-btn">Players</NavLink>
                 </nav>
             </div>
             
@@ -54,10 +56,10 @@
     </header>
 
     <div class="mobile-quick-nav mobile-only">
-        <NavLink href="gamestats" Match="NavLinkMatch.All">
+        <NavLink href="@GetGamesUrl()">
             <span>⚾</span> Games
         </NavLink>
-        <NavLink href="" Match="NavLinkMatch.All">
+        <NavLink href="@GetPlayersUrl()" Match="NavLinkMatch.All">
             <JerseyIcon /> Players
         </NavLink>
     </div>
@@ -81,10 +83,10 @@
             <div class="drawer-content" style="padding-top: 0;">
                 @* Public Links *@
                 <div style="padding: 1rem 0;">
-                    <NavLink href="gamestats" class="drawer-item" @onclick="ToggleMenu">
+                    <NavLink href="@GetGamesUrl()" class="drawer-item" @onclick="ToggleMenu">
                         <span>⚾</span> Games
                     </NavLink>
-                    <NavLink href="" Match="NavLinkMatch.All" class="drawer-item" @onclick="ToggleMenu">
+                    <NavLink href="@GetPlayersUrl()" Match="NavLinkMatch.All" class="drawer-item" @onclick="ToggleMenu">
                         <JerseyIcon /> Players
                     </NavLink>
                 </div>
@@ -215,10 +217,13 @@
 
 @code {
     private bool isMenuOpen = false;
+    private List<Season> seasons = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Navigation.LocationChanged += HandleLocationChanged;
+        SharedState.OnChanged += StateHasChanged;
+        seasons = await StatsRepository.GetSeasonsAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -255,6 +260,34 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= HandleLocationChanged;
+        SharedState.OnChanged -= StateHasChanged;
+    }
+
+    private string GetPlayersUrl()
+    {
+        int id = SharedState.SelectedSeasonId;
+        string name = GetSeasonName(id);
+        return $"playerstats/{Uri.EscapeDataString(name)}";
+    }
+
+    private string GetGamesUrl()
+    {
+        int id = SharedState.SelectedSeasonId;
+        if (id == SharedSessionState.AllSeasonsId)
+        {
+            id = GameSessionState.LastValidSeasonId;
+        }
+        
+        if (id <= 0) return "gamestats";
+        
+        string name = GetSeasonName(id);
+        return $"gamestats/{Uri.EscapeDataString(name)}";
+    }
+
+    private string GetSeasonName(int id)
+    {
+        if (id == SharedSessionState.AllSeasonsId) return "all";
+        return seasons.FirstOrDefault(s => s.Id == id)?.Name ?? "all";
     }
 
     private string GetLoginUrl()
