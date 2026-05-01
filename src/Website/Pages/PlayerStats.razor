@@ -126,6 +126,11 @@ else
                                 H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("H"))</span>
                             </span>
                         </th>
+                        <th @onclick='() => Sort("1B")' class="sortable-header narrow-col @(currentSortColumn == "1B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("1B")">
+                            <span style="position: relative; display: inline-block;">
+                                1B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("1B"))</span>
+                            </span>
+                        </th>
                         <th @onclick='() => Sort("2B")' class="sortable-header narrow-col @(currentSortColumn == "2B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("2B")">
                             <span style="position: relative; display: inline-block;">
                                 2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("2B"))</span>
@@ -224,6 +229,7 @@ else
                             <td class="narrow-col @(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
                             <td class="group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
                             <td class="narrow-col @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                            <td class="narrow-col @(currentSortColumn == "1B" ? "active-sort-col" : "")">@player.H1B</td>
                             <td class="narrow-col @(currentSortColumn == "2B" ? "active-sort-col" : "")">@player.H2B</td>
                             <td class="narrow-col @(currentSortColumn == "3B" ? "active-sort-col" : "")">@player.H3B</td>
                             <td class="narrow-col @(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
@@ -252,6 +258,7 @@ else
                         <td class="narrow-col">@teamTotals.AB</td>
                         <td class="group-divider narrow-col">@teamTotals.R</td>
                         <td class="narrow-col">@teamTotals.H</td>
+                        <td class="narrow-col">@teamTotals.H1B</td>
                         <td class="narrow-col">@teamTotals.H2B</td>
                         <td class="narrow-col">@teamTotals.H3B</td>
                         <td class="narrow-col">@teamTotals.HR</td>
@@ -612,14 +619,15 @@ else
 
     .desktop-only .box-score-table th.active-sort-header {
         font-weight: 900 !important;
-        text-decoration: underline !important;
     }
 
     .desktop-only .box-score-table .player-name {
         text-align: left !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
-        min-width: 140px !important;
+        min-width: 150px !important;
+        font-weight: 800;
+        color: var(--isotopes-accent);
     }
 
     .group-divider {

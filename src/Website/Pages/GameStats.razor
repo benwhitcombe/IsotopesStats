@@ -212,6 +212,11 @@ else
                                                         H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "H"))</span>
                                                     </span>
                                                 </th>
+                                                <th @onclick='() => Sort(gameId, "1B")' class="sortable-header narrow-col @(uiState.SortColumn == "1B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("1B")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        1B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "1B"))</span>
+                                                    </span>
+                                                </th>
                                                 <th @onclick='() => Sort(gameId, "2B")' class="sortable-header narrow-col @(uiState.SortColumn == "2B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("2B")">
                                                     <span style="position: relative; display: inline-block;">
                                                         2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "2B"))</span>
@@ -308,6 +313,7 @@ else
                                                     <td class="narrow-col @(uiState.SortColumn == "AB" ? "active-sort-col" : "")">@stat.AB</td>
                                                     <td class="group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
+                                                    <td class="narrow-col @(uiState.SortColumn == "1B" ? "active-sort-col" : "")">@stat.H1B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "HR" ? "active-sort-col" : "")">@stat.HR</td>
@@ -333,6 +339,7 @@ else
                                                 <td class="narrow-col">@summary.TeamAB</td>
                                                 <td class="group-divider narrow-col">@summary.TeamRuns</td>
                                                 <td class="narrow-col">@summary.TeamHits</td>
+                                                <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H1B)</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H2B)</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H3B)</td>
                                                 <td class="narrow-col">@summary.TeamHRs</td>
@@ -389,6 +396,7 @@ else
                                                     @if (stat.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.AB</span><span class="stat-badge-lbl">AB</span></div> }
                                                     @if (stat.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
                                                     @if (stat.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H</span><span class="stat-badge-lbl">H</span></div> }
+                                                    @if (stat.H1B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H1B</span><span class="stat-badge-lbl">1B</span></div> }
                                                     @if (stat.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H2B</span><span class="stat-badge-lbl">2B</span></div> }
                                                     @if (stat.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H3B</span><span class="stat-badge-lbl">3B</span></div> }
                                                     @if (stat.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.HR</span><span class="stat-badge-lbl">HR</span></div> }
@@ -420,7 +428,17 @@ else
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamAB</span><span class="stat-badge-lbl">AB</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRuns</span><span class="stat-badge-lbl">R</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHits</span><span class="stat-badge-lbl">H</span></div>
+                                                @{
+                                                    int team1B_m = expandedStats[gameId].Sum(s => s.H1B);
+                                                    int team2B_m = expandedStats[gameId].Sum(s => s.H2B);
+                                                    int team3B_m = expandedStats[gameId].Sum(s => s.H3B);
+                                                    int teamIPHR_m = expandedStats[gameId].Sum(s => s.IPHR);
+                                                }
+                                                @if (team1B_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@team1B_m</span><span class="stat-badge-lbl">1B</span></div> }
+                                                @if (team2B_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@team2B_m</span><span class="stat-badge-lbl">2B</span></div> }
+                                                @if (team3B_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@team3B_m</span><span class="stat-badge-lbl">3B</span></div> }
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHRs</span><span class="stat-badge-lbl">HR</span></div>
+                                                @if (teamIPHR_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamIPHR_m</span><span class="stat-badge-lbl">IPHR</span></div> }
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRBI</span><span class="stat-badge-lbl">RBI</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamBBs</span><span class="stat-badge-lbl">BB</span></div>
                                                 @if (teamKF > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamKF</span><span class="stat-badge-lbl">KF</span></div> }
@@ -822,8 +840,6 @@ else
         vertical-align: middle;
         padding-left: 2px !important;
         padding-right: 2px !important;
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
     }
 
     .game-card-detail .box-score-table th {
@@ -841,7 +857,6 @@ else
 
     .game-card-detail .box-score-table th.active-sort-header {
         font-weight: 900 !important;
-        text-decoration: underline !important;
     }
 
     .game-card-detail .box-score-table .player-name {
@@ -854,6 +869,8 @@ else
         position: sticky;
         left: 0;
         z-index: 20;
+        font-weight: 800;
+        color: var(--isotopes-accent);
     }
 
     .game-card-detail .box-score-table th.player-name {
