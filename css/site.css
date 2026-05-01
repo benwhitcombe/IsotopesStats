@@ -197,26 +197,29 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    border: 1px solid #eee;
+}
+
+.narrow-col {
+    min-width: 34px !important;
 }
 
 .table-sm th, .table-sm td {
-    padding: 8px 2px;
-    font-size: 0.7rem;
+    padding: 8px 1px;
+    font-size: 0.65rem;
     white-space: nowrap;
 }
 
 @media (min-width: 992px) {
     .table-sm th, .table-sm td {
-        padding: 8px 3px;
-        font-size: 0.75rem;
+        padding: 8px 2px;
+        font-size: 0.7rem;
     }
 }
 
 @media (min-width: 1200px) {
     .table-sm th, .table-sm td {
-        padding: 10px 4px;
-        font-size: 0.8rem;
+        padding: 10px 3px;
+        font-size: 0.75rem;
     }
 }
 
@@ -948,10 +951,6 @@ tr:last-child td {
 .form-control { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
 
 .active-sort-col { font-weight: bold; }
-
-.narrow-col {
-    min-width: 38px !important;
-}
 
 .sortable-header {
     position: relative;
