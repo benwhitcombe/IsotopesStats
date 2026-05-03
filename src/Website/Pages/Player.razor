@@ -5,7 +5,6 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject SharedSessionState SharedState
-@implements IDisposable
 
 <PageTitle>Isotopes - @PlayerName</PageTitle>
 
@@ -15,14 +14,11 @@
     </div>
     <div style="display: flex; gap: 1rem; align-items: center;">
         <div class="mobile-only">
-            @if (activeView == "Log")
-            {
-                <SeasonSelector 
-                    Seasons="@seasons" 
-                    SelectedSeasonId="@GetSeasonId(SeasonName)" 
-                    OnSeasonSelected="OnSeasonSelected"
-                    AllowAllSeasons="true" />
-            }
+            <SeasonSelector 
+                Seasons="@seasons" 
+                SelectedSeasonId="@GetSeasonId(SeasonName)" 
+                OnSeasonSelected="OnSeasonSelected"
+                AllowAllSeasons="true" />
         </div>
         <div class="desktop-only">
             <SeasonSelector 
@@ -60,77 +56,33 @@ else
 
             @if (activeView == "Stats")
             {
-                <div class="stat-drawer-overlay @(isDrawerExpanded ? "visible" : "")" @onclick="ToggleDrawer"></div>
                 <div class="mobile-list-container">
-                    <div class="mobile-list-header">
-                        <div class="mobile-list-name" @onclick='() => SortCareer("Season")' style="cursor: pointer; position: relative; padding-left: 8px;">
-                            Season
-                            @if (careerSortColumn == "Season") { <span style="font-size: 0.6rem; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "Season"))</span> }
-                        </div>
-                        <div class="mobile-list-value" style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <span @onclick='() => SortCareer(currentMobileStat)' style="cursor: pointer; position: relative; display: flex; align-items: center;">
-                                @currentMobileStat
-                                @if (careerSortColumn == currentMobileStat) { <span style="font-size: 0.6rem; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, currentMobileStat))</span> }
-                            </span>
-                        </div>
-                        <div class="mobile-list-value" @onclick='() => SortCareer("Rank")' style="cursor: pointer; position: relative; flex: 0 0 60px;">
-                            Rank
-                            @if (careerSortColumn == "Rank") { <span style="font-size: 0.6rem; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "Rank"))</span> }
-                        </div>
+                    <div class="mobile-list-header" style="padding: 12px 16px;">
+                        <div class="mobile-list-rank" style="justify-content: center; padding-right: 24px;">#</div>
+                        <div class="mobile-list-name" style="text-align: left; justify-content: flex-start;">Stat</div>
+                        <div class="mobile-list-value">Value</div>
                     </div>
                     <div class="subtle-fade-in">
-                        @foreach (SeasonPlayerStats seasonStat in ApplyCareerSorting())
-                        {
-                            bool hasPlayed = seasonStat.Stats.PA > 0;
-                            string rank = hasPlayed ? GetRankForSeason(currentMobileStat, seasonStat.SeasonId, seasonStat.Stats) : "-";
-                            string rankClass = rank.Contains("1st") ? "rank-1" : rank.Contains("2nd") ? "rank-2" : rank.Contains("3rd") ? "rank-3" : "";
-                            
-                            <div class="mobile-list-item" @onclick="() => OnSeasonSelected(seasonStat.SeasonId)">
-                                <div class="mobile-list-name" style="padding-left: 8px;">@seasonStat.SeasonName</div>
-                                <div class="mobile-list-value" style="flex: 1;">
-                                    @(hasPlayed ? GetStatValue(seasonStat.Stats, currentMobileStat) : "-")
-                                </div>
-                                <div class="mobile-list-value @rankClass" style="flex: 0 0 60px; font-weight: 700;">@rank</div>
-                            </div>
-                        }
-                        
                         @{
-                            string careerRank = GetRankForSeason(currentMobileStat, SharedSessionState.AllSeasonsId, overallCareerStats);
-                            string careerRankClass = careerRank.Contains("1st") ? "rank-1" : careerRank.Contains("2nd") ? "rank-2" : careerRank.Contains("3rd") ? "rank-3" : "";
+                            int targetSeasonId = GetSeasonId(SeasonName);
+                            PlayerStatsSummary? statsToUse = targetSeasonId == SharedSessionState.AllSeasonsId ? overallCareerStats : playerSummary;
+                            bool hasPlayedInSeason = statsToUse != null && (targetSeasonId == SharedSessionState.AllSeasonsId ? statsToUse.GamesPlayed > 0 : statsToUse.PA > 0);
                         }
-                        <div class="mobile-list-item team-totals-item">
-                            <div class="mobile-list-name" style="padding-left: 8px;">Career</div>
-                            <div class="mobile-list-value" style="flex: 1;">@GetStatValue(overallCareerStats, currentMobileStat)</div>
-                            <div class="mobile-list-value @careerRankClass" style="flex: 0 0 60px; font-weight: 900;">@careerRank</div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Bottom Drawer for Stat Selection -->
-                <div id="stat-drawer" class="mobile-stat-drawer @(isDrawerExpanded ? "expanded" : "")">
-                    <div id="drawer-handle" class="drawer-handle-container" @onclick="ToggleDrawer">
-                        <div class="drawer-handle"></div>
-                    </div>
-                    
-                    <div class="stat-carousel">
                         @foreach (string stat in AllSortableStats)
                         {
-                            <button class="stat-btn @(currentMobileStat == stat ? "active" : "")" @onclick="() => SelectMobileStat(stat)" @onclick:stopPropagation="true">@stat</button>
+                            string value = hasPlayedInSeason ? GetStatValue(statsToUse!, stat) : "-";
+                            string rank = hasPlayedInSeason ? GetRankForSeason(stat, targetSeasonId, statsToUse!) : "-";
+                            string rankClass = rank.Contains("1st") ? "rank-1" : rank.Contains("2nd") ? "rank-2" : rank.Contains("3rd") ? "rank-3" : "";
+                            string statFullName = StatDefinitions.GetDefinition(stat);
+                            if (string.IsNullOrEmpty(statFullName)) statFullName = stat;
+
+                            <div class="mobile-list-item" style="cursor: default; padding: 12px 16px;">
+                                <div class="mobile-list-rank @rankClass" style="justify-content: center; padding-right: 24px;">@rank</div>
+                                <div class="mobile-list-name" style="text-align: left; justify-content: flex-start; min-width: 0; white-space: normal; line-height: 1.2;">@statFullName</div>
+                                <div class="mobile-list-value">@value</div>
+                            </div>
                         }
-                    </div>
-                    
-                    <div class="drawer-expanded-content">
-                        <div class="drawer-section-title">Select Statistic</div>
-                        <div class="stat-grid-full">
-                            @foreach (string stat in AllSortableStats)
-                            {
-                                string definition = StatDefinitions.GetDefinition(stat);
-                                <button class="stat-btn @(currentMobileStat == stat ? "active" : "")" @onclick="() => SelectMobileStat(stat)" @onclick:stopPropagation="true">
-                                    <span class="stat-abbr-circle">@stat</span>
-                                    @(string.IsNullOrEmpty(definition) ? stat : definition)
-                                </button>
-                            }
-                        </div>
                     </div>
                 </div>
             }
@@ -593,11 +545,10 @@ else
     private bool logIsAscending = true;
 
     private string activeView = "Stats";
-    private string currentMobileStat = "AVG";
-    private bool isDrawerExpanded = false;
-    private DotNetObjectReference<Player>? objRef;
+    private string mobileStatSortColumn = "Default";
+    private bool mobileStatIsAscending = true;
     private readonly string[] AllSortableStats = {
-        "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "R", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+        "AVG", "OBP", "SLG", "OPS", "GP", "PA", "AB", "R", "H", "1B", "2B", "3B", "HR", "IPHR", "RBI", "BB", "K", "KF", "SF", "FC", "GO", "FO"
     };
 
     public class SeasonPlayerStats {
@@ -743,22 +694,6 @@ else
     {
         if (perSeasonStats == null) return Enumerable.Empty<SeasonPlayerStats>();
 
-        if (careerSortColumn == "Rank")
-        {
-            // Rank sorting: lower value (1st) is "better" but logically higher in a list.
-            // We use the raw rank value (int) for sorting.
-            Func<SeasonPlayerStats, object> selector = s => {
-                string rank = GetRankForSeason(currentMobileStat, s.SeasonId, s.Stats);
-                if (rank == "N/A" || rank == "-") return 999;
-                
-                // Parse "1st" -> 1
-                string numericPart = new string(rank.TakeWhile(char.IsDigit).ToArray());
-                return int.TryParse(numericPart, out int r) ? r : 999;
-            };
-
-            return careerIsAscending ? perSeasonStats.OrderBy(selector) : perSeasonStats.OrderByDescending(selector);
-        }
-
         Func<SeasonPlayerStats, object> selectorFunc = careerSortColumn switch
         {
             "Season" => s => s.SeasonName,
@@ -788,6 +723,44 @@ else
         };
 
         return careerIsAscending ? perSeasonStats.OrderBy(selectorFunc) : perSeasonStats.OrderByDescending(selectorFunc);
+    }
+
+    private void SortMobileStats(string column)
+    {
+        if (mobileStatSortColumn == column)
+        {
+            mobileStatIsAscending = !mobileStatIsAscending;
+        }
+        else
+        {
+            mobileStatSortColumn = column;
+            mobileStatIsAscending = true;
+        }
+    }
+
+    private IEnumerable<string> ApplyMobileStatsSorting()
+    {
+        int targetSeasonId = GetSeasonId(SeasonName);
+        PlayerStatsSummary? statsToUse = targetSeasonId == SharedSessionState.AllSeasonsId ? overallCareerStats : playerSummary;
+        bool hasPlayedInSeason = statsToUse != null && (targetSeasonId == SharedSessionState.AllSeasonsId ? statsToUse.GamesPlayed > 0 : statsToUse.PA > 0);
+
+        if (mobileStatSortColumn == "Stat")
+        {
+            return mobileStatIsAscending ? AllSortableStats.OrderBy(s => s) : AllSortableStats.OrderByDescending(s => s);
+        }
+        
+        if (mobileStatSortColumn == "Rank")
+        {
+            Func<string, int> rankSelector = s => {
+                string rank = hasPlayedInSeason ? GetRankForSeason(s, targetSeasonId, statsToUse!) : "-";
+                if (rank == "N/A" || rank == "-") return 999;
+                string numericPart = new string(rank.TakeWhile(char.IsDigit).ToArray());
+                return int.TryParse(numericPart, out int r) ? r : 999;
+            };
+            return mobileStatIsAscending ? AllSortableStats.OrderBy(rankSelector) : AllSortableStats.OrderByDescending(rankSelector);
+        }
+
+        return mobileStatIsAscending ? AllSortableStats : AllSortableStats.Reverse();
     }
 
     private void SortLogs(string column)
@@ -831,43 +804,6 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await JSRuntime.InvokeVoidAsync("drawerDragging.initOpponentNames");
-        if (activeView == "Stats")
-        {
-            if (objRef == null)
-            {
-                objRef = DotNetObjectReference.Create(this);
-            }
-            await JSRuntime.InvokeVoidAsync("drawerDragging.init", objRef, isDrawerExpanded);
-        }
-    }
-
-    public void Dispose()
-    {
-        objRef?.Dispose();
-    }
-
-    [JSInvokable]
-    public void SetDrawerState(bool expanded)
-    {
-        if (isDrawerExpanded != expanded)
-        {
-            isDrawerExpanded = expanded;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ToggleDrawer()
-    {
-        isDrawerExpanded = !isDrawerExpanded;
-        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", isDrawerExpanded);
-    }
-
-    private async Task SelectMobileStat(string stat)
-    {
-        currentMobileStat = stat;
-        isDrawerExpanded = false;
-        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", false);
-        await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive");
     }
 
     private string GetStatValue(PlayerStatsSummary player, string stat)
