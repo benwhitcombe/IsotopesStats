@@ -6,7 +6,6 @@
 @using System.Security.Claims
 @inject NavigationManager Navigation
 @inject SharedSessionState SharedState
-@inject GameStatsState GameSessionState
 @inject IJSRuntime JSRuntime
 @inject IStatsRepository StatsRepository
 
@@ -273,12 +272,7 @@
     private string GetGamesUrl()
     {
         int id = SharedState.SelectedSeasonId;
-        if (id == SharedSessionState.AllSeasonsId)
-        {
-            id = GameSessionState.LastValidSeasonId;
-        }
-        
-        if (id <= 0) return "games";
+        if (id == 0) return "games";
         
         string name = GetSeasonName(id);
         return $"games/{Uri.EscapeDataString(name)}";

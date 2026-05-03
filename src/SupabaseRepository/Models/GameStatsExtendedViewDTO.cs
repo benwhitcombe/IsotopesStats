@@ -14,6 +14,9 @@ internal class GameStatsExtendedViewDTO : StatEntryDTO
     [Column("seasonid")]
     public int SeasonId { get; set; }
 
+    [Column("seasonname")]
+    public string SeasonName { get; set; } = string.Empty;
+
     [Column("gamenumber")]
     public int GameNumber { get; set; }
 

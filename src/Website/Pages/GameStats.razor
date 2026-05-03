@@ -17,7 +17,7 @@
             Seasons="@seasons" 
             SelectedSeasonId="@effectiveSeasonId" 
             OnSeasonSelected="OnSeasonSelected"
-            AllowAllSeasons="false" />
+            AllowAllSeasons="true" />
     </div>
 </div>
 
@@ -52,7 +52,7 @@ else
     }
     else
     {
-        List<GameSummaryView> playedGames = FilteredSummaries.Where(s => s.PlayerCount > 0).OrderByDescending(s => s.GameNumber).ToList();
+        List<GameSummaryView> playedGames = FilteredSummaries.Where(s => s.PlayerCount > 0).OrderByDescending(s => s.Date).ThenByDescending(s => s.GameNumber).ToList();
         List<GameSummaryView> upcomingGames = FilteredSummaries.Where(s => s.PlayerCount == 0).OrderBy(s => s.Date).ToList();
 
         <div class="game-cards-list">
@@ -305,7 +305,7 @@ else
                                                 <tr>
                                                     <td class="@(uiState.SortColumn == "BO" ? "active-sort-col" : "")">@stat.BO</td>
                                                     <td class="player-name sticky-col @(uiState.SortColumn == "Player" ? "active-sort-col" : "")">
-                                                        <a href="/career/@Uri.EscapeDataString(stat.PlayerName)/@Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))" style="text-decoration: none; color: inherit;">
+                                                        <a href="/career/@Uri.EscapeDataString(stat.PlayerName)/@Uri.EscapeDataString(summary.SeasonName)" style="text-decoration: none; color: inherit;">
                                                             @stat.PlayerName
                                                         </a>
                                                     </td>
@@ -383,7 +383,7 @@ else
                                         {
                                             <div class="mobile-player-row">
                                                 <div class="player-row-header">
-                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/career/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))}")' style="cursor: pointer;">
+                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/career/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(summary.SeasonName)}")' style="cursor: pointer;">
                                                         @stat.BO. @stat.PlayerName
                                                     </span>
                                                     <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
@@ -485,6 +485,10 @@ else
                             <div class="desktop-only" style="width: 100%; opacity: 0.7;">
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
+                                        @if (effectiveSeasonId == SharedSessionState.AllSeasonsId)
+                                        {
+                                            <span style="font-weight: 800; color: #999; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; margin-right: 4px; font-size: 0.8rem;">@summary.SeasonName.ToUpper()</span>
+                                        }
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
                                         <span style="color: #999;">@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
                                         <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 1rem; padding: 2px 12px;">Win</span>
@@ -528,6 +532,10 @@ else
                             <div class="mobile-only" style="width: 100%; opacity: 0.7;">
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
+                                        @if (effectiveSeasonId == SharedSessionState.AllSeasonsId)
+                                        {
+                                            <span style="font-weight: 800; color: #999; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; margin-right: 4px; font-size: 0.65rem;">@summary.SeasonName.ToUpper()</span>
+                                        }
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
                                         <div class="date-container">
                                             <span class="date-part" style="color: #999;">@summary.Date.ToString("MMM dd")</span>
@@ -621,19 +629,12 @@ else
         if (string.IsNullOrEmpty(SeasonName))
         {
             int targetId = SharedState.SelectedSeasonId;
-            if (targetId <= 0 || targetId == SharedSessionState.AllSeasonsId)
+            if (targetId == 0)
             {
-                if (SessionState.LastValidSeasonId > 0)
+                targetId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+                if (targetId == 0 && seasons.Any())
                 {
-                    targetId = SessionState.LastValidSeasonId;
-                }
-                else
-                {
-                    targetId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-                    if (targetId == 0 && seasons.Any())
-                    {
-                        targetId = seasons.First().Id;
-                    }
+                    targetId = seasons.First().Id;
                 }
             }
             
@@ -644,20 +645,12 @@ else
 
         int seasonId = GetSeasonId(SeasonName);
         
-        // Game stats doesn't support 'all'
-        if (seasonId <= 0 || seasonId == SharedSessionState.AllSeasonsId)
+        if (seasonId == 0 && !string.Equals(SeasonName, "all", StringComparison.OrdinalIgnoreCase))
         {
-            if (SessionState.LastValidSeasonId > 0)
+            seasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
+            if (seasonId == 0 && seasons.Any())
             {
-                seasonId = SessionState.LastValidSeasonId;
-            }
-            else
-            {
-                seasonId = await StatsRepository.GetMostRecentStatsSeasonIdAsync();
-                if (seasonId == 0 && seasons.Any())
-                {
-                    seasonId = seasons.First().Id;
-                }
+                seasonId = seasons.First().Id;
             }
             
             string name = GetSeasonName(seasonId);
@@ -666,9 +659,8 @@ else
         }
 
         effectiveSeasonId = seasonId;
-        SessionState.LastValidSeasonId = seasonId;
         
-        if (SharedState.SelectedSeasonId != seasonId && SharedState.SelectedSeasonId != SharedSessionState.AllSeasonsId)
+        if (SharedState.SelectedSeasonId != seasonId)
         {
             SharedState.SelectedSeasonId = seasonId;
         }
@@ -698,7 +690,14 @@ else
         isLoading = true;
         try
         {
-            summaries = await StatsRepository.GetGameSummariesAsync(effectiveSeasonId);
+            if (effectiveSeasonId == SharedSessionState.AllSeasonsId)
+            {
+                summaries = await StatsRepository.GetAllGameSummariesAsync();
+            }
+            else
+            {
+                summaries = await StatsRepository.GetGameSummariesAsync(effectiveSeasonId);
+            }
             
             // Re-fetch expanded games if needed
             foreach (KeyValuePair<int, GameUIState> state in SessionState.GameUIStates.Where(s => s.Value.IsExpanded))

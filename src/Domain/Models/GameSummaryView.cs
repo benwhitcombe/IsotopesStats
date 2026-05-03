@@ -6,6 +6,8 @@ public record GameSummaryView
 
     public int SeasonId { get; set; }
 
+    public string SeasonName { get; set; } = string.Empty;
+
     public int GameNumber { get; set; }
 
     public DateTime Date { get; set; }

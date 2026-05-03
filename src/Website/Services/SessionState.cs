@@ -86,8 +86,6 @@ public record GameStatsState
         set { if (_filterText != value) { _filterText = value; OnChanged?.Invoke(); } } 
     }
     
-    public int LastValidSeasonId { get; set; } = 0;
-
     public Dictionary<int, GameUIState> GameUIStates { get; set; } = new();
 
     public GameUIState GetState(int gameId)

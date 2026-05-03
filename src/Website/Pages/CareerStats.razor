@@ -9,24 +9,16 @@
 <PageTitle>Isotopes - @PlayerName</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <div class="mobile-only">
-        <h3 style="margin:0">@PlayerName</h3>
-    </div>
+    <h3 style="margin:0">
+        <span class="mobile-only">@PlayerName</span>
+        <span class="desktop-only">@PlayerName - Career Stats</span>
+    </h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
-        <div class="mobile-only">
-            <SeasonSelector 
-                Seasons="@seasons" 
-                SelectedSeasonId="@GetSeasonId(SeasonName)" 
-                OnSeasonSelected="OnSeasonSelected"
-                AllowAllSeasons="true" />
-        </div>
-        <div class="desktop-only">
-            <SeasonSelector 
-                Seasons="@seasons" 
-                SelectedSeasonId="@GetSeasonId(SeasonName)" 
-                OnSeasonSelected="OnSeasonSelected"
-                AllowAllSeasons="true" />
-        </div>
+        <SeasonSelector 
+            Seasons="@seasons" 
+            SelectedSeasonId="@GetSeasonId(SeasonName)" 
+            OnSeasonSelected="OnSeasonSelected"
+            AllowAllSeasons="true" />
     </div>
 </div>
 
@@ -166,7 +158,6 @@ else
         </div>
 
         <div class="desktop-only">
-            <h3 style="margin-bottom: 1.5rem;">@PlayerName - Career Stats</h3>
             <div class="table-container box-score-table-wrapper view-fade-in" style="padding: 0; margin-bottom: 2rem;">
                 <table class="box-score-table career-table table-sm" style="margin-bottom: 0;">
                 <thead>
