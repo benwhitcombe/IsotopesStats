@@ -10,16 +10,27 @@
 <PageTitle>Isotopes - @PlayerName</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">@PlayerName</h3>
+    <div class="mobile-only">
+        <h3 style="margin:0">@PlayerName</h3>
+    </div>
     <div style="display: flex; gap: 1rem; align-items: center;">
-        @if (activeView == "Log")
-        {
+        <div class="mobile-only">
+            @if (activeView == "Log")
+            {
+                <SeasonSelector 
+                    Seasons="@seasons" 
+                    SelectedSeasonId="@GetSeasonId(SeasonName)" 
+                    OnSeasonSelected="OnSeasonSelected"
+                    AllowAllSeasons="true" />
+            }
+        </div>
+        <div class="desktop-only">
             <SeasonSelector 
                 Seasons="@seasons" 
                 SelectedSeasonId="@GetSeasonId(SeasonName)" 
                 OnSeasonSelected="OnSeasonSelected"
                 AllowAllSeasons="true" />
-        }
+        </div>
     </div>
 </div>
 
@@ -39,18 +50,16 @@ else
     }
     else
     {
-        PlayerStatsSummary overallCareerStats = GetCareerTotals();
-
-        <div style="margin-bottom: 1.5rem;">
-            <div class="mobile-switcher">
-                <button class="@(activeView == "Stats" ? "active" : "")" @onclick='() => activeView = "Stats"'>Career Stats</button>
-                <button class="@(activeView == "Log" ? "active" : "")" @onclick='() => activeView = "Log"'>Game Log</button>
+        <div class="mobile-only">
+            <div style="margin-bottom: 1.5rem;">
+                <div class="mobile-switcher">
+                    <button class="@(activeView == "Stats" ? "active" : "")" @onclick='() => activeView = "Stats"'>Career Stats</button>
+                    <button class="@(activeView == "Log" ? "active" : "")" @onclick='() => activeView = "Log"'>Game Log</button>
+                </div>
             </div>
-        </div>
 
-        @if (activeView == "Stats")
-        {
-            <div class="mobile-only">
+            @if (activeView == "Stats")
+            {
                 <div class="stat-drawer-overlay @(isDrawerExpanded ? "visible" : "")" @onclick="ToggleDrawer"></div>
                 <div class="mobile-list-container">
                     <div class="mobile-list-header">
@@ -124,11 +133,90 @@ else
                         </div>
                     </div>
                 </div>
-            </div>
+            }
 
-            <!-- CAREER HISTORY TABLE -->
-                    <div class="desktop-only table-container box-score-table-wrapper view-fade-in" style="padding: 0; margin-bottom: 2rem;">
-                    <table class="box-score-table career-table table-sm" style="margin-bottom: 0;">
+            @if (activeView == "Log" && logs != null)
+            {
+                <div class="game-cards-list">
+                    @for (int i = 0; i < logs.Count; i++)
+                    {
+                        GameStatsExtendedView log = logs[i];
+                        double currentDelay = i * 0.1;
+
+                        <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s; margin-bottom: 1rem;">
+                            <div class="game-card-header" style="cursor: default; padding: 1.25rem !important; display: block;">
+                                <div class="mobile-scoreboard">
+                                    <div class="scoreboard-meta">
+                                        <span>GAME #@log.GameNumber</span>
+                                        <span>@log.Date.ToString("MMM dd @ h:mm tt")</span>
+                                        <GameResultBadge OurScore="log.OurScore" OpponentScore="log.OpponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 6px;" />
+                                    </div>
+                                    <div class="scoreboard-matchup">
+                                        <div class="scoreboard-team visitor smart-name-container">
+                                            <span class="full-name">@(log.IsHome ? log.OpponentName : "Isotopes")</span>
+                                            @if (log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
+                                            {
+                                                <span class="short-name">@log.OpponentShortName</span>
+                                            }
+                                            else if (!log.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                        <div class="scoreboard-scores">
+                                            <span class="scoreboard-score">@(log.VisitingTeamScore?.ToString() ?? "0")</span>
+                                            <span class="scoreboard-divider">-</span>
+                                            <span class="scoreboard-score">@(log.HomeTeamScore?.ToString() ?? "0")</span>
+                                        </div>
+                                        <div class="scoreboard-team home smart-name-container">
+                                            <span class="full-name">@(log.IsHome ? "Isotopes" : log.OpponentName)</span>
+                                            @if (!log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
+                                            {
+                                                <span class="short-name">@log.OpponentShortName</span>
+                                            }
+                                            else if (log.IsHome)
+                                            {
+                                                <span class="short-name">Isotopes</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="scoreboard-location">
+                                        <span>📍 @log.Diamond</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="game-card-detail expanded" style="border-top: 1px solid #eee; padding: 1.25rem; background: white;">
+                                <div class="stat-badge-list">
+                                    @if (log.PA > 0) { <div class="stat-badge primary-stat"><span class="stat-badge-val">@log.PA</span><span class="stat-badge-lbl">PA</span></div> }
+                                    @if (log.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.AB</span><span class="stat-badge-lbl">AB</span></div> }
+                                    @if (log.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.R</span><span class="stat-badge-lbl">R</span></div> }
+                                    @if (log.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H</span><span class="stat-badge-lbl">H</span></div> }
+                                    @if (log.H1B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H1B</span><span class="stat-badge-lbl">1B</span></div> }
+                                    @if (log.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H2B</span><span class="stat-badge-lbl">2B</span></div> }
+                                    @if (log.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H3B</span><span class="stat-badge-lbl">3B</span></div> }
+                                    @if (log.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.HR</span><span class="stat-badge-lbl">HR</span></div> }
+                                    @if (log.IPHR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.IPHR</span><span class="stat-badge-lbl">IPHR</span></div> }
+                                    @if (log.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
+                                    @if (log.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.BB</span><span class="stat-badge-lbl">BB</span></div> }
+                                    @if (log.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.K</span><span class="stat-badge-lbl">K</span></div> }
+                                    @if (log.KF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.KF</span><span class="stat-badge-lbl">KF</span></div> }
+                                    @if (log.SF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.SF</span><span class="stat-badge-lbl">SF</span></div> }
+                                    @if (log.FC > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FC</span><span class="stat-badge-lbl">FC</span></div> }
+                                    @if (log.GO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.GO</span><span class="stat-badge-lbl">GO</span></div> }
+                                    @if (log.FO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FO</span><span class="stat-badge-lbl">FO</span></div> }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="desktop-only">
+            <h3 style="margin-bottom: 1.5rem;">@PlayerName - Career Stats</h3>
+            <div class="table-container box-score-table-wrapper view-fade-in" style="padding: 0; margin-bottom: 2rem;">
+                <table class="box-score-table career-table table-sm" style="margin-bottom: 0;">
                 <thead>
                     <tr>
                         <th class="career-season-name sortable-header @(careerSortColumn == "Season" ? "active-sort-header" : "")" style="text-align: left !important; padding-left: 12px !important;" @onclick='() => SortCareer("Season")'>
@@ -316,252 +404,172 @@ else
                     </tr>
                 </tfoot>
             </table>
-        </div>
-        }
+            </div>
 
-        @if (activeView == "Log")
-        {
-            <div class="desktop-only">
-                <div class="view-fade-in" style="animation-delay: 0.2s;">
-                    <div class="table-container box-score-table-wrapper" style="padding: 0;">
-                        <table class="box-score-table table-sm" style="margin-bottom: 0;">
-                                <thead>
+            <h3 style="margin-top: 2.5rem; margin-bottom: 1.5rem;">Game Log</h3>
+            <div class="view-fade-in" style="animation-delay: 0.2s;">
+                <div class="table-container box-score-table-wrapper" style="padding: 0;">
+                    <table class="box-score-table table-sm" style="margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th class="sortable-header @(logSortColumn == "Date" ? "active-sort-header" : "")" style="text-align: left !important; padding-left: 12px !important;" @onclick='() => SortLogs("Date")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            Date<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "Date"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="player-name sticky-col sortable-header @(logSortColumn == "Opponent" ? "active-sort-header" : "")" @onclick='() => SortLogs("Opponent")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            Opponent<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "Opponent"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "PA" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("PA")" @onclick='() => SortLogs("PA")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "PA"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "AB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("AB")" @onclick='() => SortLogs("AB")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "AB"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortLogs("R")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "R"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortLogs("H")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "H"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "1B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("1B")" @onclick='() => SortLogs("1B")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            1B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "1B"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "2B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("2B")" @onclick='() => SortLogs("2B")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "2B"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "3B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("3B")" @onclick='() => SortLogs("3B")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            3B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "3B"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "HR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("HR")" @onclick='() => SortLogs("HR")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            HR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "HR"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")" @onclick='() => SortLogs("IPHR")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "IPHR"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")" @onclick='() => SortLogs("RBI")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "RBI"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "BB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("BB")" @onclick='() => SortLogs("BB")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "BB"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "K" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("K")" @onclick='() => SortLogs("K")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            K<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "K"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "KF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("KF")" @onclick='() => SortLogs("KF")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            KF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "KF"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "SF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("SF")" @onclick='() => SortLogs("SF")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            SF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "SF"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "FC" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FC")" @onclick='() => SortLogs("FC")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            FC<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "FC"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "GO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("GO")" @onclick='() => SortLogs("GO")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            GO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "GO"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "FO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FO")" @onclick='() => SortLogs("FO")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "FO"))</span>
+                                        </span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (GameStatsExtendedView log in ApplyLogSorting())
+                                {
                                     <tr>
-                                        <th class="sortable-header @(logSortColumn == "Date" ? "active-sort-header" : "")" style="text-align: left !important; padding-left: 12px !important;" @onclick='() => SortLogs("Date")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                Date<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "Date"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="player-name sticky-col sortable-header @(logSortColumn == "Opponent" ? "active-sort-header" : "")" @onclick='() => SortLogs("Opponent")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                Opponent<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "Opponent"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="group-divider narrow-col sortable-header @(logSortColumn == "PA" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("PA")" @onclick='() => SortLogs("PA")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "PA"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "AB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("AB")" @onclick='() => SortLogs("AB")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "AB"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="group-divider narrow-col sortable-header @(logSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortLogs("R")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "R"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortLogs("H")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "H"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "1B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("1B")" @onclick='() => SortLogs("1B")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                1B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "1B"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "2B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("2B")" @onclick='() => SortLogs("2B")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                2B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "2B"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "3B" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("3B")" @onclick='() => SortLogs("3B")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                3B<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "3B"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "HR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("HR")" @onclick='() => SortLogs("HR")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                HR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "HR"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")" @onclick='() => SortLogs("IPHR")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "IPHR"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")" @onclick='() => SortLogs("RBI")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "RBI"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="group-divider narrow-col sortable-header @(logSortColumn == "BB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("BB")" @onclick='() => SortLogs("BB")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "BB"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "K" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("K")" @onclick='() => SortLogs("K")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                K<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "K"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "KF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("KF")" @onclick='() => SortLogs("KF")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                KF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "KF"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="group-divider narrow-col sortable-header @(logSortColumn == "SF" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("SF")" @onclick='() => SortLogs("SF")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                SF<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "SF"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "FC" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FC")" @onclick='() => SortLogs("FC")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                FC<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "FC"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "GO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("GO")" @onclick='() => SortLogs("GO")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                GO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "GO"))</span>
-                                            </span>
-                                        </th>
-                                        <th class="narrow-col sortable-header @(logSortColumn == "FO" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("FO")" @onclick='() => SortLogs("FO")'>
-                                            <span style="position: relative; display: inline-block;">
-                                                FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "FO"))</span>
-                                            </span>
-                                        </th>
+                                        <td style="color: #666; text-align: left !important; padding-left: 12px !important;">@log.Date.ToString("MMM dd")</td>
+                                        <td class="player-name sticky-col" style="font-weight: bold; text-align: left;">
+                                            <div class="smart-name-container">
+                                                <span class="full-name">@log.OpponentName</span>
+                                                @if (!string.IsNullOrEmpty(log.OpponentShortName))
+                                                {
+                                                    <span class="short-name">@log.OpponentShortName</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="group-divider narrow-col">@log.PA</td>
+                                        <td class="narrow-col">@log.AB</td>
+                                        <td class="group-divider narrow-col">@log.R</td>
+                                        <td class="narrow-col">@log.H</td>
+                                        <td class="narrow-col">@log.H1B</td>
+                                        <td class="narrow-col">@log.H2B</td>
+                                        <td class="narrow-col">@log.H3B</td>
+                                        <td class="narrow-col">@log.HR</td>
+                                        <td class="narrow-col">@log.IPHR</td>
+                                        <td class="narrow-col">@log.RBI</td>
+                                        <td class="group-divider narrow-col">@log.BB</td>
+                                        <td class="narrow-col">@log.K</td>
+                                        <td class="narrow-col">@log.KF</td>
+                                        <td class="group-divider narrow-col">@log.SF</td>
+                                        <td class="narrow-col">@log.FC</td>
+                                        <td class="narrow-col">@log.GO</td>
+                                        <td class="narrow-col">@log.FO</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (GameStatsExtendedView log in ApplyLogSorting())
-                                    {
-                                        <tr>
-                                            <td style="color: #666; text-align: left !important; padding-left: 12px !important;">@log.Date.ToString("MMM dd")</td>
-                                            <td class="player-name sticky-col" style="font-weight: bold; text-align: left;">
-                                                <div class="smart-name-container">
-                                                    <span class="full-name">@log.OpponentName</span>
-                                                    @if (!string.IsNullOrEmpty(log.OpponentShortName))
-                                                    {
-                                                        <span class="short-name">@log.OpponentShortName</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td class="group-divider narrow-col">@log.PA</td>
-                                            <td class="narrow-col">@log.AB</td>
-                                            <td class="group-divider narrow-col">@log.R</td>
-                                            <td class="narrow-col">@log.H</td>
-                                            <td class="narrow-col">@log.H1B</td>
-                                            <td class="narrow-col">@log.H2B</td>
-                                            <td class="narrow-col">@log.H3B</td>
-                                            <td class="narrow-col">@log.HR</td>
-                                            <td class="narrow-col">@log.IPHR</td>
-                                            <td class="narrow-col">@log.RBI</td>
-                                            <td class="group-divider narrow-col">@log.BB</td>
-                                            <td class="narrow-col">@log.K</td>
-                                            <td class="narrow-col">@log.KF</td>
-                                            <td class="group-divider narrow-col">@log.SF</td>
-                                            <td class="narrow-col">@log.FC</td>
-                                            <td class="narrow-col">@log.GO</td>
-                                            <td class="narrow-col">@log.FO</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                                <tfoot>
-                                    <tr class="game-summary-row">
-                                        <td style="text-align: left !important; padding-left: 12px !important;">Totals</td>
-                                        <td class="player-name sticky-col"></td>
-                                        <td class="group-divider narrow-col">@logs.Sum(l => l.PA)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.AB)</td>
-                                        <td class="group-divider narrow-col">@logs.Sum(l => l.R)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.H)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.H1B)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.H2B)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.H3B)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.HR)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.IPHR)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.RBI)</td>
-                                        <td class="group-divider narrow-col">@logs.Sum(l => l.BB)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.K)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.KF)</td>
-                                        <td class="group-divider narrow-col">@logs.Sum(l => l.SF)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.FC)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.GO)</td>
-                                        <td class="narrow-col">@logs.Sum(l => l.FO)</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                    </div>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="game-summary-row">
+                                    <td style="text-align: left !important; padding-left: 12px !important;">Totals</td>
+                                    <td class="player-name sticky-col"></td>
+                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.PA) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.AB) ?? 0)</td>
+                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.R) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.H) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.H1B) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.H2B) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.H3B) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.HR) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.IPHR) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.RBI) ?? 0)</td>
+                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.BB) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.K) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.KF) ?? 0)</td>
+                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.SF) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.FC) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.GO) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.FO) ?? 0)</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                 </div>
             </div>
-
-            <div class="mobile-only">
-                <div class="game-cards-list">
-                    @for (int i = 0; i < logs.Count; i++)
-                    {
-                        GameStatsExtendedView log = logs[i];
-                        double currentDelay = i * 0.1;
-
-                        <div class="game-card view-fade-in" style="animation-delay: @(currentDelay)s; margin-bottom: 1rem;">
-                            <div class="game-card-header" style="cursor: default; padding: 1.25rem !important; display: block;">
-                                <div class="mobile-scoreboard">
-                                    <div class="scoreboard-meta">
-                                        <span>GAME #@log.GameNumber</span>
-                                        <span>@log.Date.ToString("MMM dd @ h:mm tt")</span>
-                                        <GameResultBadge OurScore="log.OurScore" OpponentScore="log.OpponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 6px;" />
-                                    </div>
-                                    <div class="scoreboard-matchup">
-                                        <div class="scoreboard-team visitor smart-name-container">
-                                            <span class="full-name">@(log.IsHome ? log.OpponentName : "Isotopes")</span>
-                                            @if (log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
-                                            {
-                                                <span class="short-name">@log.OpponentShortName</span>
-                                            }
-                                            else if (!log.IsHome)
-                                            {
-                                                <span class="short-name">Isotopes</span>
-                                            }
-                                        </div>
-                                        <div class="scoreboard-scores">
-                                            <span class="scoreboard-score">@(log.VisitingTeamScore?.ToString() ?? "0")</span>
-                                            <span class="scoreboard-divider">-</span>
-                                            <span class="scoreboard-score">@(log.HomeTeamScore?.ToString() ?? "0")</span>
-                                        </div>
-                                        <div class="scoreboard-team home smart-name-container">
-                                            <span class="full-name">@(log.IsHome ? "Isotopes" : log.OpponentName)</span>
-                                            @if (!log.IsHome && !string.IsNullOrEmpty(log.OpponentShortName))
-                                            {
-                                                <span class="short-name">@log.OpponentShortName</span>
-                                            }
-                                            else if (log.IsHome)
-                                            {
-                                                <span class="short-name">Isotopes</span>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="scoreboard-location">
-                                        <span>📍 @log.Diamond</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="game-card-detail expanded" style="border-top: 1px solid #eee; padding: 1.25rem; background: white;">
-                                <div class="stat-badge-list">
-                                    @if (log.PA > 0) { <div class="stat-badge primary-stat"><span class="stat-badge-val">@log.PA</span><span class="stat-badge-lbl">PA</span></div> }
-                                    @if (log.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.AB</span><span class="stat-badge-lbl">AB</span></div> }
-                                    @if (log.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.R</span><span class="stat-badge-lbl">R</span></div> }
-                                    @if (log.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H</span><span class="stat-badge-lbl">H</span></div> }
-                                    @if (log.H1B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H1B</span><span class="stat-badge-lbl">1B</span></div> }
-                                    @if (log.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H2B</span><span class="stat-badge-lbl">2B</span></div> }
-                                    @if (log.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H3B</span><span class="stat-badge-lbl">3B</span></div> }
-                                    @if (log.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.HR</span><span class="stat-badge-lbl">HR</span></div> }
-                                    @if (log.IPHR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.IPHR</span><span class="stat-badge-lbl">IPHR</span></div> }
-                                    @if (log.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
-                                    @if (log.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.BB</span><span class="stat-badge-lbl">BB</span></div> }
-                                    @if (log.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.K</span><span class="stat-badge-lbl">K</span></div> }
-                                    @if (log.KF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.KF</span><span class="stat-badge-lbl">KF</span></div> }
-                                    @if (log.SF > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.SF</span><span class="stat-badge-lbl">SF</span></div> }
-                                    @if (log.FC > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FC</span><span class="stat-badge-lbl">FC</span></div> }
-                                    @if (log.GO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.GO</span><span class="stat-badge-lbl">GO</span></div> }
-                                    @if (log.FO > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.FO</span><span class="stat-badge-lbl">FO</span></div> }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
+        </div>
     }
 }
 
@@ -575,6 +583,7 @@ else
     private List<Season> seasons = new();
     private List<PlayerStatsSummary> teamStats = new();
     private PlayerStatsSummary? playerSummary;
+    private PlayerStatsSummary overallCareerStats = new();
     private List<SeasonPlayerStats> perSeasonStats = new();
     private Dictionary<int, List<PlayerStatsSummary>> allSeasonTeamStats = new();
 
@@ -714,6 +723,7 @@ else
         }
 
         perSeasonStats = perSeasonStats.OrderByDescending(x => x.SeasonName).ToList();
+        overallCareerStats = GetCareerTotals();
     }
 
     private void SortCareer(string column)
