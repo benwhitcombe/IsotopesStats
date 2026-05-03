@@ -1,5 +1,5 @@
-@page "/gamestats"
-@page "/gamestats/{SeasonName}"
+@page "/games"
+@page "/games/{SeasonName}"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -305,7 +305,7 @@ else
                                                 <tr>
                                                     <td class="@(uiState.SortColumn == "BO" ? "active-sort-col" : "")">@stat.BO</td>
                                                     <td class="player-name sticky-col @(uiState.SortColumn == "Player" ? "active-sort-col" : "")">
-                                                        <a href="/player/@Uri.EscapeDataString(stat.PlayerName)/@Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))" style="text-decoration: none; color: inherit;">
+                                                        <a href="/career/@Uri.EscapeDataString(stat.PlayerName)/@Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))" style="text-decoration: none; color: inherit;">
                                                             @stat.PlayerName
                                                         </a>
                                                     </td>
@@ -383,7 +383,7 @@ else
                                         {
                                             <div class="mobile-player-row">
                                                 <div class="player-row-header">
-                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/player/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))}")' style="cursor: pointer;">
+                                                    <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/career/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(GetSeasonName(effectiveSeasonId))}")' style="cursor: pointer;">
                                                         @stat.BO. @stat.PlayerName
                                                     </span>
                                                     <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
@@ -610,7 +610,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        SharedState.ReturnUrl = "gamestats";
+        SharedState.ReturnUrl = "games";
         seasons = await StatsRepository.GetSeasonsAsync();
 
         filterText = SessionState.FilterText;
@@ -638,7 +638,7 @@ else
             }
             
             string name = GetSeasonName(targetId);
-            Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}", replace: true);
+            Navigation.NavigateTo($"/games/{Uri.EscapeDataString(name)}", replace: true);
             return;
         }
 
@@ -661,7 +661,7 @@ else
             }
             
             string name = GetSeasonName(seasonId);
-            Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}", replace: true);
+            Navigation.NavigateTo($"/games/{Uri.EscapeDataString(name)}", replace: true);
             return;
         }
 
@@ -723,7 +723,7 @@ else
     {
         SharedState.SelectedSeasonId = id;
         string name = GetSeasonName(id);
-        Navigation.NavigateTo($"/gamestats/{Uri.EscapeDataString(name)}");
+        Navigation.NavigateTo($"/games/{Uri.EscapeDataString(name)}");
     }
 
     private void ClearFilter()
@@ -907,4 +907,6 @@ else
         border-right: none !important;
     }
 </style>
+
+
 

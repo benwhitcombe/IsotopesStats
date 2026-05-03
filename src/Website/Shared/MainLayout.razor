@@ -267,7 +267,7 @@
     {
         int id = SharedState.SelectedSeasonId;
         string name = GetSeasonName(id);
-        return $"playerstats/{Uri.EscapeDataString(name)}";
+        return $"players/{Uri.EscapeDataString(name)}";
     }
 
     private string GetGamesUrl()
@@ -278,10 +278,10 @@
             id = GameSessionState.LastValidSeasonId;
         }
         
-        if (id <= 0) return "gamestats";
+        if (id <= 0) return "games";
         
         string name = GetSeasonName(id);
-        return $"gamestats/{Uri.EscapeDataString(name)}";
+        return $"games/{Uri.EscapeDataString(name)}";
     }
 
     private string GetSeasonName(int id)

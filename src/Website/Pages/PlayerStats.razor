@@ -1,6 +1,6 @@
 @page "/"
-@page "/playerstats"
-@page "/playerstats/{SeasonName}"
+@page "/players"
+@page "/players/{SeasonName}"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -220,7 +220,7 @@ else
                         <tr>
                             <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
                             <td class="player-name sticky-col">
-                                <a href="/player/@Uri.EscapeDataString(player.PlayerName)/@Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))" style="text-decoration: none; color: inherit;">        
+                                <a href="/career/@Uri.EscapeDataString(player.PlayerName)/@Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))" style="text-decoration: none; color: inherit;">        
                                     @player.PlayerName
                                 </a>
                             </td>
@@ -368,7 +368,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        SharedState.ReturnUrl = "playerstats";
+        SharedState.ReturnUrl = "players";
         seasons = await StatsRepository.GetSeasonsAsync();
 
         currentSortColumn = SessionState.CurrentSortColumn;
@@ -390,7 +390,7 @@ else
             }
             
             string name = GetSeasonName(targetId);
-            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}", replace: true);
+            NavigationManager.NavigateTo($"/players/{Uri.EscapeDataString(name)}", replace: true);
             return;
         }
 
@@ -403,7 +403,7 @@ else
                 recentId = seasons.First().Id;
             }
             string name = GetSeasonName(recentId);
-            NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}", replace: true);
+            NavigationManager.NavigateTo($"/players/{Uri.EscapeDataString(name)}", replace: true);
             return;
         }
 
@@ -487,7 +487,7 @@ else
     {
         SharedState.SelectedSeasonId = id;
         string name = GetSeasonName(id);
-        NavigationManager.NavigateTo($"/playerstats/{Uri.EscapeDataString(name)}");
+        NavigationManager.NavigateTo($"/players/{Uri.EscapeDataString(name)}");
     }
 
     private void CalculateLeaders()
@@ -585,8 +585,8 @@ else
     private void NavigateToLog(string? playerName)
     {
         if (string.IsNullOrEmpty(playerName)) return;
-        SharedState.ReturnUrl = "playerstats";
-        NavigationManager.NavigateTo($"/player/{Uri.EscapeDataString(playerName)}/{Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))}");
+        SharedState.ReturnUrl = "players";
+        NavigationManager.NavigateTo($"/career/{Uri.EscapeDataString(playerName)}/{Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))}");
     }
 }
 

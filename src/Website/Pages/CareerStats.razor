@@ -1,4 +1,4 @@
-@page "/player/{PlayerName}/{SeasonName}"
+@page "/career/{PlayerName}/{SeasonName}"
 @using IsotopesStats.Website.Services
 @using IsotopesStats.Domain.Models
 @inject IStatsRepository StatsRepository
@@ -588,7 +588,7 @@ else
             if (recentSeasonId != 0)
             {
                 string name = GetSeasonName(recentSeasonId);
-                NavigationManager.NavigateTo($"/player/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}", replace: true);
+                NavigationManager.NavigateTo($"/career/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}", replace: true);
                 return;
             }
             
@@ -841,7 +841,7 @@ else
     {
         SharedState.SelectedSeasonId = id;
         string name = GetSeasonName(id);
-        NavigationManager.NavigateTo($"/player/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}");
+        NavigationManager.NavigateTo($"/career/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}");
     }
 
     private PlayerStatsSummary GetCareerTotals()
