@@ -223,7 +223,7 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     }
 
     public Task<List<Permission>> GetPermissionsAsync() => 
-        GetListAsync<Permission, PermissionDTO>(Mapper.ToModel, "name");
+        GetListAsync<Permission, PermissionDTO>(Mapper.ToModel, "name", onlyActive: false);
 
     public Task<bool> IsRoleNameUniqueAsync(string name, int excludeId = 0) => 
         IsUniqueAsync<UserRoleDTO>("name", name, excludeId);

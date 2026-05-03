@@ -33,8 +33,12 @@ internal abstract class BaseRepository
         
         if (onlyActive)
         {
-            // Use string "false" for boolean filters to avoid Postgrest type exceptions in generic methods
-            query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+            // Only apply the filter if the DTO has an IsDeleted property
+            if (typeof(DTOType).GetProperty("IsDeleted") != null)
+            {
+                // Use string "false" for boolean filters to avoid Postgrest type exceptions in generic methods
+                query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+            }
         }
 
         ModeledResponse<DTOType> response = await query.Order(orderColumn, ordering).Get();
@@ -74,8 +78,13 @@ internal abstract class BaseRepository
         where DTOType : BaseModel, new()
     {
         Table<DTOType> query = (Table<DTOType>)Supabase.From<DTOType>()
-            .Filter(column, Constants.Operator.Equals, value)
-            .Filter("isdeleted", Constants.Operator.Equals, "false");
+            .Filter(column, Constants.Operator.Equals, value);
+
+        // Only apply the filter if the DTO has an IsDeleted property
+        if (typeof(DTOType).GetProperty("IsDeleted") != null)
+        {
+            query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+        }
 
         if (excludeId != 0)
         {
