@@ -1,0 +1,77 @@
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Services
+
+<div class="player-selector-container @(isReady ? "ready" : "loading")" style="min-width: @(MinWidth)px;">
+    @if (isReady)
+    {
+        <select class="form-control player-select" value="@SelectedPlayerName" @onchange="HandlePlayerChange">
+            @foreach (Player player in Players.OrderBy(p => p.Name))
+            {
+                <option value="@player.Name">@player.Name</option>
+            }
+        </select>
+    }
+</div>
+
+@code {
+    [Parameter] public List<Player> Players { get; set; } = new();
+    [Parameter] public string SelectedPlayerName { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnPlayerSelected { get; set; }
+    [Parameter] public int MinWidth { get; set; } = 150;
+
+    private bool isReady = false;
+
+    protected override void OnParametersSet()
+    {
+        if (Players != null && Players.Any())
+        {
+            isReady = true;
+        }
+    }
+
+    private async Task HandlePlayerChange(ChangeEventArgs e)
+    {
+        string? name = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(name))
+        {
+            await OnPlayerSelected.InvokeAsync(name);
+        }
+    }
+}
+
+<style>
+    .player-selector-container {
+        display: inline-block;
+        transition: opacity 0.2s;
+        width: auto;
+    }
+
+    .player-selector-container.loading {
+        opacity: 0;
+    }
+
+    .player-selector-container.ready {
+        opacity: 1;
+    }
+
+    .player-select {
+        text-align: center;
+        text-align-last: center;
+        font-weight: bold;
+        cursor: pointer;
+        height: auto !important;
+        padding: 0.4rem 1rem !important;
+        line-height: 1.5;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: calc(100% - 4px) center;
+        background-size: 12px;
+        width: 100%;
+        min-width: fit-content;
+    }
+
+    select.player-select option {
+        text-align: center;
+    }
+</style>

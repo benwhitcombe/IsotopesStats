@@ -10,10 +10,14 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">
-        <span class="mobile-only">@PlayerName</span>
-        <span class="desktop-only">@PlayerName - Career Stats</span>
+        <span class="desktop-only">Career - @PlayerName</span>
+        <span class="mobile-only">Career</span>
     </h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
+        <PlayerSelector 
+            Players="@allPlayers" 
+            SelectedPlayerName="@PlayerName" 
+            OnPlayerSelected="OnPlayerSelected" />
         <SeasonSelector 
             Seasons="@seasons" 
             SelectedSeasonId="@GetSeasonId(SeasonName)" 
@@ -41,7 +45,7 @@ else
         <div class="mobile-only">
             <div style="margin-bottom: 1.5rem;">
                 <div class="mobile-switcher">
-                    <button class="@(activeView == "Stats" ? "active" : "")" @onclick='() => activeView = "Stats"'>Career Stats</button>
+                    <button class="@(activeView == "Stats" ? "active" : "")" @onclick='() => activeView = "Stats"'>Stats</button>
                     <button class="@(activeView == "Log" ? "active" : "")" @onclick='() => activeView = "Log"'>Game Log</button>
                 </div>
             </div>
@@ -524,6 +528,7 @@ else
     private List<GameStatsExtendedView>? allLogs;
     private bool isLoading = true;
     private List<Season> seasons = new();
+    private List<Player> allPlayers = new();
     private List<PlayerStatsSummary> teamStats = new();
     private PlayerStatsSummary? playerSummary;
     private PlayerStatsSummary overallCareerStats = new();
@@ -551,6 +556,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         seasons = await StatsRepository.GetSeasonsAsync();
+        allPlayers = await StatsRepository.GetAllPlayersAsync();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -833,6 +839,11 @@ else
         SharedState.SelectedSeasonId = id;
         string name = GetSeasonName(id);
         NavigationManager.NavigateTo($"/career/{Uri.EscapeDataString(PlayerName)}/{Uri.EscapeDataString(name)}");
+    }
+
+    private void OnPlayerSelected(string name)
+    {
+        NavigationManager.NavigateTo($"/career/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(SeasonName)}");
     }
 
     private PlayerStatsSummary GetCareerTotals()
