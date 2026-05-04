@@ -279,6 +279,7 @@ internal class StatsRepository : BaseRepository, IStatsRepository
             { "p_ishome", game.IsHome },
             { "p_opponent_id", game.OpponentId },
             { "p_type", (int)game.GameType },
+            { "p_is_deleted", game.IsDeleted },
             { "p_stats", stats.Select(s => Mapper.ToDTO(s)).ToList() }
         };
 
