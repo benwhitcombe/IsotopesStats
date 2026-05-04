@@ -128,21 +128,18 @@ else if (isEditing)
                     <thead>
                         <tr>
                             <th style="width: 200px; border-right: 2px solid #ddd;">Player</th>
-                            <th title="@StatDefinitions.GetDefinition("PA")">PA</th>
-                            <th title="@StatDefinitions.GetDefinition("AB")">AB</th>
-                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("H")">H</th>
                             <th title="@StatDefinitions.GetDefinition("1B")">1B</th>
                             <th title="@StatDefinitions.GetDefinition("2B")">2B</th>
                             <th title="@StatDefinitions.GetDefinition("3B")">3B</th>
                             <th title="@StatDefinitions.GetDefinition("HR")">HR</th>
-                            <th title="@StatDefinitions.GetDefinition("IPHR")">IPHR</th>
+                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("IPHR")">IPHR</th>
                             <th title="@StatDefinitions.GetDefinition("BB")">BB</th>
+                            <th title="@StatDefinitions.GetDefinition("K")">K</th>
+                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("KF")">KF</th>
                             <th title="@StatDefinitions.GetDefinition("SF")">SF</th>
                             <th title="@StatDefinitions.GetDefinition("FC")">FC</th>
-                            <th title="@StatDefinitions.GetDefinition("K")">K</th>
-                            <th title="@StatDefinitions.GetDefinition("KF")">KF</th>
                             <th title="@StatDefinitions.GetDefinition("GO")">GO</th>
-                            <th title="@StatDefinitions.GetDefinition("FO")">FO</th>
+                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("FO")">FO</th>
                             <th title="@StatDefinitions.GetDefinition("R")">R</th>
                             <th title="@StatDefinitions.GetDefinition("RBI")">RBI</th>
                         </tr>
@@ -163,21 +160,18 @@ else if (isEditing)
                                 @ondrop="() => HandleDrop(stat)"
                                 class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
                                 <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.PlayerName</td>
-                                <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
-                                <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
-                                <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
                                 <td><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" class="form-control form-control-sm" /></td>
-                                <td><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" class="form-control form-control-sm" /></td>
+                                <td style="border-right: 2px solid #ddd;"><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" class="form-control form-control-sm" /></td>
+                                <td><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" class="form-control form-control-sm" /></td>
+                                <td style="border-right: 2px solid #ddd;"><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" class="form-control form-control-sm" /></td>
-                                <td><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" class="form-control form-control-sm" /></td>
-                                <td><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" class="form-control form-control-sm" /></td>
-                                <td><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" class="form-control form-control-sm" /></td>
+                                <td style="border-right: 2px solid #ddd;"><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" class="form-control form-control-sm" /></td>
                                 <td><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                                 <td><input type="number" value="@stat.RBI" @oninput="(e) => HandleStatChange(stat, nameof(stat.RBI), e.Value)" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
                             </tr>
@@ -186,21 +180,18 @@ else if (isEditing)
                     <tfoot style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
                         <tr>
                             <td style="border-right: 2px solid #ddd;">TEAM TOTALS</td>
-                            <td>@playerStats.Sum(s => s.PA)</td>
-                            <td>@playerStats.Sum(s => s.AB)</td>
-                            <td style="border-right: 2px solid #ddd; color: var(--isotopes-accent);">@playerStats.Sum(s => s.H)</td>
                             <td>@playerStats.Sum(s => s.H1B)</td>
                             <td>@playerStats.Sum(s => s.H2B)</td>
                             <td>@playerStats.Sum(s => s.H3B)</td>
-                            <td>@playerStats.Sum(s => s.IPHR)</td>
                             <td>@playerStats.Sum(s => s.HR)</td>
+                            <td style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.IPHR)</td>
                             <td>@playerStats.Sum(s => s.BB)</td>
+                            <td>@playerStats.Sum(s => s.K)</td>
+                            <td style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.KF)</td>
                             <td>@playerStats.Sum(s => s.SF)</td>
                             <td>@playerStats.Sum(s => s.FC)</td>
-                            <td>@playerStats.Sum(s => s.K)</td>
-                            <td>@playerStats.Sum(s => s.KF)</td>
                             <td>@playerStats.Sum(s => s.GO)</td>
-                            <td>@playerStats.Sum(s => s.FO)</td>
+                            <td style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.FO)</td>
                             <td style="color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</td>
                             <td style="color: var(--isotopes-red);">@playerStats.Sum(s => s.RBI)</td>
                         </tr>
@@ -230,13 +221,13 @@ else if (isEditing)
                             <div class="admin-stat-input"><label>1B</label><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>2B</label><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>3B</label><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>IPHR</label><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>HR</label><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>IPHR</label><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>BB</label><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>K</label><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>KF</label><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>SF</label><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" class="form-control" /></div>
+                            <div class="admin-stat-input"><label>FC</label><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>GO</label><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>FO</label><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" class="form-control" /></div>
                             <div class="admin-stat-input"><label>R</label><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
@@ -258,13 +249,13 @@ else if (isEditing)
                         <div class="admin-stat-input"><label>1B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H1B)</div></div>
                         <div class="admin-stat-input"><label>2B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H2B)</div></div>
                         <div class="admin-stat-input"><label>3B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H3B)</div></div>
-                        <div class="admin-stat-input"><label>IPHR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.IPHR)</div></div>
                         <div class="admin-stat-input"><label>HR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.HR)</div></div>
+                        <div class="admin-stat-input"><label>IPHR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.IPHR)</div></div>
                         <div class="admin-stat-input"><label>BB</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.BB)</div></div>
-                        <div class="admin-stat-input"><label>SF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.SF)</div></div>
-                        <div class="admin-stat-input"><label>FC</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FC)</div></div>
                         <div class="admin-stat-input"><label>K</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.K)</div></div>
                         <div class="admin-stat-input"><label>KF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.KF)</div></div>
+                        <div class="admin-stat-input"><label>SF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.SF)</div></div>
+                        <div class="admin-stat-input"><label>FC</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FC)</div></div>
                         <div class="admin-stat-input"><label>GO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.GO)</div></div>
                         <div class="admin-stat-input"><label>FO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FO)</div></div>
                         <div class="admin-stat-input"><label>R</label><div class="form-control" style="background: white; font-weight: bold; color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</div></div>
