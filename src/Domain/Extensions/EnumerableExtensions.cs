@@ -49,8 +49,24 @@ public static class EnumerableExtensions
         PropertyInfo? propertyInfo = typeof(T).GetProperty(propertyName);
         if (propertyInfo == null) return source;
 
-        return isAscending 
+        IOrderedEnumerable<T> ordered = isAscending 
             ? source.OrderBy(x => propertyInfo.GetValue(x, null)) 
             : source.OrderByDescending(x => propertyInfo.GetValue(x, null));
+
+        // Handle tie-breakers for stats-related types (Default: OPS, except for OPS itself which uses AVG)
+        string tieBreakerColumn = column.Equals("OPS", StringComparison.OrdinalIgnoreCase) ? "AVG" : "OPS";
+        string tieBreakerPropertyName = ColumnToPropertyMap.TryGetValue(tieBreakerColumn, out string? tbMappedName) 
+            ? tbMappedName 
+            : tieBreakerColumn;
+
+        PropertyInfo? tbPropertyInfo = typeof(T).GetProperty(tieBreakerPropertyName);
+        if (tbPropertyInfo != null && !propertyName.Equals(tieBreakerPropertyName, StringComparison.OrdinalIgnoreCase))
+        {
+            ordered = isAscending 
+                ? ordered.ThenBy(x => tbPropertyInfo.GetValue(x, null)) 
+                : ordered.ThenByDescending(x => tbPropertyInfo.GetValue(x, null));
+        }
+
+        return ordered;
     }
 }

@@ -253,7 +253,7 @@ else
                     <tr class="game-summary-row">
                         <td></td>
                         <td class="player-name sticky-col">Team</td>
-                        <td class="group-divider narrow-col">-</td>
+                        <td class="group-divider narrow-col">@teamTotals.GamesPlayed</td>
                         <td class="narrow-col">@teamTotals.PA</td>
                         <td class="narrow-col">@teamTotals.AB</td>
                         <td class="group-divider narrow-col">@teamTotals.R</td>
@@ -494,10 +494,10 @@ else
     {
         if (!allStats.Any()) return;
 
-        avgLeader = allStats.Where(p => p.AB > 0).OrderByDescending(p => p.AVG).FirstOrDefault();
-        opsLeader = allStats.Where(p => p.PA > 0).OrderByDescending(p => p.OPS).FirstOrDefault();
-        hrLeader = allStats.Where(p => p.HR > 0).OrderByDescending(p => p.HR).FirstOrDefault();
-        rbiLeader = allStats.Where(p => p.RBI > 0).OrderByDescending(p => p.RBI).FirstOrDefault();
+        avgLeader = allStats.Where(p => p.AB > 0).SortByColumn("AVG", false).FirstOrDefault();
+        opsLeader = allStats.Where(p => p.PA > 0).SortByColumn("OPS", false).FirstOrDefault();
+        hrLeader = allStats.Where(p => p.HR > 0).SortByColumn("HR", false).FirstOrDefault();
+        rbiLeader = allStats.Where(p => p.RBI > 0).SortByColumn("RBI", false).FirstOrDefault();
     }
 
     private async Task ToggleDrawer()
