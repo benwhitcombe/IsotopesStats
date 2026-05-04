@@ -679,6 +679,69 @@ tr:last-child td {
 .stat-badge.active .stat-badge-val { color: var(--isotopes-red); }
 .stat-badge.primary-stat { background: #f8f9fa; border-color: #ddd; }
 
+/* Mobile Card Layout (Management Pages) */
+.mobile-player-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+.mobile-player-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-card-name {
+    font-weight: 800;
+    color: var(--isotopes-accent);
+    font-size: 1.1rem;
+}
+
+.mobile-card-stats {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.m-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.m-stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #999;
+    font-weight: bold;
+}
+
+.m-stat-val {
+    font-weight: 700;
+    color: #333;
+}
+
+.rank-badge {
+    background: var(--isotopes-accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
 /* Mobile-Specific (max-width: 768px) */
 @media (max-width: 768px) {
     .page { padding-bottom: 0; }
