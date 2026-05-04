@@ -79,7 +79,7 @@ else
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
                                         <span>GAME #@summary.GameNumber</span>
-                                        <span>@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
+                                        <span>@summary.Date.ToString("ddd, MMM dd, yyyy @ h:mm tt")</span>
                                         <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 1rem; padding: 2px 12px;" />
                                     </div>
                                     <div class="scoreboard-matchup">
@@ -123,7 +123,7 @@ else
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
                                         <span>GAME #@summary.GameNumber</span>
-                                        <span>@summary.Date.ToString("MMM dd @ h:mm tt")</span>
+                                        <span>@summary.Date.ToString("ddd, MMM dd @ h:mm tt")</span>
                                         <GameResultBadge OurScore="isotopesScore" OpponentScore="opponentScore" Style="margin: 0; font-size: 0.65rem; padding: 2px 6px;" />
                                     </div>
                                     <div class="scoreboard-matchup">
@@ -464,6 +464,9 @@ else
                                 <div class="footer-stat">
                                     <span class="footer-stat-label">HR:</span> @summary.TeamHRs
                                 </div>
+                                <div class="footer-stat">
+                                    <span class="footer-stat-label">Players:</span> @summary.PlayerCount
+                                </div>
                             </div>
                         }
                     </div>
@@ -485,12 +488,8 @@ else
                             <div class="desktop-only" style="width: 100%; opacity: 0.7;">
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
-                                        @if (effectiveSeasonId == SharedSessionState.AllSeasonsId)
-                                        {
-                                            <span style="font-weight: 800; color: #999; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; margin-right: 4px; font-size: 0.8rem;">@summary.SeasonName.ToUpper()</span>
-                                        }
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
-                                        <span style="color: #999;">@summary.Date.ToString("MMM dd, yyyy @ h:mm tt")</span>
+                                        <span style="color: #999;">@summary.Date.ToString("ddd, MMM dd, yyyy @ h:mm tt")</span>
                                         <span class="game-result-badge" style="visibility: hidden; margin: 0; font-size: 1rem; padding: 2px 12px;">Win</span>
                                     </div>
                                     <div class="scoreboard-matchup">
@@ -532,13 +531,9 @@ else
                             <div class="mobile-only" style="width: 100%; opacity: 0.7;">
                                 <div class="mobile-scoreboard">
                                     <div class="scoreboard-meta">
-                                        @if (effectiveSeasonId == SharedSessionState.AllSeasonsId)
-                                        {
-                                            <span style="font-weight: 800; color: #999; background: #f5f5f5; padding: 1px 6px; border-radius: 4px; margin-right: 4px; font-size: 0.65rem;">@summary.SeasonName.ToUpper()</span>
-                                        }
                                         <span style="color: #999;">GAME #@summary.GameNumber</span>
                                         <div class="date-container">
-                                            <span class="date-part" style="color: #999;">@summary.Date.ToString("MMM dd")</span>
+                                            <span class="date-part" style="color: #999;">@summary.Date.ToString("ddd, MMM dd")</span>
                                             <span class="at-sign">@("@")</span>
                                             <span class="time-part" style="color: #999;">@summary.Date.ToString("h:mm tt")</span>
                                         </div>
@@ -589,6 +584,9 @@ else
                             </div>
                             <div class="footer-stat">
                                 <span class="footer-stat-label">HR:</span> -
+                            </div>
+                            <div class="footer-stat">
+                                <span class="footer-stat-label">Players:</span> @summary.PlayerCount
                             </div>
                         </div>
                     </div>

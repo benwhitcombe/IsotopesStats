@@ -22,54 +22,92 @@
     </div>
 }
 
-<div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding-left: 1rem;">Timestamp</th>
-                    <th style="text-align: left;">User</th>
-                    <th>Action</th>
-                    <th>Entity</th>
-                    <th style="text-align: left; padding-right: 1rem;">Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!filteredLogs.Any())
-                {
+<div class="desktop-only">
+    <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
+        <div class="table-container">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 3rem; color: #999;">
-                            No log entries found.
-                        </td>
+                        <th style="text-align: left; padding-left: 1rem;">Timestamp</th>
+                        <th style="text-align: left;">User</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th style="text-align: left; padding-right: 1rem;">Description</th>
                     </tr>
-                }
-                else
-                {
-                    @foreach (UserLog log in filteredLogs)
+                </thead>
+                <tbody>
+                    @if (!filteredLogs.Any())
                     {
-                        <tr style="vertical-align: middle;">
-                            <td style="text-align: left; font-size: 0.85rem; white-space: nowrap; padding-left: 1rem;">
-                                @log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm:ss tt")
-                            </td>
-                            <td style="text-align: left; font-weight: 600; font-size: 0.85rem;">
-                                @log.UserEmail
-                            </td>
-                            <td>
-                                <span class="badge @GetActionBadgeClass(log.Action)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
-                                    @log.Action
-                                </span>
-                            </td>
-                            <td style="font-size: 0.85rem; color: #666;">
-                                @log.EntityType
-                            </td>
-                            <td style="text-align: left; font-size: 0.85rem; padding-right: 1rem;">
-                                @log.Description
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 3rem; color: #999;">
+                                No log entries found.
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        @foreach (UserLog log in filteredLogs)
+                        {
+                            <tr style="vertical-align: middle;">
+                                <td style="text-align: left; font-size: 0.85rem; white-space: nowrap; padding-left: 1rem;">
+                                    @log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm:ss tt")
+                                </td>
+                                <td style="text-align: left; font-weight: 600; font-size: 0.85rem;">
+                                    @log.UserEmail
+                                </td>
+                                <td>
+                                    <span class="badge @GetActionBadgeClass(log.Action)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
+                                        @log.Action
+                                    </span>
+                                </td>
+                                <td style="font-size: 0.85rem; color: #666;">
+                                    @log.EntityType
+                                </td>
+                                <td style="text-align: left; font-size: 0.85rem; padding-right: 1rem;">
+                                    @log.Description
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-only">
+    <div class="mobile-player-grid view-fade-in" style="display: grid;">
+        @if (!filteredLogs.Any())
+        {
+            <div style="text-align: center; padding: 3rem; color: #999;">
+                No log entries found.
+            </div>
+        }
+        else
+        {
+            @foreach (UserLog log in filteredLogs)
+            {
+                <div class="mobile-player-card">
+                    <div class="mobile-card-header">
+                        <div class="mobile-card-name">@log.UserEmail</div>
+                        <span class="badge @GetActionBadgeClass(log.Action)" style="padding: 0.4rem 0.8rem; border-radius: 20px;">@log.Action</span>
+                    </div>
+                    <div class="mobile-card-stats" style="grid-template-columns: 1fr; margin-bottom: 0.5rem; gap: 0.5rem;">
+                        <div class="m-stat" style="align-items: flex-start;">
+                            <span class="m-stat-label">Timestamp</span>
+                            <span class="m-stat-val" style="font-size: 0.85rem;">@log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm:ss tt")</span>
+                        </div>
+                        <div class="m-stat" style="align-items: flex-start;">
+                            <span class="m-stat-label">Entity</span>
+                            <span class="m-stat-val" style="font-size: 0.85rem;">@log.EntityType</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #555; padding-top: 0.5rem; border-top: 1px solid #eee;">
+                        @log.Description
+                    </div>
+                </div>
+            }
+        }
     </div>
 </div>
 

@@ -85,6 +85,7 @@
 }
 else
 {
+    <div class="desktop-only">
     <div class="stat-card view-fade-in" style="padding: 0; overflow: hidden;">
         <div class="table-container">
             <table class="table">
@@ -125,6 +126,40 @@ else
             </table>
         </div>
     </div>
+</div>
+
+<div class="mobile-only">
+    <div class="mobile-player-grid view-fade-in" style="display: grid;">
+        @foreach (UserRolesSummaryView user in users)
+        {
+            <div class="mobile-player-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    @if (string.IsNullOrEmpty(user.RoleNames))
+                    {
+                        <span style="color: #ccc; font-style: italic; font-size: 0.85rem;">No roles assigned</span>
+                    }
+                    else
+                    {
+                        @foreach (string role in user.RoleNames.Split(", "))
+                        {
+                            <span class="badge bg-light text-dark" style="margin-right: 4px; border: 1px solid #eee; margin-bottom: 4px;">@role</span>
+                        }
+                    }
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 0.8rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="view-btn" style="padding: 0.3rem 0.8rem;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
+                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 }
 
 @code {
