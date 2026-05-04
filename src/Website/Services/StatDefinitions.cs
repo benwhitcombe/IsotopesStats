@@ -33,7 +33,7 @@ namespace IsotopesStats.Website.Services
 
         public static string GetDefinition(string abbreviation)
         {
-            return Definitions.TryGetValue(abbreviation, out var definition) ? definition : string.Empty;
+            return Definitions.TryGetValue(abbreviation, out string? definition) ? definition : string.Empty;
         }
     }
 }

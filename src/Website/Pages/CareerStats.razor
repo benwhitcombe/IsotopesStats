@@ -131,6 +131,9 @@ else
                                     <div class="scoreboard-location">
                                         <span>📍 @log.Diamond</span>
                                     </div>
+                                    <div style="display: flex; justify-content: center; margin-top: 0.5rem; margin-bottom: 0.25rem;">
+                                        <span class="player-row-avg">AVG @log.AVG.ToString(".000") | OBP @log.OBP.ToString(".000") | SLG @log.SLG.ToString(".000") | OPS @log.OPS.ToString(".000")</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -138,13 +141,13 @@ else
                                 <div class="stat-badge-list">
                                     @if (log.PA > 0) { <div class="stat-badge primary-stat"><span class="stat-badge-val">@log.PA</span><span class="stat-badge-lbl">PA</span></div> }
                                     @if (log.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.AB</span><span class="stat-badge-lbl">AB</span></div> }
-                                    @if (log.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.R</span><span class="stat-badge-lbl">R</span></div> }
                                     @if (log.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H</span><span class="stat-badge-lbl">H</span></div> }
                                     @if (log.H1B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H1B</span><span class="stat-badge-lbl">1B</span></div> }
                                     @if (log.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H2B</span><span class="stat-badge-lbl">2B</span></div> }
                                     @if (log.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.H3B</span><span class="stat-badge-lbl">3B</span></div> }
                                     @if (log.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.HR</span><span class="stat-badge-lbl">HR</span></div> }
                                     @if (log.IPHR > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.IPHR</span><span class="stat-badge-lbl">IPHR</span></div> }
+                                    @if (log.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.R</span><span class="stat-badge-lbl">R</span></div> }
                                     @if (log.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
                                     @if (log.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.BB</span><span class="stat-badge-lbl">BB</span></div> }
                                     @if (log.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@log.K</span><span class="stat-badge-lbl">K</span></div> }
@@ -186,12 +189,7 @@ else
                                 AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "AB"))</span>
                             </span>
                         </th>
-                        <th class="group-divider narrow-col sortable-header @(careerSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortCareer("R")'>
-                            <span style="position: relative; display: inline-block;">
-                                R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "R"))</span>
-                            </span>
-                        </th>
-                        <th class="narrow-col sortable-header @(careerSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortCareer("H")'>
+                        <th class="group-divider narrow-col sortable-header @(careerSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortCareer("H")'>
                             <span style="position: relative; display: inline-block;">
                                 H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "H"))</span>
                             </span>
@@ -219,6 +217,11 @@ else
                         <th class="narrow-col sortable-header @(careerSortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")" @onclick='() => SortCareer("IPHR")'>
                             <span style="position: relative; display: inline-block;">
                                 IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "IPHR"))</span>
+                            </span>
+                        </th>
+                        <th class="narrow-col sortable-header @(careerSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortCareer("R")'>
+                            <span style="position: relative; display: inline-block;">
+                                R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "R"))</span>
                             </span>
                         </th>
                         <th class="narrow-col sortable-header @(careerSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")" @onclick='() => SortCareer("RBI")'>
@@ -294,13 +297,13 @@ else
                             <td class="narrow-col">@RenderStatWithMedal("PA", hasPlayed ? seasonStat.Stats.PA.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("AB", hasPlayed ? seasonStat.Stats.AB.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             
-                            <td class="group-divider narrow-col">@RenderStatWithMedal("R", hasPlayed ? seasonStat.Stats.R.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
-                            <td class="narrow-col">@RenderStatWithMedal("H", hasPlayed ? seasonStat.Stats.H.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
+                            <td class="group-divider narrow-col">@RenderStatWithMedal("H", hasPlayed ? seasonStat.Stats.H.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("1B", hasPlayed ? seasonStat.Stats.H1B.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("2B", hasPlayed ? seasonStat.Stats.H2B.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("3B", hasPlayed ? seasonStat.Stats.H3B.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("HR", hasPlayed ? seasonStat.Stats.HR.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("IPHR", hasPlayed ? seasonStat.Stats.IPHR.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
+                            <td class="narrow-col">@RenderStatWithMedal("R", hasPlayed ? seasonStat.Stats.R.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("RBI", hasPlayed ? seasonStat.Stats.RBI.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             
                             <td class="group-divider narrow-col">@RenderStatWithMedal("BB", hasPlayed ? seasonStat.Stats.BB.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
@@ -379,12 +382,7 @@ else
                                             AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "AB"))</span>
                                         </span>
                                     </th>
-                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortLogs("R")'>
-                                        <span style="position: relative; display: inline-block;">
-                                            R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "R"))</span>
-                                        </span>
-                                    </th>
-                                    <th class="narrow-col sortable-header @(logSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortLogs("H")'>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")" @onclick='() => SortLogs("H")'>
                                         <span style="position: relative; display: inline-block;">
                                             H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "H"))</span>
                                         </span>
@@ -412,6 +410,11 @@ else
                                     <th class="narrow-col sortable-header @(logSortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")" @onclick='() => SortLogs("IPHR")'>
                                         <span style="position: relative; display: inline-block;">
                                             IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "IPHR"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")" @onclick='() => SortLogs("R")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "R"))</span>
                                         </span>
                                     </th>
                                     <th class="narrow-col sortable-header @(logSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")" @onclick='() => SortLogs("RBI")'>
@@ -454,6 +457,26 @@ else
                                             FO<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "FO"))</span>
                                         </span>
                                     </th>
+                                    <th class="group-divider narrow-col sortable-header @(logSortColumn == "AVG" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("AVG")" @onclick='() => SortLogs("AVG")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            AVG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "AVG"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "OBP" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("OBP")" @onclick='() => SortLogs("OBP")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            OBP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "OBP"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "SLG" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("SLG")" @onclick='() => SortLogs("SLG")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            SLG<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "SLG"))</span>
+                                        </span>
+                                    </th>
+                                    <th class="narrow-col sortable-header @(logSortColumn == "OPS" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("OPS")" @onclick='() => SortLogs("OPS")'>
+                                        <span style="position: relative; display: inline-block;">
+                                            OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(logSortColumn, logIsAscending, "OPS"))</span>
+                                        </span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -472,13 +495,13 @@ else
                                         </td>
                                         <td class="group-divider narrow-col">@log.PA</td>
                                         <td class="narrow-col">@log.AB</td>
-                                        <td class="group-divider narrow-col">@log.R</td>
-                                        <td class="narrow-col">@log.H</td>
+                                        <td class="group-divider narrow-col">@log.H</td>
                                         <td class="narrow-col">@log.H1B</td>
                                         <td class="narrow-col">@log.H2B</td>
                                         <td class="narrow-col">@log.H3B</td>
                                         <td class="narrow-col">@log.HR</td>
                                         <td class="narrow-col">@log.IPHR</td>
+                                        <td class="narrow-col">@log.R</td>
                                         <td class="narrow-col">@log.RBI</td>
                                         <td class="group-divider narrow-col">@log.BB</td>
                                         <td class="narrow-col">@log.K</td>
@@ -487,6 +510,10 @@ else
                                         <td class="narrow-col">@log.FC</td>
                                         <td class="narrow-col">@log.GO</td>
                                         <td class="narrow-col">@log.FO</td>
+                                        <td class="group-divider narrow-col">@log.AVG.ToString(".000")</td>
+                                        <td class="narrow-col">@log.OBP.ToString(".000")</td>
+                                        <td class="narrow-col">@log.SLG.ToString(".000")</td>
+                                        <td class="narrow-col">@log.OPS.ToString(".000")</td>
                                     </tr>
                                 }
                             </tbody>
@@ -496,13 +523,13 @@ else
                                     <td class="player-name sticky-col"></td>
                                     <td class="group-divider narrow-col">@(logs?.Sum(l => l.PA) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.AB) ?? 0)</td>
-                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.R) ?? 0)</td>
-                                    <td class="narrow-col">@(logs?.Sum(l => l.H) ?? 0)</td>
+                                    <td class="group-divider narrow-col">@(logs?.Sum(l => l.H) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.H1B) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.H2B) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.H3B) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.HR) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.IPHR) ?? 0)</td>
+                                    <td class="narrow-col">@(logs?.Sum(l => l.R) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.RBI) ?? 0)</td>
                                     <td class="group-divider narrow-col">@(logs?.Sum(l => l.BB) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.K) ?? 0)</td>
@@ -511,6 +538,26 @@ else
                                     <td class="narrow-col">@(logs?.Sum(l => l.FC) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.GO) ?? 0)</td>
                                     <td class="narrow-col">@(logs?.Sum(l => l.FO) ?? 0)</td>
+                                    @{
+                                        PlayerStatsSummary logTotals = new PlayerStatsSummary {
+                                            H1B = logs?.Sum(l => l.H1B) ?? 0,
+                                            H2B = logs?.Sum(l => l.H2B) ?? 0,
+                                            H3B = logs?.Sum(l => l.H3B) ?? 0,
+                                            HR = logs?.Sum(l => l.HR) ?? 0,
+                                            IPHR = logs?.Sum(l => l.IPHR) ?? 0,
+                                            FC = logs?.Sum(l => l.FC) ?? 0,
+                                            K = logs?.Sum(l => l.K) ?? 0,
+                                            KF = logs?.Sum(l => l.KF) ?? 0,
+                                            GO = logs?.Sum(l => l.GO) ?? 0,
+                                            FO = logs?.Sum(l => l.FO) ?? 0,
+                                            BB = logs?.Sum(l => l.BB) ?? 0,
+                                            SF = logs?.Sum(l => l.SF) ?? 0
+                                        };
+                                    }
+                                    <td class="group-divider narrow-col">@logTotals.AVG.ToString(".000")</td>
+                                    <td class="narrow-col">@logTotals.OBP.ToString(".000")</td>
+                                    <td class="narrow-col">@logTotals.SLG.ToString(".000")</td>
+                                    <td class="narrow-col">@logTotals.OPS.ToString(".000")</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -543,10 +590,10 @@ else
     private string activeView = "Stats";
     private string mobileStatSortColumn = "Default";
     private bool mobileStatIsAscending = true;
-    private readonly string[] AllSortableStats = {
-        "AVG", "OBP", "SLG", "OPS", "GP", "PA", "AB", "R", "H", "1B", "2B", "3B", "HR", "IPHR", "RBI", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+    private readonly List<string> AllSortableStats = new()
+    {
+        "AVG", "OBP", "SLG", "OPS", "GP", "PA", "AB", "H", "1B", "2B", "3B", "HR", "IPHR", "R", "RBI", "BB", "K", "KF", "SF", "FC", "GO", "FO"
     };
-
     public class SeasonPlayerStats {
         public int SeasonId { get; set; }
         public string SeasonName { get; set; } = string.Empty;
@@ -757,7 +804,7 @@ else
             return mobileStatIsAscending ? AllSortableStats.OrderBy(rankSelector) : AllSortableStats.OrderByDescending(rankSelector);
         }
 
-        return mobileStatIsAscending ? AllSortableStats : AllSortableStats.Reverse();
+        return mobileStatIsAscending ? AllSortableStats : AllSortableStats.AsEnumerable().Reverse();
     }
 
     private void SortLogs(string column)

@@ -202,12 +202,7 @@ else
                                                         AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "AB"))</span>
                                                     </span>
                                                 </th>
-                                                <th @onclick='() => Sort(gameId, "R")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")">
-                                                    <span style="position: relative; display: inline-block;">
-                                                        R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "R"))</span>
-                                                    </span>
-                                                </th>
-                                                <th @onclick='() => Sort(gameId, "H")' class="sortable-header narrow-col @(uiState.SortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")">
+                                                <th @onclick='() => Sort(gameId, "H")' class="sortable-header group-divider narrow-col @(uiState.SortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")">
                                                     <span style="position: relative; display: inline-block;">
                                                         H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "H"))</span>
                                                     </span>
@@ -235,6 +230,11 @@ else
                                                 <th @onclick='() => Sort(gameId, "IPHR")' class="sortable-header narrow-col @(uiState.SortColumn == "IPHR" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("IPHR")">
                                                     <span style="position: relative; display: inline-block;">
                                                         IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "IPHR"))</span>
+                                                    </span>
+                                                </th>
+                                                <th @onclick='() => Sort(gameId, "R")' class="sortable-header narrow-col @(uiState.SortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")">
+                                                    <span style="position: relative; display: inline-block;">
+                                                        R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(gameId, "R"))</span>
                                                     </span>
                                                 </th>
                                                 <th @onclick='() => Sort(gameId, "RBI")' class="sortable-header narrow-col @(uiState.SortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")">
@@ -311,13 +311,13 @@ else
                                                     </td>
                                                     <td class="group-divider narrow-col @(uiState.SortColumn == "PA" ? "active-sort-col" : "")">@stat.PA</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "AB" ? "active-sort-col" : "")">@stat.AB</td>
-                                                    <td class="group-divider narrow-col @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
-                                                    <td class="narrow-col @(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
+                                                    <td class="group-divider narrow-col @(uiState.SortColumn == "H" ? "active-sort-col" : "")">@stat.H</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "1B" ? "active-sort-col" : "")">@stat.H1B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "2B" ? "active-sort-col" : "")">@stat.H2B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "3B" ? "active-sort-col" : "")">@stat.H3B</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "HR" ? "active-sort-col" : "")">@stat.HR</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "IPHR" ? "active-sort-col" : "")">@stat.IPHR</td>
+                                                    <td class="narrow-col @(uiState.SortColumn == "R" ? "active-sort-col" : "")">@stat.R</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "RBI" ? "active-sort-col" : "")">@stat.RBI</td>
                                                     <td class="group-divider narrow-col @(uiState.SortColumn == "BB" ? "active-sort-col" : "")">@stat.BB</td>
                                                     <td class="narrow-col @(uiState.SortColumn == "K" ? "active-sort-col" : "")">@stat.K</td>
@@ -337,13 +337,13 @@ else
                                                 <td class="player-name sticky-col">Team</td>
                                                 <td class="group-divider narrow-col">@summary.TeamPA</td>
                                                 <td class="narrow-col">@summary.TeamAB</td>
-                                                <td class="group-divider narrow-col">@summary.TeamRuns</td>
-                                                <td class="narrow-col">@summary.TeamHits</td>
+                                                <td class="group-divider narrow-col">@summary.TeamHits</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H1B)</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H2B)</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.H3B)</td>
                                                 <td class="narrow-col">@summary.TeamHRs</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.IPHR)</td>
+                                                <td class="narrow-col">@summary.TeamRuns</td>
                                                 <td class="narrow-col">@summary.TeamRBI</td>
                                                 <td class="group-divider narrow-col">@summary.TeamBBs</td>
                                                 <td class="narrow-col">@expandedStats[gameId].Sum(s => s.K)</td>
@@ -386,7 +386,7 @@ else
                                                     <span class="player-row-name" @onclick='() => Navigation.NavigateTo($"/career/{Uri.EscapeDataString(stat.PlayerName)}/{Uri.EscapeDataString(summary.SeasonName)}")' style="cursor: pointer;">
                                                         @stat.BO. @stat.PlayerName
                                                     </span>
-                                                    <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
+                                                    <span class="player-row-avg">AVG @stat.AVG.ToString(".000") | OBP @stat.OBP.ToString(".000") | SLG @stat.SLG.ToString(".000") | OPS @stat.OPS.ToString(".000")</span>
                                                 </div>
                                                 <div class="stat-badge-list">
                                                     <div class="stat-badge primary-stat">
@@ -394,13 +394,13 @@ else
                                                         <span class="stat-badge-lbl">PA</span>
                                                     </div>
                                                     @if (stat.AB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.AB</span><span class="stat-badge-lbl">AB</span></div> }
-                                                    @if (stat.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
                                                     @if (stat.H > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H</span><span class="stat-badge-lbl">H</span></div> }
                                                     @if (stat.H1B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H1B</span><span class="stat-badge-lbl">1B</span></div> }
                                                     @if (stat.H2B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H2B</span><span class="stat-badge-lbl">2B</span></div> }
                                                     @if (stat.H3B > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.H3B</span><span class="stat-badge-lbl">3B</span></div> }
                                                     @if (stat.HR > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.HR</span><span class="stat-badge-lbl">HR</span></div> }
                                                     @if (stat.IPHR > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.IPHR</span><span class="stat-badge-lbl">IPHR</span></div> }
+                                                    @if (stat.R > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.R</span><span class="stat-badge-lbl">R</span></div> }
                                                     @if (stat.RBI > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.RBI</span><span class="stat-badge-lbl">RBI</span></div> }
                                                     @if (stat.BB > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.BB</span><span class="stat-badge-lbl">BB</span></div> }
                                                     @if (stat.K > 0) { <div class="stat-badge"><span class="stat-badge-val">@stat.K</span><span class="stat-badge-lbl">K</span></div> }
@@ -415,7 +415,7 @@ else
                                         <div class="mobile-player-row" style="background: #f0f7ff; border-top: 2px solid var(--isotopes-accent);">
                                             <div class="player-row-header">
                                                 <span class="player-row-name" style="color: var(--isotopes-dark)">Team</span>
-                                                <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000") | OPS @teamOPS.ToString(".000")</span>
+                                                <span class="player-row-avg" style="color: var(--isotopes-dark)">AVG @teamAVG.ToString(".000") | OBP @teamOBP.ToString(".000") | SLG @teamSLG.ToString(".000") | OPS @teamOPS.ToString(".000")</span>
                                             </div>
                                             <div class="stat-badge-list">
                                                 @{
@@ -426,7 +426,6 @@ else
                                                 }
                                                 <div class="stat-badge primary-stat"><span class="stat-badge-val">@summary.TeamPA</span><span class="stat-badge-lbl">PA</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamAB</span><span class="stat-badge-lbl">AB</span></div>
-                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRuns</span><span class="stat-badge-lbl">R</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHits</span><span class="stat-badge-lbl">H</span></div>
                                                 @{
                                                     int team1B_m = expandedStats[gameId].Sum(s => s.H1B);
@@ -439,6 +438,7 @@ else
                                                 @if (team3B_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@team3B_m</span><span class="stat-badge-lbl">3B</span></div> }
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamHRs</span><span class="stat-badge-lbl">HR</span></div>
                                                 @if (teamIPHR_m > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamIPHR_m</span><span class="stat-badge-lbl">IPHR</span></div> }
+                                                <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRuns</span><span class="stat-badge-lbl">R</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamRBI</span><span class="stat-badge-lbl">RBI</span></div>
                                                 <div class="stat-badge"><span class="stat-badge-val">@summary.TeamBBs</span><span class="stat-badge-lbl">BB</span></div>
                                                 @if (teamKF > 0) { <div class="stat-badge"><span class="stat-badge-val">@teamKF</span><span class="stat-badge-lbl">KF</span></div> }

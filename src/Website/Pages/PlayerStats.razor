@@ -116,12 +116,7 @@ else
                                 AB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("AB"))</span>
                             </span>
                         </th>
-                        <th @onclick='() => Sort("R")' class="sortable-header group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")">
-                            <span style="position: relative; display: inline-block;">
-                                R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("R"))</span>
-                            </span>
-                        </th>
-                        <th @onclick='() => Sort("H")' class="sortable-header narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")">
+                        <th @onclick='() => Sort("H")' class="sortable-header group-divider narrow-col @(currentSortColumn == "H" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("H")">
                             <span style="position: relative; display: inline-block;">
                                 H<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("H"))</span>
                             </span>
@@ -151,12 +146,16 @@ else
                                 IPHR<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("IPHR"))</span>
                             </span>
                         </th>
+                        <th @onclick='() => Sort("R")' class="sortable-header narrow-col @(currentSortColumn == "R" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("R")">
+                            <span style="position: relative; display: inline-block;">
+                                R<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("R"))</span>
+                            </span>
+                        </th>
                         <th @onclick='() => Sort("RBI")' class="sortable-header narrow-col @(currentSortColumn == "RBI" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("RBI")">
                             <span style="position: relative; display: inline-block;">
                                 RBI<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("RBI"))</span>
                             </span>
-                        </th>
-                        <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("BB")">
+                        </th>                        <th @onclick='() => Sort("BB")' class="sortable-header group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("BB")">
                             <span style="position: relative; display: inline-block;">
                                 BB<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("BB"))</span>
                             </span>
@@ -227,13 +226,13 @@ else
                             <td class="group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
                             <td class="narrow-col @(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
                             <td class="narrow-col @(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
-                            <td class="group-divider narrow-col @(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
-                            <td class="narrow-col @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
+                            <td class="group-divider narrow-col @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
                             <td class="narrow-col @(currentSortColumn == "1B" ? "active-sort-col" : "")">@player.H1B</td>
                             <td class="narrow-col @(currentSortColumn == "2B" ? "active-sort-col" : "")">@player.H2B</td>
                             <td class="narrow-col @(currentSortColumn == "3B" ? "active-sort-col" : "")">@player.H3B</td>
                             <td class="narrow-col @(currentSortColumn == "HR" ? "active-sort-col" : "")">@player.HR</td>
                             <td class="narrow-col @(currentSortColumn == "IPHR" ? "active-sort-col" : "")">@player.IPHR</td>
+                            <td class="narrow-col @(currentSortColumn == "R" ? "active-sort-col" : "")">@player.R</td>
                             <td class="narrow-col @(currentSortColumn == "RBI" ? "active-sort-col" : "")">@player.RBI</td>
                             <td class="group-divider narrow-col @(currentSortColumn == "BB" ? "active-sort-col" : "")">@player.BB</td>
                             <td class="narrow-col @(currentSortColumn == "K" ? "active-sort-col" : "")">@player.K</td>
@@ -256,13 +255,13 @@ else
                         <td class="group-divider narrow-col">@teamTotals.GamesPlayed</td>
                         <td class="narrow-col">@teamTotals.PA</td>
                         <td class="narrow-col">@teamTotals.AB</td>
-                        <td class="group-divider narrow-col">@teamTotals.R</td>
-                        <td class="narrow-col">@teamTotals.H</td>
+                        <td class="group-divider narrow-col">@teamTotals.H</td>
                         <td class="narrow-col">@teamTotals.H1B</td>
                         <td class="narrow-col">@teamTotals.H2B</td>
                         <td class="narrow-col">@teamTotals.H3B</td>
                         <td class="narrow-col">@teamTotals.HR</td>
                         <td class="narrow-col">@teamTotals.IPHR</td>
+                        <td class="narrow-col">@teamTotals.R</td>
                         <td class="narrow-col">@teamTotals.RBI</td>
                         <td class="group-divider narrow-col">@teamTotals.BB</td>
                         <td class="narrow-col">@teamTotals.K</td>
@@ -361,10 +360,10 @@ else
     private PlayerStatsSummary? opsLeader;
     private PlayerStatsSummary? hrLeader;
     private PlayerStatsSummary? rbiLeader;
-
-    private readonly string[] AllSortableStats = {
-        "AVG", "OBP", "SLG", "OPS", "HR", "RBI", "R", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
-    };
+private readonly List<string> AllSortableStats = new()
+{
+    "AVG", "OBP", "SLG", "OPS", "HR", "R", "RBI", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+};
 
     protected override async Task OnInitializedAsync()
     {
