@@ -297,34 +297,70 @@ else
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">#</th>
-                            <th style="text-align: left;">Date</th>
-                            <th style="text-align: left;">Opponent</th>
-                            <th style="text-align: center;">Score</th>
-                            <th style="text-align: left;">Diamond</th>
-                            <th>Type</th>
-                            <th style="text-align: right;">Actions</th>
+                            <th class="@(sortColumn == "#" ? "active-sort-header" : "")" style="text-align: left; cursor: pointer; user-select: none; padding-left: 1rem;" @onclick='() => Sort("#")'>
+                                <span style="position: relative; display: inline-block;">
+                                    #<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("#"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Date" ? "active-sort-header" : "")" style="text-align: left; cursor: pointer; user-select: none;" @onclick='() => Sort("Date")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Date<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Date"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Game" ? "active-sort-header" : "")" style="text-align: left; cursor: pointer; user-select: none;" @onclick='() => Sort("Game")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Game<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Game"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Score" ? "active-sort-header" : "")" style="text-align: center; cursor: pointer; user-select: none;" @onclick='() => Sort("Score")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Score<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Score"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Result" ? "active-sort-header" : "")" style="text-align: center; cursor: pointer; user-select: none;" @onclick='() => Sort("Result")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Result<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Result"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Diamond" ? "active-sort-header" : "")" style="text-align: center; cursor: pointer; user-select: none;" @onclick='() => Sort("Diamond")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Diamond<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Diamond"))</span>
+                                </span>
+                            </th>
+                            <th class="@(sortColumn == "Type" ? "active-sort-header" : "")" style="cursor: pointer; user-select: none;" @onclick='() => Sort("Type")'>
+                                <span style="position: relative; display: inline-block;">
+                                    Type<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Type"))</span>
+                                </span>
+                            </th>
+                            <th style="text-align: center; padding-right: 1rem;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (Game game in games)
+                        @foreach (Game game in SortedGames)
                         {
-                            <tr>
-                                <td style="text-align: left;">@game.GameNumber</td>
-                                <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
+                            <tr style="vertical-align: middle;">
+                                <td style="text-align: left; padding-left: 1rem;">@game.GameNumber</td>
+                                <td style="text-align: left;">@game.Date.ToString("ddd, MMM dd, yyyy")</td>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>
-                                    @(game.IsHome ? "vs" : "@") @(!string.IsNullOrEmpty(game.Opponent?.ShortName) ? game.Opponent.ShortName : game.Opponent?.Name)
+                                    @{
+                                        string opName = !string.IsNullOrEmpty(game.Opponent?.ShortName) ? game.Opponent.ShortName : (game.Opponent?.Name ?? "Unknown");
+                                        string matchup = game.IsHome ? $"{opName} vs. Isotopes" : $"Isotopes vs. {opName}";
+                                    }
+                                    @matchup
                                 </td>
                                 <td style="text-align: center; font-weight: bold;">
                                     @(game.VisitingTeamScore?.ToString() ?? "-") - @(game.HomeTeamScore?.ToString() ?? "-")
                                 </td>
-                                <td style="text-align: left;">@game.Diamond</td>
+                                <td style="text-align: center; padding: 0;">
+                                    <GameResultBadge OurScore="@(game.IsHome ? game.HomeTeamScore : game.VisitingTeamScore)" OpponentScore="@(game.IsHome ? game.VisitingTeamScore : game.HomeTeamScore)" />
+                                </td>
+                                <td style="text-align: center;">@game.Diamond</td>
                                 <td>
                                     <span class="badge @(game.GameType == GameType.League ? "bg-primary" : "bg-warning")" style="padding: 0.4rem 0.8rem; border-radius: 20px;">
                                         @game.GameType
                                     </span>
                                 </td>
-                                <td style="text-align: right;">
+                                <td style="text-align: right; padding-right: 1rem;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
                                 </td>
@@ -338,19 +374,24 @@ else
 
     <div class="mobile-only" style="margin-top: 1rem;">
         <div class="mobile-player-grid view-fade-in" style="animation-delay: 0.1s; display: grid;">
-            @foreach (Game game in games)
+            @foreach (Game game in SortedGames)
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
-                        <div class="mobile-card-name" style="cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>
-                            @(game.IsHome ? "vs" : "@") @(!string.IsNullOrEmpty(game.Opponent?.ShortName) ? game.Opponent.ShortName : game.Opponent?.Name)
+                        <div class="mobile-card-name" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;" @onclick='() => StartEdit("edit", game.Id)'>
+                            @{
+                                string opName = !string.IsNullOrEmpty(game.Opponent?.ShortName) ? game.Opponent.ShortName : (game.Opponent?.Name ?? "Unknown");
+                                string matchup = game.IsHome ? $"{opName} vs. Isotopes" : $"Isotopes vs. {opName}";
+                            }
+                            @matchup
+                            <GameResultBadge OurScore="@(game.IsHome ? game.HomeTeamScore : game.VisitingTeamScore)" OpponentScore="@(game.IsHome ? game.VisitingTeamScore : game.HomeTeamScore)" />
                         </div>
                         <div class="rank-badge">#@game.GameNumber</div>
                     </div>
                     <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1rem;">
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Date</span>
-                            <span class="m-stat-val" style="font-size: 0.9rem;">@game.Date.ToString("MMM dd")</span>
+                            <span class="m-stat-val" style="font-size: 0.9rem;">@game.Date.ToString("ddd, MMM dd")</span>
                         </div>
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Score</span>
@@ -377,6 +418,7 @@ else
 }
 
 <style>
+    .active-sort-header { font-weight: 900 !important; }
     .drag-over { background-color: #f0f7ff !important; border-top: 2px solid var(--isotopes-accent) !important; }
     .admin-stats-table tr:focus-within { background-color: rgba(23, 162, 184, 0.08) !important; }
     .admin-stats-table td.active-col { background-color: rgba(23, 162, 184, 0.08) !important; }
@@ -411,6 +453,40 @@ else
     private StatEntry? targetStat;
 
     private int? activeColumnIndex;
+
+    private string sortColumn = "#";
+    private bool sortDescending = false;
+
+    private IEnumerable<Game> SortedGames => sortColumn switch
+    {
+        "#" => sortDescending ? games.OrderByDescending(g => g.GameNumber) : games.OrderBy(g => g.GameNumber),
+        "Date" => sortDescending ? games.OrderByDescending(g => g.Date).ThenBy(g => g.GameNumber) : games.OrderBy(g => g.Date).ThenBy(g => g.GameNumber),
+        "Game" => sortDescending ? games.OrderByDescending(g => g.Opponent?.Name).ThenBy(g => g.GameNumber) : games.OrderBy(g => g.Opponent?.Name).ThenBy(g => g.GameNumber),
+        "Score" => sortDescending ? games.OrderByDescending(g => (g.VisitingTeamScore ?? 0) + (g.HomeTeamScore ?? 0)).ThenBy(g => g.GameNumber) : games.OrderBy(g => (g.VisitingTeamScore ?? 0) + (g.HomeTeamScore ?? 0)).ThenBy(g => g.GameNumber),
+        "Result" => sortDescending ? games.OrderByDescending(g => g.IsHome ? (g.HomeTeamScore ?? 0) - (g.VisitingTeamScore ?? 0) : (g.VisitingTeamScore ?? 0) - (g.HomeTeamScore ?? 0)).ThenBy(g => g.GameNumber) : games.OrderBy(g => g.IsHome ? (g.HomeTeamScore ?? 0) - (g.VisitingTeamScore ?? 0) : (g.VisitingTeamScore ?? 0) - (g.HomeTeamScore ?? 0)).ThenBy(g => g.GameNumber),
+        "Diamond" => sortDescending ? games.OrderByDescending(g => g.Diamond).ThenBy(g => g.GameNumber) : games.OrderBy(g => g.Diamond).ThenBy(g => g.GameNumber),
+        "Type" => sortDescending ? games.OrderByDescending(g => g.GameType).ThenBy(g => g.GameNumber) : games.OrderBy(g => g.GameType).ThenBy(g => g.GameNumber),
+        _ => games.OrderBy(g => g.GameNumber)
+    };
+
+    private void Sort(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortDescending = !sortDescending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortDescending = false;
+        }
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (sortColumn != column) return "";
+        return sortDescending ? "▼" : "▲";
+    }
 
     protected override async Task OnInitializedAsync()
     {
