@@ -650,9 +650,9 @@ tr:last-child td {
 }
 
 .player-row-avg {
-    font-size: 0.7rem;
-    color: #999;
-    font-weight: 600;
+    font-size: 0.775rem;
+    color: #888;
+    font-weight: 700;
 }
 
 .stat-badge-list {
