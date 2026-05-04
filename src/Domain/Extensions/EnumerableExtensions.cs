@@ -12,6 +12,7 @@ public static class EnumerableExtensions
         { "Player", "PlayerName" },
         { "GP", "GamesPlayed" },
         { "H", "H" },
+        { "1B", "H1B" },
         { "AB", "AB" },
         { "PA", "PA" },
         { "2B", "H2B" },
