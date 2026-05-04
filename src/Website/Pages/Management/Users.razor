@@ -90,17 +90,17 @@ else
             <table class="table">
                 <thead>
                     <tr>
-                        <th style="text-align: left;">Email</th>
+                        <th style="text-align: left; padding-left: 1rem;">Email</th>
                         <th style="text-align: left;">Roles</th>
                         <th style="text-align: left;">Created</th>
-                        <th style="text-align: right;">Actions</th>
+                        <th style="text-align: center; padding-right: 1rem; width: 1%; white-space: nowrap;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (UserRolesSummaryView user in users)
                     {
-                        <tr>
-                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
+                        <tr style="vertical-align: middle;">
+                            <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer; padding-left: 1rem;" @onclick='() => StartEdit("edit", user.Id)'>@user.Email</td>
                             <td style="text-align: left;">
                                 @if (string.IsNullOrEmpty(user.RoleNames))
                                 {
@@ -115,7 +115,7 @@ else
                                 }
                             </td>
                             <td style="text-align: left; font-size: 0.85rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
-                            <td style="text-align: right;">
+                            <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
                                 <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
                                 <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
                             </td>

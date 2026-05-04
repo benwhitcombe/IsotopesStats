@@ -27,11 +27,11 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th style="text-align: left;">Timestamp</th>
+                    <th style="text-align: left; padding-left: 1rem;">Timestamp</th>
                     <th style="text-align: left;">User</th>
                     <th>Action</th>
                     <th>Entity</th>
-                    <th style="text-align: left;">Description</th>
+                    <th style="text-align: left; padding-right: 1rem;">Description</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,8 +47,8 @@
                 {
                     @foreach (UserLog log in filteredLogs)
                     {
-                        <tr>
-                            <td style="text-align: left; font-size: 0.85rem; white-space: nowrap;">
+                        <tr style="vertical-align: middle;">
+                            <td style="text-align: left; font-size: 0.85rem; white-space: nowrap; padding-left: 1rem;">
                                 @log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm:ss tt")
                             </td>
                             <td style="text-align: left; font-weight: 600; font-size: 0.85rem;">
@@ -62,7 +62,7 @@
                             <td style="font-size: 0.85rem; color: #666;">
                                 @log.EntityType
                             </td>
-                            <td style="text-align: left; font-size: 0.85rem;">
+                            <td style="text-align: left; font-size: 0.85rem; padding-right: 1rem;">
                                 @log.Description
                             </td>
                         </tr>

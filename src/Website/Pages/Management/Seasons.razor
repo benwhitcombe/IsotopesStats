@@ -86,18 +86,18 @@ else
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">ID</th>
+                            <th style="text-align: left; padding-left: 1rem;">ID</th>
                             <th style="text-align: left;">Name</th>
-                            <th style="text-align: right;">Actions</th>
+                            <th style="text-align: center; padding-right: 1rem; width: 1%; white-space: nowrap;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (Season season in seasons)
                         {
-                            <tr>
-                                <td style="text-align: left;">@season.Id</td>
+                            <tr style="vertical-align: middle;">
+                                <td style="text-align: left; padding-left: 1rem;">@season.Id</td>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", season.Id)'>@season.Name</td>
-                                <td style="text-align: right;">
+                                <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", season.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(season)">Delete</button>
                                 </td>

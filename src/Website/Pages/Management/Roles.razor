@@ -68,16 +68,16 @@ else
                 <table class="table">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">Role Name</th>
+                            <th style="text-align: left; padding-left: 1rem;">Role Name</th>
                             <th style="text-align: left;">Permissions</th>
-                            <th style="text-align: right;">Actions</th>
+                            <th style="text-align: center; padding-right: 1rem; width: 1%; white-space: nowrap;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (UserRole role in roles)
                         {
-                            <tr>
-                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", role.Id)'>@role.Name</td>
+                            <tr style="vertical-align: middle;">
+                                <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer; padding-left: 1rem;" @onclick='() => StartEdit("edit", role.Id)'>@role.Name</td>
                                 <td style="text-align: left;">
                                     @if (!role.Permissions.Any())
                                     {
@@ -91,7 +91,7 @@ else
                                         }
                                     }
                                 </td>
-                                <td style="text-align: right;">
+                                <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", role.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(role)">Delete</button>
                                 </td>

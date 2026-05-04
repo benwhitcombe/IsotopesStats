@@ -332,7 +332,7 @@ else
                                     Type<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Type"))</span>
                                 </span>
                             </th>
-                            <th style="text-align: center; padding-right: 1rem;">Actions</th>
+                            <th style="text-align: center; padding-right: 1rem; width: 1%; white-space: nowrap;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -360,7 +360,7 @@ else
                                         @game.GameType
                                     </span>
                                 </td>
-                                <td style="text-align: right; padding-right: 1rem;">
+                                <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
                                 </td>
