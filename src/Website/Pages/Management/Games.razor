@@ -96,6 +96,14 @@ else if (isEditing)
                     }
                 </InputSelect>
             </div>
+            <div class="form-group">
+                <label>@(editingGame.IsHome ? "Isotopes Score" : "Opponent Score")</label>
+                <InputNumber class="form-control" @bind-Value="editingGame.HomeTeamScore" />
+            </div>
+            <div class="form-group">
+                <label>@(!editingGame.IsHome ? "Isotopes Score" : "Opponent Score")</label>
+                <InputNumber class="form-control" @bind-Value="editingGame.VisitingTeamScore" />
+            </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 2rem;">
@@ -292,6 +300,7 @@ else
                             <th style="text-align: left;">#</th>
                             <th style="text-align: left;">Date</th>
                             <th style="text-align: left;">Opponent</th>
+                            <th style="text-align: center;">Score</th>
                             <th style="text-align: left;">Diamond</th>
                             <th>Type</th>
                             <th style="text-align: right;">Actions</th>
@@ -305,6 +314,9 @@ else
                                 <td style="text-align: left;">@game.Date.ToString("MMM dd, yyyy")</td>
                                 <td style="text-align: left; font-weight: bold; color: var(--isotopes-accent); cursor: pointer;" @onclick='() => StartEdit("edit", game.Id)'>
                                     @(game.IsHome ? "vs" : "@") @(!string.IsNullOrEmpty(game.Opponent?.ShortName) ? game.Opponent.ShortName : game.Opponent?.Name)
+                                </td>
+                                <td style="text-align: center; font-weight: bold;">
+                                    @(game.VisitingTeamScore?.ToString() ?? "-") - @(game.HomeTeamScore?.ToString() ?? "-")
                                 </td>
                                 <td style="text-align: left;">@game.Diamond</td>
                                 <td>
@@ -335,10 +347,14 @@ else
                         </div>
                         <div class="rank-badge">#@game.GameNumber</div>
                     </div>
-                    <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr; margin-bottom: 1rem;">
+                    <div class="mobile-card-stats" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1rem;">
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Date</span>
                             <span class="m-stat-val" style="font-size: 0.9rem;">@game.Date.ToString("MMM dd")</span>
+                        </div>
+                        <div class="m-stat" style="align-items: flex-start;">
+                            <span class="m-stat-label">Score</span>
+                            <span class="m-stat-val" style="font-size: 0.9rem; font-weight: bold;">@(game.VisitingTeamScore?.ToString() ?? "-") - @(game.HomeTeamScore?.ToString() ?? "-")</span>
                         </div>
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Diamond</span>

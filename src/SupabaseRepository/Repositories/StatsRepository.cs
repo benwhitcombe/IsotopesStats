@@ -261,6 +261,8 @@ internal class StatsRepository : BaseRepository, IStatsRepository
             { "p_ishome", game.IsHome },
             { "p_opponent_id", game.OpponentId },
             { "p_type", (int)game.GameType },
+            { "p_visiting_team_score", game.VisitingTeamScore ?? (object)DBNull.Value },
+            { "p_home_team_score", game.HomeTeamScore ?? (object)DBNull.Value },
             { "p_stats", stats.Select(s => Mapper.ToDTO(s)).ToList() }
         };
 
@@ -280,11 +282,12 @@ internal class StatsRepository : BaseRepository, IStatsRepository
             { "p_opponent_id", game.OpponentId },
             { "p_type", (int)game.GameType },
             { "p_is_deleted", game.IsDeleted },
+            { "p_visiting_team_score", game.VisitingTeamScore ?? (object)DBNull.Value },
+            { "p_home_team_score", game.HomeTeamScore ?? (object)DBNull.Value },
             { "p_stats", stats.Select(s => Mapper.ToDTO(s)).ToList() }
         };
 
         await Supabase.Rpc("update_game_with_stats", parameters);
-        await Supabase.From<GameDTO>().Update(Mapper.ToDTO(game));
     }
 
     public async Task DeleteGameAsync(int gameId)

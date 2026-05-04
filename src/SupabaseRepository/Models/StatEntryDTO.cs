@@ -81,11 +81,9 @@ internal class StatEntryDTO : BaseModel
     public int RBI { get; set; }
 
     [Reference(typeof(PlayerDTO))]
-    [JsonIgnore]
     public PlayerDTO? Player { get; set; }
 
     [Reference(typeof(GameDTO))]
-    [JsonIgnore]
     public GameDTO? Game { get; set; }
 }
 
