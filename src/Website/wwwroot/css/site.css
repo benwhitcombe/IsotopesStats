@@ -548,7 +548,7 @@ tr:last-child td {
     font-size: 1.2rem;
     font-weight: 800;
     color: var(--isotopes-dark);
-    line-height: 1.1;
+    line-height: 1.4;
     display: flex;
     align-items: center;
     letter-spacing: -0.5px;
@@ -597,13 +597,13 @@ tr:last-child td {
     color: #333;
     width: 1.5rem;
     text-align: center;
-    line-height: 1.1;
+    line-height: 1.4;
 }
 
 .scoreboard-divider {
     color: #adb5bd;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.4;
 }
 
 .scoreboard-location {
@@ -612,7 +612,7 @@ tr:last-child td {
     display: flex;
     align-items: center;
     gap: 4px;
-    line-height: 1;
+    line-height: 1.2;
 }
 
 /* Desktop Overrides for Scoreboard */
@@ -793,7 +793,7 @@ tr:last-child td {
         font-size: 1.05rem;
         display: flex;
         align-items: center;
-        line-height: 1;
+        line-height: 1.2;
     }
 
     .mobile-list-name {
@@ -803,7 +803,7 @@ tr:last-child td {
         color: #333;
         display: flex;
         align-items: center;
-        line-height: 1;
+        line-height: 1.2;
     }
 
     .mobile-list-value {
@@ -815,10 +815,9 @@ tr:last-child td {
         display: flex;
         align-items: center;
         justify-content: center;
-        line-height: 1;
+        line-height: 1.2;
         position: relative;
     }
-
     .team-totals-item {
         background-color: #f0f7ff !important;
         color: var(--isotopes-accent) !important;
