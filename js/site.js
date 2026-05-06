@@ -281,3 +281,32 @@ window.updateUrlQuery = function (key, value) {
     }
     window.history.replaceState(null, '', url.toString());
 };
+
+window.shareOrCopy = async function (title, url) {
+    // Check if it's a mobile device and navigator.share is available
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (navigator.share && isMobile) {
+        try {
+            await navigator.share({
+                title: title,
+                url: url
+            });
+            return { shared: true };
+        } catch (err) {
+            // User might have cancelled or error occurred
+            if (err.name === 'AbortError') {
+                return { shared: false, cancelled: true };
+            }
+            return { shared: false, error: err.message };
+        }
+    } else {
+        // Desktop or non-supporting browser fallback: Copy to clipboard
+        try {
+            await navigator.clipboard.writeText(url);
+            return { copied: true };
+        } catch (err) {
+            return { copied: false, error: err.message };
+        }
+    }
+};
