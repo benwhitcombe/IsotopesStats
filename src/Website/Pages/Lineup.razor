@@ -1,0 +1,606 @@
+@page "/lineup"
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Services
+@inject IStatsRepository StatsRepository
+@inject SharedSessionState SharedState
+@inject SessionStorageService SessionStorage
+@inject NavigationManager NavigationManager
+
+<PageTitle>Isotopes - Defense Lineup</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Defense Lineup</h3>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <SeasonSelector 
+            Seasons="@seasons" 
+            SelectedSeasonId="@selectedSeasonId" 
+            OnSeasonSelected="OnSeasonSelected"
+            AllowAllSeasons="false" />
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <LoadingIndicator />
+}
+else
+{
+    <div class="lineup-editor card p-4 shadow-sm mb-4">
+        <h5 class="mb-3" style="color: var(--isotopes-accent);">1. Select Available Players</h5>
+        
+        <div class="filter-container mb-4" style="max-width: 400px;">
+            <div class="search-container">
+                <div class="autocomplete-wrapper">
+                    <div class="ghost-text">
+                        <span style="visibility: hidden;">@searchQuery</span>
+                        <span class="suggestion">@suggestionSuffix</span>
+                    </div>
+                    <input class="form-control" 
+                           autocomplete="off"
+                           @bind="searchQuery"
+                           @bind:event="oninput"
+                           @onkeydown="HandleKeyDown"
+                           @onblur="OnSearchBlur"
+                           placeholder="Quick select player..." />
+                </div>
+                @if (!string.IsNullOrEmpty(searchQuery))
+                {
+                    <button class="clear-button" @onclick="ClearSearch">✕</button>
+                }
+                
+                @if (showSuggestions && filteredSuggestions.Any())
+                {
+                    <div class="custom-autocomplete-dropdown">
+                        @for (int i = 0; i < filteredSuggestions.Count; i++)
+                        {
+                            int index = i;
+                            var player = filteredSuggestions[i];
+                            <div class="suggestion-item @(index == activeSuggestionIndex ? "active" : "")"
+                                 @onclick="() => SelectSuggestion(player)">
+                                @player.Name
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="form-text mt-2" style="font-size: 0.85rem; color: #666;">Type a name and press Enter to select the top suggestion.</div>
+        </div>
+
+        <div class="selectable-grid mb-4" style="background: #f9f9f9; padding: 0.75rem; border-radius: 12px; border: 1px solid #eee;">
+            @foreach (Player player in players.OrderBy(p => p.Name))
+            {
+                <div class="selectable-item-container" @key="player.Id">
+                    <CheckboxButton 
+                        Id="@($"av-{player.Id}")" 
+                        Text="@GetPlayerLabel(player)" 
+                        Checked="@availablePlayerIds.Contains(player.Id)" 
+                        CheckedChanged="@((bool val) => TogglePlayerAvailability(player.Id, val))" />
+                </div>
+            }
+        </div>
+
+        <h5 class="mb-3" style="color: var(--isotopes-accent);">2. Assign Positions</h5>
+        <div class="row g-3 mb-4">
+            @foreach (PositionAssignment assignment in assignments)
+            {
+                <div class="col-md-6 col-lg-4" @key="assignment.PositionLabel">
+                    <label class="form-label fw-bold">@assignment.PositionLabel (@assignment.PositionAbbreviation)</label>
+                    <div class="input-group">
+                        <select class="form-select" 
+                                autocomplete="off"
+                                @bind="assignment.PlayerId">
+                            <option value="">-- Select Player --</option>
+                            @foreach (Player player in GetAvailableForPosition(assignment.PlayerId).OrderBy(p => p.Name))
+                            {
+                                <option value="@player.Id" @key="player.Id">@player.Name</option>
+                            }
+                        </select>
+                        @if (assignment.PlayerId.HasValue)
+                        {
+                            <button class="btn btn-outline-secondary" type="button" @onclick="() => ClearPosition(assignment)">✕</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (BenchPlayers.Any())
+        {
+            <h5 class="mb-3" style="color: var(--isotopes-accent);">3. Bench</h5>
+            <div class="card p-3 bg-light border-0 mb-4" style="border-radius: 12px;">
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (Player player in BenchPlayers.OrderBy(p => p.Name))
+                    {
+                        <div class="badge bg-secondary p-2" @key="player.Id" style="font-size: 0.9rem; font-weight: normal;">
+                            @player.Name
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="mt-4 d-flex gap-2 justify-content-end">
+            <button class="btn btn-outline-secondary" @onclick="ClearAll">Clear All</button>
+            <button class="btn btn-primary" @onclick="SaveAndView" disabled="@(!IsLineupComplete)">Save & View Lineup</button>
+        </div>
+    </div>
+    
+    @if (!IsLineupComplete)
+    {
+        <div class="alert alert-info">
+            Please select a player for all 10 positions to view the lineup.
+        </div>
+    }
+}
+
+@code {
+    private List<Season> seasons = new();
+    private List<Player> players = new();
+    private List<int> availablePlayerIds = new();
+    private int selectedSeasonId;
+    private bool isLoading = true;
+
+    private string _searchQuery = string.Empty;
+    private string searchQuery 
+    {
+        get => _searchQuery;
+        set 
+        {
+            if (_searchQuery != value)
+            {
+                _searchQuery = value;
+                UpdateSuggestion();
+            }
+        }
+    }
+
+    private string suggestionSuffix = string.Empty;
+    private Player? firstMatch = null;
+    private int activeSuggestionIndex = 0;
+    private bool showSuggestions = false;
+    private List<Player> filteredSuggestions = new();
+    private ElementReference searchInput = default!;
+    private bool hasFocused = false;
+
+    private void UpdateSuggestion()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            suggestionSuffix = string.Empty;
+            firstMatch = null;
+            filteredSuggestions.Clear();
+            showSuggestions = false;
+            return;
+        }
+
+        filteredSuggestions = players
+            .Where(p => !availablePlayerIds.Contains(p.Id) && p.Name.StartsWith(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.Name)
+            .ToList();
+
+        firstMatch = filteredSuggestions.FirstOrDefault(p => p.Name.StartsWith(searchQuery, StringComparison.OrdinalIgnoreCase)) 
+                     ?? filteredSuggestions.FirstOrDefault();
+
+        if (firstMatch != null && firstMatch.Name.StartsWith(searchQuery, StringComparison.OrdinalIgnoreCase))
+        {
+            suggestionSuffix = firstMatch.Name.Substring(searchQuery.Length);
+        }
+        else
+        {
+            suggestionSuffix = string.Empty;
+        }
+
+        activeSuggestionIndex = 0;
+        showSuggestions = filteredSuggestions.Any();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!isLoading && !hasFocused)
+        {
+            try
+            {
+                await Task.Delay(100); // Small delay to ensure DOM is ready
+                await searchInput.FocusAsync();
+                hasFocused = true;
+            }
+            catch
+            {
+                // Ignore if focus fails
+            }
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            if (showSuggestions && filteredSuggestions.Any())
+            {
+                SelectSuggestion(filteredSuggestions[activeSuggestionIndex]);
+            }
+        }
+        else if (e.Key == "ArrowDown")
+        {
+            if (showSuggestions && activeSuggestionIndex < filteredSuggestions.Count - 1)
+            {
+                activeSuggestionIndex++;
+            }
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            if (showSuggestions && activeSuggestionIndex > 0)
+            {
+                activeSuggestionIndex--;
+            }
+        }
+        else if (e.Key == "Escape")
+        {
+            showSuggestions = false;
+        }
+    }
+
+    private void SelectSuggestion(Player player)
+    {
+        TogglePlayerAvailability(player.Id, true);
+        searchQuery = string.Empty;
+        suggestionSuffix = string.Empty;
+        firstMatch = null;
+        showSuggestions = false;
+    }
+
+    private async Task OnSearchBlur()
+    {
+        // Delay to allow @onclick on suggestion items to fire
+        await Task.Delay(200);
+        showSuggestions = false;
+        StateHasChanged();
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = string.Empty;
+    }
+
+    private bool IsPlayerAssigned(int playerId)
+    {
+        foreach (PositionAssignment a in assignments)
+        {
+            if (a.PlayerId == playerId) return true;
+        }
+        return false;
+    }
+
+    private string GetPlayerLabel(Player player)
+    {
+        // 1. Check if assigned to a position
+        for (int i = 0; i < assignments.Count; i++)
+        {
+            if (assignments[i].PlayerId == player.Id)
+            {
+                return $"{i + 1}. {player.Name} ({assignments[i].PositionAbbreviation})";
+            }
+        }
+        
+        // 2. If available but not assigned, it's on the bench
+        if (availablePlayerIds.Contains(player.Id))
+        {
+            // Get all players on the bench (available but not assigned)
+            // We maintain the order they were added to the available list
+            var benchPlayerIds = availablePlayerIds
+                .Where(id => !IsPlayerAssigned(id))
+                .ToList();
+                
+            int benchIndex = benchPlayerIds.IndexOf(player.Id);
+            if (benchIndex != -1)
+            {
+                return $"{11 + benchIndex}. {player.Name} (B)";
+            }
+        }
+        
+        return player.Name;
+    }
+
+    private class PositionAssignment
+    {
+        public string PositionLabel { get; set; } = string.Empty;
+        public string PositionAbbreviation { get; set; } = string.Empty;
+        
+        private int? _playerId;
+        public int? PlayerId 
+        { 
+            get => _playerId;
+            set 
+            {
+                if (_playerId != value)
+                {
+                    _playerId = value;
+                    OnAssignmentChanged?.Invoke(this);
+                }
+            }
+        }
+
+        public Action<PositionAssignment>? OnAssignmentChanged { get; set; }
+    }
+
+    private List<PositionAssignment> assignments = new();
+
+    private void InitializeAssignments()
+    {
+        assignments = new()
+        {
+            new() { PositionLabel = "Pitcher", PositionAbbreviation = "P", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Catcher", PositionAbbreviation = "C", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "1st Base", PositionAbbreviation = "1B", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "2nd Base", PositionAbbreviation = "2B", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Third Base", PositionAbbreviation = "3B", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Short Stop", PositionAbbreviation = "SS", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Left Field", PositionAbbreviation = "LF", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Left Center Field", PositionAbbreviation = "LC", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Right Center Field", PositionAbbreviation = "RC", OnAssignmentChanged = HandleAssignmentChange },
+            new() { PositionLabel = "Right Field", PositionAbbreviation = "RF", OnAssignmentChanged = HandleAssignmentChange }
+        };
+    }
+
+    private void HandleAssignmentChange(PositionAssignment assignment)
+    {
+        if (assignment.PlayerId.HasValue)
+        {
+            // Bulletproof: Clear this player from every OTHER position
+            foreach (PositionAssignment a in assignments)
+            {
+                if (a != assignment && a.PlayerId == assignment.PlayerId)
+                {
+                    a.PlayerId = null;
+                }
+            }
+        }
+        StateHasChanged();
+    }
+
+    private bool IsLineupComplete => assignments.All(a => a.PlayerId.HasValue);
+    private IEnumerable<Player> AvailablePlayersForSelection => players.Where(p => availablePlayerIds.Contains(p.Id));
+    private IEnumerable<Player> BenchPlayers => AvailablePlayersForSelection.Where(p => !IsPlayerAssigned(p.Id));
+
+    private IEnumerable<Player> GetAvailableForPosition(int? currentId)
+    {
+        return AvailablePlayersForSelection.Where(p => 
+            p.Id == currentId || !IsPlayerAssigned(p.Id)
+        );
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        InitializeAssignments();
+        seasons = await StatsRepository.GetSeasonsAsync();
+        selectedSeasonId = SharedState.SelectedSeasonId;
+        
+        if (selectedSeasonId == 0 && seasons.Any())
+        {
+            selectedSeasonId = seasons.First().Id;
+        }
+
+        await LoadPlayers();
+        await LoadStateFromStorage();
+    }
+
+    private async Task OnSeasonSelected(int seasonId)
+    {
+        selectedSeasonId = seasonId;
+        SharedState.SelectedSeasonId = seasonId;
+        await LoadPlayers();
+        ClearAll();
+        await LoadStateFromStorage();
+    }
+
+    private async Task LoadPlayers()
+    {
+        isLoading = true;
+        players = await StatsRepository.GetPlayersAsync(selectedSeasonId);
+        isLoading = false;
+    }
+
+    private void ClearPosition(PositionAssignment assignment)
+    {
+        assignment.PlayerId = null;
+    }
+
+    private void TogglePlayerAvailability(int playerId, bool isChecked)
+    {
+        Player? player = players.FirstOrDefault(p => p.Id == playerId);
+        if (player == null) return;
+
+        if (isChecked)
+        {
+            // If already in list, do nothing to prevent logic double-fire
+            if (availablePlayerIds.Contains(playerId)) return;
+            availablePlayerIds.Add(playerId);
+            
+            // Only auto-assign if NOT already assigned to any position
+            if (!IsPlayerAssigned(player.Id))
+            {
+                // Find the first spot with NO name
+                PositionAssignment? firstEmpty = assignments.FirstOrDefault(a => !a.PlayerId.HasValue);
+                if (firstEmpty != null)
+                {
+                    firstEmpty.PlayerId = player.Id;
+                }
+            }
+        }
+        else
+        {
+            availablePlayerIds.Remove(playerId);
+            // Clear player from all positions
+            foreach (PositionAssignment a in assignments)
+            {
+                if (a.PlayerId == player.Id)
+                {
+                    a.PlayerId = null;
+                }
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task SaveAndView()
+    {
+        await SessionStorage.SetItemAsync($"lineup_av_{selectedSeasonId}", availablePlayerIds);
+        // Save names for backward compatibility with View page, or update View page too
+        var playerNames = assignments.Select(a => {
+            var p = players.FirstOrDefault(x => x.Id == a.PlayerId);
+            return p?.Name ?? string.Empty;
+        }).ToList();
+        await SessionStorage.SetItemAsync($"lineup_pos_{selectedSeasonId}", playerNames);
+        NavigationManager.NavigateTo("/lineup/view");
+    }
+
+    private async Task LoadStateFromStorage()
+    {
+        List<int>? savedAvail = await SessionStorage.GetItemAsync<List<int>>($"lineup_av_{selectedSeasonId}");
+        if (savedAvail != null)
+        {
+            availablePlayerIds = savedAvail;
+        }
+
+        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"lineup_pos_{selectedSeasonId}");
+        if (savedNames != null && savedNames.Count == assignments.Count)
+        {
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                string name = savedNames[i];
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var player = players.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+                    if (player != null)
+                    {
+                        assignments[i].PlayerId = player.Id;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ClearAll()
+    {
+        availablePlayerIds.Clear();
+        foreach (PositionAssignment a in assignments)
+        {
+            a.PlayerId = null;
+        }
+        StateHasChanged();
+    }
+}
+
+<style>
+    .selectable-item-container {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    ::deep .selectable-label {
+        height: 80px !important;
+        min-height: 80px !important;
+    }
+
+    .selectable-grid {
+        grid-auto-rows: 80px !important;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    }
+
+    .filter-container {
+        flex: 1;
+    }
+
+    .search-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .autocomplete-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .ghost-text {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        pointer-events: none;
+        white-space: nowrap;
+        overflow: hidden;
+        color: transparent;
+        display: flex;
+        align-items: center;
+    }
+
+    .ghost-text .suggestion {
+        color: #ccc;
+    }
+
+    .autocomplete-wrapper input {
+        background: transparent !important;
+        position: relative;
+        z-index: 1;
+    }
+
+    .clear-button {
+        position: absolute;
+        right: 10px;
+        background: #eee;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #666;
+        font-size: 12px;
+        transition: background 0.2s;
+        z-index: 2;
+    }
+
+    .clear-button:hover {
+        background: #ddd;
+        color: #333;
+    }
+
+    .custom-autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        z-index: 1000;
+        margin-top: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .suggestion-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid #eee;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover, .suggestion-item.active {
+        background: #f0f7ff;
+        color: var(--isotopes-accent);
+        font-weight: bold;
+    }
+</style>

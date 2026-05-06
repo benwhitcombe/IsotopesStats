@@ -1118,8 +1118,8 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
 /* Selectable Button Checkboxes */
 .selectable-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-    grid-auto-rows: 1fr !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    grid-auto-rows: 80px !important;
     gap: 0.75rem !important;
     width: 100% !important;
 }
@@ -1127,7 +1127,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
 .selectable-item {
     position: relative !important;
     display: flex !important;
-    flex-direction: column !important;
+    height: 100% !important;
 }
 
 .selectable-item input[type="checkbox"] {
@@ -1143,7 +1143,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0.75rem 50px !important;
+    padding: 0.5rem 35px !important;
     background: #fff !important;
     border: 2px solid #eee !important;
     border-radius: 12px !important;
@@ -1154,10 +1154,12 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
     user-select: none !important;
     font-size: 0.85rem !important;
     margin: 0 !important;
-    min-height: 50px !important;
     height: 100% !important;
     width: 100% !important;
     position: relative !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.2 !important;
 }
 
 .selectable-label::before {

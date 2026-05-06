@@ -1,0 +1,131 @@
+@page "/lineup/view"
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Services
+@inject IStatsRepository StatsRepository
+@inject SharedSessionState SharedState
+@inject SessionStorageService SessionStorage
+@inject NavigationManager NavigationManager
+
+<PageTitle>Isotopes - Lineup View</PageTitle>
+
+<div class="full-screen-view">
+    <div class="lineup-container">
+        <img src="images/defense.png" class="defense-bg" />
+        @foreach (PositionAssignment assignment in assignments)
+        {
+            @if (!string.IsNullOrEmpty(assignment.PlayerName))
+            {
+                <div class="player-overlay" style="left: @(assignment.X)%; top: @(assignment.Y)%;">
+                    <div class="player-name-box">@assignment.PlayerName</div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private class PositionAssignment
+    {
+        public string PlayerName { get; set; } = string.Empty;
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+
+    private List<PositionAssignment> assignments = new()
+    {
+        new() { X = 50, Y = 62 }, // Pitcher (Above mound)
+        new() { X = 50, Y = 94 }, // Catcher (Behind home)
+        new() { X = 78, Y = 56 }, // 1st Base (Above bag)
+        new() { X = 65, Y = 48 }, // 2nd Base
+        new() { X = 22, Y = 56 }, // Third Base (Above bag)
+        new() { X = 35, Y = 48 }, // Short Stop
+        new() { X = 15, Y = 25 }, // Left Field
+        new() { X = 38, Y = 15 }, // Left Center Field
+        new() { X = 62, Y = 15 }, // Right Center Field
+        new() { X = 85, Y = 25 }  // Right Field
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        int seasonId = SharedState.SelectedSeasonId;
+        if (seasonId == 0)
+        {
+            List<Season> seasons = await StatsRepository.GetSeasonsAsync();
+            if (seasons.Any())
+            {
+                seasonId = seasons.First().Id;
+            }
+        }
+
+        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"lineup_pos_{seasonId}");
+        if (savedNames != null && savedNames.Count == assignments.Count)
+        {
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                assignments[i].PlayerName = savedNames[i];
+            }
+        }
+        else
+        {
+            // If no lineup is found, go back to selection
+            NavigationManager.NavigateTo("/lineup");
+        }
+    }
+}
+
+<style>
+    .full-screen-view {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: white;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .lineup-container {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .defense-bg {
+        height: 100vh;
+        width: auto;
+        display: block;
+    }
+
+    .player-overlay {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        color: black;
+        font-weight: bold;
+        font-size: 1.4rem;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .player-name-box {
+        border: 2px solid black;
+        padding: 4px 12px;
+        background-color: white;
+        min-width: 100px;
+    }
+
+    @@media (max-width: 768px) {
+        .player-overlay {
+            font-size: 0.9rem;
+        }
+        .player-name-box {
+            padding: 2px 6px;
+            min-width: 60px;
+            border-width: 1.5px;
+        }
+    }
+</style>
