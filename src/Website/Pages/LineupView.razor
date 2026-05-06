@@ -20,10 +20,21 @@
                 </div>
             }
         }
+        @if (benchPlayers.Any())
+        {
+            <div class="bench-container">
+                <div class="bench-label">BENCH</div>
+                <div class="bench-names">
+                    @string.Join(" • ", benchPlayers)
+                </div>
+            </div>
+        }
     </div>
 </div>
 
 @code {
+    [Parameter] [SupplyParameterFromQuery(Name = "l")] public string? LineupData { get; set; }
+
     private class PositionAssignment
     {
         public string PlayerName { get; set; } = string.Empty;
@@ -31,19 +42,21 @@
         public double Y { get; set; }
     }
 
-    private List<PositionAssignment> assignments = new()
+    private List<PositionAssignment> assignments = new List<PositionAssignment>()
     {
-        new() { X = 50, Y = 62 }, // Pitcher (Above mound)
-        new() { X = 50, Y = 94 }, // Catcher (Behind home)
-        new() { X = 70, Y = 62 }, // 1st Base (Above bag)
-        new() { X = 65, Y = 48 }, // 2nd Base
-        new() { X = 30, Y = 62 }, // Third Base (Above bag)
-        new() { X = 35, Y = 48 }, // Short Stop
-        new() { X = 15, Y = 35 }, // Left Field
-        new() { X = 38, Y = 15 }, // Left Center Field
-        new() { X = 62, Y = 15 }, // Right Center Field
-        new() { X = 85, Y = 35 }  // Right Field
+        new PositionAssignment { X = 50, Y = 62 }, // Pitcher (Above mound)
+        new PositionAssignment { X = 50, Y = 97 }, // Catcher (Behind home)
+        new PositionAssignment { X = 70, Y = 62 }, // 1st Base (Above bag)
+        new PositionAssignment { X = 65, Y = 48 }, // 2nd Base
+        new PositionAssignment { X = 30, Y = 62 }, // Third Base (Above bag)
+        new PositionAssignment { X = 35, Y = 48 }, // Short Stop
+        new PositionAssignment { X = 15, Y = 35 }, // Left Field
+        new PositionAssignment { X = 38, Y = 15 }, // Left Center Field
+        new PositionAssignment { X = 62, Y = 15 }, // Right Center Field
+        new PositionAssignment { X = 85, Y = 35 }  // Right Field
     };
+
+    private List<string> benchPlayers = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,6 +70,32 @@
             }
         }
 
+        if (!string.IsNullOrEmpty(LineupData))
+        {
+            List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
+            string[] parts = LineupData.Split('-', StringSplitOptions.RemoveEmptyEntries);
+            
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (int.TryParse(parts[i], out int id) && id > 0)
+                {
+                    Player? player = players.FirstOrDefault(p => p.Id == id);
+                    if (player != null)
+                    {
+                        if (i < 10)
+                        {
+                            assignments[i].PlayerName = player.Name;
+                        }
+                        else
+                        {
+                            benchPlayers.Add(player.Name);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
         List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"lineup_pos_{seasonId}");
         if (savedNames != null && savedNames.Count == assignments.Count)
         {
@@ -64,10 +103,15 @@
             {
                 assignments[i].PlayerName = savedNames[i];
             }
+
+            List<string>? savedBench = await SessionStorage.GetItemAsync<List<string>>($"lineup_bn_{seasonId}");
+            if (savedBench != null)
+            {
+                benchPlayers = savedBench;
+            }
         }
         else
         {
-            // If no lineup is found, go back to selection
             NavigationManager.NavigateTo("/lineup");
         }
     }
@@ -118,6 +162,34 @@
         min-width: 100px;
     }
 
+    .bench-container {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border: 2px solid black;
+        padding: 8px 20px;
+        text-align: center;
+        max-width: 40%;
+        z-index: 10;
+    }
+
+    .bench-label {
+        font-weight: bold;
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 2px;
+        letter-spacing: 1px;
+    }
+
+    .bench-names {
+        font-weight: bold;
+        font-size: 1.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     @@media (max-width: 768px) {
         .player-overlay {
             font-size: 0.9rem;
@@ -126,6 +198,17 @@
             padding: 2px 6px;
             min-width: 60px;
             border-width: 1.5px;
+        }
+        .bench-container {
+            bottom: 15px;
+            right: 15px;
+            padding: 4px 12px;
+        }
+        .bench-label {
+            font-size: 0.6rem;
+        }
+        .bench-names {
+            font-size: 0.9rem;
         }
     }
 </style>

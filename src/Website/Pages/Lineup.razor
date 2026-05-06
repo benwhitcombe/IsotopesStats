@@ -54,7 +54,7 @@ else
                         @for (int i = 0; i < filteredSuggestions.Count; i++)
                         {
                             int index = i;
-                            var player = filteredSuggestions[i];
+                            Player player = filteredSuggestions[i];
                             <div class="suggestion-item @(index == activeSuggestionIndex ? "active" : "")"
                                  @onclick="() => SelectSuggestion(player)">
                                 @player.Name
@@ -134,11 +134,14 @@ else
 }
 
 @code {
-    private List<Season> seasons = new();
-    private List<Player> players = new();
-    private List<int> availablePlayerIds = new();
+    [Parameter] [SupplyParameterFromQuery(Name = "l")] public string? LineupData { get; set; }
+
+    private List<Season> seasons = new List<Season>();
+    private List<Player> players = new List<Player>();
+    private List<int> availablePlayerIds = new List<int>();
     private int selectedSeasonId;
     private bool isLoading = true;
+    private bool isInitializing = false;
 
     private string _searchQuery = string.Empty;
     private string searchQuery 
@@ -158,7 +161,7 @@ else
     private Player? firstMatch = null;
     private int activeSuggestionIndex = 0;
     private bool showSuggestions = false;
-    private List<Player> filteredSuggestions = new();
+    private List<Player> filteredSuggestions = new List<Player>();
     private ElementReference searchInput = default!;
     private bool hasFocused = false;
 
@@ -287,7 +290,7 @@ else
         {
             // Get all players on the bench (available but not assigned)
             // We maintain the order they were added to the available list
-            var benchPlayerIds = availablePlayerIds
+            List<int> benchPlayerIds = availablePlayerIds
                 .Where(id => !IsPlayerAssigned(id))
                 .ToList();
                 
@@ -323,22 +326,22 @@ else
         public Action<PositionAssignment>? OnAssignmentChanged { get; set; }
     }
 
-    private List<PositionAssignment> assignments = new();
+    private List<PositionAssignment> assignments = new List<PositionAssignment>();
 
     private void InitializeAssignments()
     {
-        assignments = new()
+        assignments = new List<PositionAssignment>()
         {
-            new() { PositionLabel = "Pitcher", PositionAbbreviation = "P", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Catcher", PositionAbbreviation = "C", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "1st Base", PositionAbbreviation = "1B", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "2nd Base", PositionAbbreviation = "2B", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Third Base", PositionAbbreviation = "3B", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Short Stop", PositionAbbreviation = "SS", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Left Field", PositionAbbreviation = "LF", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Left Center Field", PositionAbbreviation = "LC", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Right Center Field", PositionAbbreviation = "RC", OnAssignmentChanged = HandleAssignmentChange },
-            new() { PositionLabel = "Right Field", PositionAbbreviation = "RF", OnAssignmentChanged = HandleAssignmentChange }
+            new PositionAssignment { PositionLabel = "Pitcher", PositionAbbreviation = "P", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Catcher", PositionAbbreviation = "C", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "1st Base", PositionAbbreviation = "1B", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "2nd Base", PositionAbbreviation = "2B", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Third Base", PositionAbbreviation = "3B", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Short Stop", PositionAbbreviation = "SS", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Left Field", PositionAbbreviation = "LF", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Left Center Field", PositionAbbreviation = "LC", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Right Center Field", PositionAbbreviation = "RC", OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionLabel = "Right Field", PositionAbbreviation = "RF", OnAssignmentChanged = HandleAssignmentChange }
         };
     }
 
@@ -356,6 +359,47 @@ else
             }
         }
         StateHasChanged();
+        UpdateUrl();
+    }
+
+    private string GetCurrentLineupData()
+    {
+        List<int> ids = assignments.Select(a => a.PlayerId ?? 0).ToList();
+        List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+        ids.AddRange(benchIds);
+        return string.Join("-", ids);
+    }
+
+    private void UpdateUrl()
+    {
+        if (isInitializing) return;
+        
+        string data = GetCurrentLineupData();
+        string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?> { ["l"] = data });
+        NavigationManager.NavigateTo(newUri, replace: true);
+    }
+
+    private void ApplyQueryParameters()
+    {
+        if (string.IsNullOrEmpty(LineupData)) return;
+
+        string[] parts = LineupData.Split('-', StringSplitOptions.RemoveEmptyEntries);
+        
+        for (int i = 0; i < parts.Length; i++)
+        {
+            if (int.TryParse(parts[i], out int id) && id > 0)
+            {
+                if (i < 10)
+                {
+                    assignments[i].PlayerId = id;
+                }
+                
+                if (!availablePlayerIds.Contains(id))
+                {
+                    availablePlayerIds.Add(id);
+                }
+            }
+        }
     }
 
     private bool IsLineupComplete => assignments.All(a => a.PlayerId.HasValue);
@@ -371,6 +415,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        isInitializing = true;
         InitializeAssignments();
         seasons = await StatsRepository.GetSeasonsAsync();
         selectedSeasonId = SharedState.SelectedSeasonId;
@@ -382,15 +427,23 @@ else
 
         await LoadPlayers();
         await LoadStateFromStorage();
+        ApplyQueryParameters();
+        
+        isInitializing = false;
+        UpdateUrl();
+        StateHasChanged();
     }
 
     private async Task OnSeasonSelected(int seasonId)
     {
+        isInitializing = true;
         selectedSeasonId = seasonId;
         SharedState.SelectedSeasonId = seasonId;
         await LoadPlayers();
         ClearAll();
         await LoadStateFromStorage();
+        isInitializing = false;
+        UpdateUrl();
     }
 
     private async Task LoadPlayers()
@@ -403,6 +456,7 @@ else
     private void ClearPosition(PositionAssignment assignment)
     {
         assignment.PlayerId = null;
+        UpdateUrl();
     }
 
     private void TogglePlayerAvailability(int playerId, bool isChecked)
@@ -440,18 +494,20 @@ else
             }
         }
         StateHasChanged();
+        UpdateUrl();
     }
 
     private async Task SaveAndView()
     {
         await SessionStorage.SetItemAsync($"lineup_av_{selectedSeasonId}", availablePlayerIds);
-        // Save names for backward compatibility with View page, or update View page too
-        var playerNames = assignments.Select(a => {
-            var p = players.FirstOrDefault(x => x.Id == a.PlayerId);
+        List<string> playerNames = assignments.Select(a => {
+            Player? p = players.FirstOrDefault(x => x.Id == a.PlayerId);
             return p?.Name ?? string.Empty;
         }).ToList();
         await SessionStorage.SetItemAsync($"lineup_pos_{selectedSeasonId}", playerNames);
-        NavigationManager.NavigateTo("/lineup/view");
+
+        string data = GetCurrentLineupData();
+        NavigationManager.NavigateTo($"/lineup/view?l={data}");
     }
 
     private async Task LoadStateFromStorage()
@@ -470,7 +526,7 @@ else
                 string name = savedNames[i];
                 if (!string.IsNullOrEmpty(name))
                 {
-                    var player = players.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+                    Player? player = players.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
                     if (player != null)
                     {
                         assignments[i].PlayerId = player.Id;
@@ -488,6 +544,7 @@ else
             a.PlayerId = null;
         }
         StateHasChanged();
+        UpdateUrl();
     }
 }
 
