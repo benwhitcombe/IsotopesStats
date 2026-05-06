@@ -1,31 +1,45 @@
 @page "/defense/view"
+@using System.Linq
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
 @inject SharedSessionState SharedState
 @inject SessionStorageService SessionStorage
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Defense View</PageTitle>
 
 <div class="full-screen-view">
     <div class="defense-container">
         <img src="images/defense.png" class="defense-bg" />
-        @foreach (PositionAssignment assignment in assignments)
+        @for (int i = 0; i < assignments.Count; i++)
         {
-            @if (!string.IsNullOrEmpty(assignment.PlayerName))
-            {
-                <div class="player-overlay" style="left: @(assignment.X)%; top: @(assignment.Y)%;">
-                    <div class="player-name-box">@assignment.PlayerName</div>
+            int index = i;
+            PositionAssignment assignment = assignments[index];
+            bool isSelected = selectedIndex == index && selectedFromBench == false;
+            <div class="player-overlay @(isSelected ? "selected" : "")" 
+                 style="left: @(assignment.X)%; top: @(assignment.Y)%;"
+                 @onclick="() => HandlePlayerClick(index, false)">
+                <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
+                    @(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)
                 </div>
-            }
+            </div>
         }
         @if (benchPlayers.Any())
         {
             <div class="bench-container">
                 <div class="bench-label">BENCH</div>
                 <div class="bench-names">
-                    @string.Join(" • ", benchPlayers)
+                    @for (int i = 0; i < benchPlayers.Count; i++)
+                    {
+                        int index = i;
+                        bool isSelected = selectedIndex == index && selectedFromBench == true;
+                        <div class="bench-player-name @(isSelected ? "selected" : "")" 
+                             @onclick="() => HandlePlayerClick(index, true)">
+                            @benchPlayers[index]
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -34,6 +48,10 @@
 
 @code {
     [Parameter] [SupplyParameterFromQuery(Name = "p")] public string? DefenseData { get; set; }
+
+    private int? selectedIndex;
+    private bool? selectedFromBench;
+    private int seasonId;
 
     private class PositionAssignment
     {
@@ -60,7 +78,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        int seasonId = SharedState.SelectedSeasonId;
+        seasonId = SharedState.SelectedSeasonId;
         if (seasonId == 0)
         {
             List<Season> seasons = await StatsRepository.GetSeasonsAsync();
@@ -116,6 +134,98 @@
             NavigationManager.NavigateTo("/defense");
         }
     }
+
+    private async Task HandlePlayerClick(int index, bool fromBench)
+    {
+        if (selectedIndex == null)
+        {
+            selectedIndex = index;
+            selectedFromBench = fromBench;
+            return;
+        }
+
+        if (selectedIndex == index && selectedFromBench == fromBench)
+        {
+            selectedIndex = null;
+            selectedFromBench = null;
+            return;
+        }
+
+        string targetName = fromBench ? benchPlayers[index] : assignments[index].PlayerName;
+
+        if (selectedFromBench == true)
+        {
+            string sourceName = benchPlayers[selectedIndex.Value];
+            if (fromBench)
+            {
+                benchPlayers[selectedIndex.Value] = targetName;
+                benchPlayers[index] = sourceName;
+            }
+            else
+            {
+                benchPlayers[selectedIndex.Value] = targetName;
+                assignments[index].PlayerName = sourceName;
+            }
+        }
+        else
+        {
+            string sourceName = assignments[selectedIndex.Value].PlayerName;
+            if (fromBench)
+            {
+                assignments[selectedIndex.Value].PlayerName = targetName;
+                benchPlayers[index] = sourceName;
+            }
+            else
+            {
+                assignments[selectedIndex.Value].PlayerName = targetName;
+                assignments[index].PlayerName = sourceName;
+            }
+        }
+
+        selectedIndex = null;
+        selectedFromBench = null;
+        await SaveChanges();
+    }
+
+    private async Task SaveChanges()
+    {
+        if (seasonId == 0) return;
+
+        List<string> names = assignments.Select(a => a.PlayerName).ToList();
+        await SessionStorage.SetItemAsync($"defense_pos_{seasonId}", names);
+        await SessionStorage.SetItemAsync($"defense_bn_{seasonId}", benchPlayers);
+        
+        await UpdateUrl();
+    }
+
+    private async Task UpdateUrl()
+    {
+        string token = await GetCurrentDefenseToken();
+        await JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", string.IsNullOrEmpty(token) ? null : token);
+    }
+
+    private async Task<string> GetCurrentDefenseToken()
+    {
+        List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
+        List<int> ids = new List<int>();
+
+        foreach (PositionAssignment assignment in assignments)
+        {
+            Player? p = players.FirstOrDefault(x => string.Equals(x.Name, assignment.PlayerName, StringComparison.OrdinalIgnoreCase));
+            ids.Add(p?.Id ?? 0);
+        }
+
+        foreach (string benchName in benchPlayers)
+        {
+            Player? p = players.FirstOrDefault(x => string.Equals(x.Name, benchName, StringComparison.OrdinalIgnoreCase));
+            if (p != null)
+            {
+                ids.Add(p.Id);
+            }
+        }
+
+        return DefenseEncoder.Encode(ids, players);
+    }
 }
 
 <style>
@@ -157,6 +267,13 @@
         font-size: clamp(10px, 2.5vmin, 32px);
         text-align: center;
         z-index: 5;
+        cursor: pointer;
+    }
+
+    .player-overlay.selected .player-name-box {
+        background-color: #ffeb3b;
+        border-color: #fbc02d;
+        box-shadow: 0 0 15px rgba(255, 235, 59, 0.5);
     }
 
     .player-name-box {
@@ -167,6 +284,19 @@
         white-space: nowrap;
         width: max-content;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+
+    .player-name-box.empty {
+        color: #999;
+        border-style: dashed;
+        opacity: 0.6;
+        background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .player-overlay:hover .player-name-box {
+        background-color: #f8f9fa;
+        transform: scale(1.05);
     }
 
     .bench-container {
@@ -192,9 +322,33 @@
     }
 
     .bench-names {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.8vmin;
         font-weight: bold;
         font-size: clamp(9px, 1.8vmin, 22px);
-        white-space: normal;
-        line-height: 1.2;
+        margin-top: 0.5vmin;
+    }
+
+    .bench-player-name {
+        cursor: pointer;
+        padding: 0.5vmin 1.2vmin;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        background-color: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+    }
+
+    .bench-player-name:hover {
+        background-color: #eee;
+        transform: scale(1.05);
+    }
+
+    .bench-player-name.selected {
+        background-color: #ffeb3b;
+        border-color: #fbc02d;
+        color: black;
     }
 </style>
