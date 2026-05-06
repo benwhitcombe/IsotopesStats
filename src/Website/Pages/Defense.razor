@@ -81,7 +81,7 @@ else
         </div>
 
         <h5 class="mb-3" style="color: var(--isotopes-accent);">2. Assign Positions</h5>
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4" style="position: relative;">
             @foreach (PositionAssignment assignment in assignments)
             {
                 <div class="col-md-6 col-lg-4" @key="assignment.PositionLabel">
@@ -103,21 +103,72 @@ else
                     </div>
                 </div>
             }
-        </div>
 
-        @if (BenchPlayers.Any())
-        {
-            <h5 class="mb-3" style="color: var(--isotopes-accent);">3. Bench</h5>
-            <div class="card p-3 bg-light border-0 mb-4" style="border-radius: 12px;">
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (Player player in BenchPlayers.OrderBy(p => p.Name))
+            <div class="col-md-6 col-lg-4">
+                <label class="form-label fw-bold">Bench (B)</label>
+                <div class="dropdown @(isBenchDropdownOpen ? "show" : "")">
+                    <div class="form-control d-flex flex-wrap align-items-center gap-1 @(isBenchDropdownOpen ? "focused" : "")" 
+                         style="min-height: 38px; cursor: pointer; padding: 0.375rem 0.75rem; border-color: #ced4da; background-image: none; position: relative;"
+                         @onclick="ToggleBenchDropdown" @onclick:stopPropagation>
+                        
+                        @if (!BenchPlayers.Any())
+                        {
+                            <span class="text-muted">-- Select Bench --</span>
+                        }
+                        else
+                        {
+                            @foreach (int playerId in availablePlayerIds.Where(id => !IsPlayerAssigned(id)))
+                            {
+                                Player? player = players.FirstOrDefault(p => p.Id == playerId);
+                                if (player == null) continue;
+                                
+                                <span class="badge bg-secondary d-inline-flex align-items-center gap-1" 
+                                      style="font-weight: normal; font-size: 0.85rem; padding: 0.4em 0.6em; cursor: pointer;" 
+                                      @onclick="() => ToggleBenchPlayer(player.Id, false)" @onclick:stopPropagation>
+                                    @player.Name
+                                    <span style="color: #ccc; font-size: 0.7rem; margin-left: 2px;">✕</span>
+                                </span>
+                            }
+                        }
+                        
+                        <div style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none;">
+                            <span class="dropdown-toggle" style="border-top-color: #666;"></span>
+                        </div>
+                    </div>
+
+                    @if (isBenchDropdownOpen)
                     {
-                        <div class="badge bg-secondary p-2" @key="player.Id" style="font-size: 0.9rem; font-weight: normal;">
-                            @player.Name
+                        <div class="dropdown-menu w-100 p-0 show" 
+                             style="max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 2px;" 
+                             @onclick:stopPropagation>
+                            @foreach (Player player in players.OrderBy(p => p.Name))
+                            {
+                                <div class="dropdown-item p-0">
+                                    <div class="form-check w-100 p-2 px-3 m-0 d-flex align-items-center" style="cursor: pointer; border-bottom: 1px solid #f0f0f0;" @onclick="() => ToggleBenchPlayer(player.Id, !IsOnBench(player.Id))">
+                                        <input class="form-check-input m-0" type="checkbox" 
+                                               id="bench-@player.Id" 
+                                               checked="@IsOnBench(player.Id)"
+                                               @onchange="@(e => ToggleBenchPlayer(player.Id, (bool)e.Value!))"
+                                               @onclick:stopPropagation />
+                                        <label class="form-check-label ms-2 flex-grow-1" for="bench-@player.Id" @onclick:stopPropagation>
+                                            @player.Name
+                                            @if (IsPlayerAssigned(player.Id))
+                                            {
+                                                <small class="text-muted ms-1">(Assigned)</small>
+                                            }
+                                        </label>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
             </div>
+        </div>
+
+        @if (isBenchDropdownOpen)
+        {
+            <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999; background:transparent;" @onclick="() => isBenchDropdownOpen = false"></div>
         }
 
         <div class="mt-4 d-flex gap-2 justify-content-end">
@@ -143,6 +194,50 @@ else
     private int selectedSeasonId;
     private bool isLoading = true;
     private bool isInitializing = false;
+
+    private bool isBenchDropdownOpen = false;
+
+    private void ToggleBenchDropdown()
+    {
+        isBenchDropdownOpen = !isBenchDropdownOpen;
+    }
+
+    private bool IsOnBench(int playerId)
+    {
+        return availablePlayerIds.Contains(playerId) && !IsPlayerAssigned(playerId);
+    }
+
+    private void ToggleBenchPlayer(int playerId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!availablePlayerIds.Contains(playerId))
+            {
+                availablePlayerIds.Add(playerId);
+            }
+            // Clear from any assigned position
+            foreach (PositionAssignment a in assignments)
+            {
+                if (a.PlayerId == playerId) a.PlayerId = null;
+            }
+        }
+        else
+        {
+            // Only remove from availability if it was on bench
+            if (!IsPlayerAssigned(playerId))
+            {
+                availablePlayerIds.Remove(playerId);
+            }
+        }
+        StateHasChanged();
+        UpdateUrl();
+    }
+
+    private string GetBenchSummary()
+    {
+        int benchCount = availablePlayerIds.Count(id => !IsPlayerAssigned(id));
+        return benchCount == 0 ? "-- Select Bench --" : $"{benchCount} Player{(benchCount == 1 ? "" : "s")} Selected";
+    }
 
     private string _searchQuery = string.Empty;
     private string searchQuery 

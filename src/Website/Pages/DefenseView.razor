@@ -245,7 +245,7 @@
 
     private async Task TriggerAnimation(int index, bool fromBench)
     {
-        var key = (index, fromBench);
+        (int Index, bool FromBench) key = (index, fromBench);
         if (animationCounters.ContainsKey(key)) animationCounters[key]++;
         else animationCounters[key] = 1;
         
@@ -264,21 +264,6 @@
     {
         if (seasonId == 0) return;
 
-        List<string> names = assignments.Select(a => a.PlayerName).ToList();
-        await SessionStorage.SetItemAsync($"defense_pos_{seasonId}", names);
-        await SessionStorage.SetItemAsync($"defense_bn_{seasonId}", benchPlayers);
-        
-        await UpdateUrl();
-    }
-
-    private async Task UpdateUrl()
-    {
-        string token = await GetCurrentDefenseToken();
-        await JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", string.IsNullOrEmpty(token) ? null : token);
-    }
-
-    private async Task<string> GetCurrentDefenseToken()
-    {
         List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
         List<int> ids = new List<int>();
 
@@ -297,7 +282,20 @@
             }
         }
 
-        return DefenseEncoder.Encode(ids, players);
+        // Update Session Storage
+        List<string> names = assignments.Select(a => a.PlayerName).ToList();
+        await SessionStorage.SetItemAsync($"defense_pos_{seasonId}", names);
+        await SessionStorage.SetItemAsync($"defense_bn_{seasonId}", benchPlayers);
+        
+        // Also update available IDs to be thorough
+        List<int> availableIds = ids.Where(id => id > 0).Distinct().ToList();
+        await SessionStorage.SetItemAsync($"defense_av_{seasonId}", availableIds);
+
+        // Update Token and URL
+        string token = DefenseEncoder.Encode(ids, players);
+        DefenseData = token;
+        _appliedDefenseData = token;
+        await JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", string.IsNullOrEmpty(token) ? null : token);
     }
 
     private void GoBack()
@@ -307,7 +305,7 @@
 
     private async Task ShareDefense()
     {
-        var result = await JSRuntime.InvokeAsync<ShareResult>("shareOrCopy", "Isotopes Defense", NavigationManager.Uri);
+        ShareResult? result = await JSRuntime.InvokeAsync<ShareResult>("shareOrCopy", "Isotopes Defense", NavigationManager.Uri);
         if (result != null && result.Copied)
         {
             showToast = true;
