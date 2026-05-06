@@ -1,4 +1,4 @@
-@page "/lineup/view"
+@page "/defense/view"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -6,10 +6,10 @@
 @inject SessionStorageService SessionStorage
 @inject NavigationManager NavigationManager
 
-<PageTitle>Isotopes - Lineup View</PageTitle>
+<PageTitle>Isotopes - Defense View</PageTitle>
 
 <div class="full-screen-view">
-    <div class="lineup-container">
+    <div class="defense-container">
         <img src="images/defense.png" class="defense-bg" />
         @foreach (PositionAssignment assignment in assignments)
         {
@@ -33,7 +33,7 @@
 </div>
 
 @code {
-    [Parameter] [SupplyParameterFromQuery(Name = "l")] public string? LineupData { get; set; }
+    [Parameter] [SupplyParameterFromQuery(Name = "p")] public string? DefenseData { get; set; }
 
     private class PositionAssignment
     {
@@ -70,10 +70,10 @@
             }
         }
 
-        if (!string.IsNullOrEmpty(LineupData))
+        if (!string.IsNullOrEmpty(DefenseData))
         {
             List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
-            List<int> ids = LineupEncoder.Decode(LineupData, players);
+            List<int> ids = DefenseEncoder.Decode(DefenseData, players);
             
             for (int i = 0; i < ids.Count; i++)
             {
@@ -97,7 +97,7 @@
             return;
         }
 
-        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"lineup_pos_{seasonId}");
+        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"defense_pos_{seasonId}");
         if (savedNames != null && savedNames.Count == assignments.Count)
         {
             for (int i = 0; i < assignments.Count; i++)
@@ -105,7 +105,7 @@
                 assignments[i].PlayerName = savedNames[i];
             }
 
-            List<string>? savedBench = await SessionStorage.GetItemAsync<List<string>>($"lineup_bn_{seasonId}");
+            List<string>? savedBench = await SessionStorage.GetItemAsync<List<string>>($"defense_bn_{seasonId}");
             if (savedBench != null)
             {
                 benchPlayers = savedBench;
@@ -113,7 +113,7 @@
         }
         else
         {
-            NavigationManager.NavigateTo("/lineup");
+            NavigationManager.NavigateTo("/defense");
         }
     }
 }
@@ -132,7 +132,7 @@
         align-items: center;
     }
 
-    .lineup-container {
+    .defense-container {
         position: relative;
         height: 100vh;
         display: flex;
@@ -152,7 +152,6 @@
         color: black;
         font-weight: bold;
         font-size: 1.4rem;
-        white-space: nowrap;
         text-align: center;
     }
 
@@ -161,6 +160,7 @@
         padding: 4px 12px;
         background-color: white;
         min-width: 100px;
+        white-space: nowrap;
     }
 
     .bench-container {
@@ -171,7 +171,6 @@
         border: 2px solid black;
         padding: 8px 20px;
         text-align: center;
-        max-width: 40%;
         z-index: 10;
     }
 
@@ -186,9 +185,6 @@
     .bench-names {
         font-weight: bold;
         font-size: 1.2rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     @@media (max-width: 768px) {

@@ -3,7 +3,7 @@ using IsotopesStats.Domain.Models;
 
 namespace IsotopesStats.Website.Services;
 
-public static class LineupEncoder
+public static class DefenseEncoder
 {
     private const int BitsPerPlayer = 6;
     private const int StarterCount = 10;

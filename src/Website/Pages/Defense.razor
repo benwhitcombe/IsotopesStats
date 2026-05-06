@@ -1,4 +1,4 @@
-@page "/lineup"
+@page "/defense"
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Services
 @inject IStatsRepository StatsRepository
@@ -6,10 +6,10 @@
 @inject SessionStorageService SessionStorage
 @inject NavigationManager NavigationManager
 
-<PageTitle>Isotopes - Defense Lineup</PageTitle>
+<PageTitle>Isotopes - Defense</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">Defense Lineup</h3>
+    <h3 style="margin:0">Defense</h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
         <SeasonSelector 
             Seasons="@seasons" 
@@ -25,7 +25,7 @@
 }
 else
 {
-    <div class="lineup-editor card p-4 shadow-sm mb-4">
+    <div class="defense-editor card p-4 shadow-sm mb-4">
         <h5 class="mb-3" style="color: var(--isotopes-accent);">1. Select Available Players</h5>
         
         <div class="filter-container mb-4" style="max-width: 400px;">
@@ -121,20 +121,20 @@ else
 
         <div class="mt-4 d-flex gap-2 justify-content-end">
             <button class="btn btn-outline-secondary" @onclick="ClearAll">Clear All</button>
-            <button class="btn btn-primary" @onclick="SaveAndView" disabled="@(!IsLineupComplete)">Save & View Lineup</button>
+            <button class="btn btn-primary" @onclick="SaveAndView" disabled="@(!IsDefenseComplete)">Save & View Defense</button>
         </div>
     </div>
     
-    @if (!IsLineupComplete)
+    @if (!IsDefenseComplete)
     {
         <div class="alert alert-info">
-            Please select a player for all 10 positions to view the lineup.
+            Please select a player for all 10 positions to view the defense.
         </div>
     }
 }
 
 @code {
-    [Parameter] [SupplyParameterFromQuery(Name = "l")] public string? LineupData { get; set; }
+    [Parameter] [SupplyParameterFromQuery(Name = "p")] public string? DefenseData { get; set; }
 
     private List<Season> seasons = new List<Season>();
     private List<Player> players = new List<Player>();
@@ -362,7 +362,7 @@ else
         UpdateUrl();
     }
 
-    private string GetCurrentLineupData()
+    private string GetCurrentDefenseData()
     {
         if (!availablePlayerIds.Any() && !assignments.Any(a => a.PlayerId.HasValue))
         {
@@ -372,24 +372,24 @@ else
         List<int> ids = assignments.Select(a => a.PlayerId ?? 0).ToList();
         List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
         ids.AddRange(benchIds);
-        return LineupEncoder.Encode(ids, players);
+        return DefenseEncoder.Encode(ids, players);
     }
 
     private void UpdateUrl()
     {
         if (isInitializing) return;
         
-        string data = GetCurrentLineupData();
+        string data = GetCurrentDefenseData();
         string? queryValue = string.IsNullOrEmpty(data) ? null : data;
-        string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?> { ["l"] = queryValue });
+        string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?> { ["p"] = queryValue });
         NavigationManager.NavigateTo(newUri, replace: true);
     }
 
     private void ApplyQueryParameters()
     {
-        if (string.IsNullOrEmpty(LineupData)) return;
+        if (string.IsNullOrEmpty(DefenseData)) return;
 
-        List<int> ids = LineupEncoder.Decode(LineupData, players);
+        List<int> ids = DefenseEncoder.Decode(DefenseData, players);
         
         for (int i = 0; i < ids.Count; i++)
         {
@@ -409,7 +409,7 @@ else
         }
     }
 
-    private bool IsLineupComplete => assignments.All(a => a.PlayerId.HasValue);
+    private bool IsDefenseComplete => assignments.All(a => a.PlayerId.HasValue);
     private IEnumerable<Player> AvailablePlayersForSelection => players.Where(p => availablePlayerIds.Contains(p.Id));
     private IEnumerable<Player> BenchPlayers => AvailablePlayersForSelection.Where(p => !IsPlayerAssigned(p.Id));
 
@@ -506,26 +506,26 @@ else
 
     private async Task SaveAndView()
     {
-        await SessionStorage.SetItemAsync($"lineup_av_{selectedSeasonId}", availablePlayerIds);
+        await SessionStorage.SetItemAsync($"defense_av_{selectedSeasonId}", availablePlayerIds);
         List<string> playerNames = assignments.Select(a => {
             Player? p = players.FirstOrDefault(x => x.Id == a.PlayerId);
             return p?.Name ?? string.Empty;
         }).ToList();
-        await SessionStorage.SetItemAsync($"lineup_pos_{selectedSeasonId}", playerNames);
+        await SessionStorage.SetItemAsync($"defense_pos_{selectedSeasonId}", playerNames);
 
-        string data = GetCurrentLineupData();
-        NavigationManager.NavigateTo($"/lineup/view?l={data}");
+        string data = GetCurrentDefenseData();
+        NavigationManager.NavigateTo($"/defense/view?p={data}");
     }
 
     private async Task LoadStateFromStorage()
     {
-        List<int>? savedAvail = await SessionStorage.GetItemAsync<List<int>>($"lineup_av_{selectedSeasonId}");
+        List<int>? savedAvail = await SessionStorage.GetItemAsync<List<int>>($"defense_av_{selectedSeasonId}");
         if (savedAvail != null)
         {
             availablePlayerIds = savedAvail;
         }
 
-        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"lineup_pos_{selectedSeasonId}");
+        List<string>? savedNames = await SessionStorage.GetItemAsync<List<string>>($"defense_pos_{selectedSeasonId}");
         if (savedNames != null && savedNames.Count == assignments.Count)
         {
             for (int i = 0; i < assignments.Count; i++)
