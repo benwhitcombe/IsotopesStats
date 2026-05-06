@@ -121,8 +121,8 @@ else
         }
 
         <div class="mt-4 d-flex gap-2 justify-content-end">
-            <button class="btn btn-outline-secondary" @onclick="ClearAll">Clear All</button>
-            <button class="btn btn-primary" @onclick="SaveAndView" disabled="@(!IsDefenseComplete)">Save & View Defense</button>
+            <button class="view-btn" @onclick="ClearAll" style="padding: 0.8rem 2rem;">Clear All</button>
+            <button class="view-btn active" @onclick="SaveAndView" disabled="@(!IsDefenseComplete)" style="padding: 0.8rem 2rem; opacity: @(IsDefenseComplete ? "1" : "0.5"); cursor: @(IsDefenseComplete ? "pointer" : "not-allowed");">Save & View Defense</button>
         </div>
     </div>
     

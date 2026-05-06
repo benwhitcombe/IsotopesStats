@@ -10,7 +10,7 @@
 
 <PageTitle>Isotopes - Defense View</PageTitle>
 
-<div class="full-screen-view">
+<div class="defense-view-wrapper">
     <div class="defense-container">
         <img src="images/defense.png" class="defense-bg" />
         @for (int i = 0; i < assignments.Count; i++)
@@ -46,6 +46,22 @@
             </div>
         }
     </div>
+
+    <div class="view-actions mt-4 d-flex gap-2">
+        <button class="view-btn" @onclick="GoBack" style="padding: 0.8rem 2rem;">
+            ⬅️ Back to Editor
+        </button>
+        <button class="view-btn active" @onclick="ShareDefense" style="padding: 0.8rem 2rem;">
+            📤 Share Defense
+        </button>
+    </div>
+
+    @if (showToast)
+    {
+        <div class="toast-notification-simple">
+            Copied to clipboard!
+        </div>
+    }
 </div>
 
 @code {
@@ -55,6 +71,7 @@
     private bool? selectedFromBench;
     private int seasonId;
     private Dictionary<(int Index, bool FromBench), int> animationCounters = new();
+    private bool showToast = false;
 
     private class PositionAssignment
     {
@@ -181,8 +198,8 @@
         }
 
         // Capture indices for animation
-        int idx1 = selectedIndex.Value;
-        bool bench1 = selectedFromBench.Value;
+        int idx1 = selectedIndex!.Value;
+        bool bench1 = selectedFromBench!.Value;
         int idx2 = index;
         bool bench2 = fromBench;
 
@@ -282,36 +299,78 @@
 
         return DefenseEncoder.Encode(ids, players);
     }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/defense?p={DefenseData}");
+    }
+
+    private async Task ShareDefense()
+    {
+        var result = await JSRuntime.InvokeAsync<ShareResult>("shareOrCopy", "Isotopes Defense", NavigationManager.Uri);
+        if (result != null && result.Copied)
+        {
+            showToast = true;
+            StateHasChanged();
+            await Task.Delay(3000);
+            showToast = false;
+            StateHasChanged();
+        }
+    }
+
+    private class ShareResult
+    {
+        public bool Shared { get; set; }
+        public bool Copied { get; set; }
+        public bool Cancelled { get; set; }
+        public string? Error { get; set; }
+    }
 }
 
 <style>
-    .full-screen-view {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: white;
-        z-index: 9999;
+    .defense-view-wrapper {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
-        overflow: hidden;
+        width: 100%;
+        background-color: white;
+        padding-bottom: 2rem;
     }
 
     .defense-container {
         position: relative;
         display: inline-block;
         max-width: 100%;
-        max-height: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .defense-bg {
-        max-width: 100vw;
-        max-height: 100vh;
+        max-width: 100%;
+        max-height: 80vh;
         width: auto;
         height: auto;
         display: block;
+    }
+
+    .toast-notification-simple {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 2rem;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: fadeInOut 3s ease-in-out forwards;
+    }
+
+    @@keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, 20px); }
+        15% { opacity: 1; transform: translate(-50%, 0); }
+        85% { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, -20px); }
     }
 
     .player-overlay {
