@@ -513,6 +513,13 @@ else
         }).ToList();
         await SessionStorage.SetItemAsync($"defense_pos_{selectedSeasonId}", playerNames);
 
+        List<string> benchNames = availablePlayerIds
+            .Where(id => !IsPlayerAssigned(id))
+            .Select(id => players.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList();
+        await SessionStorage.SetItemAsync($"defense_bn_{selectedSeasonId}", benchNames);
+
         string data = GetCurrentDefenseData();
         NavigationManager.NavigateTo($"/defense/view?p={data}");
     }

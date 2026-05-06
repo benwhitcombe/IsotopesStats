@@ -93,6 +93,12 @@
             List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
             List<int> ids = DefenseEncoder.Decode(DefenseData, players);
             
+            foreach (PositionAssignment a in assignments)
+            {
+                a.PlayerName = string.Empty;
+            }
+            benchPlayers.Clear();
+
             for (int i = 0; i < ids.Count; i++)
             {
                 int id = ids[i];
@@ -112,6 +118,7 @@
                     }
                 }
             }
+            await SaveChanges();
             return;
         }
 
