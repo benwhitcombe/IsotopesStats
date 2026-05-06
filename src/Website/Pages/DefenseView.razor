@@ -11,41 +11,14 @@
 <PageTitle>Isotopes - Defense View</PageTitle>
 
 <div class="defense-view-wrapper">
-    <div class="defense-container">
-        <img src="images/defense.png" class="defense-bg" />
-        @for (int i = 0; i < assignments.Count; i++)
-        {
-            int index = i;
-            PositionAssignment assignment = assignments[index];
-            bool isSelected = selectedIndex == index && selectedFromBench == false;
-            bool isAnimating = animationCounters.ContainsKey((index, false));
-            <div class="player-overlay @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
-                 style="left: @(assignment.X)%; top: @(assignment.Y)%;"
-                 @onclick="() => HandlePlayerClick(index, false)">
-                <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
-                    @(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)
-                </div>
-            </div>
-        }
-        @if (benchPlayers.Any())
-        {
-            <div class="bench-container">
-                <div class="bench-label">BENCH</div>
-                <div class="bench-names">
-                    @for (int i = 0; i < benchPlayers.Count; i++)
-                    {
-                        int index = i;
-                        bool isSelected = selectedIndex == index && selectedFromBench == true;
-                        bool isAnimating = animationCounters.ContainsKey((index, true));
-                        <div class="bench-player-name @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
-                             @onclick="() => HandlePlayerClick(index, true)">
-                            @benchPlayers[index]
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-    </div>
+    <DefenseField 
+        Assignments="@fieldAssignments" 
+        BenchPlayers="@benchPlayers" 
+        SelectedIndex="@selectedIndex" 
+        SelectedFromBench="@selectedFromBench" 
+        AnimationCounters="@animationCounters" 
+        OnPlayerClick="@(e => HandlePlayerClick(e.Index, e.FromBench))"
+        IsEditable="true" />
 
     <div class="view-actions mt-4 d-flex gap-2">
         <button class="view-btn" @onclick="GoBack" style="padding: 0.8rem 2rem;">
@@ -73,26 +46,21 @@
     private Dictionary<(int Index, bool FromBench), int> animationCounters = new();
     private bool showToast = false;
 
-    private class PositionAssignment
+    private List<DefenseField.FieldPositionAssignment> assignments = new List<DefenseField.FieldPositionAssignment>()
     {
-        public string PlayerName { get; set; } = string.Empty;
-        public double X { get; set; }
-        public double Y { get; set; }
-    }
-
-    private List<PositionAssignment> assignments = new List<PositionAssignment>()
-    {
-        new PositionAssignment { X = 50, Y = 62 }, // Pitcher (Above mound)
-        new PositionAssignment { X = 50, Y = 92 }, // Catcher (Behind home)
-        new PositionAssignment { X = 70, Y = 62 }, // 1st Base (Above bag)
-        new PositionAssignment { X = 65, Y = 48 }, // 2nd Base
-        new PositionAssignment { X = 30, Y = 62 }, // Third Base (Above bag)
-        new PositionAssignment { X = 35, Y = 48 }, // Short Stop
-        new PositionAssignment { X = 15, Y = 35 }, // Left Field
-        new PositionAssignment { X = 38, Y = 15 }, // Left Center Field
-        new PositionAssignment { X = 62, Y = 15 }, // Right Center Field
-        new PositionAssignment { X = 85, Y = 35 }  // Right Field
+        new DefenseField.FieldPositionAssignment { X = 50, Y = 62 }, // Pitcher (Above mound)
+        new DefenseField.FieldPositionAssignment { X = 50, Y = 92 }, // Catcher (Behind home)
+        new DefenseField.FieldPositionAssignment { X = 70, Y = 62 }, // 1st Base (Above bag)
+        new DefenseField.FieldPositionAssignment { X = 65, Y = 48 }, // 2nd Base
+        new DefenseField.FieldPositionAssignment { X = 30, Y = 62 }, // Third Base (Above bag)
+        new DefenseField.FieldPositionAssignment { X = 35, Y = 48 }, // Short Stop
+        new DefenseField.FieldPositionAssignment { X = 15, Y = 35 }, // Left Field
+        new DefenseField.FieldPositionAssignment { X = 38, Y = 15 }, // Left Center Field
+        new DefenseField.FieldPositionAssignment { X = 62, Y = 15 }, // Right Center Field
+        new DefenseField.FieldPositionAssignment { X = 85, Y = 35 }  // Right Field
     };
+
+    private List<DefenseField.FieldPositionAssignment> fieldAssignments => assignments;
 
     private List<string> benchPlayers = new List<string>();
 
@@ -130,7 +98,7 @@
             List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
             List<int> ids = DefenseEncoder.Decode(DefenseData, players);
             
-            foreach (PositionAssignment a in assignments)
+            foreach (var a in assignments)
             {
                 a.PlayerName = string.Empty;
             }
@@ -267,7 +235,7 @@
         List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
         List<int> ids = new List<int>();
 
-        foreach (PositionAssignment assignment in assignments)
+        foreach (var assignment in assignments)
         {
             Player? p = players.FirstOrDefault(x => string.Equals(x.Name, assignment.PlayerName, StringComparison.OrdinalIgnoreCase));
             ids.Add(p?.Id ?? 0);

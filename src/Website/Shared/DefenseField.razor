@@ -1,0 +1,189 @@
+@using IsotopesStats.Domain.Models
+
+<div class="defense-container @(IsEditable ? "editable" : "")" style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")">
+    <img src="images/defense.png" class="defense-bg" />
+    @for (int i = 0; i < Assignments.Count; i++)
+    {
+        int index = i;
+        var assignment = Assignments[index];
+        bool isSelected = SelectedIndex == index && SelectedFromBench == false;
+        bool isAnimating = AnimationCounters != null && AnimationCounters.ContainsKey((index, false));
+        
+        <div class="player-overlay @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
+             style="left: @(assignment.X)%; top: @(assignment.Y)%;"
+             @onclick="() => OnPlayerClick.InvokeAsync((index, false))">
+            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
+                @(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)
+            </div>
+        </div>
+    }
+    @if (BenchPlayers.Any())
+    {
+        <div class="bench-container">
+            <div class="bench-label">BENCH</div>
+            <div class="bench-names">
+                @for (int i = 0; i < BenchPlayers.Count; i++)
+                {
+                    int index = i;
+                    bool isSelected = SelectedIndex == index && SelectedFromBench == true;
+                    bool isAnimating = AnimationCounters != null && AnimationCounters.ContainsKey((index, true));
+                    <div class="bench-player-name @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
+                         @onclick="() => OnPlayerClick.InvokeAsync((index, true))">
+                        @BenchPlayers[index]
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<FieldPositionAssignment> Assignments { get; set; } = new();
+    [Parameter] public List<string> BenchPlayers { get; set; } = new();
+    [Parameter] public int? SelectedIndex { get; set; }
+    [Parameter] public bool? SelectedFromBench { get; set; }
+    [Parameter] public Dictionary<(int Index, bool FromBench), int>? AnimationCounters { get; set; }
+    [Parameter] public EventCallback<(int Index, bool FromBench)> OnPlayerClick { get; set; }
+    [Parameter] public bool IsEditable { get; set; } = false;
+    [Parameter] public int MaxWidth { get; set; } = 0;
+
+    public class FieldPositionAssignment
+    {
+        public string PlayerName { get; set; } = string.Empty;
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+}
+
+<style>
+    .defense-container {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background-color: white;
+    }
+
+    .defense-bg {
+        max-width: 100%;
+        max-height: 80vh;
+        width: auto;
+        height: auto;
+        display: block;
+    }
+
+    .player-overlay {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        color: black;
+        font-weight: bold;
+        font-size: clamp(10px, 2.5vmin, 32px);
+        text-align: center;
+        z-index: 5;
+    }
+
+    .editable .player-overlay {
+        cursor: pointer;
+    }
+
+    .player-overlay.selected .player-name-box {
+        background-color: #ffeb3b;
+        border-color: #fbc02d;
+        box-shadow: 0 0 15px rgba(255, 235, 59, 0.5);
+    }
+
+    .player-name-box {
+        border: clamp(1px, 0.2vmin, 3px) solid black;
+        padding: 0.5vmin 1.5vmin;
+        background-color: white;
+        min-width: 12vmin;
+        white-space: nowrap;
+        width: max-content;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+
+    .player-name-box.empty {
+        color: #999;
+        border-style: dashed;
+        opacity: 0.6;
+        background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .editable .player-overlay:hover .player-name-box {
+        background-color: #f8f9fa;
+        transform: scale(1.05);
+    }
+
+    .bench-container {
+        position: absolute;
+        bottom: 1.5vmin;
+        right: 1.5vmin;
+        background-color: rgba(255, 255, 255, 0.95);
+        border: clamp(1px, 0.2vmin, 3px) solid black;
+        padding: 0.8vmin 2vmin;
+        text-align: center;
+        z-index: 10;
+        width: max-content;
+        max-width: 32vmin;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .bench-label {
+        font-weight: bold;
+        font-size: clamp(7px, 1vmin, 14px);
+        color: #666;
+        margin-bottom: 2px;
+        letter-spacing: 1px;
+    }
+
+    .bench-names {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.8vmin;
+        font-weight: bold;
+        font-size: clamp(9px, 1.8vmin, 22px);
+        margin-top: 0.5vmin;
+    }
+
+    .bench-player-name {
+        padding: 0.5vmin 1.2vmin;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        background-color: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+    }
+
+    .editable .bench-player-name {
+        cursor: pointer;
+    }
+
+    .editable .bench-player-name:hover {
+        background-color: #eee;
+        transform: scale(1.05);
+    }
+
+    .bench-player-name.selected {
+        background-color: #ffeb3b;
+        border-color: #fbc02d;
+        color: black;
+    }
+
+    .player-overlay.just-swapped .player-name-box {
+        background-color: #c8e6c9;
+        border-color: #4caf50;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        z-index: 10;
+    }
+
+    .bench-player-name.just-swapped {
+        background-color: #c8e6c9;
+        border-color: #4caf50;
+        transform: scale(1.15);
+        color: #1b5e20;
+        z-index: 15;
+    }
+</style>

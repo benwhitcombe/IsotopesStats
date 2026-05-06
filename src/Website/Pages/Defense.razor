@@ -94,89 +94,86 @@ else
         </div>
     </div>
 
-    <div class="stat-card mb-4" style="padding: 1.5rem 1.25rem; position: relative; z-index: @(isBenchDropdownOpen ? "1100" : "5");">
-        <h5 class="mb-3" style="color: var(--isotopes-accent);">Assign Positions</h5>
-        <div class="row g-3 mb-4" style="position: relative;">
-            @foreach (PositionAssignment assignment in assignments)
-            {
-                <div class="col-md-6 col-lg-4" @key="assignment.PositionLabel">
-                    <label class="form-label fw-bold">@assignment.PositionLabel (@assignment.PositionAbbreviation)</label>
-                    <div class="input-group">
-                        <select class="form-select" 
-                                autocomplete="off"
-                                @bind="assignment.PlayerId">
-                            <option value="">-- Select Player --</option>
-                            @foreach (Player player in players.OrderBy(p => p.Name))
-                            {
-                                <option value="@player.Id" @key="player.Id">@player.Name</option>
-                            }
-                        </select>
-                        @if (assignment.PlayerId.HasValue)
-                        {
-                            <button class="btn btn-outline-secondary" type="button" @onclick="() => ClearPosition(assignment)">✕</button>
-                        }
-                    </div>
+    <div class="defense-main-layout">
+        <div class="lineup-pane">
+            <div class="lineup-card-container">
+                <div class="lineup-card-header">
+                    <div class="team-name">ISOTOPES</div>
+                    <div class="card-title">LINEUP CARD</div>
                 </div>
-            }
-
-            <div class="col-md-6 col-lg-4">
-                <label class="form-label fw-bold">Bench (B)</label>
-                <div class="dropdown @(isBenchDropdownOpen ? "show" : "")">
-                    <div class="form-control d-flex flex-wrap align-items-center gap-1 @(isBenchDropdownOpen ? "focused" : "")" 
-                         style="min-height: 38px; cursor: pointer; padding: 0.375rem 0.75rem; border-color: #ced4da; background-image: none; position: relative;"
-                         @onclick="ToggleBenchDropdown" @onclick:stopPropagation>
-                        
-                        @if (!BenchPlayers.Any())
+                <table class="lineup-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th style="width: 60px;">POS</th>
+                            <th>PLAYER NAME</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < assignments.Count; i++)
                         {
-                            <span class="text-muted">-- Select Bench --</span>
-                        }
-                        else
-                        {
-                            @foreach (int playerId in availablePlayerIds.Where(id => !IsPlayerAssigned(id)))
-                            {
-                                Player? player = players.FirstOrDefault(p => p.Id == playerId);
-                                if (player == null) continue;
-                                
-                                <span class="badge bg-secondary d-inline-flex align-items-center gap-1" 
-                                      style="font-weight: normal; font-size: 0.85rem; padding: 0.4em 0.6em; cursor: pointer;" 
-                                      @onclick="() => ToggleBenchPlayer(player.Id, false)" @onclick:stopPropagation>
-                                    @player.Name
-                                    <span style="color: #ccc; font-size: 0.7rem; margin-left: 2px;">✕</span>
-                                </span>
-                            }
+                            int index = i;
+                            var assignment = assignments[index];
+                            <tr @key="assignment.PositionLabel">
+                                <td class="pos-num">@assignment.PositionNumber</td>
+                                <td class="pos-abbr">@assignment.PositionAbbreviation</td>
+                                <td class="player-select-cell">
+                                    <PlayerAutocompleteCell 
+                                        @ref="autocompleteCells[index]"
+                                        Value="@(players.FirstOrDefault(p => p.Id == assignment.PlayerId)?.Name ?? string.Empty)"
+                                        Players="@players"
+                                        PlayerAssignments="@playerAssignments"
+                                        OnSelected="@(p => HandleStarterSelection(assignment, p))"
+                                        OnCommit="@(() => FocusNextPosition(index))" />
+                                </td>
+                            </tr>
                         }
                         
-                        <div style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none;">
-                            <span class="dropdown-toggle" style="border-top-color: #666;"></span>
-                        </div>
-                    </div>
+                        @{
+                            var currentBenchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+                            int totalBenchRows = currentBenchIds.Count + (players.Count > availablePlayerIds.Count ? 1 : 0);
+                        }
+                        @for (int j = 0; j < totalBenchRows; j++)
+                        {
+                            int benchIndex = j;
+                            int posNum = 11 + benchIndex;
+                            int cellIndex = 10 + benchIndex;
+                            int? playerId = benchIndex < currentBenchIds.Count ? currentBenchIds[benchIndex] : null;
+                            
+                            <tr @key="@($"bench-{benchIndex}")">
+                                <td class="pos-num">@posNum</td>
+                                <td class="pos-abbr">B</td>
+                                <td class="player-select-cell">
+                                    <PlayerAutocompleteCell 
+                                        @ref="autocompleteCells[cellIndex]"
+                                        Value="@(players.FirstOrDefault(p => p.Id == playerId)?.Name ?? string.Empty)"
+                                        Players="@players"
+                                        PlayerAssignments="@playerAssignments"
+                                        OnSelected="@(p => HandleBenchSelection(playerId, p))"
+                                        OnCommit="@(() => FocusNextPosition(cellIndex))" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                    @if (isBenchDropdownOpen)
-                    {
-                        <div class="dropdown-menu w-100 p-0 show" 
-                             style="max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 2px;" 
-                             @onclick:stopPropagation>
-                            @foreach (Player player in players.OrderBy(p => p.Name))
-                            {
-                                <div class="dropdown-item p-0">
-                                    <div class="form-check w-100 p-2 px-3 m-0 d-flex align-items-center" style="cursor: pointer; border-bottom: 1px solid #f0f0f0;" @onclick="() => ToggleBenchPlayer(player.Id, !IsOnBench(player.Id))">
-                                        <input class="form-check-input m-0" type="checkbox" 
-                                               id="bench-@player.Id" 
-                                               checked="@IsOnBench(player.Id)"
-                                               @onchange="@(e => ToggleBenchPlayer(player.Id, (bool)e.Value!))"
-                                               @onclick:stopPropagation />
-                                        <label class="form-check-label ms-2 flex-grow-1" for="bench-@player.Id" @onclick:stopPropagation>
-                                            @player.Name
-                                            @if (IsPlayerAssigned(player.Id))
-                                            {
-                                                <small class="text-muted ms-1">(Assigned)</small>
-                                            }
-                                        </label>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
+        <div class="field-pane d-none d-xl-block">
+            <div class="field-container-sticky">
+                <DefenseField 
+                    Assignments="@fieldAssignments" 
+                    BenchPlayers="@benchPlayerNames" 
+                    SelectedIndex="@selectedIndex" 
+                    SelectedFromBench="@selectedFromBench" 
+                    AnimationCounters="@animationCounters" 
+                    OnPlayerClick="@(e => HandleFieldClick(e.Index, e.FromBench))"
+                    IsEditable="true"
+                    MaxWidth="800" />
+                
+                <div class="mt-4 d-flex gap-2 justify-content-center">
+                    <button class="view-btn" @onclick="ClearAll" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Clear All</button>
+                    <button class="view-btn active" @onclick="SaveAndView" disabled="@(!IsDefenseComplete)" style="padding: 0.6rem 1.5rem; font-size: 0.9rem; opacity: @(IsDefenseComplete ? "1" : "0.5");">Save & View Defense</button>
                 </div>
             </div>
         </div>
@@ -185,7 +182,9 @@ else
         {
             <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999; background:transparent;" @onclick="() => isBenchDropdownOpen = false"></div>
         }
+    </div>
 
+    <div class="d-xl-none mt-4">
         <div class="mt-4 d-flex gap-2 justify-content-end">
             <button class="view-btn" @onclick="ClearAll" style="padding: 0.8rem 2rem;">Clear All</button>
             <button class="view-btn active" @onclick="SaveAndView" disabled="@(!IsDefenseComplete)" style="padding: 0.8rem 2rem; opacity: @(IsDefenseComplete ? "1" : "0.5"); cursor: @(IsDefenseComplete ? "pointer" : "not-allowed");">Save & View Defense</button>
@@ -194,7 +193,7 @@ else
     
     @if (!IsDefenseComplete)
     {
-        <div class="alert alert-info">
+        <div class="alert alert-info mt-4">
             Please select a player for all 10 positions to view the defense.
         </div>
     }
@@ -382,6 +381,58 @@ else
         searchQuery = string.Empty;
     }
 
+    private Dictionary<int, PlayerAutocompleteCell> autocompleteCells = new();
+
+    private async Task FocusNextPosition(int currentIndex)
+    {
+        int nextIndex = currentIndex + 1;
+        await Task.Yield(); // Give Blazor a chance to render new row if added
+        if (autocompleteCells.TryGetValue(nextIndex, out var cell) && cell != null)
+        {
+            await cell.FocusAsync();
+        }
+    }
+
+    private void HandleStarterSelection(PositionAssignment assignment, Player? newPlayer)
+    {
+        // 1. If we are replacing an existing player in this spot, remove them from the game
+        if (assignment.PlayerId.HasValue && (newPlayer == null || assignment.PlayerId != newPlayer.Id))
+        {
+            availablePlayerIds.Remove(assignment.PlayerId.Value);
+        }
+
+        // 2. Set the new player (this triggers HandleAssignmentChange via the property setter)
+        assignment.PlayerId = newPlayer?.Id;
+
+        StateHasChanged();
+        UpdateUrl();
+    }
+
+    private void HandleBenchSelection(int? oldPlayerId, Player? newPlayer)
+    {
+        if (oldPlayerId.HasValue)
+        {
+            availablePlayerIds.Remove(oldPlayerId.Value);
+        }
+
+        if (newPlayer != null)
+        {
+            if (!availablePlayerIds.Contains(newPlayer.Id))
+            {
+                availablePlayerIds.Add(newPlayer.Id);
+            }
+
+            // Ensure they aren't assigned to a starter spot
+            foreach (var a in assignments)
+            {
+                if (a.PlayerId == newPlayer.Id) a.PlayerId = null;
+            }
+        }
+
+        StateHasChanged();
+        UpdateUrl();
+    }
+
     private bool IsPlayerAssigned(int playerId)
     {
         foreach (PositionAssignment a in assignments)
@@ -389,6 +440,133 @@ else
             if (a.PlayerId == playerId) return true;
         }
         return false;
+    }
+
+    private int? selectedIndex;
+    private bool? selectedFromBench;
+    private Dictionary<(int Index, bool FromBench), int> animationCounters = new();
+
+    private List<DefenseField.FieldPositionAssignment> fieldAssignments => assignments.Select(a => new DefenseField.FieldPositionAssignment
+    {
+        PlayerName = players.FirstOrDefault(p => p.Id == a.PlayerId)?.Name ?? string.Empty,
+        X = a.X,
+        Y = a.Y
+    }).ToList();
+
+    private Dictionary<int, string> playerAssignments 
+    {
+        get 
+        {
+            var dict = assignments
+                .Where(a => a.PlayerId.HasValue)
+                .ToDictionary(a => a.PlayerId!.Value, a => a.PositionAbbreviation);
+            
+            foreach (var id in availablePlayerIds)
+            {
+                if (!dict.ContainsKey(id))
+                {
+                    dict[id] = "B";
+                }
+            }
+            return dict;
+        }
+    }
+
+    private List<string> benchPlayerNames => availablePlayerIds
+        .Where(id => !IsPlayerAssigned(id))
+        .Select(id => players.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty)
+        .Where(name => !string.IsNullOrEmpty(name))
+        .ToList();
+
+    private async Task HandleFieldClick(int index, bool fromBench)
+    {
+        if (selectedIndex == null)
+        {
+            selectedIndex = index;
+            selectedFromBench = fromBench;
+            return;
+        }
+
+        if (selectedIndex == index && selectedFromBench == fromBench)
+        {
+            selectedIndex = null;
+            selectedFromBench = null;
+            return;
+        }
+
+        // Capture indices for animation
+        int idx1 = selectedIndex!.Value;
+        bool bench1 = selectedFromBench!.Value;
+        int idx2 = index;
+        bool bench2 = fromBench;
+
+        if (selectedFromBench == true)
+        {
+            int? sourcePlayerId = GetBenchPlayerId(selectedIndex.Value);
+            if (fromBench)
+            {
+                // Swap bench with bench - no-op for now as bench is just a list of names
+            }
+            else
+            {
+                int? targetPlayerId = assignments[index].PlayerId;
+                assignments[index].PlayerId = sourcePlayerId;
+                // If the bench player was replaced, we don't need to do much as bench is derived
+            }
+        }
+        else
+        {
+            int? sourcePlayerId = assignments[selectedIndex.Value].PlayerId;
+            if (fromBench)
+            {
+                int? targetPlayerId = GetBenchPlayerId(index);
+                assignments[selectedIndex.Value].PlayerId = targetPlayerId;
+            }
+            else
+            {
+                int? targetPlayerId = assignments[index].PlayerId;
+                assignments[selectedIndex.Value].PlayerId = targetPlayerId;
+                assignments[index].PlayerId = sourcePlayerId;
+            }
+        }
+
+        selectedIndex = null;
+        selectedFromBench = null;
+        
+        // Trigger animations
+        _ = TriggerAnimation(idx1, bench1);
+        _ = TriggerAnimation(idx2, bench2);
+        
+        StateHasChanged();
+        UpdateUrl();
+        await Task.CompletedTask;
+    }
+
+    private int? GetBenchPlayerId(int benchIndex)
+    {
+        var benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+        if (benchIndex >= 0 && benchIndex < benchIds.Count)
+        {
+            return benchIds[benchIndex];
+        }
+        return null;
+    }
+
+    private async Task TriggerAnimation(int index, bool fromBench)
+    {
+        (int Index, bool FromBench) key = (index, fromBench);
+        if (animationCounters.ContainsKey(key)) animationCounters[key]++;
+        else animationCounters[key] = 1;
+        
+        StateHasChanged();
+        await Task.Delay(600);
+        
+        if (animationCounters.ContainsKey(key))
+        {
+            animationCounters[key]--;
+            if (animationCounters[key] <= 0) animationCounters.Remove(key);
+            StateHasChanged();
+        }
     }
 
     private string GetPlayerLabel(Player player)
@@ -423,8 +601,11 @@ else
 
     private class PositionAssignment
     {
+        public int PositionNumber { get; set; }
         public string PositionLabel { get; set; } = string.Empty;
         public string PositionAbbreviation { get; set; } = string.Empty;
+        public double X { get; set; }
+        public double Y { get; set; }
         
         private int? _playerId;
         public int? PlayerId 
@@ -449,16 +630,16 @@ else
     {
         assignments = new List<PositionAssignment>()
         {
-            new PositionAssignment { PositionLabel = "Pitcher", PositionAbbreviation = "P", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Catcher", PositionAbbreviation = "C", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "1st Base", PositionAbbreviation = "1B", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "2nd Base", PositionAbbreviation = "2B", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Third Base", PositionAbbreviation = "3B", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Short Stop", PositionAbbreviation = "SS", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Left Field", PositionAbbreviation = "LF", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Left Center Field", PositionAbbreviation = "LC", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Right Center Field", PositionAbbreviation = "RC", OnAssignmentChanged = HandleAssignmentChange },
-            new PositionAssignment { PositionLabel = "Right Field", PositionAbbreviation = "RF", OnAssignmentChanged = HandleAssignmentChange }
+            new PositionAssignment { PositionNumber = 1, PositionLabel = "Pitcher", PositionAbbreviation = "P", X = 50, Y = 62, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 2, PositionLabel = "Catcher", PositionAbbreviation = "C", X = 50, Y = 92, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 3, PositionLabel = "1st Base", PositionAbbreviation = "1B", X = 70, Y = 62, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 4, PositionLabel = "2nd Base", PositionAbbreviation = "2B", X = 65, Y = 48, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 5, PositionLabel = "Third Base", PositionAbbreviation = "3B", X = 30, Y = 62, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 6, PositionLabel = "Short Stop", PositionAbbreviation = "SS", X = 35, Y = 48, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 7, PositionLabel = "Left Field", PositionAbbreviation = "LF", X = 15, Y = 35, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 8, PositionLabel = "Left Center Field", PositionAbbreviation = "LC", X = 38, Y = 15, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 9, PositionLabel = "Right Center Field", PositionAbbreviation = "RC", X = 62, Y = 15, OnAssignmentChanged = HandleAssignmentChange },
+            new PositionAssignment { PositionNumber = 10, PositionLabel = "Right Field", PositionAbbreviation = "RF", X = 85, Y = 35, OnAssignmentChanged = HandleAssignmentChange }
         };
     }
 
@@ -847,5 +1028,124 @@ else
             cursor: pointer;
             user-select: none;
         }
+    }
+
+    .defense-main-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @@media (min-width: 1200px) {
+        .defense-main-layout {
+            grid-template-columns: 450px 1fr;
+        }
+    }
+
+    .lineup-card-container {
+        background: #fdfbf7;
+        border: 2px solid #333;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+        padding: 0;
+        position: relative;
+    }
+
+    .lineup-card-header {
+        background: #333;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 2px solid #333;
+    }
+
+    .team-name {
+        font-size: 1.5rem;
+        font-weight: 900;
+        letter-spacing: 4px;
+        margin-bottom: 0.2rem;
+    }
+
+    .card-title {
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        opacity: 0.8;
+    }
+
+    .lineup-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .lineup-table th {
+        background: #eee;
+        border-bottom: 2px solid #333;
+        padding: 0.5rem;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #666;
+    }
+
+    .lineup-table td {
+        border-bottom: 1px solid #ddd;
+        padding: 0;
+        vertical-align: middle;
+    }
+
+    .pos-num {
+        text-align: center;
+        font-weight: bold;
+        color: #999;
+        border-right: 1px solid #ddd;
+    }
+
+    .pos-abbr {
+        text-align: center;
+        font-weight: 900;
+        color: #333;
+        border-right: 1px solid #ddd;
+        background: #f9f9f9;
+    }
+
+    .player-select-cell {
+        background: white;
+    }
+
+    .lineup-bench-box {
+        min-height: 45px;
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+        border: 1px dashed #ccc;
+        background: white;
+        position: relative;
+    }
+
+    .lineup-bench-box.focused {
+        border-color: #333;
+        border-style: solid;
+    }
+
+    .bench-section {
+        padding: 1rem;
+        background: #f9f9f9;
+        border-top: 1px solid #ddd;
+    }
+
+    .field-container-sticky {
+        position: sticky;
+        top: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .player-select-cell select:hover {
+        background-color: #f0f7ff !important;
+    }
+
+    .player-select-cell select:focus {
+        background-color: #e6f2ff !important;
+        outline: none;
     }
 </style>
