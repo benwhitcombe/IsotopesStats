@@ -161,6 +161,9 @@
         background-color: white;
         min-width: 100px;
         white-space: nowrap;
+        width: max-content;
+        overflow: visible;
+        text-overflow: clip;
     }
 
     .bench-container {
@@ -172,6 +175,8 @@
         padding: 8px 20px;
         text-align: center;
         z-index: 10;
+        width: max-content;
+        max-width: 480px;
     }
 
     .bench-label {
@@ -185,6 +190,7 @@
     .bench-names {
         font-weight: bold;
         font-size: 1.2rem;
+        white-space: normal;
     }
 
     @@media (max-width: 768px) {
@@ -195,17 +201,21 @@
             padding: 2px 6px;
             min-width: 60px;
             border-width: 1.5px;
+            width: max-content;
         }
         .bench-container {
             bottom: 15px;
             right: 15px;
             padding: 4px 12px;
+            width: max-content;
+            max-width: calc(100vw - 30px);
         }
         .bench-label {
             font-size: 0.6rem;
         }
         .bench-names {
             font-size: 0.9rem;
+            white-space: normal;
         }
     }
 </style>

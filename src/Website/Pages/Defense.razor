@@ -5,6 +5,7 @@
 @inject SharedSessionState SharedState
 @inject SessionStorageService SessionStorage
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Isotopes - Defense</PageTitle>
 
@@ -381,8 +382,7 @@ else
         
         string data = GetCurrentDefenseData();
         string? queryValue = string.IsNullOrEmpty(data) ? null : data;
-        string newUri = NavigationManager.GetUriWithQueryParameters(new Dictionary<string, object?> { ["p"] = queryValue });
-        NavigationManager.NavigateTo(newUri, replace: true);
+        _ = JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", queryValue);
     }
 
     private void ApplyQueryParameters()
@@ -447,7 +447,7 @@ else
         selectedSeasonId = seasonId;
         SharedState.SelectedSeasonId = seasonId;
         await LoadPlayers();
-        ClearAll();
+        ClearAllInternal();
         await LoadStateFromStorage();
         isInitializing = false;
         UpdateUrl();
@@ -543,13 +543,18 @@ else
         }
     }
 
-    private void ClearAll()
+    private void ClearAllInternal()
     {
         availablePlayerIds.Clear();
         foreach (PositionAssignment a in assignments)
         {
             a.PlayerId = null;
         }
+    }
+
+    private void ClearAll()
+    {
+        ClearAllInternal();
         StateHasChanged();
         UpdateUrl();
     }
