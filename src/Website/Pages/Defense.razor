@@ -26,61 +26,76 @@
 }
 else
 {
-    <div class="defense-editor card p-4 shadow-sm mb-4">
-        <h5 class="mb-3" style="color: var(--isotopes-accent);">1. Select Available Players</h5>
-        
-        <div class="filter-container mb-4" style="max-width: 400px;">
-            <div class="search-container">
-                <div class="autocomplete-wrapper">
-                    <div class="ghost-text">
-                        <span style="visibility: hidden;">@searchQuery</span>
-                        <span class="suggestion">@suggestionSuffix</span>
-                    </div>
-                    <input class="form-control" 
-                           autocomplete="off"
-                           @bind="searchQuery"
-                           @bind:event="oninput"
-                           @onkeydown="HandleKeyDown"
-                           @onblur="OnSearchBlur"
-                           placeholder="Quick select player..." />
-                </div>
-                @if (!string.IsNullOrEmpty(searchQuery))
+    <div class="stat-card mb-4" style="padding: 1.25rem;">
+        <div class="d-flex justify-content-between align-items-center clickable-header" @onclick="ToggleQuickSelect">
+            <div>
+                <h5 class="m-0" style="color: var(--isotopes-accent);">Quick Select</h5>
+                @if (isQuickSelectCollapsed)
                 {
-                    <button class="clear-button" @onclick="ClearSearch">✕</button>
+                    <div class="d-md-none" style="font-size: 0.8rem; color: #666; margin-top: 2px;">Expand to access quick select</div>
                 }
-                
-                @if (showSuggestions && filteredSuggestions.Any())
+            </div>
+            <div class="expand-icon d-md-none" style="color: #ccc; font-size: 0.8rem; width: 20px; text-align: center;">@(isQuickSelectCollapsed ? "▼" : "▲")</div>
+        </div>
+        
+        <div class="collapsible-content @(isQuickSelectCollapsed ? "" : "expanded")">
+            <div style="padding-top: 1.5rem;">
+                <div class="filter-container mb-4 d-none d-md-block" style="max-width: 400px;">
+                    <div class="search-container">
+                    <div class="autocomplete-wrapper">
+                        <div class="ghost-text">
+                            <span style="visibility: hidden;">@searchQuery</span>
+                            <span class="suggestion">@suggestionSuffix</span>
+                        </div>
+                        <input class="form-control" 
+                               autocomplete="off"
+                               @bind="searchQuery"
+                               @bind:event="oninput"
+                               @onkeydown="HandleKeyDown"
+                               @onblur="OnSearchBlur"
+                               placeholder="Quick select player..." />
+                    </div>
+                    @if (!string.IsNullOrEmpty(searchQuery))
+                    {
+                        <button class="clear-button" @onclick="ClearSearch">✕</button>
+                    }
+                    
+                    @if (showSuggestions && filteredSuggestions.Any())
+                    {
+                        <div class="custom-autocomplete-dropdown">
+                            @for (int i = 0; i < filteredSuggestions.Count; i++)
+                            {
+                                int index = i;
+                                Player player = filteredSuggestions[i];
+                                <div class="suggestion-item @(index == activeSuggestionIndex ? "active" : "")"
+                                     @onclick="() => SelectSuggestion(player)">
+                                    @player.Name
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="form-text mt-2" style="font-size: 0.85rem; color: #666;">Type a name and press Enter to select the top suggestion.</div>
+            </div>
+
+            <div class="selectable-grid mb-2">
+                @foreach (Player player in players.OrderBy(p => p.Name))
                 {
-                    <div class="custom-autocomplete-dropdown">
-                        @for (int i = 0; i < filteredSuggestions.Count; i++)
-                        {
-                            int index = i;
-                            Player player = filteredSuggestions[i];
-                            <div class="suggestion-item @(index == activeSuggestionIndex ? "active" : "")"
-                                 @onclick="() => SelectSuggestion(player)">
-                                @player.Name
-                            </div>
-                        }
+                    <div class="selectable-item-container" @key="player.Id">
+                        <CheckboxButton 
+                            Id="@($"av-{player.Id}")" 
+                            Text="@GetPlayerLabel(player)" 
+                            Checked="@availablePlayerIds.Contains(player.Id)" 
+                            CheckedChanged="@((bool val) => TogglePlayerAvailability(player.Id, val))" />
                     </div>
                 }
             </div>
-            <div class="form-text mt-2" style="font-size: 0.85rem; color: #666;">Type a name and press Enter to select the top suggestion.</div>
+            </div>
         </div>
+    </div>
 
-        <div class="selectable-grid mb-4" style="background: #f9f9f9; padding: 0.75rem; border-radius: 12px; border: 1px solid #eee;">
-            @foreach (Player player in players.OrderBy(p => p.Name))
-            {
-                <div class="selectable-item-container" @key="player.Id">
-                    <CheckboxButton 
-                        Id="@($"av-{player.Id}")" 
-                        Text="@GetPlayerLabel(player)" 
-                        Checked="@availablePlayerIds.Contains(player.Id)" 
-                        CheckedChanged="@((bool val) => TogglePlayerAvailability(player.Id, val))" />
-                </div>
-            }
-        </div>
-
-        <h5 class="mb-3" style="color: var(--isotopes-accent);">2. Assign Positions</h5>
+    <div class="stat-card mb-4" style="padding: 1.5rem 1.25rem;">
+        <h5 class="mb-3" style="color: var(--isotopes-accent);">Assign Positions</h5>
         <div class="row g-3 mb-4" style="position: relative;">
             @foreach (PositionAssignment assignment in assignments)
             {
@@ -194,6 +209,12 @@ else
     private int selectedSeasonId;
     private bool isLoading = true;
     private bool isInitializing = false;
+    private bool isQuickSelectCollapsed = true;
+
+    private void ToggleQuickSelect()
+    {
+        isQuickSelectCollapsed = !isQuickSelectCollapsed;
+    }
 
     private bool isBenchDropdownOpen = false;
 
@@ -799,5 +820,32 @@ else
         background: #f0f7ff;
         color: var(--isotopes-accent);
         font-weight: bold;
+    }
+
+    .collapsible-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        opacity: 0;
+    }
+
+    .collapsible-content.expanded {
+        max-height: 2000px;
+        opacity: 1;
+    }
+
+    @@media (min-width: 768px) {
+        .collapsible-content {
+            max-height: none;
+            opacity: 1;
+            overflow: visible;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .clickable-header {
+            cursor: pointer;
+            user-select: none;
+        }
     }
 </style>
