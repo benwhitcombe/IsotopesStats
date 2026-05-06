@@ -73,11 +73,12 @@
         if (!string.IsNullOrEmpty(LineupData))
         {
             List<Player> players = await StatsRepository.GetPlayersAsync(seasonId);
-            string[] parts = LineupData.Split('-', StringSplitOptions.RemoveEmptyEntries);
+            List<int> ids = LineupEncoder.Decode(LineupData, players);
             
-            for (int i = 0; i < parts.Length; i++)
+            for (int i = 0; i < ids.Count; i++)
             {
-                if (int.TryParse(parts[i], out int id) && id > 0)
+                int id = ids[i];
+                if (id > 0)
                 {
                     Player? player = players.FirstOrDefault(p => p.Id == id);
                     if (player != null)
