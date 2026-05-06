@@ -18,7 +18,8 @@
             int index = i;
             PositionAssignment assignment = assignments[index];
             bool isSelected = selectedIndex == index && selectedFromBench == false;
-            <div class="player-overlay @(isSelected ? "selected" : "")" 
+            bool isAnimating = animationCounters.ContainsKey((index, false));
+            <div class="player-overlay @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
                  style="left: @(assignment.X)%; top: @(assignment.Y)%;"
                  @onclick="() => HandlePlayerClick(index, false)">
                 <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
@@ -35,7 +36,8 @@
                     {
                         int index = i;
                         bool isSelected = selectedIndex == index && selectedFromBench == true;
-                        <div class="bench-player-name @(isSelected ? "selected" : "")" 
+                        bool isAnimating = animationCounters.ContainsKey((index, true));
+                        <div class="bench-player-name @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
                              @onclick="() => HandlePlayerClick(index, true)">
                             @benchPlayers[index]
                         </div>
@@ -52,6 +54,7 @@
     private int? selectedIndex;
     private bool? selectedFromBench;
     private int seasonId;
+    private Dictionary<(int Index, bool FromBench), int> animationCounters = new();
 
     private class PositionAssignment
     {
@@ -76,6 +79,8 @@
 
     private List<string> benchPlayers = new List<string>();
 
+    private string? _appliedDefenseData;
+
     protected override async Task OnInitializedAsync()
     {
         seasonId = SharedState.SelectedSeasonId;
@@ -87,6 +92,21 @@
                 seasonId = seasons.First().Id;
             }
         }
+
+        await ApplyParameters();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (DefenseData != _appliedDefenseData)
+        {
+            await ApplyParameters();
+        }
+    }
+
+    private async Task ApplyParameters()
+    {
+        _appliedDefenseData = DefenseData;
 
         if (!string.IsNullOrEmpty(DefenseData))
         {
@@ -119,6 +139,7 @@
                 }
             }
             await SaveChanges();
+            StateHasChanged();
             return;
         }
 
@@ -135,6 +156,7 @@
             {
                 benchPlayers = savedBench;
             }
+            StateHasChanged();
         }
         else
         {
@@ -157,6 +179,12 @@
             selectedFromBench = null;
             return;
         }
+
+        // Capture indices for animation
+        int idx1 = selectedIndex.Value;
+        bool bench1 = selectedFromBench.Value;
+        int idx2 = index;
+        bool bench2 = fromBench;
 
         string targetName = fromBench ? benchPlayers[index] : assignments[index].PlayerName;
 
@@ -192,6 +220,27 @@
         selectedIndex = null;
         selectedFromBench = null;
         await SaveChanges();
+
+        // Trigger animations
+        _ = TriggerAnimation(idx1, bench1);
+        _ = TriggerAnimation(idx2, bench2);
+    }
+
+    private async Task TriggerAnimation(int index, bool fromBench)
+    {
+        var key = (index, fromBench);
+        if (animationCounters.ContainsKey(key)) animationCounters[key]++;
+        else animationCounters[key] = 1;
+        
+        StateHasChanged();
+        await Task.Delay(600);
+        
+        if (animationCounters.ContainsKey(key))
+        {
+            animationCounters[key]--;
+            if (animationCounters[key] <= 0) animationCounters.Remove(key);
+            StateHasChanged();
+        }
     }
 
     private async Task SaveChanges()
@@ -357,5 +406,21 @@
         background-color: #ffeb3b;
         border-color: #fbc02d;
         color: black;
+    }
+
+    .player-overlay.just-swapped .player-name-box {
+        background-color: #c8e6c9;
+        border-color: #4caf50;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        z-index: 10;
+    }
+
+    .bench-player-name.just-swapped {
+        background-color: #c8e6c9;
+        border-color: #4caf50;
+        transform: scale(1.15);
+        color: #1b5e20;
+        z-index: 15;
     }
 </style>
