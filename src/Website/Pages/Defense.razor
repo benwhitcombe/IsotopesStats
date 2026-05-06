@@ -91,7 +91,7 @@ else
                                 autocomplete="off"
                                 @bind="assignment.PlayerId">
                             <option value="">-- Select Player --</option>
-                            @foreach (Player player in GetAvailableForPosition(assignment.PlayerId).OrderBy(p => p.Name))
+                            @foreach (Player player in players.OrderBy(p => p.Name))
                             {
                                 <option value="@player.Id" @key="player.Id">@player.Name</option>
                             }
@@ -350,10 +350,18 @@ else
     {
         if (assignment.PlayerId.HasValue)
         {
+            int playerId = assignment.PlayerId.Value;
+            
+            // Mark as available if not already
+            if (!availablePlayerIds.Contains(playerId))
+            {
+                availablePlayerIds.Add(playerId);
+            }
+
             // Bulletproof: Clear this player from every OTHER position
             foreach (PositionAssignment a in assignments)
             {
-                if (a != assignment && a.PlayerId == assignment.PlayerId)
+                if (a != assignment && a.PlayerId == playerId)
                 {
                     a.PlayerId = null;
                 }
@@ -426,13 +434,6 @@ else
     private bool IsDefenseComplete => assignments.All(a => a.PlayerId.HasValue);
     private IEnumerable<Player> AvailablePlayersForSelection => players.Where(p => availablePlayerIds.Contains(p.Id));
     private IEnumerable<Player> BenchPlayers => AvailablePlayersForSelection.Where(p => !IsPlayerAssigned(p.Id));
-
-    private IEnumerable<Player> GetAvailableForPosition(int? currentId)
-    {
-        return AvailablePlayersForSelection.Where(p => 
-            p.Id == currentId || !IsPlayerAssigned(p.Id)
-        );
-    }
 
     protected override async Task OnInitializedAsync()
     {
