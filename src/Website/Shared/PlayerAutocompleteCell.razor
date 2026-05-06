@@ -45,6 +45,8 @@
     [Parameter] public Dictionary<int, string> PlayerAssignments { get; set; } = new();
     [Parameter] public EventCallback<Player?> OnSelected { get; set; }
     [Parameter] public EventCallback OnCommit { get; set; }
+    [Parameter] public EventCallback OnFocused { get; set; }
+    [Parameter] public EventCallback OnBlurred { get; set; }
 
     private ElementReference inputElement;
     private List<Player> filteredPlayers = new();
@@ -171,7 +173,7 @@
         await OnSelected.InvokeAsync(player);
     }
 
-    private void HandleFocus()
+    private async Task HandleFocus()
     {
         isFocused = true;
         originalValue = internalValue;
@@ -179,6 +181,7 @@
         internalValue = string.Empty;
         UpdateSuggestions();
         showSuggestions = true;
+        await OnFocused.InvokeAsync();
     }
 
     private async Task HandleBlur()
@@ -202,6 +205,7 @@
         isFocused = false;
         showSuggestions = false;
         suggestionSuffix = string.Empty;
+        await OnBlurred.InvokeAsync();
         StateHasChanged();
     }
 
@@ -267,6 +271,7 @@
 
     .autocomplete-input.invalid {
         color: #dc3545;
+        font-weight: 900;
     }
 
     .clear-btn {
@@ -274,7 +279,7 @@
         right: 0.5rem;
         background: none;
         border: none;
-        color: #999;
+        color: black;
         font-size: 0.8rem;
         cursor: pointer;
         z-index: 2;
@@ -287,9 +292,8 @@
         left: 0;
         right: 0;
         background: white;
-        border: 1px solid #ddd;
-        border-radius: 0 0 4px 4px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 2px solid black;
+        box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
         z-index: 1000;
         max-height: 250px;
         overflow-y: auto;
@@ -299,12 +303,12 @@
         padding: 0.5rem 0.75rem;
         cursor: pointer;
         font-size: 0.9rem;
-        border-bottom: 1px solid #f5f5f5;
+        border-bottom: 1px solid black;
         text-align: left;
+        color: black;
     }
 
     .suggestion-item.assigned {
-        color: #999;
         font-style: italic;
     }
 
