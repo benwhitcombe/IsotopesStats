@@ -26,7 +26,7 @@
 }
 else
 {
-    <div class="stat-card mb-4" style="padding: 1.25rem;">
+    <div class="stat-card mb-4" style="padding: 1.25rem; position: relative; z-index: @(showSuggestions ? "1100" : "10");">
         <div class="d-flex justify-content-between align-items-center clickable-header" @onclick="ToggleQuickSelect">
             <div>
                 <h5 class="m-0" style="color: var(--isotopes-accent);">Quick Select</h5>
@@ -94,7 +94,7 @@ else
         </div>
     </div>
 
-    <div class="stat-card mb-4" style="padding: 1.5rem 1.25rem;">
+    <div class="stat-card mb-4" style="padding: 1.5rem 1.25rem; position: relative; z-index: @(isBenchDropdownOpen ? "1100" : "5");">
         <h5 class="mb-3" style="color: var(--isotopes-accent);">Assign Positions</h5>
         <div class="row g-3 mb-4" style="position: relative;">
             @foreach (PositionAssignment assignment in assignments)
