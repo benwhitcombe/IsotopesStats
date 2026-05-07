@@ -87,13 +87,15 @@ body {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.desktop-nav .view-btn:hover,
-.header-auth .view-btn:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    background: var(--isotopes-red);
-    color: white;
+@media (hover: hover) {
+    .desktop-nav .view-btn:hover,
+    .header-auth .view-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: var(--isotopes-red);
+        color: white;
+    }
 }
 
 .desktop-nav .view-btn:active,
@@ -1005,7 +1007,9 @@ tr:last-child td {
     font-size: 0.9rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.view-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+@media (hover: hover) {
+    .view-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+}
 .view-btn.active { background-color: var(--isotopes-accent); color: white; border-color: var(--isotopes-accent); font-weight: bold; }
 
 .form-group { margin-bottom: 1rem; }

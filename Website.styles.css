@@ -1,3 +1,185 @@
+/* /Pages/Defense.razor.rz.scp.css */
+.lineup-card-container[b-g044gkluai] {
+    background: white;
+    border: 2px solid black;
+    padding: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.lineup-card-header[b-g044gkluai] {
+    background: white;
+    color: black;
+    padding: 1.5rem;
+    text-align: center;
+    border-bottom: 2px solid black;
+}
+
+.team-name[b-g044gkluai] {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+}
+
+.card-title[b-g044gkluai] {
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    font-weight: bold;
+    background: transparent;
+    color: black;
+}
+
+.lineup-content-wrapper[b-g044gkluai] {
+    display: grid;
+    grid-template-columns: 1fr;
+    background: white;
+}
+
+@media (min-width: 1200px) {
+    .lineup-content-wrapper[b-g044gkluai] {
+        grid-template-columns: 450px 1fr;
+    }
+}
+
+.table-pane[b-g044gkluai] {
+    border-right: 2px solid black;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1199.98px) {
+    .table-pane[b-g044gkluai] {
+        border-right: none;
+    }
+}
+
+.lineup-table[b-g044gkluai] {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lineup-table th[b-g044gkluai] {
+    background-color: white !important;
+    border-bottom: 2px solid black;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: black !important;
+    font-weight: 900;
+}
+
+.lineup-table td[b-g044gkluai] {
+    border-bottom: 1px solid black;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.lineup-table tr:last-child td[b-g044gkluai] {
+    border-bottom: 2px solid black;
+}
+
+.pos-num[b-g044gkluai] {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-right: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.pos-abbr[b-g044gkluai] {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-right: 1px solid black;
+    background: white;
+    font-size: 1.1rem;
+}
+
+.player-select-cell[b-g044gkluai] {
+    background: white;
+}
+
+.lineup-actions[b-g044gkluai] {
+    background: white;
+}
+
+.field-pane[b-g044gkluai] {
+    background: white;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.field-container-sticky[b-g044gkluai] {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.view-btn[b-g044gkluai] {
+    background: white;
+    border: 2px solid black;
+    color: black;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+}
+
+@media (hover: hover) {
+    .view-btn:hover[b-g044gkluai] {
+        background: black;
+        color: white;
+    }
+}
+
+.view-btn:active[b-g044gkluai] {
+    background: black;
+    color: white;
+}
+
+.view-btn.active[b-g044gkluai] {
+    background: black;
+    color: white;
+}
+
+.player-select-cell select:hover[b-g044gkluai] {
+    background-color: transparent !important;
+}
+
+.player-select-cell select:focus[b-g044gkluai] {
+    background-color: transparent !important;
+    outline: none;
+}
+
+.toast-notification-simple[b-g044gkluai] {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: black;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeInOut-b-g044gkluai 3s ease-in-out forwards;
+    font-weight: bold;
+}
+
+@keyframes fadeInOut-b-g044gkluai {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}
 /* /Shared/MainLayout.razor.rz.scp.css */
 .page[b-sy2l7isrkd] {
     position: relative;
