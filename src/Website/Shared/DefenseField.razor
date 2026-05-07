@@ -1,35 +1,130 @@
 @using IsotopesStats.Domain.Models
+@inject IJSRuntime JSRuntime
 
-<div class="defense-container @(IsEditable ? "editable" : "")" style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")">
+<div class="defense-container @(IsEditable ? "editable" : "")" 
+     style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")">
+    
     <img src="images/defense.png" class="defense-bg" />
     @for (int i = 0; i < Assignments.Count; i++)
     {
         int index = i;
-        var assignment = Assignments[index];
+        FieldPositionAssignment assignment = Assignments[index];
         bool isSelected = SelectedIndex == index && SelectedFromBench == false;
-        bool isAnimating = AnimationCounters != null && AnimationCounters.ContainsKey((index, false));
         
-        <div class="player-overlay @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
+        bool isSwapping = false;
+        bool isRemoving = false;
+        if (AnimationCounters != null && AnimationCounters.TryGetValue((index, false), out AnimationState? state))
+        {
+            isSwapping = state.Type == AnimationType.Swapped;
+            isRemoving = state.Type == AnimationType.Removed;
+        }
+
+        bool isDropdownOpen = showDropdown && dropdownIndex == index && dropdownFromBench == false;
+        
+        <div class="player-overlay @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
              style="left: @(assignment.X)%; top: @(assignment.Y)%;"
-             @onclick="() => OnPlayerClick.InvokeAsync((index, false))">
+             @onclick="() => HandleFieldClick(index, false)"
+             @onclick:stopPropagation>
             <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
-                @(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)
+                <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
+                @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
+                {
+                    <span class="remove-icon">×</span>
+                }
             </div>
+            
+            @if (isDropdownOpen)
+            {
+                <div class="field-dropdown" @onclick:stopPropagation>
+                    <input @ref="dropdownInput"
+                           class="dropdown-search" 
+                           placeholder="Search player..." 
+                           value="@searchTerm"
+                           @oninput="OnSearchInput" 
+                           @onkeydown="HandleDropdownKeydown"
+                           @onblur="() => showDropdown = false" />
+                    <div class="dropdown-list">
+                        @{
+                            List<Player> filtered = FilteredPlayers.ToList();
+                            for (int f = 0; f < filtered.Count; f++)
+                            {
+                                int fIndex = f;
+                                Player player = filtered[f];
+                                <div class="dropdown-item @(fIndex == dropdownActiveIndex ? "active" : "")" 
+                                     @onmousedown="() => SelectPlayer(player)">
+                                    @GetPlayerDisplayName(player)
+                                </div>
+                            }
+                            if (!filtered.Any())
+                            {
+                                <div class="dropdown-no-results">No players found</div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
         </div>
     }
-    @if (BenchPlayers.Any())
+    @if (BenchPlayers.Any() || IsEditable)
     {
-        <div class="bench-container">
+        bool isBenchDropdownOpen = showDropdown && dropdownFromBench == true;
+        <div class="bench-container @(isBenchDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" @onclick:stopPropagation>
             <div class="bench-label">BENCH</div>
             <div class="bench-names">
                 @for (int i = 0; i < BenchPlayers.Count; i++)
                 {
                     int index = i;
                     bool isSelected = SelectedIndex == index && SelectedFromBench == true;
-                    bool isAnimating = AnimationCounters != null && AnimationCounters.ContainsKey((index, true));
-                    <div class="bench-player-name @(isSelected ? "selected" : "") @(isAnimating ? "just-swapped" : "")" 
-                         @onclick="() => OnPlayerClick.InvokeAsync((index, true))">
-                        @BenchPlayers[index]
+                    
+                    bool isSwapping = false;
+                    bool isRemoving = false;
+                    if (AnimationCounters != null && AnimationCounters.TryGetValue((index, true), out AnimationState? state))
+                    {
+                        isSwapping = state.Type == AnimationType.Swapped;
+                        isRemoving = state.Type == AnimationType.Removed;
+                    }
+
+                    <div class="bench-player-name @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
+                         @onclick="() => HandleFieldClick(index, true)">
+                        <span class="player-name-text">@BenchPlayers[index]</span>
+                        @if (isSelected)
+                        {
+                            <span class="remove-icon">×</span>
+                        }
+                    </div>
+                }
+                @if (IsEditable && Players.Any(p => !PlayerAssignments.ContainsKey(p.Id)))
+                {
+                    bool isThisAddDropdownOpen = showDropdown && dropdownIndex == BenchPlayers.Count && dropdownFromBench == true;
+                    <div class="bench-player-name empty @(isThisAddDropdownOpen ? "active-add" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" @onclick="() => HandleFieldClick(BenchPlayers.Count, true)">
+                        <span class="player-name-text">+ Add</span>
+                        
+                        @if (isThisAddDropdownOpen)
+                        {
+                            <div class="field-dropdown bench-dropdown" @onclick:stopPropagation>
+                                <input @ref="dropdownInput"
+                                       class="dropdown-search" 
+                                       placeholder="Search player..." 
+                                       value="@searchTerm"
+                                       @oninput="OnSearchInput" 
+                                       @onkeydown="HandleDropdownKeydown"
+                                       @onblur="() => showDropdown = false" />
+                                <div class="dropdown-list">
+                                    @{
+                                        List<Player> filtered = FilteredPlayers.ToList();
+                                        for (int f = 0; f < filtered.Count; f++)
+                                        {
+                                            int fIndex = f;
+                                            Player player = filtered[f];
+                                            <div class="dropdown-item @(fIndex == dropdownActiveIndex ? "active" : "")" 
+                                                 @onmousedown="() => SelectPlayer(player)">
+                                                @GetPlayerDisplayName(player)
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -40,12 +135,129 @@
 @code {
     [Parameter] public List<FieldPositionAssignment> Assignments { get; set; } = new();
     [Parameter] public List<string> BenchPlayers { get; set; } = new();
+    [Parameter] public List<Player> Players { get; set; } = new();
+    [Parameter] public Dictionary<int, string> PlayerAssignments { get; set; } = new();
     [Parameter] public int? SelectedIndex { get; set; }
     [Parameter] public bool? SelectedFromBench { get; set; }
-    [Parameter] public Dictionary<(int Index, bool FromBench), int>? AnimationCounters { get; set; }
+    [Parameter] public bool IsExplicitlySelected { get; set; }
+    [Parameter] public Dictionary<(int Index, bool FromBench), AnimationState>? AnimationCounters { get; set; }
     [Parameter] public EventCallback<(int Index, bool FromBench)> OnPlayerClick { get; set; }
+    [Parameter] public EventCallback OnDeselect { get; set; }
+    [Parameter] public EventCallback<(int Index, bool FromBench, Player Player)> OnPlayerSelected { get; set; }
     [Parameter] public bool IsEditable { get; set; } = false;
     [Parameter] public int MaxWidth { get; set; } = 0;
+
+    public enum AnimationType { Swapped, Removed }
+    public class AnimationState { public int Count; public AnimationType Type; }
+
+    private bool isMobile = false;
+    private bool showDropdown = false;
+    private bool shouldFocusInput = false;
+    private int dropdownIndex = -1;
+    private bool dropdownFromBench = false;
+    private string searchTerm = "";
+    private ElementReference dropdownInput;
+    private int dropdownActiveIndex = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
+        }
+        
+        if (showDropdown && shouldFocusInput)
+        {
+            shouldFocusInput = false;
+            try { await dropdownInput.FocusAsync(); } catch { }
+        }
+    }
+
+    private IEnumerable<Player> FilteredPlayers => Players
+        .Where(p => string.IsNullOrWhiteSpace(searchTerm) || p.Name.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
+        .OrderBy(p => PlayerAssignments.ContainsKey(p.Id) ? 1 : 0)
+        .ThenBy(p => p.Name);
+
+    private string GetPlayerDisplayName(Player player)
+    {
+        if (PlayerAssignments.TryGetValue(player.Id, out string? pos))
+        {
+            return $"{player.Name} ({pos})";
+        }
+        return player.Name;
+    }
+
+    private async Task HandleFieldClick(int index, bool fromBench)
+    {
+        if (!IsEditable) return;
+
+        bool isEmpty = fromBench 
+            ? index >= BenchPlayers.Count 
+            : string.IsNullOrEmpty(Assignments[index].PlayerName);
+
+        if (SelectedIndex.HasValue && IsExplicitlySelected)
+        {
+            showDropdown = false;
+            await OnPlayerClick.InvokeAsync((index, fromBench));
+            return;
+        }
+
+        if (!isMobile && isEmpty && OnPlayerSelected.HasDelegate)
+        {
+            dropdownIndex = index;
+            dropdownFromBench = fromBench;
+            showDropdown = true;
+            shouldFocusInput = true;
+            searchTerm = "";
+            dropdownActiveIndex = 0;
+            StateHasChanged();
+        }
+        else
+        {
+            showDropdown = false;
+            await OnPlayerClick.InvokeAsync((index, fromBench));
+        }
+    }
+
+    private async Task Deselect()
+    {
+        await OnDeselect.InvokeAsync();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        dropdownActiveIndex = 0;
+    }
+
+    private async Task HandleDropdownKeydown(KeyboardEventArgs e)
+    {
+        List<Player> filtered = FilteredPlayers.ToList();
+        if (!filtered.Any()) return;
+
+        if (e.Key == "ArrowDown")
+        {
+            dropdownActiveIndex = (dropdownActiveIndex + 1) % filtered.Count;
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            dropdownActiveIndex = (dropdownActiveIndex - 1 + filtered.Count) % filtered.Count;
+        }
+        else if (e.Key == "Enter")
+        {
+            await SelectPlayer(filtered[dropdownActiveIndex]);
+        }
+        else if (e.Key == "Escape")
+        {
+            showDropdown = false;
+        }
+    }
+
+    private async Task SelectPlayer(Player player)
+    {
+        showDropdown = false;
+        await OnPlayerSelected.InvokeAsync((dropdownIndex, dropdownFromBench, player));
+    }
 
     public class FieldPositionAssignment
     {
@@ -60,6 +272,16 @@
         position: relative;
         display: inline-block;
         max-width: 100%;
+    }
+
+    .dropdown-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        background: transparent;
     }
 
     .defense-bg {
@@ -80,15 +302,23 @@
         z-index: 5;
     }
 
+    .player-overlay.dropdown-open {
+        z-index: 10001; /* Above backdrop */
+    }
+
+    .player-overlay.selection-active {
+        z-index: 10001; /* Above backdrop */
+    }
+
     .editable .player-overlay {
         cursor: pointer;
     }
 
     .player-overlay.selected .player-name-box {
-        background-color: #ffeb3b;
-        color: black;
-        border-color: #fbc02d;
-        box-shadow: 0 0 15px rgba(255, 235, 59, 0.5);
+        background-color: #bbdefb;
+        color: #0d47a1;
+        border-color: #2196f3;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
     }
 
     .player-name-box {
@@ -99,6 +329,11 @@
         white-space: nowrap;
         width: max-content;
         transition: all 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5vmin;
+        position: relative;
     }
 
     .player-name-box.empty {
@@ -112,6 +347,85 @@
         color: black;
     }
 
+    .editable .player-overlay.selected:hover .player-name-box {
+        background-color: #90caf9;
+        color: #0d47a1;
+    }
+
+    .remove-icon {
+        display: none;
+        color: #ff5252;
+        font-weight: 900;
+        font-size: 0.8em;
+        line-height: 1;
+        position: absolute;
+        top: 2px;
+        right: 4px;
+    }
+
+    .player-overlay.selected:hover .remove-icon,
+    .bench-player-name.selected:hover .remove-icon {
+        display: inline-block;
+    }
+
+    .field-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border: 2px solid black;
+        z-index: 10002;
+        min-width: 200px;
+        box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+        margin-top: 5px;
+    }
+
+    .bench-dropdown {
+        bottom: 100%;
+        top: auto;
+        margin-top: 0;
+        margin-bottom: 5px;
+    }
+
+    .dropdown-search {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-bottom: 1px solid #ccc;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .dropdown-list {
+        max-height: 200px;
+        overflow-y: auto;
+        text-align: left;
+    }
+
+    .dropdown-item {
+        padding: 8px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item:hover, .dropdown-item.active {
+        background: #f0f7ff;
+        color: #0078d7;
+    }
+
+    .dropdown-no-results {
+        padding: 8px 12px;
+        font-size: 14px;
+        color: #666;
+        font-style: italic;
+    }
+
     .bench-container {
         position: absolute;
         bottom: 1.5vmin;
@@ -123,6 +437,14 @@
         z-index: 10;
         width: max-content;
         max-width: 32vmin;
+    }
+
+    .bench-container.dropdown-open {
+        z-index: 10001; /* Above backdrop */
+    }
+
+    .bench-container.selection-active {
+        z-index: 10001; /* Above backdrop */
     }
 
     .bench-label {
@@ -151,6 +473,11 @@
         border: 1px solid black;
         white-space: nowrap;
         color: black;
+        display: flex;
+        align-items: center;
+        gap: 0.5vmin;
+        position: relative;
+        cursor: pointer;
     }
 
     .editable .bench-player-name:hover {
@@ -159,9 +486,14 @@
     }
 
     .bench-player-name.selected {
-        background-color: #ffeb3b;
-        border-color: #fbc02d;
-        color: black;
+        background-color: #bbdefb;
+        border-color: #2196f3;
+        color: #0d47a1;
+    }
+
+    .editable .bench-player-name.selected:hover {
+        background-color: #90caf9;
+        color: #0d47a1;
     }
 
     .player-overlay.just-swapped .player-name-box,
@@ -179,6 +511,25 @@
         background-color: #c8e6c9;
         color: #1b5e20;
         border-color: #4caf50;
+        transform: scale(1.15);
+        z-index: 15;
+    }
+
+    .player-overlay.just-removed .player-name-box,
+    .editable .player-overlay.just-removed:hover .player-name-box {
+        background-color: #ffcdd2;
+        color: #b71c1c;
+        border-color: #f44336;
+        box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+        transform: scale(1.1);
+        z-index: 10;
+    }
+
+    .bench-player-name.just-removed,
+    .editable .bench-player-name.just-removed:hover {
+        background-color: #ffcdd2;
+        color: #b71c1c;
+        border-color: #f44336;
         transform: scale(1.15);
         z-index: 15;
     }

@@ -1,0 +1,181 @@
+.lineup-card-container {
+    background: white;
+    border: 2px solid black;
+    padding: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.lineup-card-header {
+    background: white;
+    color: black;
+    padding: 1.5rem;
+    text-align: center;
+    border-bottom: 2px solid black;
+}
+
+.team-name {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+}
+
+.card-title {
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    font-weight: bold;
+    background: transparent;
+    color: black;
+}
+
+.lineup-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    background: white;
+}
+
+@media (min-width: 1200px) {
+    .lineup-content-wrapper {
+        grid-template-columns: 450px 1fr;
+    }
+}
+
+.table-pane {
+    border-right: 2px solid black;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1199.98px) {
+    .table-pane {
+        border-right: none;
+    }
+}
+
+.lineup-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lineup-table th {
+    background-color: white !important;
+    border-bottom: 2px solid black;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: black !important;
+    font-weight: 900;
+}
+
+.lineup-table td {
+    border-bottom: 1px solid black;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.lineup-table tr:last-child td {
+    border-bottom: 2px solid black;
+}
+
+.pos-num {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-right: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.pos-abbr {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-right: 1px solid black;
+    background: white;
+    font-size: 1.1rem;
+}
+
+.player-select-cell {
+    background: white;
+}
+
+.lineup-actions {
+    background: white;
+}
+
+.field-pane {
+    background: white;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.field-container-sticky {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.view-btn {
+    background: white;
+    border: 2px solid black;
+    color: black;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+}
+
+@media (hover: hover) {
+    .view-btn:hover {
+        background: black;
+        color: white;
+    }
+}
+
+.view-btn:active {
+    background: black;
+    color: white;
+}
+
+.view-btn.active {
+    background: black;
+    color: white;
+}
+
+.player-select-cell select:hover {
+    background-color: transparent !important;
+}
+
+.player-select-cell select:focus {
+    background-color: transparent !important;
+    outline: none;
+}
+
+.toast-notification-simple {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: black;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeInOut 3s ease-in-out forwards;
+    font-weight: bold;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}

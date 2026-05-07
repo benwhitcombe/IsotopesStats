@@ -7,10 +7,10 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Isotopes - Defense</PageTitle>
+<PageTitle>Isotopes - Defensive Lineup</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <h3 style="margin:0">Defense</h3>
+    <h3 style="margin:0">Defensive Lineup</h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
         <SeasonSelector 
             Seasons="@seasons" 
@@ -29,7 +29,7 @@ else
     <div class="lineup-card-container">
         <div class="lineup-card-header">
             <div class="team-name">ISOTOPES</div>
-            <div class="card-title">LINEUP CARD</div>
+            <div class="card-title">DEFENSIVE LINEUP CARD</div>
         </div>
         
         <div class="lineup-content-wrapper">
@@ -46,7 +46,7 @@ else
                         @for (int i = 0; i < assignments.Count; i++)
                         {
                             int index = i;
-                            var assignment = assignments[index];
+                            PositionAssignment assignment = assignments[index];
                             <tr @key="assignment.PositionLabel">
                                 <td class="pos-num">@assignment.PositionNumber</td>
                                 <td class="pos-abbr">@assignment.PositionAbbreviation</td>
@@ -58,14 +58,14 @@ else
                                         PlayerAssignments="@playerAssignments"
                                         OnSelected="@(p => HandleStarterSelection(assignment, p))"
                                         OnCommit="@(() => FocusNextPosition(index))"
-                                        OnFocused="@(() => { selectedIndex = index; selectedFromBench = false; })"
-                                        OnBlurred="@(() => { if (selectedIndex == index && selectedFromBench == false) { selectedIndex = null; selectedFromBench = null; } })" />
+                                        OnFocused="@(() => { selectedIndex = index; selectedFromBench = false; isExplicitlySelected = false; })"
+                                        OnBlurred="@(() => { if (selectedIndex == index && selectedFromBench == false && !isExplicitlySelected) { selectedIndex = null; selectedFromBench = null; } })" />
                                 </td>
                             </tr>
                         }
                         
                         @{
-                            var currentBenchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+                            List<int> currentBenchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
                             int totalBenchRows = currentBenchIds.Count + (players.Count > availablePlayerIds.Count ? 1 : 0);
                         }
                         @for (int j = 0; j < totalBenchRows; j++)
@@ -85,8 +85,8 @@ else
                                         PlayerAssignments="@playerAssignments"
                                         OnSelected="@(p => HandleBenchSelection(playerId, p))"
                                         OnCommit="@(() => FocusNextPosition(cellIndex))"
-                                        OnFocused="@(() => { selectedIndex = benchIndex; selectedFromBench = true; })"
-                                        OnBlurred="@(() => { if (selectedIndex == benchIndex && selectedFromBench == true) { selectedIndex = null; selectedFromBench = null; } })" />
+                                        OnFocused="@(() => { selectedIndex = benchIndex; selectedFromBench = true; isExplicitlySelected = false; })"
+                                        OnBlurred="@(() => { if (selectedIndex == benchIndex && selectedFromBench == true && !isExplicitlySelected) { selectedIndex = null; selectedFromBench = null; } })" />
                                 </td>
                             </tr>
                         }
@@ -96,6 +96,7 @@ else
                     <div class="d-flex gap-2">
                         <button class="view-btn flex-grow-1" @onclick="ClearAll">Clear All</button>
                         <button class="view-btn active flex-grow-1 d-xl-none" @onclick='() => SetViewMode("field")'>View Defense</button>
+                        <button class="view-btn active flex-grow-1 d-none d-xl-block" @onclick="ShareDefense">📤 Share</button>
                     </div>
                 </div>
             </div>
@@ -106,10 +107,15 @@ else
                     <DefenseField 
                         Assignments="@fieldAssignments" 
                         BenchPlayers="@benchPlayerNames" 
+                        Players="@players"
+                        PlayerAssignments="@playerAssignments"
                         SelectedIndex="@selectedIndex" 
                         SelectedFromBench="@selectedFromBench" 
+                        IsExplicitlySelected="@isExplicitlySelected"
                         AnimationCounters="@animationCounters" 
                         OnPlayerClick="@(e => HandleFieldClick(e.Index, e.FromBench))"
+                        OnDeselect="HandleDeselect"
+                        OnPlayerSelected="@(e => HandleInPlaceSelection(e.Index, e.FromBench, e.Player))"
                         IsEditable="true"
                         MaxWidth="800" />
                     
@@ -137,14 +143,12 @@ else
 
 @code {
     [Parameter] [SupplyParameterFromQuery(Name = "p")] public string? DefenseData { get; set; }
-    [Parameter] [SupplyParameterFromQuery(Name = "v")] public string? ViewMode { get; set; }
 
     private string activeViewMode = "field";
 
-    private async Task SetViewMode(string mode)
+    private void SetViewMode(string mode)
     {
         activeViewMode = mode;
-        await JSRuntime.InvokeVoidAsync("updateUrlQuery", "v", mode);
         StateHasChanged();
     }
 
@@ -162,7 +166,7 @@ else
     {
         int nextIndex = currentIndex + 1;
         await Task.Yield(); // Give Blazor a chance to render new row if added
-        if (autocompleteCells.TryGetValue(nextIndex, out var cell) && cell != null)
+        if (autocompleteCells.TryGetValue(nextIndex, out PlayerAutocompleteCell? cell) && cell != null)
         {
             await cell.FocusAsync();
         }
@@ -185,16 +189,16 @@ else
             int prevStarterIdx = assignments.FindIndex(a => a != assignment && a.PlayerId == newPlayer.Id);
             if (prevStarterIdx != -1)
             {
-                _ = TriggerAnimation(prevStarterIdx, false);
+                _ = TriggerAnimation(prevStarterIdx, false, DefenseField.AnimationType.Swapped);
             }
             else
             {
                 // Were they on the bench?
-                var benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+                List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
                 int prevBenchIdx = benchIds.IndexOf(newPlayer.Id);
                 if (prevBenchIdx != -1)
                 {
-                    _ = TriggerAnimation(prevBenchIdx, true);
+                    _ = TriggerAnimation(prevBenchIdx, true, DefenseField.AnimationType.Swapped);
                 }
             }
         }
@@ -203,7 +207,7 @@ else
         assignment.PlayerId = newPlayer?.Id;
         
         // 4. Animate the current spot
-        _ = TriggerAnimation(index, false);
+        _ = TriggerAnimation(index, false, newPlayer == null ? DefenseField.AnimationType.Removed : DefenseField.AnimationType.Swapped);
 
         StateHasChanged();
         UpdateUrl();
@@ -217,13 +221,22 @@ else
             int prevStarterIdx = assignments.FindIndex(a => a.PlayerId == newPlayer.Id);
             if (prevStarterIdx != -1)
             {
-                _ = TriggerAnimation(prevStarterIdx, false);
+                _ = TriggerAnimation(prevStarterIdx, false, DefenseField.AnimationType.Swapped);
             }
         }
 
         // 2. Perform selection
         if (oldPlayerId.HasValue)
         {
+            if (newPlayer == null)
+            {
+                List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+                int benchIdx = benchIds.IndexOf(oldPlayerId.Value);
+                if (benchIdx != -1)
+                {
+                    _ = TriggerAnimation(benchIdx, true, DefenseField.AnimationType.Removed);
+                }
+            }
             availablePlayerIds.Remove(oldPlayerId.Value);
         }
 
@@ -235,7 +248,7 @@ else
             }
 
             // Ensure they aren't assigned to a starter spot
-            foreach (var a in assignments)
+            foreach (PositionAssignment a in assignments)
             {
                 if (a.PlayerId == newPlayer.Id) a.PlayerId = null;
             }
@@ -247,11 +260,11 @@ else
         // 3. Animate the new bench spot
         if (newPlayer != null)
         {
-            var benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+            List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
             int newBenchIdx = benchIds.IndexOf(newPlayer.Id);
             if (newBenchIdx != -1)
             {
-                _ = TriggerAnimation(newBenchIdx, true);
+                _ = TriggerAnimation(newBenchIdx, true, DefenseField.AnimationType.Swapped);
             }
         }
     }
@@ -267,7 +280,9 @@ else
 
     private int? selectedIndex;
     private bool? selectedFromBench;
-    private Dictionary<(int Index, bool FromBench), int> animationCounters = new();
+    private bool isExplicitlySelected;
+    
+    private Dictionary<(int Index, bool FromBench), DefenseField.AnimationState> animationCounters = new();
 
     private List<DefenseField.FieldPositionAssignment> fieldAssignments => assignments.Select(a => new DefenseField.FieldPositionAssignment
     {
@@ -280,11 +295,11 @@ else
     {
         get 
         {
-            var dict = assignments
+            Dictionary<int, string> dict = assignments
                 .Where(a => a.PlayerId.HasValue)
                 .ToDictionary(a => a.PlayerId!.Value, a => a.PositionAbbreviation);
             
-            foreach (var id in availablePlayerIds)
+            foreach (int id in availablePlayerIds)
             {
                 if (!dict.ContainsKey(id))
                 {
@@ -301,19 +316,89 @@ else
         .Where(name => !string.IsNullOrEmpty(name))
         .ToList();
 
+    private void HandleInPlaceSelection(int index, bool fromBench, Player player)
+    {
+        if (fromBench)
+        {
+            // If index is BenchPlayers.Count, it's a new bench spot
+            int? oldPlayerId = index < benchPlayerNames.Count ? GetBenchPlayerId(index) : null;
+            HandleBenchSelection(oldPlayerId, player);
+            
+            // Animate the new bench spot
+            List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+            int newBenchIdx = benchIds.IndexOf(player.Id);
+            if (newBenchIdx != -1)
+            {
+                _ = TriggerAnimation(newBenchIdx, true, DefenseField.AnimationType.Swapped);
+            }
+        }
+        else
+        {
+            HandleStarterSelection(assignments[index], player);
+            _ = TriggerAnimation(index, false, DefenseField.AnimationType.Swapped);
+        }
+    }
+
+    private void HandleDeselect()
+    {
+        selectedIndex = null;
+        selectedFromBench = null;
+        isExplicitlySelected = false;
+        StateHasChanged();
+    }
+
     private async Task HandleFieldClick(int index, bool fromBench)
     {
-        if (selectedIndex == null)
+        int? clickedPlayerId = fromBench ? GetBenchPlayerId(index) : assignments[index].PlayerId;
+
+        if (selectedIndex == null || !isExplicitlySelected)
         {
+            if (!clickedPlayerId.HasValue)
+            {
+                // Empty spot clicked: focus the corresponding lineup entry
+                int cellIndex = fromBench ? 10 + index : index;
+                if (autocompleteCells.TryGetValue(cellIndex, out PlayerAutocompleteCell? cell) && cell != null)
+                {
+                    await cell.FocusAsync();
+                }
+                return;
+            }
+
             selectedIndex = index;
             selectedFromBench = fromBench;
+            isExplicitlySelected = true;
+            StateHasChanged();
             return;
         }
 
         if (selectedIndex == index && selectedFromBench == fromBench)
         {
+            // CLICKED AGAIN: Remove player from position and the game entirely
+            if (fromBench)
+            {
+                int? playerId = GetBenchPlayerId(index);
+                if (playerId.HasValue)
+                {
+                    availablePlayerIds.Remove(playerId.Value);
+                    _ = TriggerAnimation(index, true, DefenseField.AnimationType.Removed);
+                }
+            }
+            else
+            {
+                int? playerId = assignments[index].PlayerId;
+                if (playerId.HasValue)
+                {
+                    availablePlayerIds.Remove(playerId.Value);
+                    assignments[index].PlayerId = null;
+                    _ = TriggerAnimation(index, false, DefenseField.AnimationType.Removed);
+                }
+            }
+
             selectedIndex = null;
             selectedFromBench = null;
+            isExplicitlySelected = false;
+            StateHasChanged();
+            UpdateUrl();
             return;
         }
 
@@ -323,42 +408,73 @@ else
         int idx2 = index;
         bool bench2 = fromBench;
 
-        if (selectedFromBench == true)
+        int? id1 = bench1 ? GetBenchPlayerId(idx1) : assignments[idx1].PlayerId;
+        int? id2 = bench2 ? GetBenchPlayerId(idx2) : assignments[idx2].PlayerId;
+
+        if (bench1 && bench2)
         {
-            int? sourcePlayerId = GetBenchPlayerId(selectedIndex.Value);
-            if (fromBench)
+            // Swap bench with bench
+            if (id1.HasValue && id2.HasValue)
             {
-                // Swap bench with bench - no-op for now as bench is just a list of names
+                int pos1 = availablePlayerIds.IndexOf(id1.Value);
+                int pos2 = availablePlayerIds.IndexOf(id2.Value);
+                if (pos1 != -1 && pos2 != -1)
+                {
+                    int temp = availablePlayerIds[pos1];
+                    availablePlayerIds[pos1] = availablePlayerIds[pos2];
+                    availablePlayerIds[pos2] = temp;
+                }
             }
-            else
+        }
+        else if (bench1 && !bench2)
+        {
+            // Bench to Starter
+            assignments[idx2].PlayerId = id1;
+            // Also swap in availablePlayerIds to preserve bench position for the former starter
+            if (id1.HasValue && id2.HasValue)
             {
-                int? targetPlayerId = assignments[index].PlayerId;
-                assignments[index].PlayerId = sourcePlayerId;
-                // If the bench player was replaced, we don't need to do much as bench is derived
+                int pos1 = availablePlayerIds.IndexOf(id1.Value);
+                int pos2 = availablePlayerIds.IndexOf(id2.Value);
+                if (pos1 != -1 && pos2 != -1)
+                {
+                    int temp = availablePlayerIds[pos1];
+                    availablePlayerIds[pos1] = availablePlayerIds[pos2];
+                    availablePlayerIds[pos2] = temp;
+                }
+            }
+        }
+        else if (!bench1 && bench2)
+        {
+            // Starter to Bench
+            assignments[idx1].PlayerId = id2;
+            // Also swap in availablePlayerIds to preserve bench position for the former starter
+            if (id1.HasValue && id2.HasValue)
+            {
+                int pos1 = availablePlayerIds.IndexOf(id1.Value);
+                int pos2 = availablePlayerIds.IndexOf(id2.Value);
+                if (pos1 != -1 && pos2 != -1)
+                {
+                    int temp = availablePlayerIds[pos1];
+                    availablePlayerIds[pos1] = availablePlayerIds[pos2];
+                    availablePlayerIds[pos2] = temp;
+                }
             }
         }
         else
         {
-            int? sourcePlayerId = assignments[selectedIndex.Value].PlayerId;
-            if (fromBench)
-            {
-                int? targetPlayerId = GetBenchPlayerId(index);
-                assignments[selectedIndex.Value].PlayerId = targetPlayerId;
-            }
-            else
-            {
-                int? targetPlayerId = assignments[index].PlayerId;
-                assignments[selectedIndex.Value].PlayerId = targetPlayerId;
-                assignments[index].PlayerId = sourcePlayerId;
-            }
+            // Starter to Starter
+            assignments[idx1].PlayerId = id2;
+            assignments[idx2].PlayerId = id1;
+            // No need to swap in availablePlayerIds for starter-starter as bench order isn't affected
         }
 
         selectedIndex = null;
         selectedFromBench = null;
+        isExplicitlySelected = false;
         
         // Trigger animations
-        _ = TriggerAnimation(idx1, bench1);
-        _ = TriggerAnimation(idx2, bench2);
+        _ = TriggerAnimation(idx1, bench1, DefenseField.AnimationType.Swapped);
+        _ = TriggerAnimation(idx2, bench2, DefenseField.AnimationType.Swapped);
         
         StateHasChanged();
         UpdateUrl();
@@ -367,7 +483,7 @@ else
 
     private int? GetBenchPlayerId(int benchIndex)
     {
-        var benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
+        List<int> benchIds = availablePlayerIds.Where(id => !IsPlayerAssigned(id)).ToList();
         if (benchIndex >= 0 && benchIndex < benchIds.Count)
         {
             return benchIds[benchIndex];
@@ -375,19 +491,26 @@ else
         return null;
     }
 
-    private async Task TriggerAnimation(int index, bool fromBench)
+    private async Task TriggerAnimation(int index, bool fromBench, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
     {
         (int Index, bool FromBench) key = (index, fromBench);
-        if (animationCounters.ContainsKey(key)) animationCounters[key]++;
-        else animationCounters[key] = 1;
+        if (animationCounters.TryGetValue(key, out DefenseField.AnimationState? state))
+        {
+            state.Count++;
+            state.Type = type;
+        }
+        else
+        {
+            animationCounters[key] = new DefenseField.AnimationState { Count = 1, Type = type };
+        }
         
         StateHasChanged();
         await Task.Delay(600);
         
-        if (animationCounters.ContainsKey(key))
+        if (animationCounters.TryGetValue(key, out state))
         {
-            animationCounters[key]--;
-            if (animationCounters[key] <= 0) animationCounters.Remove(key);
+            state.Count--;
+            if (state.Count <= 0) animationCounters.Remove(key);
             StateHasChanged();
         }
     }
@@ -494,7 +617,7 @@ else
         
         // Full reset before applying query parameters
         availablePlayerIds.Clear();
-        foreach (var a in assignments)
+        foreach (PositionAssignment a in assignments)
         {
             a.PlayerId = null;
         }
@@ -527,8 +650,6 @@ else
     {
         isInitializing = true;
         InitializeAssignments();
-        
-        if (ViewMode != null) activeViewMode = ViewMode;
 
         seasons = await StatsRepository.GetSeasonsAsync();
         selectedSeasonId = SharedState.SelectedSeasonId;
@@ -550,11 +671,6 @@ else
     protected override void OnParametersSet()
     {
         if (isInitializing) return;
-
-        if (ViewMode != null && ViewMode != activeViewMode)
-        {
-            activeViewMode = ViewMode;
-        }
 
         if (DefenseData != _appliedDefenseData)
         {
@@ -626,7 +742,7 @@ else
 
     private async Task ShareDefense()
     {
-        ShareResult? result = await JSRuntime.InvokeAsync<ShareResult>("shareOrCopy", "Isotopes Defense", NavigationManager.Uri);
+        ShareResult? result = await JSRuntime.InvokeAsync<ShareResult>("shareOrCopy", null, null);
         if (result != null && result.Copied)
         {
             showToast = true;
@@ -645,179 +761,3 @@ else
         public string? Error { get; set; }
     }
 }
-
-<style>
-    .lineup-card-container {
-        background: white;
-        border: 2px solid black;
-        padding: 0;
-        position: relative;
-        overflow: visible;
-    }
-
-    .lineup-card-header {
-        background: white;
-        color: black;
-        padding: 1.5rem;
-        text-align: center;
-        border-bottom: 2px solid black;
-    }
-
-    .team-name {
-        font-size: 1.5rem;
-        font-weight: 900;
-        letter-spacing: 6px;
-        margin-bottom: 0.1rem;
-        text-transform: uppercase;
-    }
-
-    .card-title {
-        font-size: 0.8rem;
-        letter-spacing: 3px;
-        font-weight: bold;
-        background: transparent;
-        color: black;
-    }
-
-    .lineup-content-wrapper {
-        display: grid;
-        grid-template-columns: 1fr;
-        background: white;
-    }
-
-    @@media (min-width: 1200px) {
-        .lineup-content-wrapper {
-            grid-template-columns: 450px 1fr;
-        }
-    }
-
-    .table-pane {
-        border-right: 2px solid black;
-        background: white;
-        display: flex;
-        flex-direction: column;
-    }
-
-    @@media (max-width: 1199.98px) {
-        .table-pane {
-            border-right: none;
-        }
-    }
-
-    .lineup-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .lineup-table th {
-        background-color: white !important;
-        border-bottom: 2px solid black;
-        padding: 0.5rem;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: black !important;
-        font-weight: 900;
-    }
-
-    .lineup-table td {
-        border-bottom: 1px solid black;
-        padding: 0;
-        vertical-align: middle;
-    }
-
-    .lineup-table tr:last-child td {
-        border-bottom: 2px solid black;
-    }
-
-    .pos-num {
-        text-align: center;
-        font-weight: 900;
-        color: black;
-        border-right: 1px solid black;
-        font-size: 1.1rem;
-    }
-
-    .pos-abbr {
-        text-align: center;
-        font-weight: 900;
-        color: black;
-        border-right: 1px solid black;
-        background: white;
-        font-size: 1.1rem;
-    }
-
-    .player-select-cell {
-        background: white;
-    }
-
-    .lineup-actions {
-        background: white;
-    }
-
-    .field-pane {
-        background: white;
-        display: flex;
-        justify-content: center;
-    }
-
-    .field-container-sticky {
-        position: sticky;
-        top: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
-
-    .view-btn {
-        background: white;
-        border: 2px solid black;
-        color: black;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.1s;
-    }
-
-    .view-btn:hover {
-        background: black;
-        color: white;
-    }
-
-    .view-btn.active {
-        background: black;
-        color: white;
-    }
-
-    .player-select-cell select:hover {
-        background-color: transparent !important;
-    }
-
-    .player-select-cell select:focus {
-        background-color: transparent !important;
-        outline: none;
-    }
-
-    .toast-notification-simple {
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: black;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 2rem;
-        z-index: 10000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        animation: fadeInOut 3s ease-in-out forwards;
-        font-weight: bold;
-    }
-
-    @@keyframes fadeInOut {
-        0% { opacity: 0; transform: translate(-50%, 20px); }
-        15% { opacity: 1; transform: translate(-50%, 0); }
-        85% { opacity: 1; transform: translate(-50%, 0); }
-        100% { opacity: 0; transform: translate(-50%, -20px); }
-    }
-</style>

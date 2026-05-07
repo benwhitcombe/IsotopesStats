@@ -5,13 +5,14 @@
 <div class="autocomplete-cell-wrapper" @onclick:stopPropagation>
     @if (isMobile)
     {
-        <select class="native-player-select" 
+        <select @ref="selectElement"
+                class="native-player-select" 
                 value="@(Players.FirstOrDefault(p => p.Name == Value)?.Id ?? 0)" 
                 @onchange="HandleMobileSelect"
                 @onfocus="OnFocused"
                 @onblur="OnBlurred">
             <option value="0">-- Select Player --</option>
-            @foreach (var player in Players.OrderBy(p => IsAssigned(p.Id) ? 1 : 0).ThenBy(p => p.Name))
+            @foreach (Player player in Players.OrderBy(p => IsAssigned(p.Id) ? 1 : 0).ThenBy(p => p.Name))
             {
                 <option value="@player.Id">@GetPlayerDisplayName(player)</option>
             }
@@ -45,7 +46,7 @@
                 @for (int i = 0; i < filteredPlayers.Count; i++)
                 {
                     int index = i;
-                    var player = filteredPlayers[i];
+                    Player player = filteredPlayers[i];
                     bool isAssigned = IsAssigned(player.Id);
                     <div class="suggestion-item @(index == activeIndex ? "active" : "") @(isAssigned ? "assigned" : "")"
                          @onclick="() => SelectPlayer(player)">
@@ -67,6 +68,7 @@
     [Parameter] public EventCallback OnBlurred { get; set; }
 
     private ElementReference inputElement;
+    private ElementReference selectElement;
     private List<Player> filteredPlayers = new();
     private int activeIndex = 0;
     private bool showSuggestions = false;
@@ -98,7 +100,11 @@
 
     public async Task FocusAsync()
     {
-        if (!isMobile)
+        if (isMobile)
+        {
+            await selectElement.FocusAsync();
+        }
+        else
         {
             await inputElement.FocusAsync();
         }
@@ -122,7 +128,7 @@
 
     private string GetPlayerDisplayName(Player player)
     {
-        if (PlayerAssignments.TryGetValue(player.Id, out var pos))
+        if (PlayerAssignments.TryGetValue(player.Id, out string? pos))
         {
             return $"{player.Name} ({pos})";
         }
@@ -133,16 +139,15 @@
 
     private void UpdateSuggestions()
     {
-        var baseQuery = Players.AsEnumerable();
+        IEnumerable<Player> baseQuery = Players.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(internalValue))
         {
-            baseQuery = baseQuery.Where(p => p.Name.Contains(internalValue, StringComparison.OrdinalIgnoreCase));
+            baseQuery = baseQuery.Where(p => p.Name.StartsWith(internalValue, StringComparison.OrdinalIgnoreCase));
         }
 
-        var results = baseQuery
+        List<Player> results = baseQuery
             .OrderBy(p => IsAssigned(p.Id) ? 1 : 0) // Unassigned first
-            .ThenBy(p => !string.IsNullOrWhiteSpace(internalValue) && p.Name.StartsWith(internalValue, StringComparison.OrdinalIgnoreCase) ? 0 : 1) // Starts with match
             .ThenBy(p => p.Name)
             .ToList();
 
@@ -157,7 +162,7 @@
 
         if (!string.IsNullOrWhiteSpace(internalValue))
         {
-            var bestMatch = filteredPlayers.FirstOrDefault(p => p.Name.StartsWith(internalValue, StringComparison.OrdinalIgnoreCase));
+            Player? bestMatch = filteredPlayers.FirstOrDefault(p => p.Name.StartsWith(internalValue, StringComparison.OrdinalIgnoreCase));
             if (bestMatch != null)
             {
                 suggestionSuffix = bestMatch.Name.Substring(internalValue.Length);
@@ -169,7 +174,7 @@
         }
         else
         {
-            suggestionSuffix = string.Empty;
+            suggestionSuffix = originalValue;
         }
 
         activeIndex = 0;

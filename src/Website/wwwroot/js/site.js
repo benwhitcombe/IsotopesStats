@@ -287,15 +287,20 @@ window.updateUrlQuery = function (key, value) {
 };
 
 window.shareOrCopy = async function (title, url) {
-    // Check if it's a mobile device and navigator.share is available
+    let shareUrl = url;
+    if (!shareUrl || shareUrl === 'null') {
+        shareUrl = window.location.href;
+    }
+    
     const isMobile = window.isMobileDevice();
     
     if (navigator.share && isMobile) {
         try {
-            await navigator.share({
-                title: title,
-                url: url
-            });
+            const shareData = { url: shareUrl };
+            if (title && title !== 'null') {
+                shareData.title = title;
+            }
+            await navigator.share(shareData);
             return { shared: true };
         } catch (err) {
             // User might have cancelled or error occurred
@@ -307,7 +312,7 @@ window.shareOrCopy = async function (title, url) {
     } else {
         // Desktop or non-supporting browser fallback: Copy to clipboard
         try {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(shareUrl);
             return { copied: true };
         } catch (err) {
             return { copied: false, error: err.message };
