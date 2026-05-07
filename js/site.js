@@ -1,3 +1,7 @@
+window.isMobileDevice = function () {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 window.getWindowWidth = function () {
     return window.innerWidth;
 };
@@ -284,7 +288,7 @@ window.updateUrlQuery = function (key, value) {
 
 window.shareOrCopy = async function (title, url) {
     // Check if it's a mobile device and navigator.share is available
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = window.isMobileDevice();
     
     if (navigator.share && isMobile) {
         try {
