@@ -21,7 +21,8 @@
 
         bool isDropdownOpen = showDropdown && dropdownIndex == index && dropdownFromBench == false;
         
-        <div class="player-overlay @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
+        <div @ref="fieldRefs[index]"
+             class="player-overlay @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
              style="left: @(assignment.X)%; top: @(assignment.Y)%;"
              @onclick="() => HandleFieldClick(index, false)"
              @onclick:stopPropagation>
@@ -45,7 +46,7 @@
             
             @if (isDropdownOpen)
             {
-                <div class="field-dropdown" @onclick:stopPropagation>
+                <div class="field-dropdown @(dropdownDirection == "above" ? "dropdown-above" : "")" @onclick:stopPropagation>
                     <input @ref="dropdownInput"
                            class="dropdown-search" 
                            placeholder="Search player..." 
@@ -178,6 +179,9 @@
     private string searchTerm = "";
     private ElementReference dropdownInput;
     private int dropdownActiveIndex = 0;
+    private string dropdownDirection = "below";
+    private Dictionary<int, ElementReference> fieldRefs = new();
+    private Dictionary<int, ElementReference> benchRefs = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -239,6 +243,21 @@
         {
             dropdownIndex = index;
             dropdownFromBench = fromBench;
+            
+            // Determine direction
+            if (fromBench)
+            {
+                dropdownDirection = "above"; // Bench always above for now as it's at the bottom
+            }
+            else if (fieldRefs.TryGetValue(index, out ElementReference elementRef))
+            {
+                dropdownDirection = await JSRuntime.InvokeAsync<string>("getDropdownDirection", elementRef);
+            }
+            else
+            {
+                dropdownDirection = "below";
+            }
+
             showDropdown = true;
             shouldFocusInput = true;
             searchTerm = "";
@@ -425,6 +444,14 @@
         min-width: 200px;
         box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
         margin-top: 5px;
+    }
+
+    .dropdown-above {
+        top: auto;
+        bottom: 100%;
+        margin-top: 0;
+        margin-bottom: 5px;
+        box-shadow: 4px -4px 0 rgba(0,0,0,0.2);
     }
 
     .bench-dropdown {
