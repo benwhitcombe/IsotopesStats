@@ -276,6 +276,19 @@ window.drawerDragging = {
     }
 };
 
+window.getDropdownDirection = function (element) {
+    if (!element) return 'below';
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 250; // Max height of dropdown list + search input
+    
+    // If there's not enough room below but there is room above, show above
+    if (rect.bottom + dropdownHeight > viewportHeight && rect.top > dropdownHeight) {
+        return 'above';
+    }
+    return 'below';
+};
+
 window.updateUrlQuery = function (key, value) {
     const url = new URL(window.location.href);
     if (value) {
