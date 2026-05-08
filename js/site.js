@@ -276,17 +276,37 @@ window.drawerDragging = {
     }
 };
 
-window.getDropdownDirection = function (element) {
-    if (!element) return 'below';
-    const rect = element.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const dropdownHeight = 250; // Max height of dropdown list + search input
-    
-    // If there's not enough room below but there is room above, show above
-    if (rect.bottom + dropdownHeight > viewportHeight && rect.top > dropdownHeight) {
-        return 'above';
+window.setDragImage = function (elementId, offsetX, offsetY) {
+    console.log('setDragImage called for', elementId);
+    const el = document.getElementById(elementId);
+    const ev = window.event;
+    if (el && ev && ev.dataTransfer) {
+        ev.dataTransfer.setDragImage(el, offsetX, offsetY);
     }
-    return 'below';
+};
+
+window.initDrag = function () {
+    console.log('initDrag called');
+    const ev = window.event;
+    if (ev && ev.dataTransfer) {
+        try {
+            ev.dataTransfer.setData('text/plain', 'drag');
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.dropEffect = 'move';
+            console.log('dataTransfer initialized');
+        } catch (err) {
+            console.error('initDrag error:', err);
+        }
+    } else {
+        console.warn('initDrag: no event or dataTransfer');
+    }
+};
+
+window.handleDragOver = function () {
+    const ev = window.event;
+    if (ev && ev.dataTransfer) {
+        ev.dataTransfer.dropEffect = 'move';
+    }
 };
 
 window.updateUrlQuery = function (key, value) {
