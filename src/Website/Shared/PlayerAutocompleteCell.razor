@@ -9,8 +9,8 @@
                 class="native-player-select" 
                 value="@(Players.FirstOrDefault(p => p.Name == Value)?.Id ?? 0)" 
                 @onchange="HandleMobileSelect"
-                @onfocus="OnFocused"
-                @onblur="OnBlurred">
+                @onfocus="HandleMobileFocus"
+                @onblur="HandleMobileBlur">
             <option value="0">-- Select Player --</option>
             @foreach (Player player in Players.OrderBy(p => IsAssigned(p.Id) ? 1 : 0).ThenBy(p => p.Name))
             {
@@ -108,6 +108,18 @@
         {
             await inputElement.FocusAsync();
         }
+    }
+
+    private async Task HandleMobileFocus()
+    {
+        isFocused = true;
+        await OnFocused.InvokeAsync();
+    }
+
+    private async Task HandleMobileBlur()
+    {
+        isFocused = false;
+        await OnBlurred.InvokeAsync();
     }
 
     private async Task HandleMobileSelect(ChangeEventArgs e)
