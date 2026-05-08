@@ -1,0 +1,249 @@
+@using IsotopesStats.Domain.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime JSRuntime
+
+<div class="pos-autocomplete-cell-wrapper" @onclick:stopPropagation>
+    @if (isMobile)
+    {
+        <select @ref="selectElement"
+                id="@($"pos-select-{GetHashCode()}")"
+                class="native-pos-select" 
+                value="@Value" 
+                @onchange="HandleMobileSelect"
+                @onfocus="HandleMobileFocus"
+                @onblur="HandleMobileBlur"
+                disabled="@IsDisabled"
+                tabindex="-1">
+            <option value="">--</option>
+            @foreach ((string Abbr, string Label) pos in AvailablePositions)
+            {
+                <option value="@pos.Abbr">@pos.Abbr</option>
+            }
+        </select>
+    }
+    else
+    {
+        <div class="input-container" @onclick="ToggleSuggestions" @onblur="HandleBlur" @onkeydown="HandleKeyDown" @ref="containerElement" tabindex="0">
+            <div class="autocomplete-input @(IsDisabled ? "disabled" : "")">
+                @Value
+            </div>
+        </div>
+
+        @if (showSuggestions && filteredPositions.Any())
+        {
+            <div class="pos-suggestions-dropdown">
+                @for (int i = 0; i < filteredPositions.Count; i++)
+                {
+                    int index = i;
+                    (string Abbr, string Label) pos = filteredPositions[i];
+                    <div class="pos-suggestion-item @(index == activeIndex ? "active" : "")"
+                         @onmousedown="() => SelectPosition(pos.Abbr)"
+                         @onmousedown:stopPropagation>
+                        @pos.Abbr
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public List<(string Abbr, string Label)> AvailablePositions { get; set; } = new();
+    [Parameter] public EventCallback<string?> OnSelected { get; set; }
+    [Parameter] public EventCallback OnCommit { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
+    [Parameter] public EventCallback OnFocused { get; set; }
+    [Parameter] public EventCallback OnBlurred { get; set; }
+    [Parameter] public bool IsDisabled { get; set; }
+
+    private ElementReference containerElement;
+    private ElementReference selectElement;
+    private List<(string Abbr, string Label)> filteredPositions = new();
+    private int activeIndex = -1;
+    private bool showSuggestions = false;
+    private bool isMobile = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
+            StateHasChanged();
+        }
+    }
+
+    public async Task FocusAsync()
+    {
+        try
+        {
+            if (isMobile) await selectElement.FocusAsync();
+            else await containerElement.FocusAsync();
+        }
+        catch (Exception) { }
+    }
+
+    private async Task HandleMobileFocus()
+    {
+        await OnFocused.InvokeAsync();
+    }
+
+    private async Task HandleMobileBlur()
+    {
+        await OnBlurred.InvokeAsync();
+    }
+
+    private async Task HandleMobileSelect(ChangeEventArgs e)
+    {
+        string? val = e.Value?.ToString();
+        await SelectPosition(val);
+        await OnCommit.InvokeAsync();
+    }
+
+    private async Task ToggleSuggestions()
+    {
+        if (IsDisabled) return;
+
+        if (showSuggestions)
+        {
+            showSuggestions = false;
+        }
+        else
+        {
+            filteredPositions = AvailablePositions.ToList();
+            activeIndex = -1;
+            showSuggestions = true;
+            await OnFocused.InvokeAsync();
+        }
+    }
+
+    private async Task HandleBlur()
+    {
+        // Delay to allow click on suggestion to register
+        await Task.Delay(200);
+        showSuggestions = false;
+        await OnBlurred.InvokeAsync();
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (IsDisabled) return;
+
+        if (e.Key == "ArrowDown")
+        {
+            if (!showSuggestions) await ToggleSuggestions();
+            else if (activeIndex < filteredPositions.Count - 1) activeIndex++;
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            if (activeIndex > 0) activeIndex--;
+        }
+        else if (e.Key == "Enter" || e.Key == "Tab")
+        {
+            if (showSuggestions && activeIndex >= 0 && activeIndex < filteredPositions.Count)
+            {
+                await SelectPosition(filteredPositions[activeIndex].Abbr);
+            }
+        }
+        else if (e.Key == "Escape")
+        {
+            showSuggestions = false;
+        }
+
+        await OnKeyDown.InvokeAsync(e);
+    }
+
+    private async Task SelectPosition(string? abbr)
+    {
+        showSuggestions = false;
+        await OnSelected.InvokeAsync(abbr);
+        await OnBlurred.InvokeAsync();
+    }
+}
+
+<style>
+    .pos-autocomplete-cell-wrapper {
+        position: relative;
+        width: 100%;
+        height: 42px;
+        display: block;
+    }
+
+    .input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        outline: none;
+    }
+
+    .autocomplete-input {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.1rem;
+        text-align: center;
+        user-select: none;
+    }
+
+    .autocomplete-input.disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+
+    .pos-suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: -1px;
+        right: -1px;
+        background: white;
+        border: 1px solid black;
+        box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+        z-index: 10000;
+        max-height: 250px;
+        overflow-y: auto;
+        box-sizing: border-box;
+    }
+
+    .pos-suggestion-item {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+        color: black;
+        white-space: nowrap;
+    }
+
+    .pos-suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .pos-suggestion-item:hover, .pos-suggestion-item.active {
+        background: #f0f7ff;
+        color: #007bff;
+        font-weight: bold;
+    }
+
+    .native-pos-select {
+        width: 100%;
+        height: 38px;
+        border: none;
+        background: transparent;
+        padding: 0;
+        font-weight: 900;
+        font-size: 1.1rem;
+        outline: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        text-align: center;
+        text-align-last: center;
+    }
+</style>

@@ -2,7 +2,8 @@
 @inject IJSRuntime JSRuntime
 
 <div class="defense-container @(IsEditable ? "editable" : "")" 
-     style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")">
+     style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")"
+     @ondragover:preventdefault="true">
     
     <img src="images/defense.png" class="defense-bg" />
     @for (int i = 0; i < Assignments.Count; i++)
@@ -22,16 +23,25 @@
         bool isDropdownOpen = showDropdown && dropdownIndex == index && dropdownFromBench == false;
         
         <div @ref="fieldRefs[index]"
-             class="player-overlay @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
+             id="@($"field-box-{index}")"
+             class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
              style="left: @(assignment.X)%; top: @(assignment.Y)%;"
+             draggable="@(IsEditable ? "true" : "false")"
+             ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
+             @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
+             @ondragenter:stopPropagation
+             @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
+             @ondrop:stopPropagation
+             @ondrop="() => OnDrop.InvokeAsync((index, false))"
+             @ondragend="() => OnDragEnd.InvokeAsync()"
              @onclick="() => HandleFieldClick(index, false)"
              @onclick:stopPropagation>
-            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
+            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")" style="pointer-events: none;">
                 @if (isMobile && string.IsNullOrEmpty(assignment.PlayerName) && !SelectedIndex.HasValue)
                 {
-                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" @onclick:stopPropagation>
+                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" @onclick:stopPropagation style="pointer-events: auto;">
                         <option value="0">-- Select --</option>
-                        @foreach (Player player in Players.OrderBy(p => p.Name))
+                        @foreach (Player player in Players.Where(p => BattingOrderPlayerIds.Contains(p.Id)).OrderBy(p => p.Name))
                         {
                             <option @key="player.Id" value="@player.Id">@GetPlayerDisplayName(player)</option>
                         }
@@ -46,7 +56,7 @@
             
             @if (isDropdownOpen)
             {
-                <div class="field-dropdown @(dropdownDirection == "above" ? "dropdown-above" : "")" @onclick:stopPropagation>
+                <div class="field-dropdown" @onclick:stopPropagation>
                     <input @ref="dropdownInput"
                            class="dropdown-search" 
                            placeholder="Search player..." 
@@ -79,7 +89,13 @@
     @if (BenchPlayers.Any() || IsEditable)
     {
         bool isBenchDropdownOpen = showDropdown && dropdownFromBench == true;
-        <div class="bench-container @(isBenchDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" @onclick:stopPropagation>
+        <div class="bench-container @(isBenchDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
+             @onclick:stopPropagation
+             ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
+             @ondragenter:stopPropagation
+             @ondragenter="() => OnDragEnter.InvokeAsync((null, true))"
+             @ondrop:stopPropagation
+             @ondrop="() => OnDrop.InvokeAsync((null, true))">
             <div class="bench-label">BENCH</div>
             <div class="bench-names">
                 @for (int i = 0; i < BenchPlayers.Count; i++)
@@ -95,57 +111,18 @@
                         isRemoving = state.Type == AnimationType.Removed;
                     }
 
-                    <div class="bench-player-name @(isSelected ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" 
+                    <div id="@($"bench-box-{index}")"
+                         class="bench-player-name @(isSelected || (DragTargetIndex == index && DragTargetFromBench == true) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
+                         draggable="@(IsEditable ? "true" : "false")"
+                         ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
+                         @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, true)); }'
+                         @ondragenter:stopPropagation
+                         @ondragenter="() => OnDragEnter.InvokeAsync((index, true))"
+                         @ondrop:stopPropagation
+                         @ondrop="() => OnDrop.InvokeAsync((index, true))"
+                         @ondragend="() => OnDragEnd.InvokeAsync()"
                          @onclick="() => HandleFieldClick(index, true)">
-                        <span class="player-name-text">@BenchPlayers[index]</span>
-                        @if (isSelected)
-                        {
-                            <span class="remove-icon">×</span>
-                        }
-                    </div>
-                }
-                @if (IsEditable && Players.Any(p => !PlayerAssignments.ContainsKey(p.Id)))
-                {
-                    bool isThisAddDropdownOpen = showDropdown && dropdownIndex == BenchPlayers.Count && dropdownFromBench == true;
-                    <div class="bench-player-name empty @(isThisAddDropdownOpen ? "active-add" : "") @(SelectedIndex.HasValue ? "selection-active" : "")" @onclick="() => HandleFieldClick(BenchPlayers.Count, true)">
-                        @if (isMobile && !SelectedIndex.HasValue)
-                        {
-                            <select class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(BenchPlayers.Count, true, e)" @onclick:stopPropagation>
-                                <option value="0">+ Add</option>
-                                @foreach (Player player in Players.Where(p => !PlayerAssignments.ContainsKey(p.Id)).OrderBy(p => p.Name))
-                                {
-                                    <option value="@player.Id">@player.Name</option>
-                                }
-                            </select>
-                        }
-                        <span class="player-name-text">+ Add</span>
-                        
-                        @if (isThisAddDropdownOpen)
-                        {
-                            <div class="field-dropdown bench-dropdown" @onclick:stopPropagation>
-                                <input @ref="dropdownInput"
-                                       class="dropdown-search" 
-                                       placeholder="Search player..." 
-                                       value="@searchTerm"
-                                       @oninput="OnSearchInput" 
-                                       @onkeydown="HandleDropdownKeydown"
-                                       @onblur="() => showDropdown = false" />
-                                <div class="dropdown-list">
-                                    @{
-                                        List<Player> filtered = FilteredPlayers.ToList();
-                                        for (int f = 0; f < filtered.Count; f++)
-                                        {
-                                            int fIndex = f;
-                                            Player player = filtered[f];
-                                            <div class="dropdown-item @(fIndex == dropdownActiveIndex ? "active" : "")" 
-                                                 @onmousedown="() => SelectPlayer(player)">
-                                                @GetPlayerDisplayName(player)
-                                            </div>
-                                        }
-                                    }
-                                </div>
-                            </div>
-                        }
+                        <span class="player-name-text" style="pointer-events: none;">@BenchPlayers[index]</span>
                     </div>
                 }
             </div>
@@ -157,14 +134,22 @@
     [Parameter] public List<FieldPositionAssignment> Assignments { get; set; } = new();
     [Parameter] public List<string> BenchPlayers { get; set; } = new();
     [Parameter] public List<Player> Players { get; set; } = new();
+    [Parameter] public List<int> BattingOrderPlayerIds { get; set; } = new();
     [Parameter] public Dictionary<int, string> PlayerAssignments { get; set; } = new();
     [Parameter] public int? SelectedIndex { get; set; }
     [Parameter] public bool? SelectedFromBench { get; set; }
     [Parameter] public bool IsExplicitlySelected { get; set; }
     [Parameter] public Dictionary<(int Index, bool FromBench), AnimationState>? AnimationCounters { get; set; }
+    [Parameter] public int? DragTargetIndex { get; set; }
+    [Parameter] public bool? DragTargetFromBench { get; set; }
     [Parameter] public EventCallback<(int Index, bool FromBench)> OnPlayerClick { get; set; }
     [Parameter] public EventCallback OnDeselect { get; set; }
     [Parameter] public EventCallback<(int Index, bool FromBench, Player Player)> OnPlayerSelected { get; set; }
+    [Parameter] public EventCallback<(DragEventArgs Args, int Index, bool FromBench)> OnDragStart { get; set; }
+    [Parameter] public EventCallback<(int? Index, bool FromBench)> OnDragEnter { get; set; }
+    [Parameter] public EventCallback OnDragLeave { get; set; }
+    [Parameter] public EventCallback<(int? Index, bool FromBench)> OnDrop { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
     [Parameter] public bool IsEditable { get; set; } = false;
     [Parameter] public int MaxWidth { get; set; } = 0;
 
@@ -179,7 +164,6 @@
     private string searchTerm = "";
     private ElementReference dropdownInput;
     private int dropdownActiveIndex = 0;
-    private string dropdownDirection = "below";
     private Dictionary<int, ElementReference> fieldRefs = new();
     private Dictionary<int, ElementReference> benchRefs = new();
 
@@ -212,6 +196,7 @@
 
     private IEnumerable<Player> FilteredPlayers => Players
         .Where(p => string.IsNullOrWhiteSpace(searchTerm) || p.Name.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
+        .Where(p => BattingOrderPlayerIds.Contains(p.Id))
         .OrderBy(p => PlayerAssignments.ContainsKey(p.Id) ? 1 : 0)
         .ThenBy(p => p.Name);
 
@@ -244,20 +229,6 @@
             dropdownIndex = index;
             dropdownFromBench = fromBench;
             
-            // Determine direction
-            if (fromBench)
-            {
-                dropdownDirection = "above"; // Bench always above for now as it's at the bottom
-            }
-            else if (fieldRefs.TryGetValue(index, out ElementReference elementRef))
-            {
-                dropdownDirection = await JSRuntime.InvokeAsync<string>("getDropdownDirection", elementRef);
-            }
-            else
-            {
-                dropdownDirection = "below";
-            }
-
             showDropdown = true;
             shouldFocusInput = true;
             searchTerm = "";
@@ -446,21 +417,6 @@
         margin-top: 5px;
     }
 
-    .dropdown-above {
-        top: auto;
-        bottom: 100%;
-        margin-top: 0;
-        margin-bottom: 5px;
-        box-shadow: 4px -4px 0 rgba(0,0,0,0.2);
-    }
-
-    .bench-dropdown {
-        bottom: 100%;
-        top: auto;
-        margin-top: 0;
-        margin-bottom: 5px;
-    }
-
     .dropdown-search {
         width: 100%;
         padding: 8px;
@@ -561,6 +517,16 @@
     .bench-player-name.selected {
         background-color: #bbdefb;
         border-color: #2196f3;
+        color: #0d47a1;
+    }
+
+    .bench-container.selected {
+        background-color: #bbdefb;
+        border-color: #2196f3;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+    }
+
+    .bench-container.selected .bench-label {
         color: #0d47a1;
     }
 

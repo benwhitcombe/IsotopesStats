@@ -1,0 +1,359 @@
+.lineup-card-container {
+    background: white;
+    border: 2px solid black;
+    padding: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.lineup-card-header {
+    background: white;
+    color: black;
+    padding: 0.5rem 1.5rem;
+    text-align: center;
+    border-bottom: 2px solid black;
+}
+
+.team-name {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+}
+
+.card-title {
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    font-weight: bold;
+    background: transparent;
+    color: black;
+}
+
+.lineup-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    background: white;
+}
+
+@media (min-width: 1200px) {
+    .lineup-content-wrapper {
+        grid-template-columns: 450px 1fr;
+    }
+}
+
+.table-pane {
+    border-right: 2px solid black;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 1199.98px) {
+    .table-pane {
+        border-right: none;
+    }
+}
+
+.lineup-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.lineup-table th {
+    background-color: white !important;
+    border-bottom: 2px solid black;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: black !important;
+    font-weight: 900;
+}
+
+.lineup-table td {
+    border-bottom: 1px solid black;
+    padding: 0;
+    vertical-align: middle;
+    height: 42px;
+}
+
+.lineup-table tr:last-child td {
+    border-bottom: 2px solid black;
+}
+
+.pos-num {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-right: 1px solid black;
+    font-size: 1.1rem;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.pos-abbr {
+    text-align: center;
+    font-weight: 900;
+    color: black;
+    border-left: 1px solid black;
+    background: white;
+    font-size: 1.1rem;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.pos-abbr.disabled {
+    background-color: #eee !important;
+    cursor: not-allowed;
+}
+
+.pos-abbr.disabled ::deep .autocomplete-input {
+    color: #999 !important;
+}
+
+.pos-select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-weight: 900;
+    font-size: 1.1rem;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.pos-select:hover {
+    background: #f8f9fa;
+}
+
+/* Target strictly the Player Name column components */
+.lineup-table .player-select-cell ::deep .autocomplete-input,
+.lineup-table .player-select-cell ::deep .ghost-text-container {
+    text-align: left !important;
+    font-weight: 900 !important;
+    justify-content: flex-start !important;
+    padding-left: 0.5rem !important;
+    font-size: 1.1rem !important;
+    font-family: inherit !important;
+}
+
+/* Target strictly the POS column components */
+.lineup-table .pos-abbr ::deep .autocomplete-input,
+.lineup-table .pos-abbr ::deep .native-pos-select {
+    text-align: center !important;
+    font-weight: 900 !important;
+    padding: 0 !important;
+}
+
+.lineup-actions {
+    background: white;
+}
+
+.field-pane {
+    background: white;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.field-container-sticky {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.view-btn {
+    background: white;
+    border: 2px solid black;
+    color: black;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.1s;
+}
+
+@media (hover: hover) {
+    .view-btn:hover {
+        background: black;
+        color: white;
+    }
+}
+
+.view-btn:active {
+    background: black;
+    color: white;
+}
+
+.view-btn.active {
+    background: black;
+    color: white;
+}
+
+.reorderable-row {
+    cursor: default;
+}
+
+.reorderable-row .pos-num,
+.reorderable-row .pos-abbr:not(.disabled) {
+    cursor: move;
+}
+
+@media (max-width: 1199.98px) {
+    .reorderable-row .player-select-cell {
+        cursor: move;
+    }
+}
+
+.drag-over {
+    color: #0d47a1 !important;
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+    z-index: 10;
+    transition: all 0.1s ease;
+}
+
+.drag-over td {
+    background-color: #bbdefb !important;
+}
+
+.drag-over ::deep .autocomplete-input,
+.drag-over .pos-num,
+.drag-over .pos-abbr {
+    color: #0d47a1 !important;
+}
+
+.drag-over-pos {
+    background-color: #bbdefb !important;
+    color: #0d47a1 !important;
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+    z-index: 10;
+    transition: all 0.1s ease;
+}
+
+.drag-over-pos ::deep .autocomplete-input {
+    color: #0d47a1 !important;
+}
+
+.reorderable-row.dragging {
+    opacity: 0.4;
+}
+
+.reorderable-row.just-swapped td {
+    background-color: #c8e6c9 !important;
+}
+
+.reorderable-row.just-swapped {
+    outline: 2px solid #4caf50 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    z-index: 10;
+}
+
+.reorderable-row.just-swapped ::deep .autocomplete-input,
+.reorderable-row.just-swapped .pos-num,
+.reorderable-row.just-swapped .pos-abbr {
+    color: #1b5e20 !important;
+}
+
+.reorderable-row.just-removed td {
+    background-color: #ffcdd2 !important;
+}
+
+.reorderable-row.just-removed {
+    outline: 2px solid #f44336 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+    z-index: 10;
+}
+
+.reorderable-row.just-removed ::deep .autocomplete-input,
+.reorderable-row.just-removed .pos-num,
+.reorderable-row.just-removed .pos-abbr {
+    color: #b71c1c !important;
+}
+
+.pos-abbr.just-swapped {
+    background-color: #c8e6c9 !important;
+    color: #1b5e20 !important;
+    outline: 2px solid #4caf50 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    z-index: 10;
+}
+
+.pos-abbr.just-swapped ::deep .autocomplete-input {
+    color: #1b5e20 !important;
+}
+
+.pos-abbr.just-removed {
+    background-color: #ffcdd2 !important;
+    color: #b71c1c !important;
+    outline: 2px solid #f44336 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+    z-index: 10;
+}
+
+.pos-abbr.just-removed ::deep .autocomplete-input {
+    color: #b71c1c !important;
+}
+
+.reorderable-row.selected td {
+    background-color: #bbdefb !important;
+}
+
+.reorderable-row.selected {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+    z-index: 10;
+}
+
+.reorderable-row.selected ::deep .autocomplete-input,
+.reorderable-row.selected .pos-num,
+.reorderable-row.selected .pos-abbr {
+    color: #0d47a1 !important;
+}
+
+.player-select-cell select:hover {
+    background-color: transparent !important;
+}
+
+.player-select-cell select:focus {
+    background-color: transparent !important;
+    outline: none;
+}
+
+.toast-notification-simple {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: black;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeInOut 3s ease-in-out forwards;
+    font-weight: bold;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}
