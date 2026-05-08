@@ -96,7 +96,7 @@ else
                     <div class="d-flex gap-2">
                         <button class="view-btn flex-grow-1" @onclick="ClearAll">Clear All</button>
                         <button class="view-btn active flex-grow-1 d-xl-none" @onclick='() => SetViewMode("field")'>View Defense</button>
-                        <button class="view-btn active flex-grow-1 d-none d-xl-block" @onclick="ShareDefense">📤 Share</button>
+                        <button class="view-btn active flex-grow-1 d-none d-xl-block" @onclick="ShareDefense">Share</button>
                     </div>
                 </div>
             </div>
@@ -120,8 +120,8 @@ else
                         MaxWidth="800" />
                     
                     <div class="mt-4 d-flex gap-2 justify-content-center mb-4 w-100 px-3 d-xl-none">
-                        <button class="view-btn flex-grow-1" @onclick='() => SetViewMode("lineup")'>⬅️ Lineup</button>
-                        <button class="view-btn active flex-grow-1" @onclick="ShareDefense">📤 Share</button>
+                        <button class="view-btn flex-grow-1" @onclick='() => SetViewMode("lineup")'>Lineup</button>
+                        <button class="view-btn active flex-grow-1" @onclick="ShareDefense">Share</button>
                     </div>
                 </div>
             </div>
@@ -165,6 +165,15 @@ else
     private async Task FocusNextPosition(int currentIndex)
     {
         int nextIndex = currentIndex + 1;
+        
+        bool isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
+        if (isMobile)
+        {
+            // On mobile, the native picker needs time to close before we move focus
+            // to avoid events bleeding between elements.
+            await Task.Delay(300);
+        }
+
         await Task.Yield(); // Give Blazor a chance to render new row if added
         if (autocompleteCells.TryGetValue(nextIndex, out PlayerAutocompleteCell? cell) && cell != null)
         {
@@ -174,6 +183,9 @@ else
 
     private void HandleStarterSelection(PositionAssignment assignment, Player? newPlayer)
     {
+        // Guard against redundant updates or selecting the same player already in this spot
+        if (assignment.PlayerId == newPlayer?.Id) return;
+
         int index = assignments.IndexOf(assignment);
 
         // 1. If we are replacing an existing player in this spot, remove them from the game
@@ -215,6 +227,9 @@ else
 
     private void HandleBenchSelection(int? oldPlayerId, Player? newPlayer)
     {
+        // Guard against redundant updates
+        if (oldPlayerId == newPlayer?.Id) return;
+
         // 1. Identify previous starter spot if moving to bench
         if (newPlayer != null)
         {
@@ -295,9 +310,13 @@ else
     {
         get 
         {
-            Dictionary<int, string> dict = assignments
-                .Where(a => a.PlayerId.HasValue)
-                .ToDictionary(a => a.PlayerId!.Value, a => a.PositionAbbreviation);
+            Dictionary<int, string> dict = new();
+            
+            // Use foreach to handle potential (though unexpected) duplicate assignments gracefully
+            foreach (PositionAssignment a in assignments.Where(a => a.PlayerId.HasValue))
+            {
+                dict[a.PlayerId!.Value] = a.PositionAbbreviation;
+            }
             
             foreach (int id in availablePlayerIds)
             {
@@ -603,6 +622,10 @@ else
         
         string data = GetCurrentDefenseData();
         string? queryValue = string.IsNullOrEmpty(data) ? null : data;
+        
+        // Update local tracking to prevent redundant OnParametersSet cycles
+        _appliedDefenseData = data;
+
         _ = JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", queryValue);
     }
 
@@ -615,32 +638,43 @@ else
         List<int> ids = DefenseEncoder.Decode(DefenseData, players);
         if (ids == null || !ids.Any()) return;
         
-        // Full reset before applying query parameters
-        availablePlayerIds.Clear();
-        foreach (PositionAssignment a in assignments)
-        {
-            a.PlayerId = null;
-        }
+        // Non-destructive update: only change what's different
+        // and prevent recursive UpdateUrl calls while applying
+        isInitializing = true; 
 
-        for (int i = 0; i < ids.Count; i++)
+        try
         {
-            int id = ids[i];
-            
-            // Set starters (0-9)
-            if (i < 10 && i < assignments.Count)
+            // Update starters
+            for (int i = 0; i < assignments.Count; i++)
             {
-                assignments[i].PlayerId = id > 0 ? id : null;
+                int id = (i < ids.Count && ids[i] > 0) ? ids[i] : 0;
+                int? currentId = assignments[i].PlayerId;
+                
+                if (id == 0)
+                {
+                    if (currentId.HasValue) assignments[i].PlayerId = null;
+                }
+                else
+                {
+                    if (currentId != id) assignments[i].PlayerId = id;
+                }
             }
             
-            // Track all available players (starters + bench)
-            if (id > 0)
+            // Update available players list
+            availablePlayerIds.Clear();
+            foreach (int id in ids)
             {
-                if (!availablePlayerIds.Contains(id))
+                if (id > 0 && !availablePlayerIds.Contains(id))
                 {
                     availablePlayerIds.Add(id);
                 }
             }
         }
+        finally
+        {
+            isInitializing = false;
+        }
+
         _appliedDefenseData = DefenseData;
     }
 
