@@ -28,11 +28,11 @@
             <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")">
                 @if (isMobile && string.IsNullOrEmpty(assignment.PlayerName) && !SelectedIndex.HasValue)
                 {
-                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" @onclick:stopPropagation>
+                    <select class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" @onclick:stopPropagation>
                         <option value="0">-- Select --</option>
-                        @foreach (Player player in Players.OrderBy(p => p.Name))
+                        @foreach (Player player in Players.OrderBy(p => PlayerAssignments.ContainsKey(p.Id) ? 1 : 0).ThenBy(p => p.Name))
                         {
-                            <option @key="player.Id" value="@player.Id">@GetPlayerDisplayName(player)</option>
+                            <option value="@player.Id">@GetPlayerDisplayName(player)</option>
                         }
                     </select>
                 }
