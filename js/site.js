@@ -1,5 +1,14 @@
+window.getUserAgent = function () {
+    return window.navigator ? window.navigator.userAgent : 'unknown';
+};
+
 window.isMobileDevice = function () {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    try {
+        var ua = window.navigator ? window.navigator.userAgent : '';
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    } catch (e) {
+        return false;
+    }
 };
 
 window.getWindowWidth = function () {
