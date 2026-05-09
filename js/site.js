@@ -285,12 +285,21 @@ window.drawerDragging = {
     }
 };
 
+let lastDragEvent = null;
+window.addEventListener('dragstart', (e) => {
+    lastDragEvent = e;
+}, true);
+
 window.setDragImage = function (elementId, offsetX, offsetY) {
     console.log('setDragImage called for', elementId);
     const el = document.getElementById(elementId);
-    const ev = window.event;
+    const ev = window.event || lastDragEvent;
     if (el && ev && ev.dataTransfer) {
-        ev.dataTransfer.setDragImage(el, offsetX, offsetY);
+        try {
+            ev.dataTransfer.setDragImage(el, offsetX, offsetY);
+        } catch (err) {
+            console.error('setDragImage error:', err);
+        }
     }
 };
 
