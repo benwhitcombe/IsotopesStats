@@ -54,6 +54,44 @@
         <a class="dismiss">🗙</a>
     </div>
 
+    <script type="text/javascript">
+        window.onerror = function (message, source, lineno, colno, error) {
+            var errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = 'black';
+            errorDiv.style.color = 'lime';
+            errorDiv.style.zIndex = '99999';
+            errorDiv.style.padding = '10px';
+            errorDiv.style.fontSize = '12px';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.wordBreak = 'break-all';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = 'JS ERROR: ' + message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A');
+            document.body.appendChild(errorDiv);
+        };
+
+        window.addEventListener('unhandledrejection', function (event) {
+            var errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = 'darkred';
+            errorDiv.style.color = 'white';
+            errorDiv.style.zIndex = '99999';
+            errorDiv.style.padding = '10px';
+            errorDiv.style.fontSize = '12px';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.wordBreak = 'break-all';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = 'PROMISE REJECTION: ' + event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A');
+            document.body.appendChild(errorDiv);
+        });
+    </script>
+
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="js/site.js"></script>
     <script>

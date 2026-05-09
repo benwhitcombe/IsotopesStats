@@ -20,7 +20,7 @@ else
     <PageTitle>Isotopes - Lineup</PageTitle>
 
     <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <h3 style="margin:0">Bill Exception Test</h3>
+        <h3 style="margin:0">Bill Exception Test v2</h3>
         <div style="display: flex; gap: 1rem; align-items: center;">
             <SeasonSelector 
                 Seasons="@seasons" 
@@ -766,36 +766,42 @@ else
     private Dictionary<BattingOrderEntry, DefenseField.AnimationState> posAnimations = new();
     private Dictionary<(int Index, bool FromBench), DefenseField.AnimationState> animationCounters = new();
 
-    private List<DefenseField.FieldPositionAssignment> fieldAssignments => fieldPositions.Select(fp => 
+    private List<DefenseField.FieldPositionAssignment> fieldAssignments => fieldPositions?.Select(fp => 
     {
-        BattingOrderEntry? entry = battingOrder.FirstOrDefault(le => le.PositionAbbreviation == fp.Abbreviation);
+        BattingOrderEntry? entry = battingOrder?.FirstOrDefault(le => le.PositionAbbreviation == fp.Abbreviation);
         return new DefenseField.FieldPositionAssignment
         {
-            PlayerName = entry?.PlayerId != null ? players.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty : string.Empty,
+            PlayerName = entry?.PlayerId != null && players != null ? players.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty : string.Empty,
             X = fp.X,
             Y = fp.Y
         };
-    }).ToList();
+    }).ToList() ?? new List<DefenseField.FieldPositionAssignment>();
 
     private Dictionary<int, string> playerAssignments 
     {
         get 
         {
             Dictionary<int, string> dict = new();
-            foreach (BattingOrderEntry le in battingOrder.Where(le => le.PlayerId.HasValue))
+            if (battingOrder != null)
             {
-                dict[le.PlayerId!.Value] = string.IsNullOrEmpty(le.PositionAbbreviation) ? "B" : le.PositionAbbreviation;
+                foreach (BattingOrderEntry le in battingOrder.Where(le => le.PlayerId.HasValue))
+                {
+                    dict[le.PlayerId!.Value] = string.IsNullOrEmpty(le.PositionAbbreviation) ? "B" : le.PositionAbbreviation;
+                }
             }
-            foreach (int id in availablePlayerIds)
+            if (availablePlayerIds != null)
             {
-                if (!dict.ContainsKey(id)) dict[id] = "B";
+                foreach (int id in availablePlayerIds)
+                {
+                    if (!dict.ContainsKey(id)) dict[id] = "B";
+                }
             }
             return dict;
         }
     }
 
-    private List<string> benchPlayerNames => GetBenchIds()
-        .Select(id => players.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty)
+    private List<string> benchPlayerNames => (GetBenchIds() ?? new List<int>())
+        .Select(id => players?.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty)
         .Where(name => !string.IsNullOrEmpty(name))
         .ToList();
 
