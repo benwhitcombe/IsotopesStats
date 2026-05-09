@@ -1,38 +1,40 @@
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <Authorizing>
-                    <LoadingIndicator IsFullPage="true" />
-                </Authorizing>
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
-                    {
-                        <RedirectToLogin />
-                    }
-                    else
-                    {
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; padding: 2rem; text-align: center;">
-                            <div style="font-size: 4rem; margin-bottom: 1rem;">🚫</div>
-                            <h3 style="color: var(--isotopes-red); font-weight: 800;">ACCESS DENIED</h3>
-                            <p style="color: #666; max-width: 400px; margin-top: 1rem;">You don't have the required permissions to view this page.</p>
-                            <a href="/" class="view-btn active" style="margin-top: 2rem; padding: 0.8rem 2rem;">Back to Home</a>
-                        </div>
-                    }
-                </NotAuthorized>
-            </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-        </Found>
-        <NotFound>
-            <PageTitle>Not found</PageTitle>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; padding: 2rem; text-align: center;">
-                    <div style="font-size: 4rem; margin-bottom: 1rem;">🤷‍♂️</div>
-                    <h3 style="color: var(--isotopes-dark); font-weight: 800;">PAGE NOT FOUND</h3>
-                    <p style="color: #666; max-width: 400px; margin-top: 1rem;">The page you're looking for doesn't exist or has been moved.</p>
-                    <a href="/" class="view-btn active" style="margin-top: 2rem; padding: 0.8rem 2rem;">Back to Home</a>
-                </div>
-            </LayoutView>
-        </NotFound>
-    </Router>
+    <CustomErrorBoundary>
+        <Router AppAssembly="@typeof(App).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <Authorizing>
+                        <LoadingIndicator IsFullPage="true" />
+                    </Authorizing>
+                    <NotAuthorized>
+                        @if (context.User.Identity?.IsAuthenticated != true)
+                        {
+                            <RedirectToLogin />
+                        }
+                        else
+                        {
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; padding: 2rem; text-align: center;">
+                                <div style="font-size: 4rem; margin-bottom: 1rem;">🚫</div>
+                                <h3 style="color: var(--isotopes-red); font-weight: 800;">ACCESS DENIED</h3>
+                                <p style="color: #666; max-width: 400px; margin-top: 1rem;">You don't have the required permissions to view this page.</p>
+                                <a href="/" class="view-btn active" style="margin-top: 2rem; padding: 0.8rem 2rem;">Back to Home</a>
+                            </div>
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <PageTitle>Not found</PageTitle>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; padding: 2rem; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🤷‍♂️</div>
+                        <h3 style="color: var(--isotopes-dark); font-weight: 800;">PAGE NOT FOUND</h3>
+                        <p style="color: #666; max-width: 400px; margin-top: 1rem;">The page you're looking for doesn't exist or has been moved.</p>
+                        <a href="/" class="view-btn active" style="margin-top: 2rem; padding: 0.8rem 2rem;">Back to Home</a>
+                    </div>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </CustomErrorBoundary>
 </CascadingAuthenticationState>

@@ -20,7 +20,7 @@ else
     <PageTitle>Isotopes - Lineup</PageTitle>
 
     <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <h3 style="margin:0">Lineup</h3>
+        <h3 style="margin:0">Bill Exception Test</h3>
         <div style="display: flex; gap: 1rem; align-items: center;">
             <SeasonSelector 
                 Seasons="@seasons" 
@@ -85,7 +85,7 @@ else
                                         @onmouseenter='() => activeDragType = isMobile ? DragMode.Row : DragMode.None'>
                                         <PlayerAutocompleteCell 
                                             @ref="playerCells[index]"
-                                            Value="@(players.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
+                                            Value="@(players?.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
                                             Players="@players"
                                             PlayerAssignments="@playerAssignments"
                                             OnSelected="@(p => HandleOrderSelection(entry, p))"

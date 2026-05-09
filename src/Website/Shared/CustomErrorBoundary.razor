@@ -1,0 +1,12 @@
+@using Microsoft.AspNetCore.Components.Web
+@inherits ErrorBoundary
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else
+{
+    @CurrentException.Message
+    @CurrentException.StackTrace
+}
