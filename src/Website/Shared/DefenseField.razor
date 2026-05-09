@@ -2,8 +2,7 @@
 @inject IJSRuntime JSRuntime
 
 <div class="defense-container @(IsEditable ? "editable" : "")" 
-     style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")"
-     @ondragover:preventdefault="true">
+     style="@(MaxWidth > 0 ? $"max-width: {MaxWidth}px;" : "")">
     
     <img src="images/defense.png" class="defense-bg" />
     @for (int i = 0; i < Assignments.Count; i++)
@@ -27,19 +26,15 @@
              class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
              style="left: @(assignment.X)%; top: @(assignment.Y)%;"
              draggable="@(IsEditable ? "true" : "false")"
-             ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
              @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
-             @ondragenter:stopPropagation
              @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
-             @ondrop:stopPropagation
              @ondrop="() => OnDrop.InvokeAsync((index, false))"
              @ondragend="() => OnDragEnd.InvokeAsync()"
-             @onclick="() => HandleFieldClick(index, false)"
-             @onclick:stopPropagation>
+             @onclick="() => HandleFieldClick(index, false)">
             <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")" style="pointer-events: none;">
                 @if (isMobile && string.IsNullOrEmpty(assignment.PlayerName) && !SelectedIndex.HasValue)
                 {
-                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" @onclick:stopPropagation style="pointer-events: auto;">
+                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" style="pointer-events: auto;">
                         <option value="0">-- Select --</option>
                         @foreach (Player player in Players.Where(p => BattingOrderPlayerIds.Contains(p.Id)).OrderBy(p => p.Name))
                         {
@@ -56,7 +51,7 @@
             
             @if (isDropdownOpen)
             {
-                <div class="field-dropdown" @onclick:stopPropagation>
+                <div class="field-dropdown" onclick="event.stopPropagation();">
                     <input @ref="dropdownInput"
                            class="dropdown-search" 
                            placeholder="Search player..." 
@@ -90,11 +85,7 @@
     {
         bool isBenchDropdownOpen = showDropdown && dropdownFromBench == true;
         <div class="bench-container @(isBenchDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
-             @onclick:stopPropagation
-             ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
-             @ondragenter:stopPropagation
              @ondragenter="() => OnDragEnter.InvokeAsync((null, true))"
-             @ondrop:stopPropagation
              @ondrop="() => OnDrop.InvokeAsync((null, true))">
             <div class="bench-label">BENCH</div>
             <div class="bench-names">
@@ -114,11 +105,8 @@
                     <div id="@($"bench-box-{index}")"
                          class="bench-player-name @(isSelected || (DragTargetIndex == index && DragTargetFromBench == true) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
                          draggable="@(IsEditable ? "true" : "false")"
-                         ondragover="event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';"
                          @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, true)); }'
-                         @ondragenter:stopPropagation
                          @ondragenter="() => OnDragEnter.InvokeAsync((index, true))"
-                         @ondrop:stopPropagation
                          @ondrop="() => OnDrop.InvokeAsync((index, true))"
                          @ondragend="() => OnDragEnd.InvokeAsync()"
                          @onclick="() => HandleFieldClick(index, true)">

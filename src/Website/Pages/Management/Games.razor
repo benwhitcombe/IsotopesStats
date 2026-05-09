@@ -147,7 +147,7 @@ else if (isEditing)
                             <th title="@StatDefinitions.GetDefinition("RBI")">RBI</th>
                         </tr>
                     </thead>
-                    <tbody @ondragover:preventdefault="true" @ondrop:preventdefault="true">
+                    <tbody>
                         @for (int i = 0; i < playerStats.Count; i++)
                         {
                             StatEntry stat = playerStats[i];
@@ -158,8 +158,6 @@ else if (isEditing)
                                 draggable="true" 
                                 @ondragstart="() => HandleDragStart(stat)" 
                                 @ondragover="() => HandleDragOver(stat)"
-                                @ondragover:preventdefault="true"
-                                @ondragenter:preventdefault="true"
                                 @ondrop="() => HandleDrop(stat)"
                                 class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
                                 <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.PlayerName</td>

@@ -75,17 +75,15 @@ else
                                         draggable="true"
                                         @ondragstart="(e) => HandleDragStart(e, entry, index)"
                                         @ondragover="() => HandleDragOver(entry)"
-                                        @ondragover:preventDefault="true"
                                         @ondrop="() => HandleDrop(entry)"
-                                        @ondrop:preventDefault="true"
                                         @ondragend="HandleDragEnd"
                                         class="reorderable-row @(draggingType == DragMode.Row && entry == targetEntry ? "drag-over" : "") @(entry == draggedEntry ? "dragging" : "") @(isEntrySelected && isExplicitlySelected && draggingType != DragMode.Position ? "selected" : "") @(isRowSwapping ? "just-swapped" : "") @(isRowRemoving ? "just-removed" : "")">
                                         <td class="pos-num" 
-                                            @onmouseenter='() => activeDragType = DragMode.Row'>
+                                            onmouseenter="window.lastMouseEnterType = 'row';">
                                             @entry.OrderNumber
                                         </td>
                                         <td class="player-select-cell" 
-                                            @onmouseenter='() => activeDragType = isMobile ? DragMode.Row : DragMode.None'>
+                                            onmouseenter="window.lastMouseEnterType = 'player';">
                                             <PlayerAutocompleteCell 
                                                 @ref="playerCells[index]"
                                                 Value="@(players?.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
@@ -100,7 +98,7 @@ else
                                         </td>
                                         <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(draggingType == DragMode.Position && (entry == targetEntry || entry == draggedEntry) ? "drag-over-pos" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
                                             id="@($"pos-{index}")"
-                                            @onmouseenter='() => activeDragType = entry.PlayerId != null ? DragMode.Position : DragMode.None'>
+                                            onmouseenter="window.lastMouseEnterType = 'pos';">
                                             <PositionAutocompleteCell 
                                                 @ref="posCells[index]"
                                                 Value="@(string.IsNullOrEmpty(entry.PositionAbbreviation) ? "" : entry.PositionAbbreviation)"
@@ -251,9 +249,18 @@ else
 
     private async Task HandleDragStart(DragEventArgs e, BattingOrderEntry entry, int index) 
     { 
-        if (activeDragType == DragMode.None) return;
+        string jsDragType = await JSRuntime.InvokeAsync<string>("getLastMouseEnterType");
+        DragMode dragMode = jsDragType switch {
+            "row" => DragMode.Row,
+            "player" => isMobile ? DragMode.Row : DragMode.None,
+            "pos" => entry.PlayerId != null ? DragMode.Position : DragMode.None,
+            _ => DragMode.None
+        };
+
+        if (dragMode == DragMode.None) return;
+        
         draggedEntry = entry; 
-        draggingType = activeDragType;
+        draggingType = dragMode;
 
         // Set selection to the dragged player to highlight them on the field
         (int Index, bool FromBench)? loc = GetFieldOrBenchIndex(entry);
