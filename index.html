@@ -79,8 +79,29 @@
             errorDiv.style.fontFamily = 'monospace';
             errorDiv.style.wordBreak = 'break-all';
             errorDiv.style.whiteSpace = 'pre-wrap';
-            errorDiv.innerHTML = '<strong>' + prefix + '</strong>\n' + content + '\n\nUA: ' + navigator.userAgent;
+            const fullErrorText = prefix + '\n' + content + '\n\nUA: ' + navigator.userAgent;
+            errorDiv.innerHTML = '<strong>' + prefix + '</strong> (Click to copy)\n' + content + '\n\nUA: ' + navigator.userAgent;
             
+            errorDiv.onclick = function() {
+                const textArea = document.createElement("textarea");
+                textArea.value = fullErrorText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const originalBg = errorDiv.style.background;
+                    errorDiv.style.background = '#4CAF50';
+                    setTimeout(() => { errorDiv.style.background = originalBg; }, 500);
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+                
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(fullErrorText).catch(e => {});
+                }
+            };
+
             if (document.body) {
                 document.body.appendChild(errorDiv);
                 addForceReloadButton();
@@ -142,11 +163,42 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="js/site.js?v=3"></script>
     <script>
+        window.lastMouseEnterType = 'none';
+        
+        // Comprehensive global event management to avoid needing attributes in Razor files
+        const dragTargets = '.reorderable-row, .defense-container, .player-overlay, .bench-container, .bench-player-name, .pos-abbr, .pos-num, .player-select-cell';
+        
         document.addEventListener('dragover', function (e) {
-            if (e.target.closest('.reorderable-row')) {
+            if (e.target.closest(dragTargets)) {
+                e.preventDefault();
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+            }
+        }, true);
+
+        document.addEventListener('drop', function (e) {
+            if (e.target.closest(dragTargets)) {
                 e.preventDefault();
             }
-        });
+        }, true);
+
+        // Global stop-propagation handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.stop-propagation, .field-dropdown, .native-player-select-overlay')) {
+                e.stopPropagation();
+            }
+        }, true);
+
+        document.addEventListener('mousedown', function (e) {
+            if (e.target.closest('.stop-propagation')) {
+                e.stopPropagation();
+            }
+        }, true);
+
+        window.getLastMouseEnterType = function() {
+            return window.lastMouseEnterType;
+        };
     </script>
 </body>
 </html>
