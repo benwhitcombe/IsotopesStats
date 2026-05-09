@@ -36,7 +36,7 @@
                    autocomplete="off" />
             @if (!string.IsNullOrEmpty(Value))
             {
-                <button class="clear-btn" @onclick="ClearValue" onclick="event.stopPropagation();" type="button" tabindex="-1">✕</button>
+                <button class="clear-btn stop-propagation" @onclick="ClearValue" type="button" tabindex="-1">✕</button>
             }
         </div>
 

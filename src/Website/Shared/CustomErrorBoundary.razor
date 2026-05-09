@@ -16,7 +16,7 @@ else
 }
 
 @code {
-    [Inject] private IJSRuntime JSRuntime { get; set; }
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     private string UserAgent { get; set; } = "Loading...";
 
     protected override async Task OnInitializedAsync()
