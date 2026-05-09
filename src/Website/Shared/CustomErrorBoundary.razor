@@ -7,6 +7,19 @@
 }
 else
 {
-    @CurrentException.Message
-    @CurrentException.StackTrace
+    <div style="font-family: monospace; padding: 1rem; background: white; color: black; line-height: 1.4; word-break: break-all; white-space: pre-wrap;">
+        ERROR: @CurrentException.Message
+        @CurrentException.StackTrace
+    </div>
+}
+
+@code {
+    protected override void OnParametersSet()
+    {
+        if (CurrentException != null)
+        {
+            Console.WriteLine($"Boundary caught error: {CurrentException.Message}");
+            Console.WriteLine(CurrentException.StackTrace);
+        }
+    }
 }

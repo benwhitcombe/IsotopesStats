@@ -2,17 +2,23 @@
 @using IsotopesStats.Website.Services
 
 <div class="season-selector-container @(isReady ? "ready" : "loading")" style="min-width: @(MinWidth)px;">
-    @if (isReady)
+    @if (isReady && Seasons != null)
     {
         <select class="form-control season-select" value="@SelectedSeasonId" @onchange="HandleSeasonChange">
             @if (AllowAllSeasons)
             {
                 <option value="@SharedSessionState.AllSeasonsId">All Seasons</option>
             }
-            @foreach (Season season in Seasons)
+            @foreach (Season season in Seasons.Where(s => s != null))
             {
                 <option value="@season.Id">@season.Name</option>
             }
+        </select>
+    }
+    else
+    {
+        <select class="form-control season-select" disabled>
+            <option>Loading seasons...</option>
         </select>
     }
 </div>
@@ -46,12 +52,11 @@
 <style>
     .season-selector-container {
         display: inline-block;
-        transition: opacity 0.2s;
         width: auto;
     }
 
     .season-selector-container.loading {
-        opacity: 0;
+        opacity: 0.7;
     }
 
     .season-selector-container.ready {

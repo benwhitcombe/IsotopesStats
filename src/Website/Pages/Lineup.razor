@@ -20,7 +20,7 @@ else
     <PageTitle>Isotopes - Lineup</PageTitle>
 
     <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <h3 style="margin:0">Bill Exception Test v2</h3>
+        <h3 style="margin:0">Bill Exception Test v3</h3>
         <div style="display: flex; gap: 1rem; align-items: center;">
             <SeasonSelector 
                 Seasons="@seasons" 
@@ -88,6 +88,7 @@ else
                                             Value="@(players?.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
                                             Players="@players"
                                             PlayerAssignments="@playerAssignments"
+                                            IsMobile="@isMobile"
                                             OnSelected="@(p => HandleOrderSelection(entry, p))"
                                             OnKeyDown="@(e => HandleKeyDown(index, e))"
                                             OnCommit="@(() => FocusNextPlayer(index))"
@@ -101,6 +102,7 @@ else
                                             @ref="posCells[index]"
                                             Value="@(string.IsNullOrEmpty(entry.PositionAbbreviation) ? "" : entry.PositionAbbreviation)"
                                             AvailablePositions="@AvailablePositions"
+                                            IsMobile="@isMobile"
                                             OnSelected="@(val => HandlePositionChange(entry, val))"
                                             IsDisabled="@(entry.PlayerId == null)"
                                             OnFocused="@(() => HandleFocus(index))"
@@ -319,14 +321,14 @@ else
             dropTargetEntry.PositionAbbreviation = tempPos;
 
             // Trigger animations for the rows
-            _ = TriggerRowAnimation(draggedEntry, DefenseField.AnimationType.Swapped);
-            _ = TriggerRowAnimation(dropTargetEntry, DefenseField.AnimationType.Swapped);
+            TriggerRowAnimation(draggedEntry, DefenseField.AnimationType.Swapped);
+            TriggerRowAnimation(dropTargetEntry, DefenseField.AnimationType.Swapped);
 
             // Trigger animations for the field/bench positions involved
             (int Index, bool FromBench)? loc1 = GetFieldOrBenchIndex(draggedEntry);
             (int Index, bool FromBench)? loc2 = GetFieldOrBenchIndex(dropTargetEntry);
-            if (loc1.HasValue) _ = TriggerAnimation(loc1.Value.Index, loc1.Value.FromBench, DefenseField.AnimationType.Swapped);
-            if (loc2.HasValue) _ = TriggerAnimation(loc2.Value.Index, loc2.Value.FromBench, DefenseField.AnimationType.Swapped);
+            if (loc1.HasValue) TriggerAnimation(loc1.Value.Index, loc1.Value.FromBench, DefenseField.AnimationType.Swapped);
+            if (loc2.HasValue) TriggerAnimation(loc2.Value.Index, loc2.Value.FromBench, DefenseField.AnimationType.Swapped);
 
             UpdateUrl();
         }
@@ -342,14 +344,14 @@ else
             if (dropTargetEntry.PlayerId == null) dropTargetEntry.PositionAbbreviation = string.Empty;
 
             // Trigger animations for the positions
-            _ = TriggerPosAnimation(draggedEntry, DefenseField.AnimationType.Swapped);
-            _ = TriggerPosAnimation(dropTargetEntry, DefenseField.AnimationType.Swapped);
+            TriggerPosAnimation(draggedEntry, DefenseField.AnimationType.Swapped);
+            TriggerPosAnimation(dropTargetEntry, DefenseField.AnimationType.Swapped);
 
             // Trigger animations for the field positions involved
             (int Index, bool FromBench)? loc1 = GetFieldOrBenchIndex(draggedEntry);
             (int Index, bool FromBench)? loc2 = GetFieldOrBenchIndex(dropTargetEntry);
-            if (loc1.HasValue) _ = TriggerAnimation(loc1.Value.Index, loc1.Value.FromBench, DefenseField.AnimationType.Swapped);
-            if (loc2.HasValue) _ = TriggerAnimation(loc2.Value.Index, loc2.Value.FromBench, DefenseField.AnimationType.Swapped);
+            if (loc1.HasValue) TriggerAnimation(loc1.Value.Index, loc1.Value.FromBench, DefenseField.AnimationType.Swapped);
+            if (loc2.HasValue) TriggerAnimation(loc2.Value.Index, loc2.Value.FromBench, DefenseField.AnimationType.Swapped);
 
             UpdateUrl();
         }
@@ -580,11 +582,11 @@ else
                 if (entry.PlayerId == null) entry.PositionAbbreviation = string.Empty;
                 if (prevEntry.PlayerId == null) prevEntry.PositionAbbreviation = string.Empty;
 
-                _ = TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
-                _ = TriggerRowAnimation(prevEntry, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(prevEntry, DefenseField.AnimationType.Swapped);
 
                 (int Index, bool FromBench)? prevLoc = GetFieldOrBenchIndex(prevEntry);
-                if (prevLoc.HasValue) _ = TriggerAnimation(prevLoc.Value.Index, prevLoc.Value.FromBench, DefenseField.AnimationType.Swapped);
+                if (prevLoc.HasValue) TriggerAnimation(prevLoc.Value.Index, prevLoc.Value.FromBench, DefenseField.AnimationType.Swapped);
                 swapped = true;
             }
         }
@@ -595,7 +597,7 @@ else
             if (newPlayer == null) 
             {
                 entry.PositionAbbreviation = string.Empty;
-                _ = TriggerRowAnimation(entry, DefenseField.AnimationType.Removed);
+                TriggerRowAnimation(entry, DefenseField.AnimationType.Removed);
             }
             else 
             {
@@ -603,7 +605,7 @@ else
                 {
                     entry.PositionAbbreviation = "B";
                 }
-                _ = TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
             }
 
             if (oldPlayerId.HasValue && !IsPlayerInBattingOrder(oldPlayerId.Value))
@@ -626,11 +628,11 @@ else
         (int Index, bool FromBench)? loc = GetFieldOrBenchIndex(entry);
         if (loc.HasValue)
         {
-            _ = TriggerAnimation(loc.Value.Index, loc.Value.FromBench, entry.PlayerId == null ? DefenseField.AnimationType.Removed : DefenseField.AnimationType.Swapped);
+            TriggerAnimation(loc.Value.Index, loc.Value.FromBench, entry.PlayerId == null ? DefenseField.AnimationType.Removed : DefenseField.AnimationType.Swapped);
         }
         else if (oldLoc.HasValue && entry.PlayerId == null && !oldLoc.Value.FromBench)
         {
-            _ = TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+            TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
         }
         
         StateHasChanged();
@@ -653,21 +655,21 @@ else
                 if (le != entry && le.PositionAbbreviation == pos) 
                 {
                     le.PositionAbbreviation = "B";
-                    _ = TriggerPosAnimation(le, DefenseField.AnimationType.Swapped);
+                    TriggerPosAnimation(le, DefenseField.AnimationType.Swapped);
                     (int Index, bool FromBench)? bumpedLoc = GetFieldOrBenchIndex(le);
-                    if (bumpedLoc.HasValue) _ = TriggerAnimation(bumpedLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
+                    if (bumpedLoc.HasValue) TriggerAnimation(bumpedLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
                 }
             }
         }
 
         entry.PositionAbbreviation = pos;
-        _ = TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
+        TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
         (int Index, bool FromBench)? loc = GetFieldOrBenchIndex(entry);
-        if (loc.HasValue) _ = TriggerAnimation(loc.Value.Index, loc.Value.FromBench, DefenseField.AnimationType.Swapped);
+        if (loc.HasValue) TriggerAnimation(loc.Value.Index, loc.Value.FromBench, DefenseField.AnimationType.Swapped);
 
         if (oldLoc.HasValue && oldLoc.Value.FromBench == false && (loc == null || loc.Value.FromBench == true || loc.Value.Index != oldLoc.Value.Index))
         {
-            _ = TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+            TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
         }
 
         StateHasChanged();
@@ -689,9 +691,9 @@ else
                 prevEntry.PlayerId = null;
                 prevEntry.PositionAbbreviation = string.Empty;
                 
-                _ = TriggerRowAnimation(prevEntry, DefenseField.AnimationType.Removed);
+                TriggerRowAnimation(prevEntry, DefenseField.AnimationType.Removed);
 
-                if (prevLoc.HasValue && !prevLoc.Value.FromBench) _ = TriggerAnimation(prevLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+                if (prevLoc.HasValue && !prevLoc.Value.FromBench) TriggerAnimation(prevLoc.Value.Index, false, DefenseField.AnimationType.Removed);
             }
         }
 
@@ -707,7 +709,7 @@ else
         {
             List<int> benchIds = GetBenchIds();
             int newBenchIdx = benchIds.IndexOf(newPlayer.Id);
-            if (newBenchIdx != -1) _ = TriggerAnimation(newBenchIdx, true, DefenseField.AnimationType.Swapped);
+            if (newBenchIdx != -1) TriggerAnimation(newBenchIdx, true, DefenseField.AnimationType.Swapped);
         }
     }
 
@@ -739,22 +741,30 @@ else
         return null;
     }
 
-    private async Task TriggerRowAnimation(BattingOrderEntry entry, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
+    private async void TriggerRowAnimation(BattingOrderEntry entry, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
     {
-        if (rowAnimations.TryGetValue(entry, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
-        else rowAnimations[entry] = new DefenseField.AnimationState { Count = 1, Type = type };
-        StateHasChanged();
-        await Task.Delay(600);
-        if (rowAnimations.TryGetValue(entry, out state)) { state.Count--; if (state.Count <= 0) rowAnimations.Remove(entry); StateHasChanged(); }
+        try
+        {
+            if (rowAnimations.TryGetValue(entry, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
+            else rowAnimations[entry] = new DefenseField.AnimationState { Count = 1, Type = type };
+            StateHasChanged();
+            await Task.Delay(600);
+            if (rowAnimations.TryGetValue(entry, out state)) { state.Count--; if (state.Count <= 0) rowAnimations.Remove(entry); StateHasChanged(); }
+        }
+        catch (Exception) { /* Ignore unobserved exception */ }
     }
 
-    private async Task TriggerPosAnimation(BattingOrderEntry entry, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
+    private async void TriggerPosAnimation(BattingOrderEntry entry, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
     {
-        if (posAnimations.TryGetValue(entry, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
-        else posAnimations[entry] = new DefenseField.AnimationState { Count = 1, Type = type };
-        StateHasChanged();
-        await Task.Delay(600);
-        if (posAnimations.TryGetValue(entry, out state)) { state.Count--; if (state.Count <= 0) posAnimations.Remove(entry); StateHasChanged(); }
+        try
+        {
+            if (posAnimations.TryGetValue(entry, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
+            else posAnimations[entry] = new DefenseField.AnimationState { Count = 1, Type = type };
+            StateHasChanged();
+            await Task.Delay(600);
+            if (posAnimations.TryGetValue(entry, out state)) { state.Count--; if (state.Count <= 0) posAnimations.Remove(entry); StateHasChanged(); }
+        }
+        catch (Exception) { /* Ignore unobserved exception */ }
     }
 
     private int? selectedIndex;
@@ -826,11 +836,11 @@ else
                 if (entry == null) { entry = new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 }; battingOrder.Add(entry); }
                 entry.PlayerId = player.Id;
                 if (!availablePlayerIds.Contains(player.Id)) availablePlayerIds.Add(player.Id);
-                _ = TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
             }
             else
             {
-                _ = TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
+                TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
             }
 
             foreach (BattingOrderEntry le in battingOrder)
@@ -838,18 +848,18 @@ else
                 if (le != entry && le.PositionAbbreviation == pos) 
                 {
                     le.PositionAbbreviation = "B";
-                    _ = TriggerPosAnimation(le, DefenseField.AnimationType.Swapped);
+                    TriggerPosAnimation(le, DefenseField.AnimationType.Swapped);
                     (int Index, bool FromBench)? bumpedLoc = GetFieldOrBenchIndex(le);
-                    if (bumpedLoc.HasValue) _ = TriggerAnimation(bumpedLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
+                    if (bumpedLoc.HasValue) TriggerAnimation(bumpedLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
                 }
             }
 
             entry.PositionAbbreviation = pos;
-            _ = TriggerAnimation(index, false, DefenseField.AnimationType.Swapped);
+            TriggerAnimation(index, false, DefenseField.AnimationType.Swapped);
             
             if (oldLoc.HasValue && oldLoc.Value.FromBench == false && oldLoc.Value.Index != index)
             {
-                _ = TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+                TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
             }
         }
         StateHasChanged();
@@ -889,11 +899,11 @@ else
                 if (entry != null)
                 {
                     entry.PositionAbbreviation = "B";
-                    _ = TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
+                    TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
                     (int Index, bool FromBench)? newLoc = GetFieldOrBenchIndex(entry);
-                    if (newLoc.HasValue) _ = TriggerAnimation(newLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
+                    if (newLoc.HasValue) TriggerAnimation(newLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
                 }
-                _ = TriggerAnimation(index, false, DefenseField.AnimationType.Removed);
+                TriggerAnimation(index, false, DefenseField.AnimationType.Removed);
             }
             selectedIndex = null;
             selectedFromBench = null;
@@ -930,16 +940,16 @@ else
                 entry1 = battingOrder.FirstOrDefault(le => le.PlayerId == null);
                 if (entry1 == null) { entry1 = new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 }; battingOrder.Add(entry1); }
                 entry1.PlayerId = id1;
-                _ = TriggerRowAnimation(entry1, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(entry1, DefenseField.AnimationType.Swapped);
             }
             else if (entry1 != null)
             {
-                _ = TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped);
+                TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped);
             }
             if (entry2 != null) 
             {
                 entry2.PositionAbbreviation = "B";
-                _ = TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped);
+                TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped);
             }
             if (entry1 != null) entry1.PositionAbbreviation = pos2;
         }
@@ -954,16 +964,16 @@ else
                 entry2 = battingOrder.FirstOrDefault(le => le.PlayerId == null);
                 if (entry2 == null) { entry2 = new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 }; battingOrder.Add(entry2); }
                 entry2.PlayerId = id2;
-                _ = TriggerRowAnimation(entry2, DefenseField.AnimationType.Swapped);
+                TriggerRowAnimation(entry2, DefenseField.AnimationType.Swapped);
             }
             else if (entry2 != null)
             {
-                _ = TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped);
+                TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped);
             }
             if (entry1 != null) 
             {
                 entry1.PositionAbbreviation = "B";
-                _ = TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped);
+                TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped);
             }
             if (entry2 != null) entry2.PositionAbbreviation = pos1;
         }
@@ -973,8 +983,8 @@ else
             string pos2 = fieldPositions[idx2].Abbreviation;
             BattingOrderEntry? entry1 = battingOrder.FirstOrDefault(le => le.PositionAbbreviation == pos1);
             BattingOrderEntry? entry2 = battingOrder.FirstOrDefault(le => le.PositionAbbreviation == pos2);
-            if (entry1 != null) { entry1.PositionAbbreviation = pos2; _ = TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped); }
-            if (entry2 != null) { entry2.PositionAbbreviation = pos1; _ = TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped); }
+            if (entry1 != null) { entry1.PositionAbbreviation = pos2; TriggerPosAnimation(entry1, DefenseField.AnimationType.Swapped); }
+            if (entry2 != null) { entry2.PositionAbbreviation = pos1; TriggerPosAnimation(entry2, DefenseField.AnimationType.Swapped); }
         }
 
         selectedIndex = null;
@@ -983,12 +993,12 @@ else
         
         if (!(bench1 && id2 == null))
         {
-            _ = TriggerAnimation(idx1, bench1, DefenseField.AnimationType.Swapped);
+            TriggerAnimation(idx1, bench1, DefenseField.AnimationType.Swapped);
         }
         
         if (!(bench2 && id1 == null))
         {
-            _ = TriggerAnimation(idx2, bench2, DefenseField.AnimationType.Swapped);
+            TriggerAnimation(idx2, bench2, DefenseField.AnimationType.Swapped);
         }
 
         StateHasChanged();
@@ -1002,14 +1012,18 @@ else
         return null;
     }
 
-    private async Task TriggerAnimation(int index, bool fromBench, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
+    private async void TriggerAnimation(int index, bool fromBench, DefenseField.AnimationType type = DefenseField.AnimationType.Swapped)
     {
-        (int Index, bool FromBench) key = (index, fromBench);
-        if (animationCounters.TryGetValue(key, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
-        else animationCounters[key] = new DefenseField.AnimationState { Count = 1, Type = type };
-        StateHasChanged();
-        await Task.Delay(600);
-        if (animationCounters.TryGetValue(key, out state)) { state.Count--; if (state.Count <= 0) animationCounters.Remove(key); StateHasChanged(); }
+        try
+        {
+            (int Index, bool FromBench) key = (index, fromBench);
+            if (animationCounters.TryGetValue(key, out DefenseField.AnimationState? state)) { state.Count++; state.Type = type; }
+            else animationCounters[key] = new DefenseField.AnimationState { Count = 1, Type = type };
+            StateHasChanged();
+            await Task.Delay(600);
+            if (animationCounters.TryGetValue(key, out state)) { state.Count--; if (state.Count <= 0) animationCounters.Remove(key); StateHasChanged(); }
+        }
+        catch (Exception) { /* Ignore unobserved exception */ }
     }
 
     private string GetCurrentLineupData()
@@ -1023,14 +1037,18 @@ else
         return LineupEncoder.Encode(encodedOrder, benchIds, players);
     }
 
-    private void UpdateUrl()
+    private async void UpdateUrl()
     {
         if (isInitializing) return;
-        string data = GetCurrentLineupData();
-        string? queryValue = string.IsNullOrEmpty(data) ? null : data;
-        _appliedLineupData = data;
-        _ = JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", queryValue);
-        _ = SaveToStorage();
+        try
+        {
+            string data = GetCurrentLineupData();
+            string? queryValue = string.IsNullOrEmpty(data) ? null : data;
+            _appliedLineupData = data;
+            await JSRuntime.InvokeVoidAsync("updateUrlQuery", "p", queryValue);
+            await SaveToStorage();
+        }
+        catch (Exception) { /* Ignore unobserved exception */ }
     }
 
     private async Task SaveToStorage()

@@ -3,7 +3,7 @@
 @inject IJSRuntime JSRuntime
 
 <div class="pos-autocomplete-cell-wrapper" @onclick:stopPropagation>
-    @if (isMobile)
+    @if (IsMobile)
     {
         <select @ref="selectElement"
                 id="@($"pos-select-{GetHashCode()}")"
@@ -56,28 +56,19 @@
     [Parameter] public EventCallback OnFocused { get; set; }
     [Parameter] public EventCallback OnBlurred { get; set; }
     [Parameter] public bool IsDisabled { get; set; }
+    [Parameter] public bool IsMobile { get; set; }
 
     private ElementReference containerElement;
     private ElementReference selectElement;
     private List<(string Abbr, string Label)> filteredPositions = new();
     private int activeIndex = -1;
     private bool showSuggestions = false;
-    private bool isMobile = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
-            StateHasChanged();
-        }
-    }
 
     public async Task FocusAsync()
     {
         try
         {
-            if (isMobile) await selectElement.FocusAsync();
+            if (IsMobile) await selectElement.FocusAsync();
             else await containerElement.FocusAsync();
         }
         catch (Exception) { }

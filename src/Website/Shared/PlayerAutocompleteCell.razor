@@ -3,7 +3,7 @@
 @inject IJSRuntime JSRuntime
 
 <div class="autocomplete-cell-wrapper" @onclick:stopPropagation>
-    @if (isMobile)
+    @if (IsMobile)
     {
         <select @ref="selectElement"
                 id="@($"select-{GetHashCode()}")"
@@ -68,6 +68,7 @@
     [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
     [Parameter] public EventCallback OnFocused { get; set; }
     [Parameter] public EventCallback OnBlurred { get; set; }
+    [Parameter] public bool IsMobile { get; set; } = false;
 
     private ElementReference inputElement;
     private ElementReference selectElement;
@@ -79,18 +80,8 @@
     private Player? originalPlayer = null;
     private string internalValue = string.Empty;
     private bool isFocused = false;
-    private bool isMobile = false;
 
     private bool isInvalid => isFocused && !string.IsNullOrWhiteSpace(internalValue) && !filteredPlayers.Any();
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
-            StateHasChanged();
-        }
-    }
 
     protected override void OnParametersSet()
     {
@@ -104,7 +95,7 @@
     {
         try
         {
-            if (isMobile)
+            if (IsMobile)
             {
                 await selectElement.FocusAsync();
             }
