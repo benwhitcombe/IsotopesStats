@@ -54,41 +54,70 @@
         <a class="dismiss">🗙</a>
     </div>
 
+    <style>
+        #blazor-error-ui {
+            z-index: 99998 !important;
+            bottom: 60px !important; /* Move it up so it doesn't cover the force reload button if both show */
+        }
+    </style>
+
     <script type="text/javascript">
-        window.onerror = function (message, source, lineno, colno, error) {
+        function displayGlobalError(prefix, content, color, bg) {
             var errorDiv = document.createElement('div');
             errorDiv.style.position = 'fixed';
             errorDiv.style.top = '0';
             errorDiv.style.left = '0';
             errorDiv.style.width = '100%';
-            errorDiv.style.background = 'black';
-            errorDiv.style.color = 'lime';
-            errorDiv.style.zIndex = '99999';
-            errorDiv.style.padding = '10px';
-            errorDiv.style.fontSize = '12px';
+            errorDiv.style.background = bg || 'black';
+            errorDiv.style.color = color || 'white';
+            errorDiv.style.zIndex = '100000';
+            errorDiv.style.padding = '15px';
+            errorDiv.style.fontSize = '11px';
             errorDiv.style.fontFamily = 'monospace';
             errorDiv.style.wordBreak = 'break-all';
             errorDiv.style.whiteSpace = 'pre-wrap';
-            errorDiv.innerHTML = 'JS ERROR: ' + message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A');
-            document.body.appendChild(errorDiv);
+            errorDiv.innerHTML = '<strong>' + prefix + '</strong>\n' + content + '\n\nUA: ' + navigator.userAgent;
+            
+            if (document.body) {
+                document.body.appendChild(errorDiv);
+                addForceReloadButton();
+            } else {
+                // If body not ready, try again in a bit
+                setTimeout(function() { 
+                    if (document.body) {
+                        document.body.appendChild(errorDiv);
+                        addForceReloadButton();
+                    }
+                }, 500);
+            }
+        }
+
+        function addForceReloadButton() {
+            if (document.getElementById('force-reload-btn')) return;
+            var btn = document.createElement('button');
+            btn.id = 'force-reload-btn';
+            btn.innerHTML = 'FORCE CACHE CLEAR & RELOAD';
+            btn.style.position = 'fixed';
+            btn.style.bottom = '20px';
+            btn.style.left = '20px';
+            btn.style.right = '20px';
+            btn.style.padding = '20px';
+            btn.style.background = 'yellow';
+            btn.style.color = 'black';
+            btn.style.fontWeight = 'bold';
+            btn.style.zIndex = '100001';
+            btn.onclick = function() {
+                window.location.reload(true);
+            };
+            document.body.appendChild(btn);
+        }
+
+        window.onerror = function (message, source, lineno, colno, error) {
+            displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'), 'lime', 'black');
         };
 
         window.addEventListener('unhandledrejection', function (event) {
-            var errorDiv = document.createElement('div');
-            errorDiv.style.position = 'fixed';
-            errorDiv.style.top = '0';
-            errorDiv.style.left = '0';
-            errorDiv.style.width = '100%';
-            errorDiv.style.background = 'darkred';
-            errorDiv.style.color = 'white';
-            errorDiv.style.zIndex = '99999';
-            errorDiv.style.padding = '10px';
-            errorDiv.style.fontSize = '12px';
-            errorDiv.style.fontFamily = 'monospace';
-            errorDiv.style.wordBreak = 'break-all';
-            errorDiv.style.whiteSpace = 'pre-wrap';
-            errorDiv.innerHTML = 'PROMISE REJECTION: ' + event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A');
-            document.body.appendChild(errorDiv);
+            displayGlobalError('PROMISE REJECTION', event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A'), 'white', 'darkred');
         });
     </script>
 

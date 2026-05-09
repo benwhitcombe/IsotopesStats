@@ -20,7 +20,7 @@ else
     <PageTitle>Isotopes - Lineup</PageTitle>
 
     <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <h3 style="margin:0">Bill Exception Test v3</h3>
+        <h3 style="margin:0">Bill Exception Test v4</h3>
         <div style="display: flex; gap: 1rem; align-items: center;">
             <SeasonSelector 
                 Seasons="@seasons" 
@@ -1100,12 +1100,23 @@ else
     private string? errorMessage;
     private string? stackTrace;
 
+    private async Task SetMobileFlag()
+    {
+        try
+        {
+            string ua = await JSRuntime.InvokeAsync<string>("getUserAgent");
+            isMobile = !string.IsNullOrEmpty(ua) && (ua.Contains("Android") || ua.Contains("iPhone") || ua.Contains("iPad") || ua.Contains("Mobile"));
+        }
+        catch { isMobile = false; }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try 
         {
             isInitializing = true;
             InitializeBattingOrder();
+            await SetMobileFlag();
             seasons = await StatsRepository.GetSeasonsAsync();
             selectedSeasonId = SharedState.SelectedSeasonId;
             if (selectedSeasonId == 0 && seasons.Any()) selectedSeasonId = seasons.First().Id;
@@ -1125,23 +1136,14 @@ else
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
-        try
-        {
-            if (firstRender)
-            {
-                isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
-                StateHasChanged();
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"JS Error: {ex.Message}";
-            stackTrace = ex.StackTrace;
-            StateHasChanged();
-        }
+        // No more JS interop here to avoid circuit crashes
     }
+
+    // Remove the old async version
+    // protected override async Task OnAfterRenderAsync(bool firstRender) { ... }
+    
 
     protected override void OnParametersSet()
     {

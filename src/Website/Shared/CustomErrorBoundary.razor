@@ -10,10 +10,21 @@ else
     <div style="font-family: monospace; padding: 1rem; background: white; color: black; line-height: 1.4; word-break: break-all; white-space: pre-wrap;">
         ERROR: @CurrentException.Message
         @CurrentException.StackTrace
+        
+        UA: @UserAgent
     </div>
 }
 
 @code {
+    [Inject] private IJSRuntime JSRuntime { get; set; }
+    private string UserAgent { get; set; } = "Loading...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { UserAgent = await JSRuntime.InvokeAsync<string>("getUserAgent"); }
+        catch { UserAgent = "Error getting UA"; }
+    }
+
     protected override void OnParametersSet()
     {
         if (CurrentException != null)
