@@ -3,6 +3,8 @@
     --isotopes-white: #FFFFFF;
     --isotopes-dark: #333333;
     --isotopes-accent: #004684;
+    color-scheme: light only;
+    forced-color-adjust: none;
 }
 
 * {
@@ -11,6 +13,8 @@
 
 html, body {
     height: 100%;
+    color-scheme: light only;
+    forced-color-adjust: none;
 }
 
 body {

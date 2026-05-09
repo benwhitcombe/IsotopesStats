@@ -8,8 +8,7 @@
         <select @ref="selectElement"
                 id="@($"select-{GetHashCode()}")"
                 class="native-player-select" 
-                value="@(Players.FirstOrDefault(p => p.Name == Value)?.Id ?? 0)" 
-                @onchange="HandleMobileSelect"
+                @bind="SelectedPlayerId"
                 @onfocus="HandleMobileFocus"
                 @onblur="HandleMobileBlur">
             <option value="0">-- Select Player --</option>
@@ -72,6 +71,18 @@
 
     private ElementReference inputElement;
     private ElementReference selectElement;
+
+    private int SelectedPlayerId
+    {
+        get => Players.FirstOrDefault(p => p.Name == Value)?.Id ?? 0;
+        set
+        {
+            Player? player = Players.FirstOrDefault(p => p.Id == value);
+            _ = SelectPlayer(player);
+            _ = OnCommit.InvokeAsync();
+        }
+    }
+
     private List<Player> filteredPlayers = new();
     private int activeIndex = -1;
     private bool showSuggestions = false;

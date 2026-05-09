@@ -8,8 +8,7 @@
         <select @ref="selectElement"
                 id="@($"pos-select-{GetHashCode()}")"
                 class="native-pos-select" 
-                value="@Value" 
-                @onchange="HandleMobileSelect"
+                @bind="SelectedPosition" 
                 @onfocus="HandleMobileFocus"
                 @onblur="HandleMobileBlur"
                 disabled="@IsDisabled"
@@ -60,6 +59,17 @@
 
     private ElementReference containerElement;
     private ElementReference selectElement;
+
+    private string SelectedPosition
+    {
+        get => Value;
+        set
+        {
+            _ = SelectPosition(value);
+            _ = OnCommit.InvokeAsync();
+        }
+    }
+
     private List<(string Abbr, string Label)> filteredPositions = new();
     private int activeIndex = -1;
     private bool showSuggestions = false;

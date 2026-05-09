@@ -21,6 +21,7 @@ public class SessionStorageService
     {
         try
         {
+            if (!await IsAvailable()) return;
             string json = JsonSerializer.Serialize(value, _options);
             await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", key, json);
         }
@@ -34,6 +35,7 @@ public class SessionStorageService
     {
         try
         {
+            if (!await IsAvailable()) return default;
             string json = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", key);
             if (string.IsNullOrEmpty(json))
                 return default;
@@ -49,6 +51,29 @@ public class SessionStorageService
 
     public async Task RemoveItemAsync(string key)
     {
-        await _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", key);
+        try
+        {
+            if (!await IsAvailable()) return;
+            await _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", key);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing from session storage: {ex.Message}");
+        }
+    }
+
+    private bool? _isAvailable;
+    private async Task<bool> IsAvailable()
+    {
+        if (_isAvailable.HasValue) return _isAvailable.Value;
+        try
+        {
+            _isAvailable = await _jsRuntime.InvokeAsync<bool>("eval", "typeof sessionStorage !== 'undefined' && (()=>{try{sessionStorage.setItem('test','1');sessionStorage.removeItem('test');return true;}catch(e){return false;}})()");
+        }
+        catch
+        {
+            _isAvailable = false;
+        }
+        return _isAvailable.Value;
     }
 }
