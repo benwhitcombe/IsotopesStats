@@ -4,7 +4,7 @@ window.getUserAgent = function () {
 
 window.isMobileDevice = function () {
     try {
-        var ua = window.navigator ? window.navigator.userAgent : '';
+        const ua = window.navigator ? window.navigator.userAgent : '';
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     } catch (e) {
         return false;

@@ -7,7 +7,7 @@
         // https://github.com/rafrex/spa-github-pages
         (function (l) {
             if (l.search && l.search.startsWith('?/')) {
-                var decoded = l.search.slice(1).split('&').map(function (s) {
+                const decoded = l.search.slice(1).split('&').map(function (s) {
                     return s.replace(/~and~/g, '&')
                 }).join('?');
                 window.history.replaceState(null, null,
@@ -32,7 +32,7 @@
         // https://github.com/rafrex/spa-github-pages
         (function (l) {
             if (l.search[1] === '/') {
-                var decoded = l.search.slice(1).split('&').map(function (s) {
+                const decoded = l.search.slice(1).split('&').map(function (s) {
                     return s.replace(/~and~/g, '&')
                 }).join('?');
                 window.history.replaceState(null, null,
@@ -66,7 +66,7 @@
 
     <script type="text/javascript">
         function displayGlobalError(prefix, content, color, bg) {
-            var errorDiv = document.createElement('div');
+            const errorDiv = document.createElement('div');
             errorDiv.style.position = 'fixed';
             errorDiv.style.top = '0';
             errorDiv.style.left = '0';
@@ -97,7 +97,7 @@
 
         function addForceReloadButton() {
             if (document.getElementById('force-reload-btn')) return;
-            var btn = document.createElement('button');
+            const btn = document.createElement('button');
             btn.id = 'force-reload-btn';
             btn.innerHTML = 'FORCE CACHE CLEAR & RELOAD';
             btn.style.position = 'fixed';
@@ -114,6 +114,21 @@
             };
             document.body.appendChild(btn);
         }
+
+        // Intercept console.error to catch Blazor Critical errors that don't bubble to window.onerror
+        (function() {
+            const originalError = console.error;
+            console.error = function() {
+                const args = Array.from(arguments);
+                const message = args.join(' ');
+                
+                if (message.includes('crit:') || message.includes('Unhandled exception') || message.includes('InvalidCharacterError')) {
+                    displayGlobalError('BLAZOR CRITICAL', message, 'white', 'darkred');
+                }
+                
+                originalError.apply(console, arguments);
+            };
+        })();
 
         window.onerror = function (message, source, lineno, colno, error) {
             displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'), 'lime', 'black');
