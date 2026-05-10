@@ -7,37 +7,27 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-@if (!string.IsNullOrEmpty(errorMessage))
+<PageTitle>Isotopes - Lineup</PageTitle>
+
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h3 style="margin:0">Lineup</h3>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <SeasonSelector 
+            Seasons="@seasons" 
+            SelectedSeasonId="@selectedSeasonId" 
+            OnSeasonSelected="OnSeasonSelected"
+            AllowAllSeasons="false" />
+    </div>
+</div>
+
+@if (isLoading)
 {
-    @errorMessage
-    @if (!string.IsNullOrEmpty(stackTrace))
-    {
-        @stackTrace
-    }
+    <LoadingIndicator />
 }
 else
 {
-    <PageTitle>Isotopes - Lineup</PageTitle>
-
-    <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-        <h3 style="margin:0">Lineup v6</h3>
-        <div style="display: flex; gap: 1rem; align-items: center;">
-            <SeasonSelector 
-                Seasons="@seasons" 
-                SelectedSeasonId="@selectedSeasonId" 
-                OnSeasonSelected="OnSeasonSelected"
-                AllowAllSeasons="false" />
-        </div>
-    </div>
-
-    @if (isLoading)
-    {
-        <LoadingIndicator />
-    }
-    else
-    {
-        <CustomErrorBoundary>
-            <div class="lineup-card-container">
+    <CustomErrorBoundary>
+        <div class="lineup-card-container">
                 <div class="lineup-card-header">
                     <div class="team-name">ISOTOPES</div>
                     <div class="card-title">DEFENSIVE LINEUP CARD</div>
