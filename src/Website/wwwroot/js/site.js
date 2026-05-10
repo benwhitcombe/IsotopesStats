@@ -337,6 +337,20 @@ window.updateUrlQuery = function (key, value) {
     window.history.replaceState(null, '', url.toString());
 };
 
+window.setDragHighlight = function (elementId, className, add) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (add) {
+        el.classList.add(className);
+    } else {
+        el.classList.remove(className);
+    }
+};
+
+window.clearAllDragHighlights = function (className) {
+    document.querySelectorAll('.' + className).forEach(el => el.classList.remove(className));
+};
+
 window.shareOrCopy = async function (title, url) {
     let shareUrl = url;
     if (!shareUrl || shareUrl === 'null') {

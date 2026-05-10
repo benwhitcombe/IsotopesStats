@@ -64,10 +64,11 @@ else
                                         id="@($"row-{index}")"
                                         draggable="@(entry.PlayerId != null ? "true" : "false")"
                                         @ondragstart="(e) => HandleDragStart(e, entry, index)"
-                                        @ondragover="() => HandleDragOver(entry)"
+                                        @ondragenter='() => HandleDragEnter(entry, $"row-{index}")'
+                                        @ondragleave='() => HandleDragLeave($"row-{index}")'
                                         @ondrop="() => HandleDrop(entry)"
                                         @ondragend="HandleDragEnd"
-                                        class="reorderable-row @(draggingType == DragMode.Row && entry == targetEntry ? "drag-over" : "") @(entry == draggedEntry ? "dragging" : "") @(isEntrySelected && isExplicitlySelected && draggingType != DragMode.Position ? "selected" : "") @(isRowSwapping ? "just-swapped" : "") @(isRowRemoving ? "just-removed" : "")">
+                                        class="reorderable-row @(entry == draggedEntry ? "dragging" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None && (selectedFromBench == true) ? "selected" : "") @(isRowSwapping ? "just-swapped" : "") @(isRowRemoving ? "just-removed" : "")">
                                         <td class="pos-num" 
                                             onmouseenter="window.lastMouseEnterType = 'row';">
                                             @entry.OrderNumber
@@ -86,8 +87,10 @@ else
                                                 OnFocused="@(() => HandleFocus(index))"
                                                 OnBlurred="@(() => HandleBlur(index))" />
                                         </td>
-                                        <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(draggingType == DragMode.Position && (entry == targetEntry || entry == draggedEntry) ? "drag-over-pos" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
+                                        <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None && (selectedFromBench == false) ? "selected" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
                                             id="@($"pos-{index}")"
+                                            @ondragenter='() => HandlePosDragEnter(entry, $"pos-{index}")'
+                                            @ondragleave='() => HandlePosDragLeave($"pos-{index}")'
                                             onmouseenter="window.lastMouseEnterType = 'pos';">
                                             <PositionAutocompleteCell 
                                                 @ref="posCells[index]"
@@ -207,18 +210,41 @@ else
 
     private void HandleFieldDrop((int? Index, bool FromBench) e)
     {
-        if (selectedIndex.HasValue && selectedFromBench.HasValue)
+        if (draggingType != DragMode.None && draggedEntry != null)
         {
-            // If dropping on the bench itself (not a specific player), 
-            // and the player is currently on the field, we want to move them to the bench.
+            // External table drag (Row or Position) to field
+            if (!e.FromBench && e.Index.HasValue)
+            {
+                string pos = fieldPositions[e.Index.Value].Abbreviation;
+                HandlePositionChange(draggedEntry, pos);
+            }
+            else if (e.FromBench)
+            {
+                HandlePositionChange(draggedEntry, "B");
+            }
+        }
+        else if (selectedIndex.HasValue && selectedFromBench.HasValue)
+        {
+            // Internal field/bench drag (started from the field map)
             if (e.FromBench && !e.Index.HasValue && !selectedFromBench.Value)
             {
-                // This will trigger the removal from the field and addition to the bench
+                // Move from field to bench
                 HandleFieldClick(selectedIndex.Value, selectedFromBench.Value);
             }
-            else
+            else if (e.Index.HasValue)
             {
-                HandleFieldClick(e.Index ?? 0, e.FromBench);
+                // Perform the action directly instead of relying on click selection state
+                int idx1 = selectedIndex.Value;
+                bool bench1 = selectedFromBench.Value;
+                int idx2 = e.Index.Value;
+                bool bench2 = e.FromBench;
+
+                if (idx1 != idx2 || bench1 != bench2)
+                {
+                    // Force explicit selection true to ensure move logic triggers
+                    isExplicitlySelected = true;
+                    HandleFieldClick(idx2, bench2);
+                }
             }
         }
         HandleFieldDragEnd();
@@ -232,6 +258,36 @@ else
         selectedFromBench = null;
         isExplicitlySelected = false;
         StateHasChanged();
+    }
+
+    private async Task HandleDragEnter(BattingOrderEntry entry, string elementId)
+    {
+        if (draggingType == DragMode.Position && entry.PlayerId == null)
+        {
+            targetEntry = null;
+            return;
+        }
+        targetEntry = entry;
+        await JSRuntime.InvokeVoidAsync("setDragHighlight", elementId, "drag-over", true);
+    }
+
+    private async Task HandleDragLeave(string elementId)
+    {
+        await JSRuntime.InvokeVoidAsync("setDragHighlight", elementId, "drag-over", false);
+    }
+
+    private async Task HandlePosDragEnter(BattingOrderEntry entry, string elementId)
+    {
+        if (draggingType == DragMode.Position)
+        {
+            targetEntry = entry;
+            await JSRuntime.InvokeVoidAsync("setDragHighlight", elementId, "drag-over-pos", true);
+        }
+    }
+
+    private async Task HandlePosDragLeave(string elementId)
+    {
+        await JSRuntime.InvokeVoidAsync("setDragHighlight", elementId, "drag-over-pos", false);
     }
 
     private async Task HandleDragStart(DragEventArgs e, BattingOrderEntry entry, int index) 
@@ -255,7 +311,7 @@ else
         {
             selectedIndex = loc.Value.Index;
             selectedFromBench = loc.Value.FromBench;
-            isExplicitlySelected = true;
+            isExplicitlySelected = false;
         }
 
         if (draggingType == DragMode.Position)
@@ -268,17 +324,7 @@ else
         }
     }
 
-    private void HandleDragOver(BattingOrderEntry entry) 
-    {
-        if (draggingType == DragMode.Position && entry.PlayerId == null)
-        {
-            targetEntry = null;
-            return;
-        }
-        targetEntry = entry;
-    }
-
-    private void HandleDragEnd()
+    private async Task HandleDragEnd()
     {
         draggedEntry = null;
         targetEntry = null;
@@ -289,6 +335,9 @@ else
         selectedFromBench = null;
         isExplicitlySelected = false;
         
+        await JSRuntime.InvokeVoidAsync("clearAllDragHighlights", "drag-over");
+        await JSRuntime.InvokeVoidAsync("clearAllDragHighlights", "drag-over-pos");
+
         StateHasChanged();
     }
 
@@ -321,12 +370,6 @@ else
             // Trigger animations for the rows
             TriggerRowAnimation(draggedEntry, DefenseField.AnimationType.Swapped);
             TriggerRowAnimation(dropTargetEntry, DefenseField.AnimationType.Swapped);
-
-            // Trigger animations for the field/bench positions involved
-            (int Index, bool FromBench)? loc1 = GetFieldOrBenchIndex(draggedEntry);
-            (int Index, bool FromBench)? loc2 = GetFieldOrBenchIndex(dropTargetEntry);
-            if (loc1.HasValue) TriggerAnimation(loc1.Value.Index, loc1.Value.FromBench, DefenseField.AnimationType.Swapped);
-            if (loc2.HasValue) TriggerAnimation(loc2.Value.Index, loc2.Value.FromBench, DefenseField.AnimationType.Swapped);
 
             UpdateUrl();
         }
@@ -847,8 +890,8 @@ else
                     TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
                     (int Index, bool FromBench)? newLoc = GetFieldOrBenchIndex(entry);
                     if (newLoc.HasValue) TriggerAnimation(newLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
+                    TriggerAnimation(index, false, DefenseField.AnimationType.Removed);
                 }
-                TriggerAnimation(index, false, DefenseField.AnimationType.Removed);
             }
             selectedIndex = null;
             selectedFromBench = null;
