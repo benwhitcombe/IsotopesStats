@@ -24,10 +24,12 @@
 
 .card-title {
     font-size: 0.8rem;
-    letter-spacing: 3px;
-    font-weight: bold;
+    letter-spacing: 2px;
+    font-weight: 900;
     background: transparent;
     color: black;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    text-transform: uppercase;
 }
 
 .lineup-content-wrapper {
@@ -147,7 +149,8 @@
     justify-content: flex-start !important;
     padding-left: 0.5rem !important;
     font-size: 1.1rem !important;
-    font-family: inherit !important;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    letter-spacing: 1.5px !important;
 }
 
 /* Target strictly the POS column components */
