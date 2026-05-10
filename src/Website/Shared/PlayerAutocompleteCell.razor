@@ -8,7 +8,8 @@
         <select @ref="selectElement"
                 id="@($"select-{GetHashCode()}")"
                 class="native-player-select" 
-                @bind="SelectedPlayerId"
+                value="@SelectedPlayerId"
+                @onchange="HandleMobileSelect"
                 @onfocus="HandleMobileFocus"
                 @onblur="HandleMobileBlur">
             <option value="0">-- Select Player --</option>
@@ -230,6 +231,15 @@
             if (showSuggestions && activeIndex >= 0 && activeIndex < filteredPlayers.Count)
             {
                 await SelectPlayer(filteredPlayers[activeIndex]);
+            }
+            else if (!string.IsNullOrWhiteSpace(internalValue))
+            {
+                // Try to find a match manually if Enter is pressed without an active suggestion
+                Player? matchedPlayer = Players.FirstOrDefault(p => p.Name.Equals(internalValue, StringComparison.OrdinalIgnoreCase));
+                if (matchedPlayer != null)
+                {
+                    await SelectPlayer(matchedPlayer);
+                }
             }
         }
         else if (e.Key == "Escape")

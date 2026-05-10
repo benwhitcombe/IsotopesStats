@@ -62,7 +62,7 @@ else
 
                                     <tr @key="entry"
                                         id="@($"row-{index}")"
-                                        draggable="true"
+                                        draggable="@(entry.PlayerId != null ? "true" : "false")"
                                         @ondragstart="(e) => HandleDragStart(e, entry, index)"
                                         @ondragover="() => HandleDragOver(entry)"
                                         @ondrop="() => HandleDrop(entry)"
@@ -240,8 +240,8 @@ else
     { 
         string jsDragType = await JSRuntime.InvokeAsync<string>("getLastMouseEnterType");
         DragMode dragMode = jsDragType switch {
-            "row" => DragMode.Row,
-            "player" => isMobile ? DragMode.Row : DragMode.None,
+            "row" => entry.PlayerId != null ? DragMode.Row : DragMode.None,
+            "player" => (isMobile && entry.PlayerId != null) ? DragMode.Row : DragMode.None,
             "pos" => entry.PlayerId != null ? DragMode.Position : DragMode.None,
             _ => DragMode.None
         };
@@ -504,12 +504,6 @@ else
                 selectedFromBench = null;
             }
         }
-        
-        if (index == battingOrder.Count - 1)
-        {
-            battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
-            StateHasChanged();
-        }
     }
 
     private void HandleBlur(int index)
@@ -555,7 +549,15 @@ else
         if (changed) StateHasChanged();
     }
 
-    private void HandleOrderSelection(BattingOrderEntry entry, Player? newPlayer)
+    private void AddEmptyRowIfLastRowFilled()
+    {
+        if (battingOrder.Count > 0 && battingOrder.Last().PlayerId != null)
+        {
+            battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+        }
+    }
+
+    private async Task HandleOrderSelection(BattingOrderEntry entry, Player? newPlayer)
     {
         if (entry.PlayerId == newPlayer?.Id) return;
 
@@ -619,11 +621,7 @@ else
             }
         }
 
-        // Add a new row if we just filled the last one (and it wasn't already added by Focus)
-        if (index == battingOrder.Count - 1 && entry.PlayerId != null)
-        {
-            battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
-        }
+        AddEmptyRowIfLastRowFilled();
 
         (int Index, bool FromBench)? loc = GetFieldOrBenchIndex(entry);
         if (loc.HasValue)
@@ -636,6 +634,7 @@ else
         }
         
         StateHasChanged();
+        await Task.Yield();
         UpdateUrl();
     }
 
@@ -862,6 +861,7 @@ else
                 TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
             }
         }
+        AddEmptyRowIfLastRowFilled();
         StateHasChanged();
         UpdateUrl();
     }
@@ -1001,6 +1001,7 @@ else
             TriggerAnimation(idx2, bench2, DefenseField.AnimationType.Swapped);
         }
 
+        AddEmptyRowIfLastRowFilled();
         StateHasChanged();
         UpdateUrl();
     }
