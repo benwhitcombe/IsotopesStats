@@ -59,7 +59,12 @@
 .lineup-table[b-haooa4l116] {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
+
+.lineup-table th:nth-child(1)[b-haooa4l116] { width: 40px; }
+.lineup-table th:nth-child(2)[b-haooa4l116] { width: auto; }
+.lineup-table th:nth-child(3)[b-haooa4l116] { width: 80px; }
 
 .lineup-table th[b-haooa4l116] {
     background-color: white !important;
@@ -84,6 +89,7 @@
 }
 
 .pos-num[b-haooa4l116] {
+    width: 40px;
     text-align: center;
     font-weight: 900;
     color: black;
@@ -94,6 +100,7 @@
 }
 
 .pos-abbr[b-haooa4l116] {
+    width: 80px;
     text-align: center;
     font-weight: 900;
     color: black;
