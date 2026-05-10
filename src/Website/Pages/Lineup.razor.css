@@ -58,7 +58,12 @@
 .lineup-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
+
+.lineup-table th:nth-child(1) { width: 40px; }
+.lineup-table th:nth-child(2) { width: auto; }
+.lineup-table th:nth-child(3) { width: 80px; }
 
 .lineup-table th {
     background-color: white !important;
@@ -83,6 +88,7 @@
 }
 
 .pos-num {
+    width: 40px;
     text-align: center;
     font-weight: 900;
     color: black;
@@ -93,6 +99,7 @@
 }
 
 .pos-abbr {
+    width: 80px;
     text-align: center;
     font-weight: 900;
     color: black;
