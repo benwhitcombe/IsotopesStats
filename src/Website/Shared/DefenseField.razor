@@ -19,11 +19,9 @@
             isRemoving = state.Type == AnimationType.Removed;
         }
 
-        bool isDropdownOpen = showDropdown && dropdownIndex == index && dropdownFromBench == false;
-        
         <div @ref="fieldRefs[index]"
              id="@($"field-box-{index}")"
-             class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(isDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
+             class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
              style="left: @(assignment.X)%; top: @(assignment.Y)%;"
              draggable="@(IsEditable ? "true" : "false")"
              @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
@@ -32,59 +30,17 @@
              @ondragend="() => OnDragEnd.InvokeAsync()"
              @onclick="() => HandleFieldClick(index, false)">
             <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")" style="pointer-events: none;">
-                @if (isMobile && string.IsNullOrEmpty(assignment.PlayerName) && !SelectedIndex.HasValue)
-                {
-                    <select @key="@($"field-sel-{index}")" class="native-player-select-overlay" @onchange="(e) => HandleMobileSelect(index, false, e)" style="pointer-events: auto;">
-                        <option value="0">-- Select --</option>
-                        @foreach (Player player in Players.Where(p => BattingOrderPlayerIds.Contains(p.Id)).OrderBy(p => p.Name))
-                        {
-                            <option @key="player.Id" value="@player.Id">@GetPlayerDisplayName(player)</option>
-                        }
-                    </select>
-                }
                 <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
                 @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
                 {
                     <span class="remove-icon">×</span>
                 }
             </div>
-            
-            @if (isDropdownOpen)
-            {
-                <div class="field-dropdown">
-                    <input @ref="dropdownInput"
-                           class="dropdown-search" 
-                           placeholder="Search player..." 
-                           value="@searchTerm"
-                           @oninput="OnSearchInput" 
-                           @onkeydown="HandleDropdownKeydown"
-                           @onblur="() => showDropdown = false" />
-                    <div class="dropdown-list">
-                        @{
-                            List<Player> filtered = FilteredPlayers.ToList();
-                            for (int f = 0; f < filtered.Count; f++)
-                            {
-                                int fIndex = f;
-                                Player player = filtered[f];
-                                <div class="dropdown-item @(fIndex == dropdownActiveIndex ? "active" : "")" 
-                                     @onmousedown="() => SelectPlayer(player)">
-                                    @GetPlayerDisplayName(player)
-                                </div>
-                            }
-                            if (!filtered.Any())
-                            {
-                                <div class="dropdown-no-results">No players found</div>
-                            }
-                        }
-                    </div>
-                </div>
-            }
         </div>
     }
     @if (BenchPlayers.Any() || IsEditable)
     {
-        bool isBenchDropdownOpen = showDropdown && dropdownFromBench == true;
-        <div class="bench-container @(isBenchDropdownOpen ? "dropdown-open" : "") @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
+        <div class="bench-container @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
              @ondragenter="() => OnDragEnter.InvokeAsync((null, true))"
              @ondrop="() => OnDrop.InvokeAsync((null, true))">
             <div class="bench-label">BENCH</div>
@@ -145,13 +101,6 @@
     public class AnimationState { public int Count; public AnimationType Type; }
 
     private bool isMobile = false;
-    private bool showDropdown = false;
-    private bool shouldFocusInput = false;
-    private int dropdownIndex = -1;
-    private bool dropdownFromBench = false;
-    private string searchTerm = "";
-    private ElementReference dropdownInput;
-    private int dropdownActiveIndex = 0;
     private Dictionary<int, ElementReference> fieldRefs = new();
     private Dictionary<int, ElementReference> benchRefs = new();
 
@@ -162,31 +111,7 @@
             isMobile = await JSRuntime.InvokeAsync<bool>("isMobileDevice");
             StateHasChanged();
         }
-        
-        if (showDropdown && shouldFocusInput)
-        {
-            shouldFocusInput = false;
-            try { await dropdownInput.FocusAsync(); } catch { }
-        }
     }
-
-    private async Task HandleMobileSelect(int index, bool fromBench, ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out int playerId) && playerId > 0)
-        {
-            Player? player = Players.FirstOrDefault(p => p.Id == playerId);
-            if (player != null)
-            {
-                await OnPlayerSelected.InvokeAsync((index, fromBench, player));
-            }
-        }
-    }
-
-    private IEnumerable<Player> FilteredPlayers => Players
-        .Where(p => string.IsNullOrWhiteSpace(searchTerm) || p.Name.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
-        .Where(p => BattingOrderPlayerIds.Contains(p.Id))
-        .OrderBy(p => PlayerAssignments.ContainsKey(p.Id) ? 1 : 0)
-        .ThenBy(p => p.Name);
 
     private string GetPlayerDisplayName(Player player)
     {
@@ -201,73 +126,12 @@
     {
         if (!IsEditable) return;
 
-        bool isEmpty = fromBench 
-            ? index >= BenchPlayers.Count 
-            : string.IsNullOrEmpty(Assignments[index].PlayerName);
-
-        if (SelectedIndex.HasValue && IsExplicitlySelected)
-        {
-            showDropdown = false;
-            await OnPlayerClick.InvokeAsync((index, fromBench));
-            return;
-        }
-
-        if (!isMobile && isEmpty && OnPlayerSelected.HasDelegate)
-        {
-            dropdownIndex = index;
-            dropdownFromBench = fromBench;
-            
-            showDropdown = true;
-            shouldFocusInput = true;
-            searchTerm = "";
-            dropdownActiveIndex = 0;
-            StateHasChanged();
-        }
-        else
-        {
-            showDropdown = false;
-            await OnPlayerClick.InvokeAsync((index, fromBench));
-        }
+        await OnPlayerClick.InvokeAsync((index, fromBench));
     }
 
     private async Task Deselect()
     {
         await OnDeselect.InvokeAsync();
-    }
-
-    private void OnSearchInput(ChangeEventArgs e)
-    {
-        searchTerm = e.Value?.ToString() ?? "";
-        dropdownActiveIndex = 0;
-    }
-
-    private async Task HandleDropdownKeydown(KeyboardEventArgs e)
-    {
-        List<Player> filtered = FilteredPlayers.ToList();
-        if (!filtered.Any()) return;
-
-        if (e.Key == "ArrowDown")
-        {
-            dropdownActiveIndex = (dropdownActiveIndex + 1) % filtered.Count;
-        }
-        else if (e.Key == "ArrowUp")
-        {
-            dropdownActiveIndex = (dropdownActiveIndex - 1 + filtered.Count) % filtered.Count;
-        }
-        else if (e.Key == "Enter")
-        {
-            await SelectPlayer(filtered[dropdownActiveIndex]);
-        }
-        else if (e.Key == "Escape")
-        {
-            showDropdown = false;
-        }
-    }
-
-    private async Task SelectPlayer(Player player)
-    {
-        showDropdown = false;
-        await OnPlayerSelected.InvokeAsync((dropdownIndex, dropdownFromBench, player));
     }
 
     public class FieldPositionAssignment
@@ -324,10 +188,6 @@
         font-size: clamp(10px, 2.5vmin, 32px);
         text-align: center;
         z-index: 5;
-    }
-
-    .player-overlay.dropdown-open {
-        z-index: 10001; /* Above backdrop */
     }
 
     .player-overlay.selection-active {
@@ -392,57 +252,6 @@
         display: inline-block;
     }
 
-    .field-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: white;
-        border: 2px solid black;
-        z-index: 10002;
-        min-width: 200px;
-        box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
-        margin-top: 5px;
-    }
-
-    .dropdown-search {
-        width: 100%;
-        padding: 8px;
-        border: none;
-        border-bottom: 1px solid #ccc;
-        font-size: 14px;
-        outline: none;
-    }
-
-    .dropdown-list {
-        max-height: 200px;
-        overflow-y: auto;
-        text-align: left;
-    }
-
-    .dropdown-item {
-        padding: 8px 12px;
-        font-size: 14px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-    }
-
-    .dropdown-item:last-child {
-        border-bottom: none;
-    }
-
-    .dropdown-item:hover, .dropdown-item.active {
-        background: #f0f7ff;
-        color: #0078d7;
-    }
-
-    .dropdown-no-results {
-        padding: 8px 12px;
-        font-size: 14px;
-        color: #666;
-        font-style: italic;
-    }
-
     .bench-container {
         position: absolute;
         bottom: 1.5vmin;
@@ -454,10 +263,6 @@
         z-index: 10;
         width: max-content;
         max-width: 32vmin;
-    }
-
-    .bench-container.dropdown-open {
-        z-index: 10001; /* Above backdrop */
     }
 
     .bench-container.selection-active {

@@ -129,7 +129,6 @@ else
                                 AnimationCounters="@animationCounters" 
                                 OnPlayerClick="@(e => HandleFieldClick(e.Index, e.FromBench))"
                                 OnDeselect="HandleDeselect"
-                                OnPlayerSelected="@(e => HandleInPlaceSelection(e.Index, e.FromBench, e.Player))"
                                 OnDragStart="@(e => HandleFieldDragStart(e.Args, (e.Index, e.FromBench)))"
                                 OnDragEnter="HandleFieldDragEnter"
                                 OnDrop="HandleFieldDrop"
@@ -813,58 +812,6 @@ else
         .Where(name => !string.IsNullOrEmpty(name))
         .ToList();
 
-    private void HandleInPlaceSelection(int index, bool fromBench, Player player)
-    {
-        if (fromBench)
-        {
-            int? oldPlayerId = index < benchPlayerNames.Count ? GetBenchPlayerId(index) : null;
-            HandleBenchSelection(oldPlayerId, player);
-        }
-        else
-        {
-            string pos = fieldPositions[index].Abbreviation;
-            BattingOrderEntry? entry = battingOrder.FirstOrDefault(le => le.PlayerId == player.Id);
-            
-            (int Index, bool FromBench)? oldLoc = null;
-            if (entry != null) oldLoc = GetFieldOrBenchIndex(entry);
-
-            if (entry == null)
-            {
-                entry = battingOrder.FirstOrDefault(le => le.PlayerId == null);
-                if (entry == null) { entry = new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 }; battingOrder.Add(entry); }
-                entry.PlayerId = player.Id;
-                if (!availablePlayerIds.Contains(player.Id)) availablePlayerIds.Add(player.Id);
-                TriggerRowAnimation(entry, DefenseField.AnimationType.Swapped);
-            }
-            else
-            {
-                TriggerPosAnimation(entry, DefenseField.AnimationType.Swapped);
-            }
-
-            foreach (BattingOrderEntry le in battingOrder)
-            {
-                if (le != entry && le.PositionAbbreviation == pos) 
-                {
-                    le.PositionAbbreviation = "B";
-                    TriggerPosAnimation(le, DefenseField.AnimationType.Swapped);
-                    (int Index, bool FromBench)? bumpedLoc = GetFieldOrBenchIndex(le);
-                    if (bumpedLoc.HasValue) TriggerAnimation(bumpedLoc.Value.Index, true, DefenseField.AnimationType.Swapped);
-                }
-            }
-
-            entry.PositionAbbreviation = pos;
-            TriggerAnimation(index, false, DefenseField.AnimationType.Swapped);
-            
-            if (oldLoc.HasValue && oldLoc.Value.FromBench == false && oldLoc.Value.Index != index)
-            {
-                TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
-            }
-        }
-        AddEmptyRowIfLastRowFilled();
-        StateHasChanged();
-        UpdateUrl();
-    }
-
     private void HandleDeselect()
     {
         selectedIndex = null;
@@ -881,7 +828,6 @@ else
 
         if (selectedIndex == null || !isExplicitlySelected)
         {
-            if (!clickedPlayerId.HasValue) return;
             selectedIndex = index;
             selectedFromBench = fromBench;
             isExplicitlySelected = true;
