@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject IJSRuntime JSRuntime
 
-<div class="autocomplete-cell-wrapper" onclick="event.stopPropagation();">
+<div class="autocomplete-cell-wrapper">
     @if (IsMobile)
     {
         <select @ref="selectElement"
@@ -42,7 +42,7 @@
 
         @if (showSuggestions && filteredPlayers.Any())
         {
-            <div class="suggestions-dropdown" onmousedown="event.stopPropagation();">
+            <div class="suggestions-dropdown">
                 @for (int i = 0; i < filteredPlayers.Count; i++)
                 {
                     int index = i;
