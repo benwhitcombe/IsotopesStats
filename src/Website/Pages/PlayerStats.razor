@@ -320,7 +320,7 @@ else
                 <div class="stat-carousel">
                     @foreach (string stat in AllSortableStats)
                     {
-                        <button class="stat-btn @(currentSortColumn == stat ? "active" : "") stop-propagation" @onclick="() => SelectMobileSort(stat)">@stat</button>
+                        <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)">@stat</button>
                     }
                 </div>
                 
@@ -330,7 +330,7 @@ else
                         @foreach (string stat in AllSortableStats)
                         {
                             string definition = StatDefinitions.GetDefinition(stat);
-                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "") stop-propagation" @onclick="() => SelectMobileSort(stat)">
+                            <button class="stat-btn @(currentSortColumn == stat ? "active" : "")" @onclick="() => SelectMobileSort(stat)">
                                 <span class="stat-abbr-circle">@stat</span>
                                 @(string.IsNullOrEmpty(definition) ? stat : definition)
                             </button>

@@ -156,7 +156,7 @@ else if (isEditing)
 
                             <tr @key="stat.PlayerId"
                                 draggable="true" 
-                                @ondragstart="() => HandleDragStart(stat)" 
+                                @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); HandleDragStart(stat); }' 
                                 @ondragover="() => HandleDragOver(stat)"
                                 @ondrop="() => HandleDrop(stat)"
                                 class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
