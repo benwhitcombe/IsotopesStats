@@ -15,6 +15,68 @@
     border-bottom: 2px solid black;
 }
 
+.inning-selector-row[b-haooa4l116] {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.field-header[b-haooa4l116] {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-bottom: 2px solid black;
+    height: 45px; /* Matches table header height */
+    padding: 0 1rem;
+}
+
+@media (min-width: 1200px) {
+    .field-header[b-haooa4l116] {
+        justify-content: flex-start;
+    }
+}
+
+.inning-label[b-haooa4l116] {
+    font-weight: 900;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: black;
+}
+
+.inning-buttons[b-haooa4l116] {
+    display: flex;
+    gap: 4px;
+}
+
+.inning-btn[b-haooa4l116] {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid black;
+    background: white;
+    color: black;
+    font-weight: 900;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.1s;
+    padding: 0;
+}
+
+@media (hover: hover) {
+    .inning-btn:hover[b-haooa4l116] {
+        background: #eee;
+    }
+}
+
+.inning-btn.active[b-haooa4l116] {
+    background: black;
+    color: white;
+}
+
 .team-name[b-haooa4l116] {
     font-size: 1.5rem;
     font-weight: 900;
@@ -52,6 +114,11 @@
     flex-direction: column;
 }
 
+.table-pane.table-active[b-haooa4l116] {
+    position: relative;
+    z-index: 10001; /* Above the DefenseField backdrop (9999) */
+}
+
 @media (max-width: 1199.98px) {
     .table-pane[b-haooa4l116] {
         border-right: none;
@@ -71,7 +138,9 @@
 .lineup-table th[b-haooa4l116] {
     background-color: white !important;
     border-bottom: 2px solid black;
-    padding: 0.5rem;
+    padding: 0 0.5rem;
+    height: 45px; /* Explicit height to match .field-header */
+    vertical-align: middle;
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1px;
