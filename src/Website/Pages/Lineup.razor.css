@@ -27,7 +27,7 @@
     justify-content: center;
     background-color: white;
     border-bottom: 2px solid black;
-    height: 45px; /* Matches table header height */
+    height: 46px; /* Matches table header height */
     padding: 0 1rem;
 }
 
@@ -47,6 +47,39 @@
 .inning-buttons {
     display: flex;
     gap: 4px;
+}
+
+.inning-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: white;
+    border: 2px solid black;
+    color: black;
+    font-weight: 900;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    transition: all 0.1s;
+}
+
+@media (hover: hover) {
+    .action-btn:hover {
+        background: #eee;
+    }
+}
+
+.action-btn:active {
+    background: #ddd;
 }
 
 .inning-btn {

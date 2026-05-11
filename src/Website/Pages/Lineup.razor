@@ -156,9 +156,13 @@ else
                                 IsEditable="true"
                                 MaxWidth="800" />
                             
-                            <div class="mt-4 gap-2 d-flex justify-content-center mb-4 w-100 px-3 d-xl-none">
-                                <button class="view-btn flex-grow-1" @onclick='() => SetViewMode("lineup")'>Lineup</button>
-                                <button class="view-btn active flex-grow-1" @onclick="ShareLineup">Share</button>
+                            <div class="lineup-actions p-3 border-top mt-auto w-100">
+                                <div class="gap-2 d-flex">
+                                    <button class="view-btn flex-grow-1" @onclick="ResetInning">Reset Inning</button>
+                                    <button class="view-btn flex-grow-1" @onclick="BenchAll">Bench All</button>
+                                    <button class="view-btn flex-grow-1 d-xl-none" @onclick='() => SetViewMode("lineup")'>Lineup</button>
+                                    <button class="view-btn active flex-grow-1" @onclick="ShareLineup">Share</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -502,6 +506,74 @@ else
     {
         selectedInning = inning;
         StateHasChanged();
+    }
+
+    private void ResetInning()
+    {
+        if (selectedInning == 1)
+        {
+            BenchAll();
+            return;
+        }
+
+        bool changed = false;
+        foreach (BattingOrderEntry entry in battingOrder)
+        {
+            if (entry.InningPositions.ContainsKey(selectedInning))
+            {
+                (int Index, bool FromBench)? oldLoc = GetFieldOrBenchIndex(entry);
+                entry.InningPositions.Remove(selectedInning);
+                (int Index, bool FromBench)? newLoc = GetFieldOrBenchIndex(entry);
+
+                _ = TriggerPosAnimation(entry, DefenseField.AnimationType.Removed);
+                if (oldLoc.HasValue && !oldLoc.Value.FromBench) _ = TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+                if (newLoc.HasValue) _ = TriggerAnimation(newLoc.Value.Index, newLoc.Value.FromBench, DefenseField.AnimationType.Swapped);
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            StateHasChanged();
+            _ = UpdateUrl();
+        }
+    }
+
+    private void BenchAll()
+    {
+        bool changed = false;
+        foreach (BattingOrderEntry entry in battingOrder)
+        {
+            if (entry.PlayerId == null) continue;
+
+            string currentPos = GetEntryPosition(entry);
+            if (currentPos == "B") continue;
+
+            (int Index, bool FromBench)? oldLoc = GetFieldOrBenchIndex(entry);
+
+            if (selectedInning == 1)
+            {
+                entry.PositionAbbreviation = "B";
+            }
+            else
+            {
+                entry.InningPositions[selectedInning] = "B";
+            }
+
+            (int Index, bool FromBench)? newLoc = GetFieldOrBenchIndex(entry);
+
+            _ = TriggerPosAnimation(entry, DefenseField.AnimationType.Removed);
+            if (oldLoc.HasValue && !oldLoc.Value.FromBench) _ = TriggerAnimation(oldLoc.Value.Index, false, DefenseField.AnimationType.Removed);
+            if (newLoc.HasValue) _ = TriggerAnimation(newLoc.Value.Index, newLoc.Value.FromBench, DefenseField.AnimationType.Swapped);
+
+            changed = true;
+        }
+
+        if (changed)
+        {
+            StateHasChanged();
+            _ = UpdateUrl();
+        }
     }
 
     private string GetEntryPosition(BattingOrderEntry entry, int inning = -1)

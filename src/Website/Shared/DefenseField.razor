@@ -34,7 +34,7 @@
              @ondrop="() => OnDrop.InvokeAsync((index, false))"
              @ondragend="() => OnDragEnd.InvokeAsync()"
              @onclick="() => HandleFieldClick(index, false)">
-            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "")" style="pointer-events: none;">
+            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
                 <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
                 @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
                 {
@@ -64,7 +64,7 @@
                     }
 
                     <div id="@($"bench-box-{index}")"
-                         class="bench-player-name @(isSelected || (DragTargetIndex == index && DragTargetFromBench == true) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
+                         class="bench-player-name @(isSelected || (DragTargetIndex == index && DragTargetFromBench == true) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "") @(BenchPlayers[index].IsInherited ? "inherited" : "")" 
                          draggable="@(IsEditable ? "true" : "false")"
                          @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, true)); }'
                          @ondragenter="() => OnDragEnter.InvokeAsync((index, true))"
@@ -254,6 +254,16 @@
     .editable .player-overlay.selected:hover .player-name-box {
         background-color: #90caf9;
         color: #0d47a1;
+    }
+
+    .player-name-box.inherited .player-name-text {
+        font-style: italic;
+        color: #666;
+    }
+
+    .bench-player-name.inherited .player-name-text {
+        font-style: italic;
+        color: #666;
     }
 
     .remove-icon {
