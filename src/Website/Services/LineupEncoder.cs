@@ -10,19 +10,16 @@ public static class LineupEncoder
 
     public enum Position { None = 0, P = 1, C = 2, _1B = 3, _2B = 4, _3B = 5, SS = 6, LF = 7, LC = 8, RC = 9, RF = 10, B = 11 }
 
-    public static string Encode(List<(int PlayerId, string Position)> lineup, List<int> benchIds, List<Player> roster)
+    public static string Encode(List<(int PlayerId, string Position, Dictionary<int, string>? InningPositions)> lineup, List<int> benchIds, List<Player> roster)
     {
         if ((lineup == null || !lineup.Any()) && (benchIds == null || !benchIds.Any())) return string.Empty;
         if (roster == null) return string.Empty;
 
-        // Format: [LineupCount: 6 bits] [BenchCount: 6 bits]
-        // For each lineup: [PlayerIndex: 6 bits] [Position: 4 bits]
-        // For each bench: [PlayerIndex: 6 bits]
-
         int lineupCount = lineup?.Count ?? 0;
         int benchCount = benchIds?.Count ?? 0;
 
-        int totalBits = 6 + 6 + (lineupCount * (BitsPerPlayer + BitsPerPosition)) + (benchCount * BitsPerPlayer);
+        // Base bits + 28 bits per player for 7 innings (4 bits per position)
+        int totalBits = 6 + 6 + (lineupCount * (BitsPerPlayer + BitsPerPosition)) + (benchCount * BitsPerPlayer) + (lineupCount * 7 * BitsPerPosition);
         BitArray bitArray = new BitArray(totalBits);
         int bitIndex = 0;
 
@@ -31,7 +28,7 @@ public static class LineupEncoder
 
         if (lineup != null)
         {
-            foreach ((int PlayerId, string Position) item in lineup)
+            foreach ((int PlayerId, string Position, Dictionary<int, string>? InningPositions) item in lineup)
             {
                 WriteBits(bitArray, ref bitIndex, GetRosterIndex(item.PlayerId, roster), BitsPerPlayer);
                 WriteBits(bitArray, ref bitIndex, (int)AbbrToPosition(item.Position), BitsPerPosition);
@@ -46,8 +43,24 @@ public static class LineupEncoder
             }
         }
 
-        byte[] bytes = new byte[(bitArray.Length + 7) / 8];
-        bitArray.CopyTo(bytes, 0);
+        // Add inning data at the end (Sparse Overrides)
+        if (lineup != null)
+        {
+            foreach ((int PlayerId, string Position, Dictionary<int, string>? InningPositions) item in lineup)
+            {
+                for (int i = 1; i <= 7; i++)
+                {
+                    string? pos = item.InningPositions?.GetValueOrDefault(i);
+                    WriteBits(bitArray, ref bitIndex, string.IsNullOrEmpty(pos) ? 0 : (int)AbbrToPosition(pos), BitsPerPosition);
+                }
+            }
+        }
+
+        byte[] bytes = new byte[(bitIndex + 7) / 8];
+        for (int i = 0; i < bitIndex; i++)
+        {
+            if (bitArray[i]) bytes[i / 8] |= (byte)(1 << (i % 8));
+        }
 
         return Convert.ToBase64String(bytes)
             .Replace('+', '-')
@@ -55,7 +68,7 @@ public static class LineupEncoder
             .TrimEnd('=');
     }
 
-    public static (List<(int PlayerId, string Position)> Lineup, List<int> Bench) Decode(string? token, List<Player> roster)
+    public static (List<(int PlayerId, string Position, Dictionary<int, string> InningPositions)> Lineup, List<int> Bench) Decode(string? token, List<Player> roster)
     {
         if (string.IsNullOrEmpty(token) || roster == null) return (new(), new());
 
@@ -77,12 +90,12 @@ public static class LineupEncoder
             int lineupCount = ReadBits(bitArray, ref bitIndex, 6);
             int benchCount = ReadBits(bitArray, ref bitIndex, 6);
 
-            List<(int PlayerId, string Position)> lineup = new List<(int PlayerId, string Position)>();
+            List<(int PlayerId, string Position, Dictionary<int, string> InningPositions)> lineup = new();
             for (int i = 0; i < lineupCount; i++)
             {
                 int playerIdx = ReadBits(bitArray, ref bitIndex, BitsPerPlayer);
                 int posIdx = ReadBits(bitArray, ref bitIndex, BitsPerPosition);
-                lineup.Add((GetPlayerIdFromIndex(playerIdx, roster), PositionToAbbr((Position)posIdx)));
+                lineup.Add((GetPlayerIdFromIndex(playerIdx, roster), PositionToAbbr((Position)posIdx), new Dictionary<int, string>()));
             }
 
             List<int> bench = new List<int>();
@@ -90,6 +103,22 @@ public static class LineupEncoder
             {
                 int playerIdx = ReadBits(bitArray, ref bitIndex, BitsPerPlayer);
                 bench.Add(GetPlayerIdFromIndex(playerIdx, roster));
+            }
+
+            // Check if we have inning data (28 bits per lineup player)
+            if (bitIndex + (lineupCount * 7 * BitsPerPosition) <= bitArray.Length)
+            {
+                for (int i = 0; i < lineupCount; i++)
+                {
+                    for (int j = 1; j <= 7; j++)
+                    {
+                        int innPosVal = ReadBits(bitArray, ref bitIndex, BitsPerPosition);
+                        if (innPosVal > 0)
+                        {
+                            lineup[i].InningPositions[j] = PositionToAbbr((Position)innPosVal);
+                        }
+                    }
+                }
             }
 
             return (lineup, bench);

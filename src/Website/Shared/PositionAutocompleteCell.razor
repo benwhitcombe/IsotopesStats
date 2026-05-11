@@ -23,7 +23,7 @@
     else
     {
         <div class="input-container" @onclick="ToggleSuggestions" @onblur="HandleBlur" @onkeydown="HandleKeyDown" @ref="containerElement" tabindex="0">
-            <div class="autocomplete-input @(IsDisabled ? "disabled" : "")">
+            <div class="autocomplete-input @(IsDisabled ? "disabled" : "") @(IsInherited ? "inherited" : "")">
                 @Value
             </div>
         </div>
@@ -55,6 +55,7 @@
     [Parameter] public EventCallback OnBlurred { get; set; }
     [Parameter] public bool IsDisabled { get; set; }
     [Parameter] public bool IsMobile { get; set; }
+    [Parameter] public bool IsInherited { get; set; }
 
     private ElementReference containerElement;
     private ElementReference selectElement;
@@ -195,6 +196,11 @@
     .autocomplete-input.disabled {
         cursor: default;
         opacity: 0.5;
+    }
+
+    .autocomplete-input.inherited {
+        font-style: italic;
+        color: #444;
     }
 
     .pos-suggestions-dropdown {

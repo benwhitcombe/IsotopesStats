@@ -71,7 +71,7 @@
                          @ondrop="() => OnDrop.InvokeAsync((index, true))"
                          @ondragend="() => OnDragEnd.InvokeAsync()"
                          @onclick="() => HandleFieldClick(index, true)">
-                        <span class="player-name-text" style="pointer-events: none;">@BenchPlayers[index]</span>
+                        <span class="player-name-text" style="pointer-events: none;">@BenchPlayers[index].PlayerName</span>
                     </div>
                 }
             </div>
@@ -81,7 +81,7 @@
 
 @code {
     [Parameter] public List<FieldPositionAssignment> Assignments { get; set; } = new();
-    [Parameter] public List<string> BenchPlayers { get; set; } = new();
+    [Parameter] public List<BenchPlayerAssignment> BenchPlayers { get; set; } = new();
     [Parameter] public List<Player> Players { get; set; } = new();
     [Parameter] public List<int> BattingOrderPlayerIds { get; set; } = new();
     [Parameter] public Dictionary<int, string> PlayerAssignments { get; set; } = new();
@@ -144,6 +144,13 @@
         public string PlayerName { get; set; } = string.Empty;
         public double X { get; set; }
         public double Y { get; set; }
+        public bool IsInherited { get; set; }
+    }
+
+    public class BenchPlayerAssignment
+    {
+        public string PlayerName { get; set; } = string.Empty;
+        public bool IsInherited { get; set; }
     }
 }
 
