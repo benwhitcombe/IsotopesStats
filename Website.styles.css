@@ -5,6 +5,7 @@
     padding: 0;
     position: relative;
     overflow: visible;
+    width: 100%;
 }
 
 .lineup-card-header[b-haooa4l116] {
@@ -132,6 +133,7 @@
     display: grid;
     grid-template-columns: 1fr;
     background: white;
+    width: 100%;
 }
 
 @media (min-width: 1200px) {
@@ -145,6 +147,7 @@
     background: white;
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .table-pane.table-active[b-haooa4l116] {
@@ -162,6 +165,8 @@
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    height: 100%;
+    flex-grow: 1;
 }
 
 .lineup-table th:nth-child(1)[b-haooa4l116] { width: 40px; }
@@ -172,7 +177,7 @@
     background-color: white !important;
     border-bottom: 2px solid black;
     padding: 0 0.5rem;
-    height: 45px; /* Explicit height to match .field-header */
+    height: 46px; /* Matches .field-header exactly */
     vertical-align: middle;
     font-size: 0.8rem;
     text-transform: uppercase;
@@ -186,11 +191,12 @@
     padding: 0;
     vertical-align: middle;
     height: 42px;
+    min-height: 42px;
     transition: background-color 0.2s ease;
 }
 
 .lineup-table tr:last-child td[b-haooa4l116] {
-    border-bottom: 2px solid black;
+    border-bottom: none;
 }
 
 .pos-num[b-haooa4l116] {
@@ -271,6 +277,8 @@
 
 .lineup-actions[b-haooa4l116] {
     background: white;
+    border-top: 2px solid black !important;
+    border-bottom: none !important;
 }
 
 .field-pane[b-haooa4l116] {
@@ -314,6 +322,17 @@
 .view-btn.active[b-haooa4l116] {
     background: black;
     color: white;
+}
+
+.share-btn[b-haooa4l116] {
+    width: 250px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    padding: 0;
+    border-radius: 0; /* Ensure square corners */
 }
 
 .reorderable-row[b-haooa4l116] {
