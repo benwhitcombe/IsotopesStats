@@ -9,40 +9,42 @@
         <div class="dropdown-backdrop" @onclick="Deselect"></div>
     }
     
-    <img src="images/defense.png" class="defense-bg" />
-    @for (int i = 0; i < Assignments.Count; i++)
-    {
-        int index = i;
-        FieldPositionAssignment assignment = Assignments[index];
-        bool isSelected = SelectedIndex == index && SelectedFromBench == false;
-        
-        bool isSwapping = false;
-        bool isRemoving = false;
-        if (AnimationCounters != null && AnimationCounters.TryGetValue((index, false), out AnimationState? state))
+    <div class="field-map">
+        <img src="images/defense.png" class="defense-bg" />
+        @for (int i = 0; i < Assignments.Count; i++)
         {
-            isSwapping = state.Type == AnimationType.Swapped;
-            isRemoving = state.Type == AnimationType.Removed;
-        }
+            int index = i;
+            FieldPositionAssignment assignment = Assignments[index];
+            bool isSelected = SelectedIndex == index && SelectedFromBench == false;
+            
+            bool isSwapping = false;
+            bool isRemoving = false;
+            if (AnimationCounters != null && AnimationCounters.TryGetValue((index, false), out AnimationState? state))
+            {
+                isSwapping = state.Type == AnimationType.Swapped;
+                isRemoving = state.Type == AnimationType.Removed;
+            }
 
-        <div @ref="fieldRefs[index]"
-             id="@($"field-box-{index}")"
-             class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
-             style="left: @(assignment.X)%; top: @(assignment.Y)%;"
-             draggable="@(IsEditable ? "true" : "false")"
-             @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
-             @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
-             @ondrop="() => OnDrop.InvokeAsync((index, false))"
-             @ondragend="() => OnDragEnd.InvokeAsync()"
-             @onclick="() => HandleFieldClick(index, false)">
-            <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
-                <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
-                @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
-                {
-                    <span class="remove-icon">×</span>
-                }
+            <div @ref="fieldRefs[index]"
+                 id="@($"field-box-{index}")"
+                 class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
+                 style="left: @(assignment.X)%; top: @(assignment.Y)%;"
+                 draggable="@(IsEditable ? "true" : "false")"
+                 @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
+                 @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
+                 @ondrop="() => OnDrop.InvokeAsync((index, false))"
+                 @ondragend="() => OnDragEnd.InvokeAsync()"
+                 @onclick="() => HandleFieldClick(index, false)">
+                <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
+                    <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
+                    @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
+                    {
+                        <span class="remove-icon">×</span>
+                    }
+                </div>
             </div>
-        </div>
-    }
+        }
+    </div>
     @if (BenchPlayers.Any() || IsEditable)
     {
         <div class="bench-container @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
@@ -156,6 +158,14 @@
 
 <style>
     .defense-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .field-map {
         position: relative;
         display: inline-block;
         max-width: 100%;
@@ -186,7 +196,6 @@
 
     .defense-bg {
         max-width: 100%;
-        max-height: 80vh;
         width: auto;
         height: auto;
         display: block;
@@ -197,7 +206,7 @@
         transform: translate(-50%, -50%);
         color: black;
         font-weight: 900;
-        font-size: clamp(10px, 2.5vmin, 32px);
+        font-size: 1.1rem;
         text-align: center;
         z-index: 5;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
@@ -226,16 +235,16 @@
 
     .player-name-box {
         border: 2px solid black;
-        padding: 0.5vmin 1.5vmin;
+        padding: 0.3rem 0.8rem;
         background-color: white;
-        min-width: 12vmin;
+        min-width: 6rem;
         white-space: nowrap;
         width: max-content;
         transition: all 0.1s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5vmin;
+        gap: 0.3rem;
         position: relative;
     }
 
@@ -277,22 +286,29 @@
         right: 4px;
     }
 
-    .player-overlay.selected:hover .remove-icon,
-    .bench-player-name.selected:hover .remove-icon {
+    .player-overlay.selected .remove-icon,
+    .bench-player-name.selected .remove-icon {
         display: inline-block;
     }
 
     .bench-container {
-        position: absolute;
-        bottom: 1.5vmin;
-        right: 1.5vmin;
+        position: relative;
         background-color: white;
         border: 2px solid black;
-        padding: 0.8vmin 2vmin;
+        padding: 0.5rem;
         text-align: center;
         z-index: 10;
-        width: max-content;
-        max-width: 32vmin;
+        width: calc(100% - 1rem);
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        box-sizing: border-box;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        min-height: 98px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
     }
 
     .bench-container.selection-active {
@@ -301,34 +317,35 @@
 
     .bench-label {
         font-weight: 900;
-        font-size: clamp(9px, 1.2vmin, 18px);
+        font-size: 0.75rem;
         color: black;
         margin-bottom: 4px;
         letter-spacing: 2px;
         text-transform: uppercase;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        width: 100%;
     }
 
     .bench-names {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 0.8vmin;
+        gap: 0.5rem;
         font-weight: 900;
-        font-size: clamp(9px, 1.8vmin, 22px);
-        margin-top: 0.5vmin;
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
     }
 
     .bench-player-name {
-        padding: 0.5vmin 1.2vmin;
+        padding: 0.3rem 0.8rem;
         transition: all 0.1s ease;
         background-color: white;
-        border: 1px solid black;
+        border: 2px solid black;
         white-space: nowrap;
         color: black;
         display: flex;
         align-items: center;
-        gap: 0.5vmin;
+        gap: 0.3rem;
         position: relative;
         cursor: pointer;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
@@ -376,7 +393,7 @@
         background-color: #c8e6c9;
         color: #1b5e20;
         border-color: #4caf50;
-        transform: scale(1.15);
+        transform: scale(1.1);
         z-index: 15;
     }
 
@@ -395,7 +412,23 @@
         background-color: #ffcdd2;
         color: #b71c1c;
         border-color: #f44336;
-        transform: scale(1.15);
+        transform: scale(1.1);
         z-index: 15;
+    }
+
+    @@media (max-width: 768px) {
+        .defense-container {
+            flex-direction: column;
+            align-items: center;
+        }
+        .bench-container {
+            max-height: none;
+            overflow-y: visible;
+        }
+        .bench-names {
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
     }
 </style>
