@@ -176,7 +176,7 @@
     background-color: white !important;
     border-bottom: 2px solid black;
     padding: 0 0.5rem;
-    height: 46px; /* Matches .field-header exactly */
+    height: 45px; /* Adjusted to 45px to achieve 46px total height, matching .field-header */
     vertical-align: middle;
     font-size: 0.8rem;
     text-transform: uppercase;
