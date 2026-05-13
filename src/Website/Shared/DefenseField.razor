@@ -10,40 +10,42 @@
     }
     
     <div class="field-map">
-        <img src="images/defense.png" class="defense-bg" />
-        @for (int i = 0; i < Assignments.Count; i++)
-        {
-            int index = i;
-            FieldPositionAssignment assignment = Assignments[index];
-            bool isSelected = SelectedIndex == index && SelectedFromBench == false;
-            
-            bool isSwapping = false;
-            bool isRemoving = false;
-            if (AnimationCounters != null && AnimationCounters.TryGetValue((index, false), out AnimationState? state))
+        <div class="field-map-content">
+            <img src="images/defense.png" class="defense-bg" />
+            @for (int i = 0; i < Assignments.Count; i++)
             {
-                isSwapping = state.Type == AnimationType.Swapped;
-                isRemoving = state.Type == AnimationType.Removed;
-            }
+                int index = i;
+                FieldPositionAssignment assignment = Assignments[index];
+                bool isSelected = SelectedIndex == index && SelectedFromBench == false;
+                
+                bool isSwapping = false;
+                bool isRemoving = false;
+                if (AnimationCounters != null && AnimationCounters.TryGetValue((index, false), out AnimationState? state))
+                {
+                    isSwapping = state.Type == AnimationType.Swapped;
+                    isRemoving = state.Type == AnimationType.Removed;
+                }
 
-            <div @ref="fieldRefs[index]"
-                 id="@($"field-box-{index}")"
-                 class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
-                 style="left: @(assignment.X)%; top: @(assignment.Y)%;"
-                 draggable="@(IsEditable ? "true" : "false")"
-                 @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
-                 @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
-                 @ondrop="() => OnDrop.InvokeAsync((index, false))"
-                 @ondragend="() => OnDragEnd.InvokeAsync()"
-                 @onclick="() => HandleFieldClick(index, false)">
-                <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
-                    <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
-                    @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
-                    {
-                        <span class="remove-icon">×</span>
-                    }
+                <div @ref="fieldRefs[index]"
+                     id="@($"field-box-{index}")"
+                     class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
+                     style="left: @(assignment.X)%; top: @(assignment.Y)%;"
+                     draggable="@(IsEditable ? "true" : "false")"
+                     @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
+                     @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
+                     @ondrop="() => OnDrop.InvokeAsync((index, false))"
+                     @ondragend="() => OnDragEnd.InvokeAsync()"
+                     @onclick="() => HandleFieldClick(index, false)">
+                    <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
+                        <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
+                        @if (isSelected && !string.IsNullOrEmpty(assignment.PlayerName))
+                        {
+                            <span class="remove-icon">×</span>
+                        }
+                    </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
     @if (BenchPlayers.Any() || IsEditable)
     {
@@ -164,15 +166,24 @@
         max-width: 100%;
         width: 100%;
         flex: 1;
+        container-type: inline-size;
     }
 
     .field-map {
         position: relative;
-        display: inline-block;
-        max-width: 100%;
-        max-height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
         flex: 1;
         min-height: 0;
+    }
+
+    .field-map-content {
+        position: relative;
+        display: flex;
+        max-width: 100%;
+        max-height: 100%;
     }
 
     .dropdown-backdrop {
@@ -212,16 +223,16 @@
         transform: translate(-50%, -50%);
         color: black;
         font-weight: 900;
-        font-size: 1.1rem;
+        font-size: clamp(0.6rem, 2.5cqw, 1.1rem);
         text-align: center;
         z-index: 5;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-        letter-spacing: 1.5px;
+        letter-spacing: clamp(0.5px, 0.25cqw, 1.5px);
     }
 
     .player-name-text {
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-        letter-spacing: 1.5px;
+        letter-spacing: inherit;
     }
 
     .player-overlay.selection-active {
@@ -240,17 +251,17 @@
     }
 
     .player-name-box {
-        border: 2px solid black;
-        padding: 0.3rem 0.8rem;
+        border: clamp(1px, 0.4cqw, 2px) solid black;
+        padding: 0.3cqw 0.8cqw;
         background-color: white;
-        min-width: 6rem;
+        min-width: clamp(3.5rem, 12cqw, 6rem);
         white-space: nowrap;
         width: max-content;
         transition: all 0.1s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.3rem;
+        gap: 0.3cqw;
         position: relative;
     }
 
