@@ -5,6 +5,18 @@
     position: relative;
     overflow: visible;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 1200px) {
+    .lineup-card-container:not(.has-extra-rows) {
+        height: 792px;
+    }
+    .lineup-card-container.has-extra-rows {
+        min-height: 792px;
+        height: auto;
+    }
 }
 
 .lineup-card-header {
@@ -13,6 +25,7 @@
     padding: 0.5rem 1.5rem;
     text-align: center;
     border-bottom: 2px solid black;
+    flex-shrink: 0;
 }
 
 .inning-selector-row {
@@ -30,6 +43,7 @@
     border-bottom: 2px solid black;
     height: 46px; /* Matches table header height */
     padding: 0 1rem;
+    flex-shrink: 0;
 }
 
 @media (min-width: 1200px) {
@@ -133,6 +147,8 @@
     grid-template-columns: 1fr;
     background: white;
     width: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 @media (min-width: 1200px) {
@@ -147,6 +163,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .table-pane.table-active {
@@ -183,6 +200,7 @@
     letter-spacing: 1px;
     color: black !important;
     font-weight: 900;
+    flex-shrink: 0;
 }
 
 .lineup-table td {
@@ -190,8 +208,14 @@
     padding: 0;
     vertical-align: middle;
     height: 42px;
-    min-height: 42px;
+    min-height: 32px; /* Allow shrinking below 42px on small viewports */
     transition: background-color 0.2s ease;
+}
+
+@media (min-width: 1200px) {
+    .lineup-card-container:not(.has-extra-rows) .lineup-table td {
+        height: 1px; /* Distribute space equally when constrained */
+    }
 }
 
 .lineup-table tr:last-child td {
@@ -278,6 +302,7 @@
     background: white;
     border-top: 2px solid black !important;
     border-bottom: none !important;
+    flex-shrink: 0;
 }
 
 .field-pane {
@@ -286,6 +311,9 @@
     justify-content: center;
     position: relative;
     z-index: 10;
+    height: 100%;
+    min-height: 0;
+    overflow: visible; /* Allow content to push out if container isn't auto yet */
 }
 
 .field-container-sticky {
@@ -295,6 +323,31 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.field-container-sticky ::deep .defense-container {
+    flex: 1 0 auto; /* Allow growing but don't force shrinking below content */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.field-container-sticky ::deep .field-map {
+    flex: 1 1 520px; /* Stronger base height */
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.field-container-sticky ::deep .defense-bg {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .view-btn {

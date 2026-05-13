@@ -7,6 +7,8 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
+@implements IAsyncDisposable
+
 <PageTitle>Isotopes - Lineup</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -27,7 +29,7 @@
 else
 {
     <CustomErrorBoundary>
-        <div class="lineup-card-container">
+    <div class="lineup-card-container @(battingOrder.Count > 10 || isExtraHeight ? "has-extra-rows" : "")">
                 <div class="lineup-card-header">
                     <div class="team-name">ISOTOPES</div>
                     <div class="card-title">LINEUP CARD</div>
@@ -155,7 +157,7 @@ else
                                 IsEditable="true"
                                 MaxWidth="580" />
                             
-                            <div class="lineup-actions p-3 border-top mt-auto w-100">
+                            <div class="lineup-actions p-3 border-top w-100">
                                 <div class="d-flex flex-wrap gap-2 justify-content-center">
                                     <button class="view-btn active d-xl-none" style="min-width: 100px;" @onclick='() => SetViewMode("lineup")'>View Lineup</button>
                                     <button class="view-btn" style="min-width: 100px;" @onclick="ResetInning">Reset Inning</button>
@@ -201,6 +203,43 @@ else
     private bool isLoading = true;
     private bool isInitializing = false;
     private bool showToast = false;
+    private bool isExtraHeight = false;
+
+    private IJSObjectReference? observerModule;
+    private DotNetObjectReference<Lineup>? dotNetHelper;
+
+    [JSInvokable]
+    public void SetExtraHeight(bool isExtra)
+    {
+        if (isExtraHeight != isExtra)
+        {
+            isExtraHeight = isExtra;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            observerModule = await JSRuntime.InvokeAsync<IJSObjectReference>("observeLineupHeight", dotNetHelper);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (observerModule != null)
+            {
+                await observerModule.InvokeVoidAsync("disconnect");
+                await observerModule.DisposeAsync();
+            }
+            dotNetHelper?.Dispose();
+        }
+        catch (Exception) { /* JS disconnection errors on navigation are normal */ }
+    }
 
     private Dictionary<int, PlayerAutocompleteCell> playerCells = new();
     private Dictionary<int, PositionAutocompleteCell> posCells = new();
@@ -1364,15 +1403,6 @@ else
             StateHasChanged();
         }
     }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        // No more JS interop here to avoid circuit crashes
-    }
-
-    // Remove the old async version
-    // protected override async Task OnAfterRenderAsync(bool firstRender) { ... }
-    
 
     protected override void OnParametersSet()
     {
