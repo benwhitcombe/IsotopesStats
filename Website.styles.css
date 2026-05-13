@@ -6,6 +6,18 @@
     position: relative;
     overflow: visible;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 1200px) {
+    .lineup-card-container:not(.has-extra-rows)[b-haooa4l116] {
+        height: 792px;
+    }
+    .lineup-card-container.has-extra-rows[b-haooa4l116] {
+        min-height: 792px;
+        height: auto;
+    }
 }
 
 .lineup-card-header[b-haooa4l116] {
@@ -14,6 +26,7 @@
     padding: 0.5rem 1.5rem;
     text-align: center;
     border-bottom: 2px solid black;
+    flex-shrink: 0;
 }
 
 .inning-selector-row[b-haooa4l116] {
@@ -31,6 +44,7 @@
     border-bottom: 2px solid black;
     height: 46px; /* Matches table header height */
     padding: 0 1rem;
+    flex-shrink: 0;
 }
 
 @media (min-width: 1200px) {
@@ -134,6 +148,8 @@
     grid-template-columns: 1fr;
     background: white;
     width: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 @media (min-width: 1200px) {
@@ -148,6 +164,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .table-pane.table-active[b-haooa4l116] {
@@ -177,13 +194,14 @@
     background-color: white !important;
     border-bottom: 2px solid black;
     padding: 0 0.5rem;
-    height: 46px; /* Matches .field-header exactly */
+    height: 45px; /* Adjusted to 45px to achieve 46px total height, matching .field-header */
     vertical-align: middle;
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: black !important;
     font-weight: 900;
+    flex-shrink: 0;
 }
 
 .lineup-table td[b-haooa4l116] {
@@ -191,8 +209,14 @@
     padding: 0;
     vertical-align: middle;
     height: 42px;
-    min-height: 42px;
+    min-height: 32px; /* Allow shrinking below 42px on small viewports */
     transition: background-color 0.2s ease;
+}
+
+@media (min-width: 1200px) {
+    .lineup-card-container:not(.has-extra-rows) .lineup-table td[b-haooa4l116] {
+        height: 1px; /* Distribute space equally when constrained */
+    }
 }
 
 .lineup-table tr:last-child td[b-haooa4l116] {
@@ -279,6 +303,7 @@
     background: white;
     border-top: 2px solid black !important;
     border-bottom: none !important;
+    flex-shrink: 0;
 }
 
 .field-pane[b-haooa4l116] {
@@ -287,6 +312,9 @@
     justify-content: center;
     position: relative;
     z-index: 10;
+    height: 100%;
+    min-height: 0;
+    overflow: visible; /* Allow content to push out if container isn't auto yet */
 }
 
 .field-container-sticky[b-haooa4l116] {
@@ -296,6 +324,31 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.field-container-sticky[b-haooa4l116]  .defense-container {
+    flex: 1 0 auto; /* Allow growing but don't force shrinking below content */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.field-container-sticky[b-haooa4l116]  .field-map {
+    flex: 1 1 520px; /* Stronger base height */
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.field-container-sticky[b-haooa4l116]  .defense-bg {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .view-btn[b-haooa4l116] {

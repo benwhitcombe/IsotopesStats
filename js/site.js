@@ -351,6 +351,54 @@ window.clearAllDragHighlights = function (className) {
     document.querySelectorAll('.' + className).forEach(el => el.classList.remove(className));
 };
 
+window.observeLineupHeight = function (dotNetHelper) {
+    if (!window.ResizeObserver) return;
+    
+    const checkPressure = () => {
+        const container = document.querySelector('.lineup-card-container');
+        const wrapper = document.querySelector('.lineup-content-wrapper');
+        const benchNames = document.querySelector('.bench-names');
+        if (!container || !wrapper) return;
+
+        const currentHasExtra = container.classList.contains('has-extra-rows');
+        
+        // 1. Check if the bench has wrapped. 
+        // A single row of names is typically 36-40px. 
+        // If it's over 42px, it has almost certainly wrapped.
+        const benchNeedsGrowth = benchNames && benchNames.offsetHeight > 42;
+        
+        // 2. Check if the overall content is being squashed or wants more space.
+        // If scrollHeight > clientHeight, it means content is overflowing or being compressed.
+        const wrapperWantsGrowth = wrapper.scrollHeight > wrapper.clientHeight;
+
+        if ((benchNeedsGrowth || wrapperWantsGrowth) && !currentHasExtra) {
+            dotNetHelper.invokeMethodAsync('SetExtraHeight', true);
+        } else if (!benchNeedsGrowth && !wrapperWantsGrowth && currentHasExtra) {
+            dotNetHelper.invokeMethodAsync('SetExtraHeight', false);
+        }
+    };
+
+    const observer = new ResizeObserver(() => {
+        // Use requestAnimationFrame to ensure we check after the browser has layouted
+        requestAnimationFrame(checkPressure);
+    });
+
+    const wrapper = document.querySelector('.lineup-content-wrapper');
+    const benchNames = document.querySelector('.bench-names');
+    
+    if (wrapper) observer.observe(wrapper);
+    if (benchNames) observer.observe(benchNames);
+    
+    // Initial checks to catch state on load
+    setTimeout(checkPressure, 100);
+    setTimeout(checkPressure, 500);
+    
+    return {
+        disconnect: () => observer.disconnect(),
+        check: checkPressure
+    };
+};
+
 window.shareOrCopy = async function (title, url) {
     let shareUrl = url;
     if (!shareUrl || shareUrl === 'null') {
