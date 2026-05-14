@@ -11,7 +11,7 @@
     
     <div class="field-map">
         <div class="field-map-content">
-            <img src="images/defense.png" class="defense-bg" />
+            <img src="images/defense.png" class="defense-bg" draggable="false" />
             @for (int i = 0; i < Assignments.Count; i++)
             {
                 int index = i;
@@ -30,11 +30,6 @@
                      id="@($"field-box-{index}")"
                      class="player-overlay @(isSelected || (DragTargetIndex == index && DragTargetFromBench == false) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "")" 
                      style="left: @(assignment.X)%; top: @(assignment.Y)%;"
-                     draggable="@(IsEditable ? "true" : "false")"
-                     @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, false)); }'
-                     @ondragenter="() => OnDragEnter.InvokeAsync((index, false))"
-                     @ondrop="() => OnDrop.InvokeAsync((index, false))"
-                     @ondragend="() => OnDragEnd.InvokeAsync()"
                      @onclick="() => HandleFieldClick(index, false)">
                     <div class="player-name-box @(string.IsNullOrEmpty(assignment.PlayerName) ? "empty" : "") @(assignment.IsInherited ? "inherited" : "")" style="pointer-events: none;">
                         <span class="player-name-text">@(string.IsNullOrEmpty(assignment.PlayerName) ? "Empty" : assignment.PlayerName)</span>
@@ -49,9 +44,7 @@
     </div>
     @if (BenchPlayers.Any() || IsEditable)
     {
-        <div class="bench-container @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")" 
-             @ondragenter="() => OnDragEnter.InvokeAsync((null, true))"
-             @ondrop="() => OnDrop.InvokeAsync((null, true))">
+        <div class="bench-container @(SelectedIndex.HasValue ? "selection-active" : "") @(DragTargetFromBench == true && !DragTargetIndex.HasValue ? "selected" : "")">
             <div class="bench-label">BENCH</div>
             <div class="bench-names">
                 @for (int i = 0; i < BenchPlayers.Count; i++)
@@ -69,11 +62,6 @@
 
                     <div id="@($"bench-box-{index}")"
                          class="bench-player-name @(isSelected || (DragTargetIndex == index && DragTargetFromBench == true) ? "selected" : "") @(isSwapping ? "just-swapped" : "") @(isRemoving ? "just-removed" : "") @(SelectedIndex.HasValue || DragTargetIndex.HasValue ? "selection-active" : "") @(BenchPlayers[index].IsInherited ? "inherited" : "")" 
-                         draggable="@(IsEditable ? "true" : "false")"
-                         @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); await OnDragStart.InvokeAsync((e, index, true)); }'
-                         @ondragenter="() => OnDragEnter.InvokeAsync((index, true))"
-                         @ondrop="() => OnDrop.InvokeAsync((index, true))"
-                         @ondragend="() => OnDragEnd.InvokeAsync()"
                          @onclick="() => HandleFieldClick(index, true)">
                         <span class="player-name-text" style="pointer-events: none;">@BenchPlayers[index].PlayerName</span>
                     </div>
@@ -98,11 +86,6 @@
     [Parameter] public EventCallback<(int Index, bool FromBench)> OnPlayerClick { get; set; }
     [Parameter] public EventCallback OnDeselect { get; set; }
     [Parameter] public EventCallback<(int Index, bool FromBench, Player Player)> OnPlayerSelected { get; set; }
-    [Parameter] public EventCallback<(DragEventArgs Args, int Index, bool FromBench)> OnDragStart { get; set; }
-    [Parameter] public EventCallback<(int? Index, bool FromBench)> OnDragEnter { get; set; }
-    [Parameter] public EventCallback OnDragLeave { get; set; }
-    [Parameter] public EventCallback<(int? Index, bool FromBench)> OnDrop { get; set; }
-    [Parameter] public EventCallback OnDragEnd { get; set; }
     [Parameter] public bool IsEditable { get; set; } = false;
     [Parameter] public int MaxWidth { get; set; } = 0;
 
@@ -124,9 +107,13 @@
 
     private string GetPlayerDisplayName(Player player)
     {
-        if (PlayerAssignments.TryGetValue(player.Id, out string? pos))
+        if (PlayerAssignments.TryGetValue(player.Id, out string? val))
         {
-            return $"{player.Name} ({pos})";
+            if (int.TryParse(val, out int bo))
+            {
+                return $"#{bo}. {player.Name}";
+            }
+            return $"{player.Name} ({val})";
         }
         return player.Name;
     }
@@ -235,7 +222,8 @@
         letter-spacing: inherit;
     }
 
-    .player-overlay.selection-active {
+    .player-overlay.selection-active,
+    .player-overlay.drag-over {
         z-index: 10001; /* Above backdrop */
     }
 
@@ -243,7 +231,8 @@
         cursor: pointer;
     }
 
-    .player-overlay.selected .player-name-box {
+    .player-overlay.selected .player-name-box,
+    .player-overlay.drag-over .player-name-box {
         background-color: #bbdefb;
         color: #0d47a1;
         border-color: #2196f3;
@@ -277,7 +266,8 @@
         color: black;
     }
 
-    .editable .player-overlay.selected:hover .player-name-box {
+    .editable .player-overlay.selected:hover .player-name-box,
+    .editable .player-overlay.drag-over:hover .player-name-box {
         background-color: #90caf9;
         color: #0d47a1;
     }
@@ -304,7 +294,9 @@
     }
 
     .player-overlay.selected .remove-icon,
-    .bench-player-name.selected .remove-icon {
+    .player-overlay.drag-over .remove-icon,
+    .bench-player-name.selected .remove-icon,
+    .bench-player-name.drag-over .remove-icon {
         display: inline-block;
     }
 
@@ -374,23 +366,27 @@
         color: black;
     }
 
-    .bench-player-name.selected {
+    .bench-player-name.selected,
+    .bench-player-name.drag-over {
         background-color: #bbdefb;
         border-color: #2196f3;
         color: #0d47a1;
     }
 
-    .bench-container.selected {
+    .bench-container.selected,
+    .bench-container.drag-over {
         background-color: #bbdefb;
         border-color: #2196f3;
         box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
     }
 
-    .bench-container.selected .bench-label {
+    .bench-container.selected .bench-label,
+    .bench-container.drag-over .bench-label {
         color: #0d47a1;
     }
 
-    .editable .bench-player-name.selected:hover {
+    .editable .bench-player-name.selected:hover,
+    .editable .bench-player-name.drag-over:hover {
         background-color: #90caf9;
         color: #0d47a1;
     }

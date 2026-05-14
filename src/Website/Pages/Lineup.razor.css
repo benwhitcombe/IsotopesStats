@@ -7,8 +7,17 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
 }
+
+body.is-dragging-field,
+body.is-dragging-field *,
+.lineup-table.is-dragging,
+.lineup-table.is-dragging * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.lineup-card-header {
 
 /* Pseudo-element border removed to allow dropdowns to overlap */
 
@@ -221,7 +230,118 @@
     vertical-align: middle;
     height: 42px;
     min-height: 32px;
-    transition: background-color 0.2s ease;
+}
+
+/* --- STABLE DRAG BORDERS --- */
+
+.lineup-table.is-dragging {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+/* Ensure borders are consistent in separate mode */
+.lineup-table.is-dragging td {
+    border-bottom: 1px solid black !important;
+}
+
+.lineup-table.is-dragging th {
+    height: 46px !important;
+}
+
+/* Fix double border: last row should NOT have a bottom border in separate mode */
+.lineup-table.is-dragging tr:last-child td {
+    border-bottom: none !important;
+}
+
+.lineup-table.is-dragging .pos-num {
+    border-right: 1px solid black !important;
+}
+
+.lineup-table.is-dragging .pos-abbr {
+    border-left: 1px solid black !important;
+}
+
+/* 8px blue line indicator when hovering over players (Insert) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr:not(.empty-row):not(.dragging-hidden):hover td {
+    box-shadow: inset 0 8px 0 #2196f3 !important;
+}
+
+/* Solid blue highlight when hovering over empty rows (Occupy) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr.empty-row:not(.dragging-hidden):hover td {
+    background-color: #2196f3 !important;
+    color: white !important;
+}
+
+/* Visible but dimmed placeholder (Source Row) */
+.reorderable-row.dragging-hidden td {
+    opacity: 0.50 !important;
+    background-color: #fafafa !important;
+}
+
+tbody.is-dragging-row .suggestions-dropdown,
+.reorderable-row.dragging .suggestions-dropdown,
+.sortable-fallback .suggestions-dropdown {
+    display: none !important;
+}
+
+.sortable-fallback {
+    opacity: 0.9 !important;
+    background: white !important;
+    box-shadow: 0 0 0 2px #2196f3, 0 10px 25px rgba(0,0,0,0.2) !important;
+    z-index: 50000 !important; /* Massive z-index to stay on top */
+    border: none !important;
+    pointer-events: none !important;
+    
+    /* Inherit table styles for fallbackOnBody: true */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    text-transform: uppercase;
+}
+
+.sortable-fallback.fallback-pos-only td:not(.pos-abbr) {
+    opacity: 0 !important;
+    border: none !important;
+}
+
+.sortable-fallback.fallback-pos-only {
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.sortable-fallback.fallback-pos-only .pos-abbr {
+    background: white !important;
+    box-shadow: 0 0 0 2px #2196f3, 0 10px 25px rgba(0,0,0,0.2) !important;
+    border: 1px solid black !important;
+}
+
+.sortable-fallback td {
+    border-bottom: 1px solid black !important;
+    vertical-align: middle;
+    padding: 0;
+    font-weight: 900;
+}
+
+.sortable-fallback .pos-num {
+    text-align: center;
+    border-right: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.sortable-fallback .pos-abbr {
+    text-align: center;
+    border-left: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.sortable-fallback .player-select-cell ::deep .autocomplete-input,
+.sortable-fallback .player-select-cell ::deep .ghost-text-container {
+    text-align: left !important;
+    padding-left: 0.5rem !important;
+    font-size: 1.1rem !important;
+    letter-spacing: 1.5px !important;
+}
+
+.reorderable-row.chosen {
+    background-color: #f5f5f5;
 }
 
 @media (min-width: 1200px) {

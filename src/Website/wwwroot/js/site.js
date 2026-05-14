@@ -56,8 +56,6 @@ window.drawerDragging = {
             const isGrid = e.target.closest('.stat-grid-full');
             const carousel = e.target.closest('.stat-carousel');
 
-            // Drag works on anything in the drawer except the vertically scrollable grid
-            // This includes handle, title, and the peek area
             if (isDrawer && !isGrid) {
                 this.handleTouchStart(e, !!carousel);
             }
@@ -98,22 +96,16 @@ window.drawerDragging = {
         const prevState = this.isExpanded;
         this.isExpanded = isExpanded;
         
-        // If opening, scroll immediately (while drawer is sliding/mostly hidden)
-        // to prevent visible snapping later
         if (isExpanded && !prevState) {
             this.scrollToActive(true);
         }
 
         this.applyStateTransform(false);
-        
-        // Give CSS transition time to finish before a final smooth check
         setTimeout(() => this.scrollToActive(), 400);
     },
 
     scrollToActive: function(immediate) {
-        // Use requestAnimationFrame to ensure the browser has performed layout
         requestAnimationFrame(() => {
-            // 1. Handle Carousel (horizontal) - used when collapsed
             const carousel = document.querySelector('.stat-carousel');
             if (carousel && (!this.isExpanded || immediate)) {
                 const activeBtn = carousel.querySelector('.stat-btn.active');
@@ -134,12 +126,10 @@ window.drawerDragging = {
                 }
             }
 
-            // 2. Handle Expanded Grid (vertical) - used when expanded
             const grid = document.querySelector('.stat-grid-full');
             if (grid && (this.isExpanded || immediate)) {
                 const activeBtn = grid.querySelector('.stat-btn.active');
                 if (activeBtn) {
-                    // Even if drawer is sliding up, the grid should have its dimensions
                     if (grid.offsetHeight > 0 && activeBtn.offsetHeight > 0) {
                         const isVisible = (activeBtn.offsetTop >= grid.scrollTop) && 
                                           (activeBtn.offsetTop + activeBtn.offsetHeight <= grid.scrollTop + grid.offsetHeight);
@@ -153,7 +143,6 @@ window.drawerDragging = {
                             }
                         }
                     } else if (immediate) {
-                        // If immediate and not ready, try one more frame
                         requestAnimationFrame(() => this.scrollToActive(true));
                     }
                 }
@@ -188,22 +177,19 @@ window.drawerDragging = {
         const touchX = e.touches[0].clientX;
         const touchY = e.touches[0].clientY;
         
-        // If we're on the carousel, we need to distinguish between horizontal scroll and vertical drag
         if (this.isCarousel && !this.dragDirectionDetected) {
             const deltaX = Math.abs(touchX - this.startX);
             const deltaY = Math.abs(touchY - this.startY);
             
             if (deltaX > 10 || deltaY > 10) {
                 if (deltaX > deltaY) {
-                    // It's a horizontal swipe, let the carousel scroll naturally
                     this.isDragging = false;
                     return;
                 } else {
-                    // It's a vertical swipe, proceed with drawer dragging
                     this.dragDirectionDetected = true;
                 }
             } else {
-                return; // Wait for more movement to be sure
+                return;
             }
         }
 
@@ -219,7 +205,6 @@ window.drawerDragging = {
 
         this.drawerElement.style.transform = `translateY(${newTranslate}px)`;
         
-        // Block page scroll while we are actually dragging the drawer
         if (e.cancelable) {
             e.preventDefault();
         }
@@ -236,7 +221,7 @@ window.drawerDragging = {
         if (movedUp && !this.isExpanded) {
             this.isExpanded = true;
             this.dotNetHelper.invokeMethodAsync('SetDrawerState', true);
-            this.scrollToActive(true); // Immediate scroll as it starts opening
+            this.scrollToActive(true);
         } else if (movedDown && this.isExpanded) {
             this.isExpanded = false;
             this.dotNetHelper.invokeMethodAsync('SetDrawerState', false);
@@ -244,13 +229,11 @@ window.drawerDragging = {
         
         this.applyStateTransform(false);
 
-        // Final check after transition
         if (this.isExpanded !== prevState) {
             setTimeout(() => this.scrollToActive(), 400);
         }
     },
     
-    // Utility to swap full names for short names when they wrap
     initOpponentNames: function() {
         if (!window.ResizeObserver) return;
 
@@ -262,11 +245,7 @@ window.drawerDragging = {
                     const short = container.querySelector('.short-name');
                     
                     if (!full || !short) continue;
-
-                    // If elements aren't fully rendered, skip
                     if (container.clientWidth === 0 || full.scrollWidth === 0) continue;
-
-                    // Check if the full name's natural width exceeds the container's available width
                     const isWrapped = full.scrollWidth > container.clientWidth;
                     
                     if (isWrapped) {
@@ -278,7 +257,6 @@ window.drawerDragging = {
             });
         }
 
-        // Observe all smart name containers that aren't already being observed
         document.querySelectorAll('.smart-name-container').forEach(el => {
             this.nameObserver.observe(el);
         });
@@ -291,7 +269,6 @@ window.addEventListener('dragstart', (e) => {
 }, true);
 
 window.setDragImage = function (elementId, offsetX, offsetY) {
-    console.log('setDragImage called for', elementId);
     const el = document.getElementById(elementId);
     const ev = window.event || lastDragEvent;
     if (el && ev && ev.dataTransfer) {
@@ -304,19 +281,15 @@ window.setDragImage = function (elementId, offsetX, offsetY) {
 };
 
 window.initDrag = function () {
-    console.log('initDrag called');
     const ev = window.event;
     if (ev && ev.dataTransfer) {
         try {
             ev.dataTransfer.setData('text/plain', 'drag');
             ev.dataTransfer.effectAllowed = 'move';
             ev.dataTransfer.dropEffect = 'move';
-            console.log('dataTransfer initialized');
         } catch (err) {
             console.error('initDrag error:', err);
         }
-    } else {
-        console.warn('initDrag: no event or dataTransfer');
     }
 };
 
@@ -368,14 +341,12 @@ window.shareOrCopy = async function (title, url) {
             await navigator.share(shareData);
             return { shared: true };
         } catch (err) {
-            // User might have cancelled or error occurred
             if (err.name === 'AbortError') {
                 return { shared: false, cancelled: true };
             }
             return { shared: false, error: err.message };
         }
     } else {
-        // Desktop or non-supporting browser fallback: Copy to clipboard
         try {
             await navigator.clipboard.writeText(shareUrl);
             return { copied: true };
@@ -401,5 +372,324 @@ window.autoPositionDropdown = function (wrapper) {
     } else {
         dropdown.classList.remove('open-up');
         dropdown.style.maxHeight = (Math.min(preferredHeight, spaceBelow) - 10) + 'px';
+    }
+};
+
+window.initLineupSortable = function (tbodyElement, dotNetHelper) {
+    if (!tbodyElement || typeof Sortable === 'undefined') return;
+    
+    if (tbodyElement.sortableInstance) {
+        tbodyElement.sortableInstance.destroy();
+    }
+
+    const container = tbodyElement.closest('.lineup-content-wrapper');
+
+    const clearHighlights = () => {
+        if (container) {
+            container.querySelectorAll('.drag-over, .drag-over-pos, .drag-target').forEach(el => {
+                el.classList.remove('drag-over', 'drag-over-pos', 'drag-target');
+            });
+        }
+    };
+
+    const getInteractionTarget = (e) => {
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        if (!x || !y) return null;
+
+        // Hide fallback/ghost to see what's under
+        const fallback = document.querySelector('.sortable-fallback');
+        const customGhost = document.getElementById('custom-drag-ghost');
+        const prevFallbackDisplay = fallback ? fallback.style.display : null;
+        const prevGhostDisplay = customGhost ? customGhost.style.display : null;
+        
+        if (fallback) fallback.style.display = 'none';
+        if (customGhost) customGhost.style.display = 'none';
+        
+        const el = document.elementFromPoint(x, y);
+        
+        if (fallback) fallback.style.display = prevFallbackDisplay;
+        if (customGhost) customGhost.style.display = prevGhostDisplay;
+
+        if (!el) return null;
+
+        return {
+            fieldBox: el.closest('.player-overlay'),
+            benchBox: el.closest('.bench-player-name'),
+            benchContainer: el.closest('.bench-container'),
+            posCell: el.closest('.pos-abbr'),
+            row: el.closest('tr.reorderable-row'),
+            el: el
+        };
+    };
+
+    const globalMoveHandler = (e) => {
+        clearHighlights();
+        const targets = getInteractionTarget(e);
+        if (!targets) return;
+
+        if (tbodyElement._isPosDrag) {
+            if (targets.posCell && targets.row && !targets.row.classList.contains('empty-row')) {
+                targets.posCell.classList.add('drag-over-pos');
+            } else if (targets.fieldBox) {
+                targets.fieldBox.classList.add('drag-over');
+            } else if (targets.benchBox) {
+                targets.benchBox.classList.add('drag-over');
+            } else if (targets.benchContainer) {
+                targets.benchContainer.classList.add('drag-over');
+            }
+        } else {
+            if (targets.row) targets.row.classList.add('drag-over');
+            else if (targets.fieldBox) targets.fieldBox.classList.add('drag-over');
+            else if (targets.benchBox) {
+                targets.benchBox.classList.add('drag-over');
+            } else if (targets.benchContainer) {
+                targets.benchContainer.classList.add('drag-over');
+            }
+        }
+    };
+
+    // --- TABLE SORTABLE ---
+    tbodyElement.sortableInstance = new Sortable(tbodyElement, {
+        animation: 0,
+        handle: '.pos-num, .player-select-cell, .pos-abbr',
+        draggable: 'tr:not(.empty-row)',
+        ghostClass: 'dragging-hidden',
+        chosenClass: 'chosen',
+        filter: '.clear-btn, .suggestions-dropdown, .native-player-select',
+        preventOnFilter: false,
+        fallbackTolerance: 5,
+        forceFallback: true,
+        fallbackClass: 'sortable-fallback',
+        fallbackOnBody: true,
+        sort: false,
+        onStart: function (evt) {
+            const handle = evt.originalEvent.target;
+            const isPosDrag = !!handle.closest('.pos-abbr');
+            tbodyElement._isDragging = true;
+            tbodyElement._isPosDrag = isPosDrag;
+            tbodyElement.classList.add('is-dragging-row');
+            if (isPosDrag) tbodyElement.classList.add('is-dragging-pos');
+
+            const table = tbodyElement.closest('table');
+            if (table) table.classList.add('is-dragging');
+            
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            // Sync fallback style
+            requestAnimationFrame(() => {
+                const fallback = document.querySelector('.sortable-fallback');
+                if (fallback) {
+                    fallback.style.pointerEvents = 'none';
+                    fallback.style.zIndex = '50000';
+                    const originalRow = evt.item;
+                    const rect = originalRow.getBoundingClientRect();
+                    fallback.style.width = rect.width + 'px';
+                    fallback.style.height = rect.height + 'px';
+                    fallback.style.display = 'table';
+                    fallback.style.tableLayout = 'fixed';
+                    
+                    const originalCells = originalRow.querySelectorAll('td');
+                    const fallbackCells = fallback.querySelectorAll('td');
+                    for (let i = 0; i < originalCells.length; i++) {
+                        if (fallbackCells[i]) {
+                            const cellRect = originalCells[i].getBoundingClientRect();
+                            fallbackCells[i].style.width = cellRect.width + 'px';
+                            fallbackCells[i].style.height = cellRect.height + 'px';
+                        }
+                    }
+
+                    if (isPosDrag) {
+                        fallback.classList.add('fallback-pos-only');
+                    }
+                }
+            });
+
+            window.addEventListener('mousemove', globalMoveHandler);
+            window.addEventListener('touchmove', globalMoveHandler, { passive: false });
+        },
+        onEnd: function (evt) {
+            window.removeEventListener('mousemove', globalMoveHandler);
+            window.removeEventListener('touchmove', globalMoveHandler);
+
+            const isPosDrag = tbodyElement._isPosDrag;
+            tbodyElement._isDragging = false;
+            tbodyElement._isPosDrag = false;
+            tbodyElement.classList.remove('is-dragging-row', 'is-dragging-pos');
+            const table = tbodyElement.closest('table');
+            if (table) table.classList.remove('is-dragging');
+
+            const targets = getInteractionTarget(evt.originalEvent);
+            clearHighlights();
+
+            const oldIndex = evt.oldIndex;
+            
+            if (isPosDrag) {
+                if (targets && targets.posCell && targets.row && !targets.row.classList.contains('empty-row')) {
+                    const newIndex = Array.from(tbodyElement.children).indexOf(targets.row);
+                    if (newIndex !== -1) dotNetHelper.invokeMethodAsync('OnPosSwapped', oldIndex, newIndex);
+                } else if (targets && (targets.fieldBox || targets.benchBox || targets.benchContainer)) {
+                    const fieldIdx = targets.fieldBox ? parseInt(targets.fieldBox.id.split('-').pop()) : null;
+                    const fromBench = !!(targets.benchBox || targets.benchContainer);
+                    dotNetHelper.invokeMethodAsync('OnTableDroppedOnField', oldIndex, fieldIdx, fromBench);
+                }
+            } else {
+                if (targets && targets.row) {
+                    const newIndex = Array.from(tbodyElement.children).indexOf(targets.row);
+                    if (oldIndex !== newIndex && newIndex !== -1) {
+                        dotNetHelper.invokeMethodAsync('OnRowReordered', oldIndex, newIndex);
+                    }
+                } else if (targets && (targets.fieldBox || targets.benchBox || targets.benchContainer)) {
+                    const fieldIdx = targets.fieldBox ? parseInt(targets.fieldBox.id.split('-').pop()) : null;
+                    const fromBench = !!(targets.benchBox || targets.benchContainer);
+                    dotNetHelper.invokeMethodAsync('OnTableDroppedOnField', oldIndex, fieldIdx, fromBench);
+                }
+            }
+        }
+    });
+
+    // --- FIELD INTERACTIONS ---
+    if (container) {
+        let fieldDragData = null;
+        let ghost = null;
+
+        const handleFieldStart = (el, e, index, fromBench) => {
+            // Only allow dragging if we are not clicking a remove button
+            if (e.target.classList.contains('remove-icon')) return;
+
+            fieldDragData = { index, fromBench };
+            document.body.classList.add('is-dragging-field');
+            
+            // Create ghost
+            const sourceEl = el;
+            ghost = sourceEl.cloneNode(true);
+            ghost.id = 'custom-drag-ghost';
+            ghost.style.position = 'fixed';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.zIndex = '50000';
+            ghost.style.opacity = '0.8';
+            ghost.style.width = sourceEl.offsetWidth + 'px';
+            ghost.style.height = sourceEl.offsetHeight + 'px';
+            
+            // For field boxes, make the ghost look like a player-name-box
+            if (!fromBench) {
+                const nameBox = ghost.querySelector('.player-name-box');
+                if (nameBox) {
+                    ghost.innerHTML = '';
+                    ghost.appendChild(nameBox);
+                    nameBox.style.transform = 'none';
+                    nameBox.style.position = 'static';
+                }
+            }
+
+            document.body.appendChild(ghost);
+            updateGhostPosition(e);
+
+            window.addEventListener('mousemove', handleFieldMove);
+            window.addEventListener('mouseup', handleFieldEnd);
+            window.addEventListener('touchmove', handleFieldMove, { passive: false });
+            window.addEventListener('touchend', handleFieldEnd);
+        };
+
+        const updateGhostPosition = (e) => {
+            if (!ghost) return;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            ghost.style.left = (x - ghost.offsetWidth / 2) + 'px';
+            ghost.style.top = (y - ghost.offsetHeight / 2) + 'px';
+        };
+
+        const handleFieldMove = (e) => {
+            if (!fieldDragData) return;
+            updateGhostPosition(e);
+            if (e.cancelable) e.preventDefault();
+
+            clearHighlights();
+            const targets = getInteractionTarget(e);
+            if (targets) {
+                if (targets.fieldBox) targets.fieldBox.classList.add('drag-over');
+                else if (targets.benchBox || targets.benchContainer) {
+                    const bc = targets.benchContainer || targets.benchBox.closest('.bench-container');
+                    if (bc) bc.classList.add('drag-over');
+                }
+                else if (targets.posCell) targets.posCell.classList.add('drag-over-pos');
+                else if (targets.row) targets.row.classList.add('drag-over');
+            }
+        };
+
+        const handleFieldEnd = (e) => {
+            if (!fieldDragData) return;
+            
+            const targets = getInteractionTarget(e);
+            clearHighlights();
+
+            if (targets) {
+                if (targets.fieldBox || targets.benchBox || targets.benchContainer) {
+                    const targetIdx = targets.fieldBox ? parseInt(targets.fieldBox.id.split('-').pop()) : null;
+                    const targetFromBench = !!(targets.benchBox || targets.benchContainer);
+                    
+                    dotNetHelper.invokeMethodAsync('OnFieldSwap', 
+                        fieldDragData.index, fieldDragData.fromBench, 
+                        targetIdx, targetFromBench);
+                } else if (targets.posCell || targets.row) {
+                    const rowIdx = Array.from(tbodyElement.children).indexOf(targets.row);
+                    if (rowIdx !== -1) {
+                        dotNetHelper.invokeMethodAsync('OnFieldDroppedOnTable', 
+                            fieldDragData.index, fieldDragData.fromBench, rowIdx);
+                    }
+                }
+            }
+
+            // Cleanup
+            document.body.classList.remove('is-dragging-field');
+            if (ghost) {
+                ghost.remove();
+                ghost = null;
+            }
+            fieldDragData = null;
+            window.removeEventListener('mousemove', handleFieldMove);
+            window.removeEventListener('mouseup', handleFieldEnd);
+            window.removeEventListener('touchmove', handleFieldMove);
+            window.removeEventListener('touchend', handleFieldEnd);
+        };
+
+        // Attach listeners to field boxes and bench names
+        // Use event delegation on the container for better performance and to handle dynamic updates
+        container.addEventListener('mousedown', (e) => {
+            const fieldBox = e.target.closest('.player-overlay');
+            if (fieldBox) {
+                const idx = parseInt(fieldBox.id.split('-').pop());
+                handleFieldStart(fieldBox, e, idx, false);
+                e.preventDefault();
+                return;
+            }
+            const benchBox = e.target.closest('.bench-player-name');
+            if (benchBox) {
+                const idx = parseInt(benchBox.id.split('-').pop());
+                handleFieldStart(benchBox, e, idx, true);
+                e.preventDefault();
+                return;
+            }
+        });
+
+        // Touch support
+        container.addEventListener('touchstart', (e) => {
+            const fieldBox = e.target.closest('.player-overlay');
+            if (fieldBox) {
+                const idx = parseInt(fieldBox.id.split('-').pop());
+                handleFieldStart(fieldBox, e, idx, false);
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+            const benchBox = e.target.closest('.bench-player-name');
+            if (benchBox) {
+                const idx = parseInt(benchBox.id.split('-').pop());
+                handleFieldStart(benchBox, e, idx, true);
+                if (e.cancelable) e.preventDefault();
+                return;
+            }
+        }, { passive: false });
     }
 };
