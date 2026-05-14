@@ -1052,20 +1052,12 @@ else
     {
         get 
         {
-            Dictionary<int, string> dict = new();
+            Dictionary<int, string> dict = new Dictionary<int, string>();
             if (battingOrder != null)
             {
                 foreach (BattingOrderEntry le in battingOrder.Where(le => le.PlayerId.HasValue))
                 {
-                    string pos = GetEntryPosition(le);
-                    dict[le.PlayerId!.Value] = string.IsNullOrEmpty(pos) ? "B" : pos;
-                }
-            }
-            if (availablePlayerIds != null)
-            {
-                foreach (int id in availablePlayerIds)
-                {
-                    if (!dict.ContainsKey(id)) dict[id] = "B";
+                    dict[le.PlayerId!.Value] = le.OrderNumber.ToString();
                 }
             }
             return dict;

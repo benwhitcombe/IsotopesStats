@@ -124,9 +124,13 @@
 
     private string GetPlayerDisplayName(Player player)
     {
-        if (PlayerAssignments.TryGetValue(player.Id, out string? pos))
+        if (PlayerAssignments.TryGetValue(player.Id, out string? val))
         {
-            return $"{player.Name} ({pos})";
+            if (int.TryParse(val, out int bo))
+            {
+                return $"#{bo}. {player.Name}";
+            }
+            return $"{player.Name} ({val})";
         }
         return player.Name;
     }

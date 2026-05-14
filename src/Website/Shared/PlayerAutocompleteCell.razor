@@ -13,7 +13,7 @@
                 @onfocus="HandleMobileFocus"
                 @onblur="HandleMobileBlur">
             <option value="0">-- Select Player --</option>
-            @foreach (Player player in Players.OrderBy(p => p.Name))
+            @foreach (Player player in Players.OrderBy(p => IsAssigned(p.Id) ? 1 : 0).ThenBy(p => GetPlayerSortOrder(p)).ThenBy(p => p.Name))
             {
                 <option @key="player.Id" value="@player.Id">@GetPlayerDisplayName(player)</option>
             }
@@ -51,7 +51,7 @@
                     bool isAssigned = IsAssigned(player.Id);
                     <div class="suggestion-item @(index == activeIndex ? "active" : "") @(isAssigned ? "assigned" : "")"
                          @onmousedown="() => SelectPlayer(player)">
-                        @GetPlayerDisplayName(player)
+                        @GetPlayerDisplayName(player, player.Id == originalPlayer?.Id && string.IsNullOrWhiteSpace(internalValue))
                     </div>
                 }
             </div>
@@ -166,13 +166,27 @@
         UpdateSuggestions();
     }
 
-    private string GetPlayerDisplayName(Player player)
+    private string GetPlayerDisplayName(Player player, bool hidePrefix = false)
     {
-        if (PlayerAssignments.TryGetValue(player.Id, out string? pos))
+        if (PlayerAssignments.TryGetValue(player.Id, out string? val))
         {
-            return $"{player.Name} ({pos})";
+            if (int.TryParse(val, out int bo))
+            {
+                if (hidePrefix) return player.Name;
+                return $"#{bo}. {player.Name}";
+            }
+            return $"{player.Name} ({val})";
         }
         return player.Name;
+    }
+
+    private int GetPlayerSortOrder(Player player)
+    {
+        if (PlayerAssignments.TryGetValue(player.Id, out string? val) && int.TryParse(val, out int bo))
+        {
+            return bo;
+        }
+        return 0;
     }
 
     private bool IsAssigned(int playerId) => PlayerAssignments.ContainsKey(playerId);
@@ -188,6 +202,7 @@
 
         List<Player> results = baseQuery
             .OrderBy(p => IsAssigned(p.Id) ? 1 : 0) // Unassigned first
+            .ThenBy(p => GetPlayerSortOrder(p))
             .ThenBy(p => p.Name)
             .ToList();
 
