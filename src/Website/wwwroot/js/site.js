@@ -384,3 +384,22 @@ window.shareOrCopy = async function (title, url) {
         }
     }
 };
+
+window.autoPositionDropdown = function (wrapper) {
+    if (!wrapper) return;
+    const dropdown = wrapper.querySelector('.suggestions-dropdown, .pos-suggestions-dropdown');
+    if (!dropdown) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const preferredHeight = 250;
+
+    if (spaceBelow < preferredHeight && spaceAbove > spaceBelow) {
+        dropdown.classList.add('open-up');
+        dropdown.style.maxHeight = (Math.min(preferredHeight, spaceAbove) - 10) + 'px';
+    } else {
+        dropdown.classList.remove('open-up');
+        dropdown.style.maxHeight = (Math.min(preferredHeight, spaceBelow) - 10) + 'px';
+    }
+};

@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject IJSRuntime JSRuntime
 
-<div class="autocomplete-cell-wrapper">
+<div @ref="wrapperElement" class="autocomplete-cell-wrapper">
     @if (IsMobile)
     {
         <select @ref="selectElement"
@@ -72,6 +72,7 @@
 
     private ElementReference inputElement;
     private ElementReference selectElement;
+    private ElementReference wrapperElement;
 
     private int SelectedPlayerId
     {
@@ -100,6 +101,21 @@
         if (!isFocused)
         {
             internalValue = Value;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (showSuggestions)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("autoPositionDropdown", wrapperElement);
+            }
+            catch (Exception)
+            {
+                // Component might be disposed or JS not ready
+            }
         }
     }
 
@@ -309,7 +325,8 @@
     .autocomplete-cell-wrapper {
         position: relative;
         width: 100%;
-        height: 42px;
+        height: 100%;
+        min-height: 42px;
         display: block;
     }
 
@@ -387,6 +404,12 @@
         max-height: 250px;
         overflow-y: auto;
         box-sizing: border-box;
+    }
+
+    .suggestions-dropdown.open-up {
+        top: auto;
+        bottom: 100%;
+        box-shadow: 4px -4px 0px rgba(0,0,0,0.2);
     }
 
     .suggestion-item {
