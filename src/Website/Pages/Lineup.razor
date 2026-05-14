@@ -416,6 +416,7 @@ else
                 }
 
                 AddEmptyRowIfLastRowFilled();
+                TrimEmptyRows();
                 _ = UpdateUrl();
             }
         }
@@ -711,27 +712,39 @@ else
         if (isInitializing) return;
         bool changed = false;
         
-        // We want at least 10 rows.
-        // If we have more than 10, we want exactly ONE empty row at the end.
+        // Keep trimming as long as we have extra trailing empty rows and are above the 10-row minimum
         while (battingOrder.Count > 10)
         {
             int lastIdx = battingOrder.Count - 1;
-            // Only trim if the last row is empty AND the row before it is also empty.
-            if (battingOrder[lastIdx].PlayerId == null && battingOrder[lastIdx - 1].PlayerId == null)
+            bool lastEmpty = battingOrder[lastIdx].PlayerId == null;
+            
+            if (lastEmpty)
             {
-                // Don't remove the extra row if the user is currently focused on the row that "needs" it.
-                if (focusedBattingIndex == lastIdx - 1) break;
+                bool secondToLastEmpty = battingOrder[lastIdx - 1].PlayerId == null;
+                bool anyUnassigned = players != null && players.Any(p => !battingOrder.Any(le => le.PlayerId == p.Id));
                 
-                battingOrder.RemoveAt(lastIdx);
-                playerCells.Remove(lastIdx);
-                posCells.Remove(lastIdx);
-                changed = true;
+                // Remove if there are two trailing empty rows OR if there's one empty row but no more unassigned players
+                if (secondToLastEmpty || !anyUnassigned)
+                {
+                    // Only skip if the focus is on the very last row we're trying to remove
+                    if (focusedBattingIndex == lastIdx) break;
+                    
+                    battingOrder.RemoveAt(lastIdx);
+                    playerCells.Remove(lastIdx);
+                    posCells.Remove(lastIdx);
+                    changed = true;
+                }
+                else
+                {
+                    break;
+                }
             }
             else
             {
                 break;
             }
         }
+
         if (changed) StateHasChanged();
     }
 
@@ -739,7 +752,11 @@ else
     {
         if (battingOrder.Count > 0 && battingOrder.Last().PlayerId != null)
         {
-            battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+            bool anyUnassigned = players != null && players.Any(p => !battingOrder.Any(le => le.PlayerId == p.Id));
+            if (anyUnassigned)
+            {
+                battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+            }
         }
     }
 
@@ -808,6 +825,7 @@ else
         }
 
         AddEmptyRowIfLastRowFilled();
+        TrimEmptyRows();
 
         (int Index, bool FromBench)? loc = GetFieldOrBenchIndex(entry);
         if (loc.HasValue)
@@ -1108,6 +1126,7 @@ else
 
                 HandleDeselect();
                 AddEmptyRowIfLastRowFilled();
+                TrimEmptyRows();
                 _ = UpdateUrl();
             }
         }
@@ -1221,6 +1240,7 @@ else
         selectedFromBench = null;
         isExplicitlySelected = false;
         AddEmptyRowIfLastRowFilled();
+        TrimEmptyRows();
         StateHasChanged();
         await UpdateUrl();
     }
@@ -1313,7 +1333,14 @@ else
                 });
             }
             while (battingOrder.Count < 10) battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
-            if (battingOrder.Any() && battingOrder.Last().PlayerId != null) battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+            if (battingOrder.Any() && battingOrder.Last().PlayerId != null) 
+            {
+                bool anyUnassigned = players != null && players.Any(p => !battingOrder.Any(le => le.PlayerId == p.Id));
+                if (anyUnassigned)
+                {
+                    battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+                }
+            }
             
             availablePlayerIds.Clear();
             foreach ((int PlayerId, string Position, Dictionary<int, string> InningPositions) item in decoded.Lineup) if (item.PlayerId > 0) availablePlayerIds.Add(item.PlayerId);
@@ -1449,7 +1476,14 @@ else
                 }
             }
             while (battingOrder.Count < 10) battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
-            if (battingOrder.Any() && battingOrder.Last().PlayerId != null) battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+            if (battingOrder.Any() && battingOrder.Last().PlayerId != null) 
+            {
+                bool anyUnassigned = players != null && players.Any(p => !battingOrder.Any(le => le.PlayerId == p.Id));
+                if (anyUnassigned)
+                {
+                    battingOrder.Add(new BattingOrderEntry { OrderNumber = battingOrder.Count + 1 });
+                }
+            }
         }
     }
 
