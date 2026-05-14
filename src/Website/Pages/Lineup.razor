@@ -7,8 +7,6 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-@implements IAsyncDisposable
-
 <PageTitle>Isotopes - Lineup</PageTitle>
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -29,7 +27,7 @@
 else
 {
     <CustomErrorBoundary>
-    <div class="lineup-card-container @(battingOrder.Count > 10 || isExtraHeight ? "has-extra-rows" : "")">
+    <div class="lineup-card-container">
                 <div class="lineup-card-header">
                     <div class="team-name">ISOTOPES</div>
                     <div class="card-title">LINEUP CARD</div>
@@ -37,83 +35,85 @@ else
                 
                 <div class="lineup-content-wrapper">
                     <div class="table-pane @(activeViewMode == "lineup" ? "d-flex" : "d-none d-xl-flex") @(selectedBattingIndex != null ? "table-active" : "")">
-                        <table class="lineup-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px;">#</th>
-                                    <th>BATTING ORDER</th>
-                                    <th style="width: 80px;">POS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (int i = 0; i < battingOrder.Count; i++)
-                                {
-                                    int index = i;
-                                    BattingOrderEntry entry = battingOrder[index];
-                                    bool isEntrySelected = IsEntrySelected(entry);
-                                    
-                                    DefenseField.AnimationState? rowState = null;
-                                    rowAnimations.TryGetValue(entry, out rowState);
-                                    bool isRowSwapping = rowState?.Type == DefenseField.AnimationType.Swapped;
-                                    bool isRowRemoving = rowState?.Type == DefenseField.AnimationType.Removed;
-
-                                    DefenseField.AnimationState? posState = null;
-                                    posAnimations.TryGetValue(entry, out posState);
-                                    bool isPosSwapping = posState?.Type == DefenseField.AnimationType.Swapped;
-                                    bool isPosRemoving = posState?.Type == DefenseField.AnimationType.Removed;
-
-                                    <tr @key="entry"
-                                        id="@($"row-{index}")"
-                                        draggable="@(entry.PlayerId != null ? "true" : "false")"
-                                        @ondragstart="(e) => HandleDragStart(e, entry, index)"
-                                        @ondragenter='() => HandleDragEnter(entry, $"row-{index}")'
-                                        @ondragleave='() => HandleDragLeave($"row-{index}")'
-                                        @ondrop="() => HandleDrop(entry, false)"
-                                        @ondragend="HandleDragEnd"
-                                        class="reorderable-row @(entry == draggedEntry ? "dragging" : "") @((selectedBattingIndex == index && draggingType == DragMode.None) ? "selected" : "") @(isRowSwapping ? "just-swapped" : "") @(isRowRemoving ? "just-removed" : "")">
-                                        <td class="pos-num" 
-                                            onmouseenter="window.lastMouseEnterType = 'row';"
-                                            @onclick="() => HandleNumberClick(index)"
-                                            style="cursor: pointer;">
-                                            @entry.OrderNumber
-                                        </td>
-                                        <td class="player-select-cell" 
-                                            onmouseenter="window.lastMouseEnterType = 'player';">
-                                            <PlayerAutocompleteCell 
-                                                @ref="playerCells[index]"
-                                                Value="@(players?.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
-                                                Players="@players"
-                                                PlayerAssignments="@playerAssignments"
-                                                IsMobile="@isMobile"
-                                                OnSelected="@(p => HandleOrderSelection(entry, p))"
-                                                OnKeyDown="@(e => HandleKeyDown(index, e))"
-                                                OnCommit="@(() => FocusNextPlayer(index))"
-                                                OnFocused="@(() => HandleFocus(index))"
-                                                OnBlurred="@(() => HandleBlur(index))" />
-                                        </td>
-                                        <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None ? "selected" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
-                                            id="@($"pos-{index}")"
-                                            @ondragenter='() => HandlePosDragEnter(entry, $"pos-{index}")'
-                                            @ondragleave='() => HandlePosDragLeave($"pos-{index}")'
-                                            @ondrop="() => HandleDrop(entry, true)"
-                                            onmouseenter="window.lastMouseEnterType = 'pos';">
-                                            <PositionAutocompleteCell 
-                                                @ref="posCells[index]"
-                                                Value="@GetEntryPosition(entry)"
-                                                AvailablePositions="@AvailablePositions"
-                                                IsMobile="@isMobile"
-                                                IsInherited="@IsPositionInherited(entry)"
-                                                OnSelected="@(val => HandlePositionChange(entry, val))"
-                                                IsDisabled="@(entry.PlayerId == null)"
-                                                OnFocused="@(() => HandleFocus(index))"
-                                                OnBlurred="@(() => HandleBlur(index))" />
-                                        </td>
+                        <div class="lineup-table-wrapper">
+                            <table class="lineup-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 40px;">#</th>
+                                        <th>BATTING ORDER</th>
+                                        <th style="width: 80px;">POS</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
-                        <div class="lineup-actions p-3 border-top mt-auto">
-                            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < battingOrder.Count; i++)
+                                    {
+                                        int index = i;
+                                        BattingOrderEntry entry = battingOrder[index];
+                                        bool isEntrySelected = IsEntrySelected(entry);
+                                        
+                                        DefenseField.AnimationState? rowState = null;
+                                        rowAnimations.TryGetValue(entry, out rowState);
+                                        bool isRowSwapping = rowState?.Type == DefenseField.AnimationType.Swapped;
+                                        bool isRowRemoving = rowState?.Type == DefenseField.AnimationType.Removed;
+
+                                        DefenseField.AnimationState? posState = null;
+                                        posAnimations.TryGetValue(entry, out posState);
+                                        bool isPosSwapping = posState?.Type == DefenseField.AnimationType.Swapped;
+                                        bool isPosRemoving = posState?.Type == DefenseField.AnimationType.Removed;
+
+                                        <tr @key="entry"
+                                            id="@($"row-{index}")"
+                                            draggable="@(entry.PlayerId != null ? "true" : "false")"
+                                            @ondragstart="(e) => HandleDragStart(e, entry, index)"
+                                            @ondragenter='() => HandleDragEnter(entry, $"row-{index}")'
+                                            @ondragleave='() => HandleDragLeave($"row-{index}")'
+                                            @ondrop="() => HandleDrop(entry, false)"
+                                            @ondragend="HandleDragEnd"
+                                            class="reorderable-row @(entry == draggedEntry ? "dragging" : "") @((selectedBattingIndex == index && draggingType == DragMode.None) ? "selected" : "") @(isRowSwapping ? "just-swapped" : "") @(isRowRemoving ? "just-removed" : "")">
+                                            <td class="pos-num" 
+                                                onmouseenter="window.lastMouseEnterType = 'row';"
+                                                @onclick="() => HandleNumberClick(index)"
+                                                style="cursor: pointer;">
+                                                @entry.OrderNumber
+                                            </td>
+                                            <td class="player-select-cell" 
+                                                onmouseenter="window.lastMouseEnterType = 'player';">
+                                                <PlayerAutocompleteCell 
+                                                    @ref="playerCells[index]"
+                                                    Value="@(players?.FirstOrDefault(p => p.Id == entry.PlayerId)?.Name ?? string.Empty)"
+                                                    Players="@players"
+                                                    PlayerAssignments="@playerAssignments"
+                                                    IsMobile="@isMobile"
+                                                    OnSelected="@(p => HandleOrderSelection(entry, p))"
+                                                    OnKeyDown="@(e => HandleKeyDown(index, e))"
+                                                    OnCommit="@(() => FocusNextPlayer(index))"
+                                                    OnFocused="@(() => HandleFocus(index))"
+                                                    OnBlurred="@(() => HandleBlur(index))" />
+                                            </td>
+                                            <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None ? "selected" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
+                                                id="@($"pos-{index}")"
+                                                @ondragenter='() => HandlePosDragEnter(entry, $"pos-{index}")'
+                                                @ondragleave='() => HandlePosDragLeave($"pos-{index}")'
+                                                @ondrop="() => HandleDrop(entry, true)"
+                                                onmouseenter="window.lastMouseEnterType = 'pos';">
+                                                <PositionAutocompleteCell 
+                                                    @ref="posCells[index]"
+                                                    Value="@GetEntryPosition(entry)"
+                                                    AvailablePositions="@AvailablePositions"
+                                                    IsMobile="@isMobile"
+                                                    IsInherited="@IsPositionInherited(entry)"
+                                                    OnSelected="@(val => HandlePositionChange(entry, val))"
+                                                    IsDisabled="@(entry.PlayerId == null)"
+                                                    OnFocused="@(() => HandleFocus(index))"
+                                                    OnBlurred="@(() => HandleBlur(index))" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="lineup-actions border-top">
+                            <div class="d-flex flex-wrap gap-2 justify-content-center p-3">
                                 <button class="view-btn" style="min-width: 100px;" @onclick="ClearAll">Clear All</button>
                                 <button class="view-btn active d-xl-none" style="min-width: 100px;" @onclick='() => SetViewMode("field")'>View Defense</button>
                             </div>
@@ -157,8 +157,8 @@ else
                                 IsEditable="true"
                                 MaxWidth="680" />
                             
-                            <div class="lineup-actions p-3 border-top w-100">
-                                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <div class="lineup-actions border-top">
+                                <div class="d-flex flex-wrap gap-2 justify-content-center p-3">
                                     <button class="view-btn active d-xl-none" style="min-width: 100px;" @onclick='() => SetViewMode("lineup")'>View Lineup</button>
                                     <button class="view-btn" style="min-width: 100px;" @onclick="ResetInning">Reset Inning</button>
                                     <button class="view-btn" style="min-width: 100px;" @onclick="BenchAll">Bench All</button>
@@ -203,43 +203,6 @@ else
     private bool isLoading = true;
     private bool isInitializing = false;
     private bool showToast = false;
-    private bool isExtraHeight = false;
-
-    private IJSObjectReference? observerModule;
-    private DotNetObjectReference<Lineup>? dotNetHelper;
-
-    [JSInvokable]
-    public void SetExtraHeight(bool isExtra)
-    {
-        if (isExtraHeight != isExtra)
-        {
-            isExtraHeight = isExtra;
-            StateHasChanged();
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            dotNetHelper = DotNetObjectReference.Create(this);
-            observerModule = await JSRuntime.InvokeAsync<IJSObjectReference>("observeLineupHeight", dotNetHelper);
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        try
-        {
-            if (observerModule != null)
-            {
-                await observerModule.InvokeVoidAsync("disconnect");
-                await observerModule.DisposeAsync();
-            }
-            dotNetHelper?.Dispose();
-        }
-        catch (Exception) { /* JS disconnection errors on navigation are normal */ }
-    }
 
     private Dictionary<int, PlayerAutocompleteCell> playerCells = new();
     private Dictionary<int, PositionAutocompleteCell> posCells = new();
@@ -1493,13 +1456,30 @@ else
     private void ClearAllInternal()
     {
         availablePlayerIds.Clear();
-        foreach (BattingOrderEntry le in battingOrder) 
-        { 
-            le.PlayerId = null; 
-            le.PositionAbbreviation = string.Empty; 
-            le.InningPositions.Clear();
-        }
-        while (battingOrder.Count > 10) battingOrder.RemoveAt(battingOrder.Count - 1);
+        InitializeBattingOrder();
+        playerCells.Clear();
+        posCells.Clear();
+        rowAnimations.Clear();
+        posAnimations.Clear();
+        animationCounters.Clear();
+        
+        // Reset selection and focused state
+        selectedIndex = null;
+        selectedFromBench = null;
+        selectedBattingIndex = null;
+        focusedBattingIndex = null;
+        isExplicitlySelected = false;
+
+        // Reset drag state
+        draggedEntry = null;
+        targetEntry = null;
+        dragTargetIndex = null;
+        dragTargetFromBench = null;
+        draggingType = DragMode.None;
+        
+        // Reset view state
+        activeViewMode = "lineup";
+        selectedInning = 1;
     }
 
     private void ClearAll()
