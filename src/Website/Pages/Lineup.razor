@@ -281,10 +281,21 @@ else
     }
 
     [JSInvokable]
+    public async Task HandleFieldClickManual(int index, bool fromBench)
+    {
+        await HandleFieldClick(index, fromBench);
+    }
+
+    [JSInvokable]
     public async Task OnFieldSwap(int index1, bool fromBench1, int? index2, bool fromBench2)
     {
+        if (!index2.HasValue && !fromBench2) return; // Dropped nowhere
+
+        // If dropped on exactly the same spot, do nothing (don't bench)
+        if (index1 == index2 && fromBench1 == fromBench2) return;
+
         // Simulate a click sequence to reuse HandleFieldClick logic
-        // Reset current selection
+        // Reset current selection to the source
         selectedIndex = index1;
         selectedFromBench = fromBench1;
         isExplicitlySelected = true;
@@ -303,7 +314,7 @@ else
             }
         }
         
-        // Ensure cleanup
+        // Ensure cleanup after drag complete
         selectedIndex = null;
         selectedFromBench = null;
         isExplicitlySelected = false;

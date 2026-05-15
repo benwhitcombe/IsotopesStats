@@ -17,8 +17,6 @@ body.is-dragging-field *,
     -webkit-user-select: none !important;
 }
 
-.lineup-card-header {
-
 /* Pseudo-element border removed to allow dropdowns to overlap */
 
 @media (min-width: 1200px) {
@@ -261,14 +259,38 @@ body.is-dragging-field *,
     border-left: 1px solid black !important;
 }
 
-/* 8px blue line indicator when hovering over players (Insert) */
-tbody.is-dragging-row:not(.is-dragging-pos) tr:not(.empty-row):not(.dragging-hidden):hover td {
+/* --- TABLE ROW DRAG INDICATORS --- */
+
+/* 1. OCCUPIED ROW: 8px blue line indicator (Insert) */
+/* Apply when dragging via Sortable (hover) OR when dragging via custom JS (.drag-over) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row:not(.empty-row):not(.dragging-hidden):hover td,
+tr.reorderable-row:not(.empty-row):not(.dragging-hidden).drag-over td {
     box-shadow: inset 0 8px 0 #2196f3 !important;
 }
 
-/* Solid blue highlight when hovering over empty rows (Occupy) */
-tbody.is-dragging-row:not(.is-dragging-pos) tr.empty-row:not(.dragging-hidden):hover td {
+tr.reorderable-row:not(.empty-row):not(.dragging-hidden).drag-over {
+    z-index: 10;
+}
+
+/* 2. EMPTY ROW: Solid blue highlight (Occupy) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover td,
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over td {
     background-color: #2196f3 !important;
+    color: white !important;
+}
+
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    z-index: 10;
+}
+
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover ::deep .autocomplete-input,
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover .pos-num,
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover .pos-abbr,
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over ::deep .autocomplete-input,
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over .pos-num,
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over .pos-abbr {
     color: white !important;
 }
 
@@ -278,9 +300,12 @@ tbody.is-dragging-row:not(.is-dragging-pos) tr.empty-row:not(.dragging-hidden):h
     background-color: #fafafa !important;
 }
 
-tbody.is-dragging-row .suggestions-dropdown,
-.reorderable-row.dragging .suggestions-dropdown,
-.sortable-fallback .suggestions-dropdown {
+tbody.is-dragging-row ::deep .suggestions-dropdown,
+tbody.is-dragging-row ::deep .pos-suggestions-dropdown,
+.reorderable-row.dragging ::deep .suggestions-dropdown,
+.reorderable-row.dragging ::deep .pos-suggestions-dropdown,
+.sortable-fallback ::deep .suggestions-dropdown,
+.sortable-fallback ::deep .pos-suggestions-dropdown {
     display: none !important;
 }
 
@@ -529,6 +554,12 @@ tbody.is-dragging-row .suggestions-dropdown,
     transition: outline-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Disable transitions during drag to prevent flickering grey shadows/outlines when hovering off */
+.lineup-table.is-dragging .reorderable-row,
+body.is-dragging-field .reorderable-row {
+    transition: none !important;
+}
+
 .reorderable-row .pos-num,
 .reorderable-row .pos-abbr:not(.disabled) {
     cursor: move;
@@ -540,22 +571,37 @@ tbody.is-dragging-row .suggestions-dropdown,
     }
 }
 
+/* Generic .drag-over for z-index - apply to both types */
 .drag-over {
-    color: #0d47a1 !important;
-    outline: 2px solid #2196f3 !important;
-    outline-offset: -2px;
-    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
     z-index: 10;
 }
 
-.drag-over td {
-    background-color: #bbdefb !important;
+/* Specific background, text color, outline, and shadow ONLY for empty rows */
+.drag-over.empty-row td {
+    background-color: #2196f3 !important;
 }
 
-.drag-over ::deep .autocomplete-input,
-.drag-over .pos-num,
-.drag-over .pos-abbr {
-    color: #0d47a1 !important;
+.drag-over.empty-row td,
+.drag-over.empty-row ::deep .autocomplete-input,
+.drag-over.empty-row .pos-num,
+.drag-over.empty-row .pos-abbr {
+    color: white !important;
+}
+
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+}
+
+/* Ensure occupied rows do NOT get a background highlight or outline when .drag-over is applied */
+.drag-over:not(.empty-row) td {
+    background-color: transparent !important;
+}
+
+.drag-over:not(.empty-row) {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .drag-over-pos {

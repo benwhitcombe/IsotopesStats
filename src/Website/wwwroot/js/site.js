@@ -550,43 +550,21 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
         }
     });
 
-    // --- FIELD INTERACTIONS ---
+        // --- FIELD INTERACTIONS ---
     if (container) {
         let fieldDragData = null;
         let ghost = null;
+        let preventNextClick = false;
 
         const handleFieldStart = (el, e, index, fromBench) => {
             // Only allow dragging if we are not clicking a remove button
             if (e.target.classList.contains('remove-icon')) return;
 
-            fieldDragData = { index, fromBench };
-            document.body.classList.add('is-dragging-field');
-            
-            // Create ghost
-            const sourceEl = el;
-            ghost = sourceEl.cloneNode(true);
-            ghost.id = 'custom-drag-ghost';
-            ghost.style.position = 'fixed';
-            ghost.style.pointerEvents = 'none';
-            ghost.style.zIndex = '50000';
-            ghost.style.opacity = '0.8';
-            ghost.style.width = sourceEl.offsetWidth + 'px';
-            ghost.style.height = sourceEl.offsetHeight + 'px';
-            
-            // For field boxes, make the ghost look like a player-name-box
-            if (!fromBench) {
-                const nameBox = ghost.querySelector('.player-name-box');
-                if (nameBox) {
-                    ghost.innerHTML = '';
-                    ghost.appendChild(nameBox);
-                    nameBox.style.transform = 'none';
-                    nameBox.style.position = 'static';
-                }
-            }
+            const startX = e.clientX || (e.touches && e.touches[0].clientX);
+            const startY = e.clientY || (e.touches && e.touches[0].clientY);
 
-            document.body.appendChild(ghost);
-            updateGhostPosition(e);
-
+            fieldDragData = { el, index, fromBench, startX, startY, moved: false };
+            
             window.addEventListener('mousemove', handleFieldMove);
             window.addEventListener('mouseup', handleFieldEnd);
             window.addEventListener('touchmove', handleFieldMove, { passive: false });
@@ -603,6 +581,44 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
 
         const handleFieldMove = (e) => {
             if (!fieldDragData) return;
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+
+            if (!fieldDragData.moved) {
+                const dist = Math.sqrt(Math.pow(x - fieldDragData.startX, 2) + Math.pow(y - fieldDragData.startY, 2));
+                if (dist > 5) {
+                    fieldDragData.moved = true;
+                    
+                    document.body.classList.add('is-dragging-field');
+                    
+                    // Create ghost
+                    const sourceEl = fieldDragData.el;
+                    ghost = sourceEl.cloneNode(true);
+                    ghost.id = 'custom-drag-ghost';
+                    ghost.style.position = 'fixed';
+                    ghost.style.pointerEvents = 'none';
+                    ghost.style.zIndex = '50000';
+                    ghost.style.opacity = '0.8';
+                    ghost.style.width = sourceEl.offsetWidth + 'px';
+                    ghost.style.height = sourceEl.offsetHeight + 'px';
+                    
+                    // For field boxes, make the ghost look like a player-name-box
+                    if (!fieldDragData.fromBench) {
+                        const nameBox = ghost.querySelector('.player-name-box');
+                        if (nameBox) {
+                            ghost.innerHTML = '';
+                            ghost.appendChild(nameBox);
+                            nameBox.style.transform = 'none';
+                            nameBox.style.position = 'static';
+                        }
+                    }
+
+                    document.body.appendChild(ghost);
+                } else {
+                    return;
+                }
+            }
+
             updateGhostPosition(e);
             if (e.cancelable) e.preventDefault();
 
@@ -622,22 +638,28 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
         const handleFieldEnd = (e) => {
             if (!fieldDragData) return;
             
-            const targets = getInteractionTarget(e);
-            clearHighlights();
+            if (fieldDragData.moved) {
+                // IT WAS A DRAG
+                preventNextClick = true;
+                setTimeout(() => preventNextClick = false, 100);
 
-            if (targets) {
-                if (targets.fieldBox || targets.benchBox || targets.benchContainer) {
-                    const targetIdx = targets.fieldBox ? parseInt(targets.fieldBox.id.split('-').pop()) : null;
-                    const targetFromBench = !!(targets.benchBox || targets.benchContainer);
-                    
-                    dotNetHelper.invokeMethodAsync('OnFieldSwap', 
-                        fieldDragData.index, fieldDragData.fromBench, 
-                        targetIdx, targetFromBench);
-                } else if (targets.posCell || targets.row) {
-                    const rowIdx = Array.from(tbodyElement.children).indexOf(targets.row);
-                    if (rowIdx !== -1) {
-                        dotNetHelper.invokeMethodAsync('OnFieldDroppedOnTable', 
-                            fieldDragData.index, fieldDragData.fromBench, rowIdx);
+                const targets = getInteractionTarget(e);
+                clearHighlights();
+
+                if (targets) {
+                    if (targets.fieldBox || targets.benchBox || targets.benchContainer) {
+                        const targetIdx = targets.fieldBox ? parseInt(targets.fieldBox.id.split('-').pop()) : null;
+                        const targetFromBench = !!(targets.benchBox || targets.benchContainer);
+                        
+                        dotNetHelper.invokeMethodAsync('OnFieldSwap', 
+                            fieldDragData.index, fieldDragData.fromBench, 
+                            targetIdx, targetFromBench);
+                    } else if (targets.posCell || targets.row) {
+                        const rowIdx = Array.from(tbodyElement.children).indexOf(targets.row);
+                        if (rowIdx !== -1) {
+                            dotNetHelper.invokeMethodAsync('OnFieldDroppedOnTable', 
+                                fieldDragData.index, fieldDragData.fromBench, rowIdx);
+                        }
                     }
                 }
             }
@@ -655,21 +677,26 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
             window.removeEventListener('touchend', handleFieldEnd);
         };
 
+        // Suppress native click if a drag just ended
+        container.addEventListener('click', (e) => {
+            if (preventNextClick) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, true);
+
         // Attach listeners to field boxes and bench names
-        // Use event delegation on the container for better performance and to handle dynamic updates
         container.addEventListener('mousedown', (e) => {
             const fieldBox = e.target.closest('.player-overlay');
             if (fieldBox) {
                 const idx = parseInt(fieldBox.id.split('-').pop());
                 handleFieldStart(fieldBox, e, idx, false);
-                e.preventDefault();
                 return;
             }
             const benchBox = e.target.closest('.bench-player-name');
             if (benchBox) {
                 const idx = parseInt(benchBox.id.split('-').pop());
                 handleFieldStart(benchBox, e, idx, true);
-                e.preventDefault();
                 return;
             }
         });
@@ -680,16 +707,14 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
             if (fieldBox) {
                 const idx = parseInt(fieldBox.id.split('-').pop());
                 handleFieldStart(fieldBox, e, idx, false);
-                if (e.cancelable) e.preventDefault();
                 return;
             }
             const benchBox = e.target.closest('.bench-player-name');
             if (benchBox) {
                 const idx = parseInt(benchBox.id.split('-').pop());
                 handleFieldStart(benchBox, e, idx, true);
-                if (e.cancelable) e.preventDefault();
                 return;
             }
-        }, { passive: false });
+        }, { passive: true });
     }
 };
