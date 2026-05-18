@@ -8,7 +8,14 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
+}
+
+body.is-dragging-field[b-haooa4l116],
+body.is-dragging-field *[b-haooa4l116],
+.lineup-table.is-dragging[b-haooa4l116],
+.lineup-table.is-dragging *[b-haooa4l116] {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* Pseudo-element border removed to allow dropdowns to overlap */
@@ -222,7 +229,145 @@
     vertical-align: middle;
     height: 42px;
     min-height: 32px;
-    transition: background-color 0.2s ease;
+}
+
+/* --- STABLE DRAG BORDERS --- */
+
+.lineup-table.is-dragging[b-haooa4l116] {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+/* Ensure borders are consistent in separate mode */
+.lineup-table.is-dragging td[b-haooa4l116] {
+    border-bottom: 1px solid black !important;
+}
+
+.lineup-table.is-dragging th[b-haooa4l116] {
+    height: 46px !important;
+}
+
+/* Fix double border: last row should NOT have a bottom border in separate mode */
+.lineup-table.is-dragging tr:last-child td[b-haooa4l116] {
+    border-bottom: none !important;
+}
+
+.lineup-table.is-dragging .pos-num[b-haooa4l116] {
+    border-right: 1px solid black !important;
+}
+
+.lineup-table.is-dragging .pos-abbr[b-haooa4l116] {
+    border-left: 1px solid black !important;
+}
+
+/* --- TABLE ROW DRAG INDICATORS --- */
+
+/* 1. OCCUPIED ROW: 8px blue line indicator (Insert) */
+/* Apply when dragging via Sortable (hover) OR when dragging via custom JS (.drag-over) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row:not(.empty-row):not(.dragging-hidden):hover td[b-haooa4l116],
+tr.reorderable-row:not(.empty-row):not(.dragging-hidden).drag-over td[b-haooa4l116] {
+    box-shadow: inset 0 8px 0 #2196f3 !important;
+}
+
+tr.reorderable-row:not(.empty-row):not(.dragging-hidden).drag-over[b-haooa4l116] {
+    z-index: 10;
+}
+
+/* 2. EMPTY ROW: Solid blue highlight (Occupy) */
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover td[b-haooa4l116],
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over td[b-haooa4l116] {
+    background-color: #2196f3 !important;
+    color: white !important;
+}
+
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over[b-haooa4l116] {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    z-index: 10;
+}
+
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover[b-haooa4l116]  .autocomplete-input,
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover .pos-num[b-haooa4l116],
+tbody.is-dragging-row:not(.is-dragging-pos) tr.reorderable-row.empty-row:not(.dragging-hidden):hover .pos-abbr[b-haooa4l116],
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over[b-haooa4l116]  .autocomplete-input,
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over .pos-num[b-haooa4l116],
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over .pos-abbr[b-haooa4l116] {
+    color: white !important;
+}
+
+/* Visible but dimmed placeholder (Source Row) */
+.reorderable-row.dragging-hidden td[b-haooa4l116] {
+    opacity: 0.50 !important;
+    background-color: #fafafa !important;
+}
+
+tbody.is-dragging-row[b-haooa4l116]  .suggestions-dropdown,
+tbody.is-dragging-row[b-haooa4l116]  .pos-suggestions-dropdown,
+.reorderable-row.dragging[b-haooa4l116]  .suggestions-dropdown,
+.reorderable-row.dragging[b-haooa4l116]  .pos-suggestions-dropdown,
+.sortable-fallback[b-haooa4l116]  .suggestions-dropdown,
+.sortable-fallback[b-haooa4l116]  .pos-suggestions-dropdown {
+    display: none !important;
+}
+
+.sortable-fallback[b-haooa4l116] {
+    opacity: 0.9 !important;
+    background: white !important;
+    box-shadow: 0 0 0 2px #2196f3, 0 10px 25px rgba(0,0,0,0.2) !important;
+    z-index: 50000 !important; /* Massive z-index to stay on top */
+    border: none !important;
+    pointer-events: none !important;
+    
+    /* Inherit table styles for fallbackOnBody: true */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    text-transform: uppercase;
+}
+
+.sortable-fallback.fallback-pos-only td:not(.pos-abbr)[b-haooa4l116] {
+    opacity: 0 !important;
+    border: none !important;
+}
+
+.sortable-fallback.fallback-pos-only[b-haooa4l116] {
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+.sortable-fallback.fallback-pos-only .pos-abbr[b-haooa4l116] {
+    background: white !important;
+    box-shadow: 0 0 0 2px #2196f3, 0 10px 25px rgba(0,0,0,0.2) !important;
+    border: 1px solid black !important;
+}
+
+.sortable-fallback td[b-haooa4l116] {
+    border-bottom: 1px solid black !important;
+    vertical-align: middle;
+    padding: 0;
+    font-weight: 900;
+}
+
+.sortable-fallback .pos-num[b-haooa4l116] {
+    text-align: center;
+    border-right: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.sortable-fallback .pos-abbr[b-haooa4l116] {
+    text-align: center;
+    border-left: 1px solid black;
+    font-size: 1.1rem;
+}
+
+.sortable-fallback .player-select-cell[b-haooa4l116]  .autocomplete-input,
+.sortable-fallback .player-select-cell[b-haooa4l116]  .ghost-text-container {
+    text-align: left !important;
+    padding-left: 0.5rem !important;
+    font-size: 1.1rem !important;
+    letter-spacing: 1.5px !important;
+}
+
+.reorderable-row.chosen[b-haooa4l116] {
+    background-color: #f5f5f5;
 }
 
 @media (min-width: 1200px) {
@@ -410,6 +555,12 @@
     transition: outline-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Disable transitions during drag to prevent flickering grey shadows/outlines when hovering off */
+.lineup-table.is-dragging .reorderable-row[b-haooa4l116],
+body.is-dragging-field .reorderable-row[b-haooa4l116] {
+    transition: none !important;
+}
+
 .reorderable-row .pos-num[b-haooa4l116],
 .reorderable-row .pos-abbr:not(.disabled)[b-haooa4l116] {
     cursor: move;
@@ -421,22 +572,37 @@
     }
 }
 
+/* Generic .drag-over for z-index - apply to both types */
 .drag-over[b-haooa4l116] {
-    color: #0d47a1 !important;
-    outline: 2px solid #2196f3 !important;
-    outline-offset: -2px;
-    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
     z-index: 10;
 }
 
-.drag-over td[b-haooa4l116] {
-    background-color: #bbdefb !important;
+/* Specific background, text color, outline, and shadow ONLY for empty rows */
+.drag-over.empty-row td[b-haooa4l116] {
+    background-color: #2196f3 !important;
 }
 
-.drag-over[b-haooa4l116]  .autocomplete-input,
-.drag-over .pos-num[b-haooa4l116],
-.drag-over .pos-abbr[b-haooa4l116] {
-    color: #0d47a1 !important;
+.drag-over.empty-row td[b-haooa4l116],
+.drag-over.empty-row[b-haooa4l116]  .autocomplete-input,
+.drag-over.empty-row .pos-num[b-haooa4l116],
+.drag-over.empty-row .pos-abbr[b-haooa4l116] {
+    color: white !important;
+}
+
+tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over[b-haooa4l116] {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.3);
+}
+
+/* Ensure occupied rows do NOT get a background highlight or outline when .drag-over is applied */
+.drag-over:not(.empty-row) td[b-haooa4l116] {
+    background-color: transparent !important;
+}
+
+.drag-over:not(.empty-row)[b-haooa4l116] {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .drag-over-pos[b-haooa4l116] {
