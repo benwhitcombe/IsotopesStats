@@ -59,4 +59,12 @@ public interface IStatsRepository
     Task<List<GameSummaryView>> GetAllGameSummariesAsync();
     
     Task<List<GameStatsExtendedView>> GetExtendedGameStatsAsync(int gameId);
+
+    // Plate Appearances
+    Task<List<PlateAppearance>> GetPlateAppearancesAsync(int gameId);
+    Task<PlateAppearance> AddPlateAppearanceAsync(PlateAppearance plateAppearance);
+    Task UpdatePlateAppearanceAsync(PlateAppearance plateAppearance);
+    Task DeletePlateAppearanceAsync(int id);
+    Task<List<StatEntry>> CalculateStatsFromPlateAppearancesAsync(int gameId);
+    Task SyncGameStatsFromPlateAppearancesAsync(int gameId);
 }

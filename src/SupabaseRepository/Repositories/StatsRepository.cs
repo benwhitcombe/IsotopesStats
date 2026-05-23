@@ -352,4 +352,164 @@ internal class StatsRepository : BaseRepository, IStatsRepository
             .Get();
         return response.Models.Select(x => Mapper.ToModel(x)).ToList();
     }
+
+    // --- PLATE APPEARANCES ---
+    public async Task<List<PlateAppearance>> GetPlateAppearancesAsync(int gameId)
+    {
+        ModeledResponse<PlateAppearanceDTO> response = await Supabase.From<PlateAppearanceDTO>()
+            .Filter("gameid", Constants.Operator.Equals, gameId)
+            .Order("ordernumber", Constants.Ordering.Ascending)
+            .Get();
+        return response.Models.Select(x => Mapper.ToModel(x)).ToList();
+    }
+
+    public async Task<PlateAppearance> AddPlateAppearanceAsync(PlateAppearance plateAppearance)
+    {
+        PlateAppearanceDTO dto = Mapper.ToDTO(plateAppearance);
+        ModeledResponse<PlateAppearanceDTO> response = await Supabase.From<PlateAppearanceDTO>().Insert(dto);
+        PlateAppearanceDTO resultDto = response.Models.First();
+        return Mapper.ToModel(resultDto);
+    }
+
+    public async Task UpdatePlateAppearanceAsync(PlateAppearance plateAppearance)
+    {
+        PlateAppearanceDTO dto = Mapper.ToDTO(plateAppearance);
+        await Supabase.From<PlateAppearanceDTO>().Update(dto);
+    }
+
+    public async Task DeletePlateAppearanceAsync(int id)
+    {
+        await Supabase.From<PlateAppearanceDTO>()
+            .Filter("id", Constants.Operator.Equals, id)
+            .Delete();
+    }
+
+    public async Task<List<StatEntry>> CalculateStatsFromPlateAppearancesAsync(int gameId)
+    {
+        List<PlateAppearance> pas = await GetPlateAppearancesAsync(gameId);
+        List<StatEntry> existingStats = await GetGameStatsAsync(gameId);
+        Dictionary<int, StatEntry> statsMap = new Dictionary<int, StatEntry>();
+
+        // Pre-populate statsMap with existing stats to preserve lineup and BO (Batting Order)
+        foreach (StatEntry est in existingStats)
+        {
+            statsMap[est.PlayerId] = new StatEntry
+            {
+                GameId = gameId,
+                PlayerId = est.PlayerId,
+                BO = est.BO
+            };
+        }
+
+        // Aggregate stats chronologically
+        foreach (PlateAppearance pa in pas.OrderBy(p => p.Id))
+        {
+            if (pa.Result == "Inning Over")
+            {
+                continue;
+            }
+
+            if (!statsMap.ContainsKey(pa.PlayerId))
+            {
+                statsMap[pa.PlayerId] = new StatEntry
+                {
+                    GameId = gameId,
+                    PlayerId = pa.PlayerId,
+                    BO = statsMap.Count + 1
+                };
+            }
+
+            StatEntry stat = statsMap[pa.PlayerId];
+
+            switch (pa.Result)
+            {
+                case "1B":
+                    stat.H1B++;
+                    break;
+                case "2B":
+                    stat.H2B++;
+                    break;
+                case "3B":
+                    stat.H3B++;
+                    break;
+                case "IPHR":
+                    stat.IPHR++;
+                    stat.R++; // Batter scores
+                    break;
+                case "HR":
+                    stat.HR++;
+                    stat.R++; // Batter scores
+                    break;
+                case "BB":
+                    stat.BB++;
+                    break;
+                case "FC":
+                    stat.FC++;
+                    break;
+                case "SF":
+                    stat.SF++;
+                    break;
+                case "K":
+                    stat.K++;
+                    break;
+                case "KF":
+                    stat.KF++;
+                    break;
+                case "GO":
+                    stat.GO++;
+                    break;
+                case "FO":
+                    stat.FO++;
+                    break;
+            }
+
+            stat.RBI += pa.RunsScored;
+
+            // Trace runner runs scored
+            if (pa.RunsScored > 0)
+            {
+                int baseRuns = pa.RunsScored - ((pa.Result == "HR" || pa.Result == "IPHR") ? 1 : 0);
+                if (baseRuns > 0)
+                {
+                    List<int> runnersBefore = new List<int>();
+                    if (pa.RunnerOn3B.HasValue) runnersBefore.Add(pa.RunnerOn3B.Value);
+                    if (pa.RunnerOn2B.HasValue) runnersBefore.Add(pa.RunnerOn2B.Value);
+                    if (pa.RunnerOn1B.HasValue) runnersBefore.Add(pa.RunnerOn1B.Value);
+
+                    HashSet<int> runnersAfter = new HashSet<int>();
+                    if (pa.RunnerOn3B_End.HasValue) runnersAfter.Add(pa.RunnerOn3B_End.Value);
+                    if (pa.RunnerOn2B_End.HasValue) runnersAfter.Add(pa.RunnerOn2B_End.Value);
+                    if (pa.RunnerOn1B_End.HasValue) runnersAfter.Add(pa.RunnerOn1B_End.Value);
+
+                    List<int> leftBases = runnersBefore.Where(r => !runnersAfter.Contains(r)).ToList();
+
+                    for (int i = 0; i < Math.Min(baseRuns, leftBases.Count); i++)
+                    {
+                        int scorerId = leftBases[i];
+                        if (!statsMap.ContainsKey(scorerId))
+                        {
+                            statsMap[scorerId] = new StatEntry
+                            {
+                                GameId = gameId,
+                                PlayerId = scorerId,
+                                BO = statsMap.Count + 1
+                            };
+                        }
+                        statsMap[scorerId].R++;
+                    }
+                }
+            }
+        }
+
+        return statsMap.Values.OrderBy(s => s.BO).ToList();
+    }
+
+    public async Task SyncGameStatsFromPlateAppearancesAsync(int gameId)
+    {
+        Game? game = await GetGameAsync(gameId);
+        if (game == null) return;
+
+        List<StatEntry> aggregatedStats = await CalculateStatsFromPlateAppearancesAsync(gameId);
+        await UpdateGameWithStatsAsync(game, aggregatedStats);
+    }
 }

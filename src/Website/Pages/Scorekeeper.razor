@@ -1,0 +1,521 @@
+@page "/management/games/{GameId:int}/scorekeeping"
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Domain.Interfaces
+@using IsotopesStats.Website.Components
+@attribute [Authorize(Policy = "Manage Games")]
+@inject IStatsRepository StatsRepository
+@inject NavigationManager NavigationManager
+
+<PageTitle>Scorekeeping - Isotopes</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Loading game data...</p>
+    </div>
+}
+else if (game == null)
+{
+    <div class="alert alert-danger">Game not found.</div>
+}
+else if (!isLineupSet)
+{
+    <div class="scorekeeper-container mx-auto" style="max-width: 800px;">
+        <div class="stat-card mb-3">
+            <div class="card-body">
+                <h4 class="mb-3 text-center" style="color: var(--isotopes-accent);">Set Batting Order</h4>
+                <p class="text-muted text-center">Select players from the roster to add them to the batting order.</p>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-primary border-bottom pb-2">Selected Lineup (@setupBattingOrderIds.Count)</h6>
+                        @if (setupBattingOrderIds.Count == 0)
+                        {
+                            <div class="text-muted fst-italic">No players selected</div>
+                        }
+                        else
+                        {
+                            <ul class="list-group list-group-flush">
+                                @for (int i = 0; i < setupBattingOrderIds.Count; i++)
+                                {
+                                    int pid = setupBattingOrderIds[i];
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" style="border-color: #eee;">
+                                        <div>
+                                            <span class="badge bg-secondary me-2">@(i + 1)</span> @GetPlayerName(pid)
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-secondary me-1" @onclick="() => MovePlayerUp(pid)" disabled="@(i == 0)">↑</button>
+                                            <button class="btn btn-sm btn-outline-secondary me-1" @onclick="() => MovePlayerDown(pid)" disabled="@(i == setupBattingOrderIds.Count - 1)">↓</button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => TogglePlayerInSetupLineup(pid)">X</button>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-primary border-bottom pb-2">Available Roster</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (Player player in roster.Where(p => !setupBattingOrderIds.Contains(p.Id)).OrderBy(p => p.Name))
+                            {
+                                <button class="view-btn btn-sm" @onclick="() => TogglePlayerInSetupLineup(player.Id)">
+                                    + @player.Name
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="view-btn active w-100 mt-3 py-2 fs-5" disabled="@(setupBattingOrderIds.Count == 0)" @onclick="ConfirmLineup">Confirm Lineup & Start Game</button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="scorekeeper-container mx-auto" style="max-width: 600px;">
+        <div class="d-flex justify-content-end mb-2">
+            <a href="/management/games/@GameId/scorecard" class="btn btn-outline-secondary btn-sm fw-bold">Back to Scorecard</a>
+        </div>
+        <!-- Header: Score & Inning -->
+        <div class="stat-card mb-3 text-center" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem;">
+            <div>
+                <h5 class="mb-0 text-muted">INNING</h5>
+                <div class="fs-2 fw-bold" style="color: var(--isotopes-accent);">@(currentInning)</div>
+            </div>
+            <div class="flex-grow-1 mx-3">
+                <h5 class="mb-0 text-muted">SCORE</h5>
+                <div class="fs-1 fw-bold text-success">@runsScored</div>
+            </div>
+            <div>
+                <h5 class="mb-0 text-muted">OUTS</h5>
+                <div class="fs-2 fw-bold" style="color: var(--isotopes-red);">@currentOuts</div>
+            </div>
+        </div>
+
+        <!-- Diamond / Bases View -->
+        <div class="stat-card mb-4 position-relative" style="height: 250px;">
+            <div class="diamond-container h-100 d-flex justify-content-center align-items-center">
+                <svg viewBox="0 0 100 100" style="width: 200px; height: 200px;">
+                    <!-- Base paths -->
+                    <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#ddd" stroke-width="2" />
+                    <!-- 1B -->
+                    <polygon points="90,50 85,45 80,50 85,55" fill="@(runnerOn1B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- 2B -->
+                    <polygon points="50,10 45,15 50,20 55,15" fill="@(runnerOn2B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- 3B -->
+                    <polygon points="10,50 15,45 20,50 15,55" fill="@(runnerOn3B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- Home Plate (pointing down) -->
+                    <polygon points="45,85 55,85 55,90 50,95 45,90" fill="#fff" stroke="#aaa" />
+                </svg>
+            </div>
+            <!-- Runner Names Overlays -->
+            @if (runnerOn2B != null)
+            {
+                <div class="position-absolute top-0 start-50 translate-middle-x mt-2 badge" style="background-color: var(--isotopes-accent);">
+                    @GetPlayerName(runnerOn2B.Value)
+                </div>
+            }
+            @if (runnerOn3B != null)
+            {
+                <div class="position-absolute top-50 start-0 translate-middle-y ms-4 badge" style="background-color: var(--isotopes-accent);">
+                    @GetPlayerName(runnerOn3B.Value)
+                </div>
+            }
+            @if (runnerOn1B != null)
+            {
+                <div class="position-absolute top-50 end-0 translate-middle-y me-4 badge" style="background-color: var(--isotopes-accent);">
+                    @GetPlayerName(runnerOn1B.Value)
+                </div>
+            }
+        </div>
+
+        <!-- Batter Info -->
+        <div class="text-center mb-4">
+            <h5 class="text-muted mb-1">CURRENT BATTER</h5>
+            <h2 class="fw-bold">@currentBatterName</h2>
+        </div>
+
+        <!-- Play Controls -->
+        <div class="row g-2 mb-3">
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("1B")'>Single (1B)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("2B")'>Double (2B)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("3B")'>Triple (3B)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("IPHR")'>Inside Park HR (IPHR)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("HR")'>Home Run (HR)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" @onclick='() => RecordPlay("BB")'>Walk (BB)</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => RecordPlay("GO")'>Ground Out</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => RecordPlay("FO")'>Fly Out</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => RecordPlay("K")'>Strikeout</button></div>
+            <div class="col-6"><button class="view-btn w-100 py-3 fs-5" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick='() => RecordPlay("KF")'>Foul Out (KF)</button></div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <button class="view-btn" @onclick="UndoLastPlay">Undo Last</button>
+            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="NextInning">Next Inning</button>
+        </div>
+    </div>
+}
+
+<RunnerAdvancementModal 
+    IsVisible="isModalVisible" 
+    CurrentBase="runnerToAdvanceBase" 
+    OnDestinationSelected="HandleAdvancement" 
+    OnClose="CloseModal" />
+
+@code {
+    [Parameter]
+    public int GameId { get; set; }
+
+    private bool isLoading = true;
+    private Game? game;
+    private List<PlateAppearance> plateAppearances = new();
+    private List<Player> roster = new();
+    
+    // Live State
+    private int currentInning = 1;
+    private int currentOuts = 0;
+    private int runsScored = 0;
+    
+    private int? runnerOn1B = null;
+    private int? runnerOn2B = null;
+    private int? runnerOn3B = null;
+    
+    private string currentBatterName = "Unknown";
+    private int currentBatterId = 0;
+    private int batterOrderIndex = 0;
+
+    // Lineup
+    private bool isLineupSet = false;
+    private List<int> battingOrderIds = new();
+    private List<int> setupBattingOrderIds = new();
+
+    // Modal State
+    private bool isModalVisible = false;
+    private int runnerToAdvanceBase = 0;
+    private Queue<int> runnersToAdvance = new();
+    private PlateAppearance? pendingPA;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            game = await StatsRepository.GetGameAsync(GameId);
+            if (game != null)
+            {
+                roster = await StatsRepository.GetPlayersAsync(game.SeasonId);
+                plateAppearances = await StatsRepository.GetPlateAppearancesAsync(GameId);
+                
+                // Load batting order from roster to avoid needing a saved Lineup entity
+                // In reality, pull this from the saved Lineup/StatEntries
+                List<StatEntry> gameStats = await StatsRepository.GetGameStatsAsync(GameId);
+                if (gameStats.Any())
+                {
+                    battingOrderIds = gameStats.OrderBy(s => s.BO).Select(s => s.PlayerId).Distinct().ToList();
+                    isLineupSet = true;
+                }
+                else
+                {
+                    isLineupSet = false;
+                }
+                
+                if (isLineupSet)
+                {
+                    RecalculateState();
+                }
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetPlayerName(int id)
+    {
+        return roster.FirstOrDefault(p => p.Id == id)?.Name ?? "Unknown";
+    }
+
+    private void TogglePlayerInSetupLineup(int playerId)
+    {
+        if (setupBattingOrderIds.Contains(playerId))
+            setupBattingOrderIds.Remove(playerId);
+        else
+            setupBattingOrderIds.Add(playerId);
+    }
+
+    private void MovePlayerUp(int playerId)
+    {
+        int index = setupBattingOrderIds.IndexOf(playerId);
+        if (index > 0)
+        {
+            setupBattingOrderIds.RemoveAt(index);
+            setupBattingOrderIds.Insert(index - 1, playerId);
+        }
+    }
+
+    private void MovePlayerDown(int playerId)
+    {
+        int index = setupBattingOrderIds.IndexOf(playerId);
+        if (index >= 0 && index < setupBattingOrderIds.Count - 1)
+        {
+            setupBattingOrderIds.RemoveAt(index);
+            setupBattingOrderIds.Insert(index + 1, playerId);
+        }
+    }
+
+    private async Task ConfirmLineup()
+    {
+        if (setupBattingOrderIds.Count == 0 || game == null) return;
+        
+        List<StatEntry> stats = new();
+        for (int i = 0; i < setupBattingOrderIds.Count; i++)
+        {
+            stats.Add(new StatEntry
+            {
+                PlayerId = setupBattingOrderIds[i],
+                GameId = GameId,
+                BO = i + 1
+            });
+        }
+        
+        await StatsRepository.UpdateGameWithStatsAsync(game, stats);
+        
+        battingOrderIds = setupBattingOrderIds.ToList();
+        isLineupSet = true;
+        RecalculateState();
+    }
+
+    private void RecalculateState()
+    {
+        // Replay all PAs to determine current state
+        currentInning = 1;
+        currentOuts = 0;
+        runsScored = 0;
+        runnerOn1B = null;
+        runnerOn2B = null;
+        runnerOn3B = null;
+        batterOrderIndex = 0;
+
+        foreach (PlateAppearance pa in plateAppearances.OrderBy(p => p.Id))
+        {
+            currentInning = pa.Inning;
+            currentOuts += pa.OutsRecorded;
+            runsScored += pa.RunsScored;
+            
+            runnerOn1B = pa.RunnerOn1B_End;
+            runnerOn2B = pa.RunnerOn2B_End;
+            runnerOn3B = pa.RunnerOn3B_End;
+            
+            if (currentOuts >= 3)
+            {
+                currentOuts = 0;
+                currentInning++;
+                runnerOn1B = null;
+                runnerOn2B = null;
+                runnerOn3B = null;
+            }
+            
+            batterOrderIndex = (batterOrderIndex + 1) % Math.Max(1, battingOrderIds.Count);
+        }
+
+        if (battingOrderIds.Count > 0)
+        {
+            currentBatterId = battingOrderIds[batterOrderIndex];
+            currentBatterName = GetPlayerName(currentBatterId);
+        }
+    }
+
+    private async Task RecordPlay(string result)
+    {
+        PlateAppearance pa = new PlateAppearance
+        {
+            GameId = GameId,
+            PlayerId = currentBatterId,
+            Inning = currentInning,
+            OrderNumber = plateAppearances.Count + 1,
+            Result = result,
+            OutsBefore = currentOuts,
+            RunnerOn1B = runnerOn1B,
+            RunnerOn2B = runnerOn2B,
+            RunnerOn3B = runnerOn3B,
+            RunnerOn1B_End = runnerOn1B,
+            RunnerOn2B_End = runnerOn2B,
+            RunnerOn3B_End = runnerOn3B,
+            RunsScored = 0,
+            OutsRecorded = 0
+        };
+
+        bool isOut = result == "K" || result == "KF" || result == "GO" || result == "FO" || result == "SF";
+        if (isOut)
+        {
+            pa.OutsRecorded = 1;
+        }
+        else if (result == "1B" || result == "BB" || result == "FC")
+        {
+            pa.RunnerOn1B_End = currentBatterId;
+        }
+        else if (result == "2B")
+        {
+            pa.RunnerOn2B_End = currentBatterId;
+        }
+        else if (result == "3B")
+        {
+            pa.RunnerOn3B_End = currentBatterId;
+        }
+        else if (result == "HR" || result == "IPHR")
+        {
+            pa.RunsScored++;
+        }
+
+        pendingPA = pa;
+        runnersToAdvance.Clear();
+
+        if (result == "HR" || result == "IPHR")
+        {
+            if (runnerOn3B != null) { pendingPA.RunsScored++; pendingPA.RunnerOn3B_End = null; }
+            if (runnerOn2B != null) { pendingPA.RunsScored++; pendingPA.RunnerOn2B_End = null; }
+            if (runnerOn1B != null) { pendingPA.RunsScored++; pendingPA.RunnerOn1B_End = null; }
+        }
+        else
+        {
+            // Queue runners for advancement (start from 3B backwards)
+            if (runnerOn3B != null) runnersToAdvance.Enqueue(3);
+            if (runnerOn2B != null) runnersToAdvance.Enqueue(2);
+            if (runnerOn1B != null) runnersToAdvance.Enqueue(1);
+        }
+
+        ProcessNextRunner();
+        
+        if (!isModalVisible)
+        {
+            // No runners to advance, save immediately
+            await SavePendingPA();
+        }
+    }
+
+    private void ProcessNextRunner()
+    {
+        if (runnersToAdvance.Count > 0)
+        {
+            runnerToAdvanceBase = runnersToAdvance.Dequeue();
+            isModalVisible = true;
+        }
+        else
+        {
+            isModalVisible = false;
+        }
+    }
+
+    private async Task HandleAdvancement(int destination)
+    {
+        if (pendingPA == null) return;
+        
+        int runnerId = runnerToAdvanceBase switch
+        {
+            1 => pendingPA.RunnerOn1B.GetValueOrDefault(),
+            2 => pendingPA.RunnerOn2B.GetValueOrDefault(),
+            3 => pendingPA.RunnerOn3B.GetValueOrDefault(),
+            _ => 0
+        };
+
+        // Clear original base in End state
+        if (runnerToAdvanceBase == 1 && pendingPA.RunnerOn1B_End == runnerId) pendingPA.RunnerOn1B_End = null;
+        if (runnerToAdvanceBase == 2 && pendingPA.RunnerOn2B_End == runnerId) pendingPA.RunnerOn2B_End = null;
+        if (runnerToAdvanceBase == 3 && pendingPA.RunnerOn3B_End == runnerId) pendingPA.RunnerOn3B_End = null;
+
+        if (destination == 4)
+        {
+            pendingPA.RunsScored++;
+        }
+        else if (destination == 0)
+        {
+            pendingPA.OutsRecorded++;
+        }
+        else if (destination == 1)
+        {
+            pendingPA.RunnerOn1B_End = runnerId;
+        }
+        else if (destination == 2)
+        {
+            pendingPA.RunnerOn2B_End = runnerId;
+        }
+        else if (destination == 3)
+        {
+            pendingPA.RunnerOn3B_End = runnerId;
+        }
+
+        if (runnersToAdvance.Count > 0)
+        {
+            ProcessNextRunner();
+        }
+        else
+        {
+            isModalVisible = false;
+            await SavePendingPA();
+        }
+    }
+
+    private async Task SavePendingPA()
+    {
+        if (pendingPA != null)
+        {
+            // Smart play detection
+            if (pendingPA.Result == "FO" && pendingPA.RunsScored > 0)
+            {
+                pendingPA.Result = "SF";
+            }
+            else if ((pendingPA.Result == "1B" || pendingPA.Result == "2B" || pendingPA.Result == "3B") && pendingPA.OutsRecorded > 0)
+            {
+                pendingPA.Result = "FC";
+            }
+
+            PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
+            plateAppearances.Add(savedPa);
+            RecalculateState();
+            pendingPA = null;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+        runnersToAdvance.Clear();
+        pendingPA = null;
+    }
+
+    private async Task UndoLastPlay()
+    {
+        if (plateAppearances.Count > 0)
+        {
+            PlateAppearance last = plateAppearances.Last();
+            await StatsRepository.DeletePlateAppearanceAsync(last.Id);
+            plateAppearances.Remove(last);
+            RecalculateState();
+            StateHasChanged();
+        }
+    }
+
+    private async Task NextInning()
+    {
+        // Add a dummy out to force inning over
+        if (currentOuts < 3)
+        {
+             PlateAppearance pa = new PlateAppearance
+             {
+                 GameId = GameId,
+                 PlayerId = currentBatterId,
+                 Inning = currentInning,
+                 OrderNumber = plateAppearances.Count + 1,
+                 Result = "Inning Over",
+                 OutsRecorded = 3 - currentOuts
+             };
+             await StatsRepository.AddPlateAppearanceAsync(pa);
+             plateAppearances.Add(pa);
+             RecalculateState();
+             StateHasChanged();
+        }
+    }
+}

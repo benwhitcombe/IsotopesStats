@@ -1,0 +1,64 @@
+@using IsotopesStats.Domain.Models
+
+@if (IsVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Where did the runner go?</h5>
+                    <button type="button" class="btn-close" @onclick="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="fs-5 mb-4">Runner on <strong>@GetBaseName(CurrentBase)</strong></p>
+                    
+                    <div class="d-flex flex-column gap-3">
+                        @if (CurrentBase < 2)
+                        {
+                            <button class="btn btn-outline-primary btn-lg" @onclick="() => SelectDestination(2)">2nd Base</button>
+                        }
+                        @if (CurrentBase < 3)
+                        {
+                            <button class="btn btn-outline-primary btn-lg" @onclick="() => SelectDestination(3)">3rd Base</button>
+                        }
+                        <button class="btn btn-outline-success btn-lg" @onclick="() => SelectDestination(4)">Home (Scores!)</button>
+                        <button class="btn btn-outline-danger btn-lg" @onclick="() => SelectDestination(0)">Out</button>
+                        <button class="btn btn-outline-secondary btn-lg" @onclick="() => SelectDestination(CurrentBase)">Stayed on @GetBaseName(CurrentBase)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+    
+    [Parameter]
+    public int CurrentBase { get; set; } // 1 for 1B, 2 for 2B, 3 for 3B
+
+    [Parameter]
+    public EventCallback<int> OnDestinationSelected { get; set; }
+    
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private string GetBaseName(int b) => b switch
+    {
+        1 => "1st",
+        2 => "2nd",
+        3 => "3rd",
+        _ => "Base"
+    };
+
+    private async Task SelectDestination(int destinationBase)
+    {
+        await OnDestinationSelected.InvokeAsync(destinationBase);
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

@@ -46,6 +46,9 @@ internal partial class SupabaseMapper
     [MapperRequiredMapping(RequiredMappingStrategy.None)]
     public partial SeasonOpponents ToModel(SeasonOpponentsDTO dto);
 
+    [MapperRequiredMapping(RequiredMappingStrategy.None)]
+    public partial PlateAppearance ToModel(PlateAppearanceDTO dto);
+
     // --- View Mappings (To Model) ---
     [MapperRequiredMapping(RequiredMappingStrategy.None)]
     public partial GameManagementView ToModel(GameManagementViewDTO dto);
@@ -113,4 +116,7 @@ internal partial class SupabaseMapper
 
     [MapperRequiredMapping(RequiredMappingStrategy.None)]
     public partial RolePermissionDTO ToDTO(RolePermission model);
+
+    [MapperRequiredMapping(RequiredMappingStrategy.None)]
+    public partial PlateAppearanceDTO ToDTO(PlateAppearance model);
 }
