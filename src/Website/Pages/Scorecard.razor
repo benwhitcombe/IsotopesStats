@@ -620,6 +620,7 @@ else
     private List<StatEntry> mismatchedPlayers = new();
     private bool isOutOfSync = false;
     private bool isSyncModalVisible = false;
+    private bool zoomInitialized = false;
     
     private string opponentName = "Unknown";
     
@@ -889,8 +890,9 @@ else
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!isLoading && !zoomInitialized)
         {
+            zoomInitialized = true;
             try
             {
                 await JS.InvokeVoidAsync("initScorecardZoom", "scorecard-zoom-container");
