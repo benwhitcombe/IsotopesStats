@@ -1303,3 +1303,5 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
     right: 0.75rem;
     top: 0.5rem;
 }
+. p l a y - b t n   {   t r a n s i t i o n :   b a c k g r o u n d - c o l o r   0 . 2 s ,   c o l o r   0 . 2 s ;   }   . p l a y - b t n : h o v e r : n o t ( . a c t i v e - p l a y )   {   b a c k g r o u n d - c o l o r :   # f 0 f 0 f 0   ! i m p o r t a n t ;   }  
+ 
