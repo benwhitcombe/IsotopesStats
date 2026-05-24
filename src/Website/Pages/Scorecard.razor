@@ -604,32 +604,6 @@ else
         border-top: 4px solid #000 !important;
     }
 
-    @@media print {
-        body * {
-            visibility: hidden;
-        }
-        .scorecard-container, .scorecard-container * {
-            visibility: visible;
-        }
-        .scorecard-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            border: none;
-            padding: 0;
-        }
-        .no-print {
-            display: none !important;
-        }
-        @@page {
-            size: landscape;
-            margin: 0.5cm;
-        }
-        .pa-clickable:hover {
-            background-color: transparent !important;
-        }
-    }
 </style>
 
 @code {
