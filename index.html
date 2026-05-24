@@ -166,6 +166,13 @@
         window.initScorecardZoom = (elementId) => {
             const el = document.getElementById(elementId);
             if (!el) return;
+            
+            // Disable native browser touch scrolling so panzoom can capture pinch/drag gestures
+            if (el.parentElement) {
+                el.parentElement.style.touchAction = 'none';
+                el.parentElement.style.overflow = 'hidden';
+            }
+            
             panzoom(el, {
                 maxZoom: 5,
                 minZoom: 0.5,
