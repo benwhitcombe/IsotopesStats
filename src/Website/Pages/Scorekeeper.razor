@@ -8,6 +8,85 @@
 
 <PageTitle>Scorekeeping - Isotopes</PageTitle>
 
+<style>
+    .play-btn {
+        transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    .play-btn:active:not([disabled]) {
+        transform: scale(0.96);
+    }
+    
+    .play-btn[disabled] {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .play-btn-hit {
+        color: var(--isotopes-accent) !important;
+        border-color: var(--isotopes-accent) !important;
+    }
+    .play-btn-hit:hover:not(.active-play) {
+        background-color: var(--isotopes-accent) !important;
+        color: white !important;
+    }
+    .play-btn-hit.active-play {
+        background-color: var(--isotopes-accent) !important;
+        color: white !important;
+        border-width: 3px !important;
+    }
+    
+    .play-btn-out {
+        color: var(--isotopes-red) !important;
+        border-color: var(--isotopes-red) !important;
+    }
+    .play-btn-out:hover:not(.active-play) {
+        background-color: var(--isotopes-red) !important;
+        color: white !important;
+    }
+    .play-btn-out.active-play {
+        background-color: var(--isotopes-red) !important;
+        color: white !important;
+        border-width: 3px !important;
+    }
+
+    .play-btn-util {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .play-btn-util:hover:not([disabled]) {
+        background-color: #6c757d !important;
+        color: white !important;
+    }
+
+    @@keyframes popHighlight {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    .pop-highlight {
+        display: inline-block;
+        animation: popHighlight 0.4s ease-out;
+    }
+    
+    @@keyframes slideFade {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-fade {
+        animation: slideFade 0.3s ease-out;
+        display: inline-block;
+    }
+    
+    @@keyframes simpleFadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    .badge-fade {
+        animation: simpleFadeIn 0.3s ease-in-out;
+    }
+</style>
+
 @if (isLoading)
 {
     <div class="text-center mt-5">
@@ -80,7 +159,7 @@ else
             <button class="btn btn-sm btn-outline-danger fw-bold px-3" @onclick="ClearPlay" disabled="@(viewingPaIndex == null)">Reset</button>
         </div>
         <!-- Diamond / Bases View -->
-        <div class="stat-card mb-4 py-4 position-relative">
+        <div class="stat-card mb-2 py-3 position-relative">
             <div class="d-flex justify-content-between text-center px-4 mb-2">
                 <div>
                     <h6 class="mb-0 text-muted">INNING</h6>
@@ -88,15 +167,15 @@ else
                 </div>
                 <div>
                     <h6 class="mb-0 text-muted">SCORE</h6>
-                    <div class="fs-4 fw-bold" style="color: var(--isotopes-green);">@runsScored</div>
+                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-green);" @key="runsScored">@runsScored</div>
                 </div>
                 <div>
                     <h6 class="mb-0 text-muted">OUTS</h6>
-                    <div class="fs-4 fw-bold" style="color: var(--isotopes-red);">@currentOuts</div>
+                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-red);" @key="currentOuts">@currentOuts</div>
                 </div>
             </div>
 
-            <div class="position-relative mx-auto mb-5 mt-4" style="width: 200px; height: 200px;">
+            <div class="position-relative mx-auto mb-5 mt-2" style="width: 200px; height: 200px;">
                 @{
                     int? display1B = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunnerOn1B_End : runnerOn1B;
                     int? display2B = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunnerOn2B_End : runnerOn2B;
@@ -119,19 +198,19 @@ else
                 <!-- Runner Names Overlays -->
                 @if (display2B != null)
                 {
-                    <div class="position-absolute badge" style="background-color: var(--isotopes-accent); left: 50%; bottom: 90%; transform: translateX(-50%); z-index: 10;">
+                    <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 50%; bottom: 90%; transform: translateX(-50%); z-index: 10;">
                         @GetPlayerName(display2B.Value)
                     </div>
                 }
                 @if (display3B != null)
                 {
-                    <div class="position-absolute badge" style="background-color: var(--isotopes-accent); right: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+                    <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); right: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
                         @GetPlayerName(display3B.Value)
                     </div>
                 }
                 @if (display1B != null)
                 {
-                    <div class="position-absolute badge" style="background-color: var(--isotopes-accent); left: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+                    <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
                         @GetPlayerName(display1B.Value)
                     </div>
                 }
@@ -140,7 +219,7 @@ else
                     var (scored, outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
                     @if (scored.Any())
                     {
-                        <div class="position-absolute d-flex flex-row gap-1 align-items-center" style="left: 50%; top: 100%; transform: translateX(-50%); margin-top: 10px; z-index: 10;">
+                        <div class="position-absolute d-flex flex-row gap-1 align-items-center badge-fade" style="left: 50%; top: 100%; transform: translateX(-50%); margin-top: 10px; z-index: 10;">
                             @foreach (var p in scored)
                             {
                                 <div class="badge bg-success">@p</div>
@@ -149,30 +228,26 @@ else
                     }
                     @foreach (var o in outs)
                     {
-                        if (o.StartBase == 0)
+                        if (o.StartBase == 1)
                         {
-                            <div class="position-absolute badge bg-danger" style="left: 75%; top: 75%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
-                        }
-                        else if (o.StartBase == 1)
-                        {
-                            <div class="position-absolute badge bg-danger" style="left: 75%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
+                            <div class="position-absolute badge bg-danger badge-fade" style="left: 75%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
                         }
                         else if (o.StartBase == 2)
                         {
-                            <div class="position-absolute badge bg-danger" style="left: 25%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
+                            <div class="position-absolute badge bg-danger badge-fade" style="left: 25%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
                         }
                         else if (o.StartBase == 3)
                         {
-                            <div class="position-absolute badge bg-danger" style="left: 25%; top: 75%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
+                            <div class="position-absolute badge bg-danger badge-fade" style="left: 25%; top: 75%; transform: translate(-50%, -50%); z-index: 10;">@o.Name</div>
                         }
                     }
                 }
             </div>
             
             <!-- Batter Info -->
-            <div class="text-center mt-4">
+            <div class="text-center mt-2" style="min-height: 4rem;">
                 <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">BATTER</h6>
-                <h3 class="fw-bold mb-0">
+                <h3 class="fw-bold mb-0 slide-fade" @key="currentBatterId">
                     @currentBatterName
                     @if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
                     {
@@ -184,30 +259,30 @@ else
 
         <!-- Play Controls -->
         <div class="row g-2 mb-3">
-            <div class="col-6"><button class="@GetPlayButtonClass("1B")" style="@GetPlayButtonStyle("1B")" @onclick='() => RecordPlay("1B")'>Single (1B)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("2B")" style="@GetPlayButtonStyle("2B")" @onclick='() => RecordPlay("2B")'>Double (2B)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("3B")" style="@GetPlayButtonStyle("3B")" @onclick='() => RecordPlay("3B")'>Triple (3B)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("IPHR")" style="@GetPlayButtonStyle("IPHR")" @onclick='() => RecordPlay("IPHR")'>Inside Park HR (IPHR)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("HR")" style="@GetPlayButtonStyle("HR")" @onclick='() => RecordPlay("HR")'>Home Run (HR)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("BB")" style="@GetPlayButtonStyle("BB")" @onclick='() => RecordPlay("BB")'>Walk (BB)</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("GO")" style="@GetPlayButtonStyle("GO")" @onclick='() => RecordPlay("GO")'>Ground Out</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("FO")" style="@GetPlayButtonStyle("FO")" @onclick='() => RecordPlay("FO")'>Fly Out</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("K")" style="@GetPlayButtonStyle("K")" @onclick='() => RecordPlay("K")'>Strikeout</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("KF")" style="@GetPlayButtonStyle("KF")" @onclick='() => RecordPlay("KF")'>Foul Out (KF)</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("1B")" @onclick='() => RecordPlay("1B")'>1B</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("2B")" @onclick='() => RecordPlay("2B")'>2B</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("3B")" @onclick='() => RecordPlay("3B")'>3B</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("IPHR")" @onclick='() => RecordPlay("IPHR")'>IPHR</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("HR")" @onclick='() => RecordPlay("HR")'>HR</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("BB")" @onclick='() => RecordPlay("BB")'>BB</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("GO")" @onclick='() => RecordPlay("GO")'>GO</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("FO")" @onclick='() => RecordPlay("FO")'>FO</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("K")" @onclick='() => RecordPlay("K")'>K</button></div>
+            <div class="col-6"><button class="@GetPlayButtonClass("KF")" @onclick='() => RecordPlay("KF")'>KF</button></div>
         </div>
         
         <div class="row g-2 mt-2">
             <div class="col-3">
-                <button class="view-btn w-100 py-3" @onclick="PrevPlay" disabled="@(plateAppearances.Count == 0 || viewingPaIndex == 0)">&laquo; Prev</button>
+                <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="PrevPlay" disabled="@(plateAppearances.Count == 0 || viewingPaIndex == 0)">&laquo; Prev</button>
             </div>
             <div class="col-3">
-                <button class="view-btn w-100 py-3" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="NextInning">End Inning</button>
+                <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="NextInning">End Inning</button>
             </div>
             <div class="col-3">
-                <button class="view-btn w-100 py-3" style="@GetPlayButtonStyle("Skip")" @onclick='() => RecordPlay("Skip")'>Skip</button>
+                <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick='() => RecordPlay("Skip")'>Skip</button>
             </div>
             <div class="col-3">
-                <button class="view-btn w-100 py-3" @onclick="NextPlay" disabled="@(viewingPaIndex == null)">Next &raquo;</button>
+                <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="NextPlay" disabled="@(viewingPaIndex == null)">Next &raquo;</button>
             </div>
         </div>
 
@@ -698,6 +773,7 @@ else
             {
                 PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
                 plateAppearances.Add(savedPa);
+                viewingPaIndex = plateAppearances.Count - 1; // Stay on the newly recorded PA
             }
             
             RecalculateState();
@@ -773,7 +849,14 @@ else
 
     private string GetPlayButtonClass(string result)
     {
-        string css = "view-btn w-100 py-3 fs-5";
+        string css = "view-btn play-btn w-100 py-3 fs-5";
+        bool isOut = result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF";
+        
+        if (isOut) 
+            css += " play-btn-out";
+        else 
+            css += " play-btn-hit";
+            
         if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value && IsPlayResultMatch(plateAppearances[viewingPaIndex.Value].Result, result))
         {
             css += " active-play"; // Could add a custom CSS class in the future
@@ -781,28 +864,7 @@ else
         return css;
     }
 
-    private string GetPlayButtonStyle(string result)
-    {
-        string style = "";
-        bool isOut = result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF";
-        
-        if (isOut) 
-            style += "color: var(--isotopes-red); border-color: var(--isotopes-red); ";
-            
-        if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value && IsPlayResultMatch(plateAppearances[viewingPaIndex.Value].Result, result))
-        {
-            if (isOut || plateAppearances[viewingPaIndex.Value].Result == "SF") // SF is rendered on the FO button
-            {
-                style += "background-color: var(--isotopes-red); color: white; border-color: var(--isotopes-red); border-width: 3px;";
-            }
-            else
-            {
-                style += "background-color: var(--isotopes-accent); color: white; border-color: var(--isotopes-accent); border-width: 3px;";
-            }
-        }
-        
-        return style;
-    }
+
 
     private (List<string> Scored, List<(string Name, int StartBase)> Outs) GetRunnersHomeAndOut(PlateAppearance pa)
     {
