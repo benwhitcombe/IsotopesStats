@@ -168,16 +168,36 @@
             if (!el) return;
             
             // Disable native browser touch scrolling so panzoom can capture pinch/drag gestures
+            el.style.touchAction = 'none';
             if (el.parentElement) {
                 el.parentElement.style.touchAction = 'none';
                 el.parentElement.style.overflow = 'hidden';
+                // Force wrapper to not exceed screen height/width so panzoom handles all movement
+                el.parentElement.style.maxHeight = '85vh';
+                el.parentElement.style.width = '100%';
+            }
+            
+            // Calculate initial zoom to fit width on mobile
+            let startZoom = 1.0;
+            if (window.innerWidth < 1250) {
+                startZoom = window.innerWidth / 1260; // Slightly smaller than actual width to give a tiny margin
             }
             
             panzoom(el, {
                 maxZoom: 5,
-                minZoom: 0.5,
+                minZoom: 0.2,
                 bounds: true,
-                boundsPadding: 0.1
+                boundsPadding: 0.1,
+                initialZoom: startZoom,
+                initialX: 0,
+                initialY: 0,
+                onTouch: function(e) {
+                    // Prevent default to ensure panning works
+                    if (e.touches.length > 1) {
+                        e.preventDefault();
+                    }
+                    return false; 
+                }
             });
         };
         
