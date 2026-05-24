@@ -43,4 +43,24 @@ public record Game : IEntity
 
     // Navigation property
     public Opponent? Opponent { get; set; }
+
+    public string? OpponentInningScoresJson { get; set; }
+
+    public System.Collections.Generic.Dictionary<int, int> GetOpponentInningScores()
+    {
+        if (string.IsNullOrWhiteSpace(OpponentInningScoresJson)) return new System.Collections.Generic.Dictionary<int, int>();
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<int, int>>(OpponentInningScoresJson) ?? new System.Collections.Generic.Dictionary<int, int>();
+        }
+        catch
+        {
+            return new System.Collections.Generic.Dictionary<int, int>();
+        }
+    }
+
+    public void SetOpponentInningScores(System.Collections.Generic.Dictionary<int, int> scores)
+    {
+        OpponentInningScoresJson = System.Text.Json.JsonSerializer.Serialize(scores);
+    }
 }

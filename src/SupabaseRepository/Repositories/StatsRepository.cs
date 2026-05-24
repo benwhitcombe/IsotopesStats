@@ -290,6 +290,11 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         await Supabase.Rpc("update_game_with_stats", parameters);
     }
 
+    public async Task UpdateGameAsync(Game game)
+    {
+        await Supabase.From<GameDTO>().Update(Mapper.ToDTO(game));
+    }
+
     public async Task DeleteGameAsync(int gameId)
     {
         Game game = new Game { Id = gameId, IsDeleted = true };

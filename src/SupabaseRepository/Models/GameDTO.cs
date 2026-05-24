@@ -42,4 +42,7 @@ internal class GameDTO : BaseModel
 
     [Reference(typeof(OpponentDTO))]
     public OpponentDTO? Opponent { get; set; }
+
+    [Column("opponentinningscoresjson")]
+    public string? OpponentInningScoresJson { get; set; }
 }

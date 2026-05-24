@@ -6,24 +6,17 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Where did the runner go?</h5>
+                    <h5 class="modal-title">Where did @RunnerName go?</h5>
                     <button type="button" class="btn-close" @onclick="Close"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <p class="fs-5 mb-4">Runner on <strong>@GetBaseName(CurrentBase)</strong></p>
+                    <p class="fs-5 mb-4">Starting from <strong>@GetBaseName(CurrentBase)</strong></p>
                     
                     <div class="d-flex flex-column gap-3">
-                        @if (CurrentBase < 2)
+                        @foreach (var dest in GetOrderedDestinations())
                         {
-                            <button class="btn btn-outline-primary btn-lg" @onclick="() => SelectDestination(2)">2nd Base</button>
+                            <button class="@GetButtonClass(dest)" @onclick="() => SelectDestination(dest)">@GetDestinationLabel(dest)</button>
                         }
-                        @if (CurrentBase < 3)
-                        {
-                            <button class="btn btn-outline-primary btn-lg" @onclick="() => SelectDestination(3)">3rd Base</button>
-                        }
-                        <button class="btn btn-outline-success btn-lg" @onclick="() => SelectDestination(4)">Home (Scores!)</button>
-                        <button class="btn btn-outline-danger btn-lg" @onclick="() => SelectDestination(0)">Out</button>
-                        <button class="btn btn-outline-secondary btn-lg" @onclick="() => SelectDestination(CurrentBase)">Stayed on @GetBaseName(CurrentBase)</button>
                     </div>
                 </div>
             </div>
@@ -32,25 +25,70 @@
 }
 
 @code {
-    [Parameter]
-    public bool IsVisible { get; set; }
-    
-    [Parameter]
-    public int CurrentBase { get; set; } // 1 for 1B, 2 for 2B, 3 for 3B
-
-    [Parameter]
-    public EventCallback<int> OnDestinationSelected { get; set; }
-    
-    [Parameter]
-    public EventCallback OnClose { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public int CurrentBase { get; set; } // 0 for Batter, 1 for 1B, 2 for 2B, 3 for 3B
+    [Parameter] public string RunnerName { get; set; } = "the runner";
+    [Parameter] public int MinBase { get; set; } = 1;
+    [Parameter] public int MaxBase { get; set; } = 4;
+    [Parameter] public int TopOption { get; set; } = -1;
+    [Parameter] public EventCallback<int> OnDestinationSelected { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
 
     private string GetBaseName(int b) => b switch
     {
+        0 => "Home Plate",
         1 => "1st",
         2 => "2nd",
         3 => "3rd",
         _ => "Base"
     };
+
+    private string GetDestinationLabel(int dest) => dest switch
+    {
+        0 => "Out",
+        1 => CurrentBase == 1 ? "Stayed on 1st" : "1st Base",
+        2 => CurrentBase == 2 ? "Stayed on 2nd" : "2nd Base",
+        3 => CurrentBase == 3 ? "Stayed on 3rd" : "3rd Base",
+        4 => "Home (Scores!)",
+        _ => "Stayed"
+    };
+
+    private string GetButtonClass(int dest)
+    {
+        if (dest == 0) return "btn btn-outline-danger btn-lg";
+        if (dest == 4) return "btn btn-outline-success btn-lg";
+        if (dest == CurrentBase && dest != 0) return "btn btn-outline-secondary btn-lg";
+        return "btn btn-outline-primary btn-lg";
+    }
+
+    private List<int> GetOrderedDestinations()
+    {
+        var options = new List<int>();
+        
+        // 1. Advancing bases
+        for (int i = CurrentBase + 1; i <= MaxBase; i++)
+        {
+            if (i >= MinBase) options.Add(i);
+        }
+        
+        // 2. Out
+        options.Add(0);
+        
+        // 3. Stayed on current base (if valid and not the batter)
+        if (CurrentBase >= MinBase && CurrentBase <= MaxBase && CurrentBase != 0)
+        {
+            options.Add(CurrentBase);
+        }
+        
+        // 4. Move preferred option to the top
+        if (options.Contains(TopOption))
+        {
+            options.Remove(TopOption);
+            options.Insert(0, TopOption);
+        }
+        
+        return options;
+    }
 
     private async Task SelectDestination(int destinationBase)
     {

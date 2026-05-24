@@ -93,14 +93,17 @@ else
             </div>
 
             <!-- Main Scorecard Grid -->
-            <table class="scorecard-grid">
+            @{
+                int tableWidth = 40 + 250 + 45 + (TotalColumns * 90);
+            }
+            <table class="scorecard-grid" style="width: @(tableWidth)px;">
                 <colgroup>
                     <col style="width: 40px;" />
                     <col style="width: 250px;" />
                     <col style="width: 45px;" />
                     @for (int i = 1; i <= TotalColumns; i++)
                     {
-                        <col style="width: 70px;" />
+                        <col style="width: 90px;" />
                     }
                 </colgroup>
                 <thead>
@@ -173,62 +176,64 @@ else
                                                 @if (result == "IPHR") { <span class="circleable-wide circled">IPHR</span> }
                                             </div>
 
-                                            <div class="pa-center-result">
-                                                @if (result == "GO" || result == "FO" || result == "SF")
-                                                {
-                                                    <span class="fw-bold result-text">@result</span>
-                                                }
+                                            <div class="pa-left-labels">
+                                                @if (result == "GO") { <span class="circleable circled">GO</span> }
+                                                @if (result == "FO") { <span class="circleable circled">FO</span> }
+                                                @if (result == "SF") { <span class="circleable circled">SF</span> }
                                             </div>
                                             
-                                            <svg viewBox="0 0 100 100" class="pa-diamond">
-                                                @if (result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF")
-                                                {
-                                                    <line x1="15" y1="15" x2="85" y2="85" stroke="#000" stroke-width="1.5" />
-                                                    <line x1="85" y1="15" x2="15" y2="85" stroke="#000" stroke-width="1.5" />
-                                                }
-                                                
-                                                <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
-                                                @if (furthest >= 1) { <line x1="50" y1="90" x2="90" y2="50" stroke="#000" stroke-width="3" /> }
-                                                @if (furthest >= 2) { <line x1="90" y1="50" x2="50" y2="10" stroke="#000" stroke-width="3" /> }
-                                                @if (furthest >= 3) { <line x1="50" y1="10" x2="10" y2="50" stroke="#000" stroke-width="3" /> }
-                                                @if (furthest >= 4) { 
-                                                    <line x1="10" y1="50" x2="50" y2="90" stroke="#000" stroke-width="3" /> 
-                                                    <polygon points="50,90 90,50 50,10 10,50" fill="#666" stroke="#000" stroke-width="3" />
-                                                }
-                                                
-                                                @if (gotOut) {
-                                                    @if (furthest == 1) { 
-                                                        <line x1="90" y1="50" x2="70" y2="30" stroke="#000" stroke-width="3" /> 
-                                                        <line x1="65" y1="25" x2="75" y2="35" stroke="#000" stroke-width="2" />
-                                                        <line x1="75" y1="25" x2="65" y2="35" stroke="#000" stroke-width="2" />
+                                            @if (result != "Skip")
+                                            {
+                                                <svg viewBox="0 0 100 100" class="pa-diamond">
+                                                    @if (result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF")
+                                                    {
+                                                        <line x1="5" y1="5" x2="95" y2="95" stroke="#000" stroke-width="6" />
+                                                        <line x1="95" y1="5" x2="5" y2="95" stroke="#000" stroke-width="6" />
                                                     }
-                                                    else if (furthest == 2) { 
-                                                        <line x1="50" y1="10" x2="30" y2="30" stroke="#000" stroke-width="3" /> 
-                                                        <line x1="25" y1="25" x2="35" y2="35" stroke="#000" stroke-width="2" />
-                                                        <line x1="35" y1="25" x2="25" y2="35" stroke="#000" stroke-width="2" />
+                                                    
+                                                    <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
+                                                    @if (furthest >= 1) { <line x1="50" y1="90" x2="90" y2="50" stroke="#000" stroke-width="5" /> }
+                                                    @if (furthest >= 2) { <line x1="90" y1="50" x2="50" y2="10" stroke="#000" stroke-width="5" /> }
+                                                    @if (furthest >= 3) { <line x1="50" y1="10" x2="10" y2="50" stroke="#000" stroke-width="5" /> }
+                                                    @if (furthest >= 4) { 
+                                                        <line x1="10" y1="50" x2="50" y2="90" stroke="#000" stroke-width="5" /> 
+                                                        <polygon points="50,90 90,50 50,10 10,50" fill="#666" stroke="#000" stroke-width="5" />
                                                     }
-                                                    else if (furthest == 3) { 
-                                                        <line x1="10" y1="50" x2="30" y2="70" stroke="#000" stroke-width="3" /> 
-                                                        <line x1="25" y1="65" x2="35" y2="75" stroke="#000" stroke-width="2" />
-                                                        <line x1="35" y1="65" x2="25" y2="75" stroke="#000" stroke-width="2" />
+                                                    
+                                                    @if (gotOut) {
+                                                        @if (furthest == 1) { 
+                                                            <line x1="90" y1="50" x2="70" y2="30" stroke="#000" stroke-width="5" /> 
+                                                            <line x1="60" y1="20" x2="80" y2="40" stroke="#000" stroke-width="4" />
+                                                            <line x1="80" y1="20" x2="60" y2="40" stroke="#000" stroke-width="4" />
+                                                        }
+                                                        else if (furthest == 2) { 
+                                                            <line x1="50" y1="10" x2="30" y2="30" stroke="#000" stroke-width="5" /> 
+                                                            <line x1="20" y1="20" x2="40" y2="40" stroke="#000" stroke-width="4" />
+                                                            <line x1="40" y1="20" x2="20" y2="40" stroke="#000" stroke-width="4" />
+                                                        }
+                                                        else if (furthest == 3) { 
+                                                            <line x1="10" y1="50" x2="30" y2="70" stroke="#000" stroke-width="5" /> 
+                                                            <line x1="20" y1="60" x2="40" y2="80" stroke="#000" stroke-width="4" />
+                                                            <line x1="40" y1="60" x2="20" y2="80" stroke="#000" stroke-width="4" />
+                                                        }
+                                                        else if (furthest == 0) {
+                                                            <line x1="50" y1="90" x2="70" y2="70" stroke="#000" stroke-width="5" />
+                                                            <line x1="60" y1="60" x2="80" y2="80" stroke="#000" stroke-width="4" />
+                                                            <line x1="80" y1="60" x2="60" y2="80" stroke="#000" stroke-width="4" />
+                                                        }
                                                     }
-                                                    else if (furthest == 0) {
-                                                        <line x1="50" y1="90" x2="70" y2="70" stroke="#000" stroke-width="3" />
-                                                        <line x1="65" y1="65" x2="75" y2="75" stroke="#000" stroke-width="2" />
-                                                        <line x1="75" y1="65" x2="65" y2="75" stroke="#000" stroke-width="2" />
-                                                    }
-                                                }
-                                            </svg>
+                                                </svg>
+                                            }
                                             
-                                            <div class="pa-bottom-labels d-flex justify-content-between px-1 w-100">
+                                            <div class="pa-bottom-labels align-items-center">
                                                 <span class="circleable @(result == "K" || result == "KF" ? "circled" : "")">@(result == "KF" ? "KF" : "K")</span>
                                                 @if (pa.RunsScored > 0)
                                                 {
-                                                    <span style="font-size: 10px; font-weight: bold; align-self: center;">@(pa.RunsScored) RBI</span>
+                                                    <span style="font-size: 10px; font-weight: bold; white-space: nowrap; line-height: 1.3;">@(pa.RunsScored) RBI</span>
                                                 }
                                                 else
                                                 {
-                                                    <span style="visibility: hidden; font-size: 10px; font-weight: bold; align-self: center;">0 RBI</span>
+                                                    <span style="visibility: hidden; font-size: 10px; font-weight: bold; white-space: nowrap; line-height: 1.3;">0 RBI</span>
                                                 }
                                                 <span class="circleable @(result == "BB" ? "circled" : "")">BB</span>
                                             </div>
@@ -247,14 +252,18 @@ else
                                             <svg viewBox="0 0 100 100" class="pa-diamond">
                                                 <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
                                             </svg>
-                                            <div class="pa-bottom-labels">
+                                            <div class="pa-bottom-labels align-items-end">
                                                 <span class="circleable">K</span>
                                                 <span class="circleable">BB</span>
                                             </div>
                                         }
-                                        @if (isThirdOut || isPreviousThirdOut)
+                                        @if (isThirdOut || isPreviousThirdOut || (pa != null && pa.Result == "Skip"))
                                         {
                                             <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                @if (pa != null && pa.Result == "Skip")
+                                                {
+                                                    <line x1="0" y1="50" x2="100" y2="50" stroke="#000" stroke-width="4" />
+                                                }
                                                 @if (isThirdOut)
                                                 {
                                                     <line x1="0" y1="98" x2="100" y2="98" stroke="#000" stroke-width="5" />
@@ -285,6 +294,45 @@ else
                                 </div>
                                 <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1;">
                                     <span class="fw-bold fs-5">@GetCumulativeRuns(col)</span>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                    
+                    <!-- Opponent Runs Row -->
+                    <tr class="runs-row" style="height: 50px;">
+                        <td colspan="3" class="text-end fw-bold fs-4 pe-2 align-middle border-start-0 border-end-0">Opponent</td>
+                        @for (int col = 1; col <= TotalColumns; col++)
+                        {
+                            int currentColumn = col;
+                            <td class="p-0 m-0" style="position: relative; height: 50px;">
+                                @if (canManageGames)
+                                {
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
+                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                                    </svg>
+                                    <div class="position-absolute" style="top: 0px; left: 2px; z-index: 1; width: 45px;">
+                                        <input type="number" min="0" max="99"
+                                               class="form-control text-start fw-bold fs-5 p-0 m-0 no-print" 
+                                               style="background: transparent; box-shadow: none; border: none; height: 26px;"
+                                               value="@GetOpponentScoreForColumn(currentColumn)"
+                                               @onchange="@(e => UpdateOpponentScoreForColumn(currentColumn, e.Value))" />
+                                        <div class="d-none d-print-block fw-bold fs-5" style="margin-left: 6px; margin-top: 2px;">
+                                            @GetOpponentScoreForColumn(currentColumn)
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
+                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                                    </svg>
+                                    <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
+                                        <span class="fw-bold fs-5">@GetOpponentScoreForColumn(currentColumn)</span>
+                                    </div>
+                                }
+                                <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1; pointer-events: none;">
+                                    <span class="fw-bold fs-5">@GetCumulativeOpponentRuns(currentColumn)</span>
                                 </div>
                             </td>
                         }
@@ -406,10 +454,10 @@ else
         border-bottom: 4px solid #000;
         color: #000 !important;
     }
-    .pos-col { width: 40px; }
-    .player-col { width: 250px; }
-    .hr-col { width: 45px; border-right: 4px solid #000 !important; }
-    .inning-col { width: 70px; }
+    .pos-col { width: 40px; min-width: 40px; }
+    .player-col { width: 250px; min-width: 250px; }
+    .hr-col { width: 45px; min-width: 45px; border-right: 4px solid #000 !important; }
+    .inning-col { width: 90px; min-width: 90px; }
     
     .player-num {
         text-align: center;
@@ -425,7 +473,7 @@ else
     }
     
     .pa-cell {
-        height: 70px;
+        height: 90px;
         padding: 0;
         vertical-align: top;
     }
@@ -438,7 +486,7 @@ else
     .pa-cell-content {
         position: relative;
         width: 100%;
-        height: 70px;
+        height: 90px;
         padding: 2px;
         overflow: hidden;
     }
@@ -476,6 +524,7 @@ else
         left: 0;
         padding: 0 4px;
         font-family: monospace;
+        align-items: center;
     }
 
     .circleable {
@@ -511,18 +560,16 @@ else
         border-color: #000;
     }
     
-    .pa-center-result {
+    .pa-left-labels {
+        font-size: 10px;
         position: absolute;
+        left: 2px;
         top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 2;
-    }
-    .result-text {
-        font-size: 18px;
-        background-color: rgba(255,255,255,0.8);
-        padding: 0 2px;
-        border-radius: 2px;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-family: monospace;
     }
     
     .pa-diamond {
@@ -771,11 +818,57 @@ else
         return total.ToString();
     }
     
+    private string GetOpponentScoreForColumn(int colIndex)
+    {
+        if (game == null) return "";
+        var scores = game.GetOpponentInningScores();
+        return scores.ContainsKey(colIndex) ? scores[colIndex].ToString() : "";
+    }
+    
+    private string GetCumulativeOpponentRuns(int colIndex)
+    {
+        if (game == null) return "";
+        var scores = game.GetOpponentInningScores();
+        if (!scores.ContainsKey(colIndex)) return "";
+        
+        int total = scores.Where(kvp => kvp.Key <= colIndex).Sum(kvp => kvp.Value);
+        return total.ToString();
+    }
+    
+    private async Task UpdateOpponentScoreForColumn(int colIndex, object? value)
+    {
+        if (game == null) return;
+        
+        var scores = game.GetOpponentInningScores();
+        if (value != null && int.TryParse(value.ToString(), out int score))
+        {
+            scores[colIndex] = score;
+        }
+        else
+        {
+            scores.Remove(colIndex);
+        }
+        
+        game.SetOpponentInningScores(scores);
+        game.VisitingTeamScore = game.IsHome ? scores.Values.Sum() : game.VisitingTeamScore;
+        game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : scores.Values.Sum();
+        
+        await StatsRepository.UpdateGameAsync(game);
+    }
+    
     private void HandleCellClick(PlateAppearance? pa)
     {
         if (pa != null && canManageGames)
         {
-            NavigationManager.NavigateTo($"/management/games/{GameId}/scorekeeping");
+            int index = plateAppearances.OrderBy(p => p.Id).ToList().IndexOf(pa);
+            if (index >= 0)
+            {
+                NavigationManager.NavigateTo($"/management/games/{GameId}/scorekeeping?paIndex={index}");
+            }
+            else
+            {
+                NavigationManager.NavigateTo($"/management/games/{GameId}/scorekeeping");
+            }
         }
     }
 
