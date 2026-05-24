@@ -5,6 +5,7 @@
 @inject NavigationManager NavigationManager
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+@inject IJSRuntime JS
 
 <PageTitle>Scorecard - Isotopes</PageTitle>
 
@@ -43,7 +44,7 @@ else
             </div>
         }
 
-        <div class="scorecard-container">
+        <div class="scorecard-container" id="scorecard-zoom-container">
             <!-- Unified Header Section -->
             <div class="d-flex w-100" style="padding: 10px;">
                 <!-- Details Box -->
@@ -910,5 +911,21 @@ else
         BuildScorecardGrid();
         CloseSyncModal();
         StateHasChanged();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initScorecardZoom", "scorecard-zoom-container");
+            }
+            catch (Exception ex)
+            {
+                // Ignore JS errors if panning isn't loaded or prerendering
+                Console.WriteLine(ex.Message);
+            }
+        }
     }
 }

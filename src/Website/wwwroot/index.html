@@ -160,8 +160,20 @@
 
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="js/Sortable.min.js"></script>
+    <script src="js/panzoom.min.js"></script>
     <script src="js/site.js?v=21"></script>
     <script>
+        window.initScorecardZoom = (elementId) => {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            panzoom(el, {
+                maxZoom: 5,
+                minZoom: 0.5,
+                bounds: true,
+                boundsPadding: 0.1
+            });
+        };
+        
         window.lastMouseEnterType = 'none';
         
         // Comprehensive global event management to avoid needing attributes in Razor files
