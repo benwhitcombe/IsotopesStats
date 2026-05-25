@@ -180,10 +180,15 @@
                 el.parentElement.style.width = '100%';
             }
             
-            // Calculate initial zoom to fit width on mobile
+            // Calculate initial zoom to fit BOTH width and height on mobile
             let parentWidth = el.parentElement.clientWidth || window.innerWidth;
+            let parentHeight = el.parentElement.clientHeight || (window.innerHeight * 0.85);
             let elWidth = el.clientWidth || 1235;
-            let startZoom = (parentWidth - 10) / elWidth; // Give a tiny margin
+            let elHeight = el.clientHeight || 1500;
+            
+            let widthRatio = (parentWidth - 10) / elWidth;
+            let heightRatio = (parentHeight - 10) / elHeight;
+            let startZoom = Math.min(widthRatio, heightRatio);
             
             var pz = panzoom(el, {
                 maxZoom: 5,
