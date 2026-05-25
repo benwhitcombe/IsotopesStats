@@ -144,8 +144,8 @@ else
                                     pa = paMatrix[(playerId.Value, currentColumn)];
                                 }
                                 
-                                bool isThirdOut = pa != null && (pa.OutsBefore + pa.OutsRecorded) >= 3;
-                                bool isPreviousThirdOut = false;
+                                bool isEndOfInning = pa != null && pa.EndsInning;
+                                bool isPreviousEndOfInning = false;
                                 if (currentColumn > 1)
                                 {
                                     PlateAppearance? prevPa = null;
@@ -153,7 +153,7 @@ else
                                     {
                                         prevPa = paMatrix[(playerId.Value, currentColumn - 1)];
                                     }
-                                    isPreviousThirdOut = prevPa != null && (prevPa.OutsBefore + prevPa.OutsRecorded) >= 3;
+                                    isPreviousEndOfInning = prevPa != null && prevPa.EndsInning;
                                 }
 
                                 <td class="pa-cell @(pa != null && canManageGames ? "pa-clickable" : "")" @onclick="() => HandleCellClick(pa)">
@@ -258,18 +258,18 @@ else
                                                 <span class="circleable">BB</span>
                                             </div>
                                         }
-                                        @if (isThirdOut || isPreviousThirdOut || (pa != null && pa.Result == "Skip"))
+                                        @if (isEndOfInning || isPreviousEndOfInning || (pa != null && pa.Result == "Skip"))
                                         {
                                             <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;" viewBox="0 0 100 100" preserveAspectRatio="none">
                                                 @if (pa != null && pa.Result == "Skip")
                                                 {
                                                     <line x1="0" y1="50" x2="100" y2="50" stroke="#000" stroke-width="4" />
                                                 }
-                                                @if (isThirdOut)
+                                                @if (isEndOfInning)
                                                 {
                                                     <line x1="0" y1="98" x2="100" y2="98" stroke="#000" stroke-width="5" />
                                                 }
-                                                @if (isPreviousThirdOut)
+                                                @if (isPreviousEndOfInning)
                                                 {
                                                     <line x1="0" y1="100" x2="20" y2="80" stroke="#000" stroke-width="5" stroke-linecap="round" />
                                                 }
@@ -740,6 +740,8 @@ else
             
         foreach (var pa in subsequentPAs)
         {
+            if (pa.PlayerId == batterId) break;
+            
             if (pa.RunnerOn1B_End == batterId) furthest = Math.Max(furthest, 1);
             if (pa.RunnerOn2B_End == batterId) furthest = Math.Max(furthest, 2);
             if (pa.RunnerOn3B_End == batterId) furthest = Math.Max(furthest, 3);

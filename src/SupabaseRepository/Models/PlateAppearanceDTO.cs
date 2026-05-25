@@ -50,4 +50,7 @@ internal class PlateAppearanceDTO : BaseModel
 
     [Column("runneron3b_end")]
     public int? RunnerOn3B_End { get; set; }
+
+    [Column("ends_inning")]
+    public bool EndsInning { get; set; }
 }

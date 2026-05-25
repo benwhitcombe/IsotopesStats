@@ -157,8 +157,11 @@ else
 {
     <div class="scorekeeper-container mx-auto" style="max-width: 600px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0 fw-bold">Scorekeeper</h2>
-            <button class="btn btn-sm btn-outline-danger fw-bold px-3" @onclick="ClearPlay" disabled="@(viewingPaIndex == null)">Reset</button>
+            <h2 class="mb-0 fw-bold text-nowrap me-3">Scorekeeper</h2>
+            <div class="d-flex gap-2 justify-content-end w-100">
+                <button class="btn btn-sm btn-outline-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" @onclick="ClearPlay" disabled="@(viewingPaIndex == null)">Reset</button>
+                <button class="btn btn-sm btn-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" @onclick="DeletePlay" disabled="@(viewingPaIndex == null)">Delete</button>
+            </div>
         </div>
         <!-- Diamond / Bases View -->
         <div class="stat-card mb-2 py-3 position-relative">
@@ -278,7 +281,7 @@ else
                 <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="PrevPlay" disabled="@(plateAppearances.Count == 0 || viewingPaIndex == 0)">&laquo; Prev</button>
             </div>
             <div class="col-3">
-                <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="NextInning">End Inning</button>
+                <button class="view-btn play-btn w-100 py-3 @(IsEndsInningToggled() ? "play-btn-out active-play" : "play-btn-out bg-white")" @onclick="ToggleEndInning" disabled="@(viewingPaIndex == null)">End Inning</button>
             </div>
             <div class="col-3">
                 <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick='() => RecordPlay("Skip")'>Skip</button>
@@ -477,7 +480,7 @@ else
             runnerOn2B = pa.RunnerOn2B_End;
             runnerOn3B = pa.RunnerOn3B_End;
             
-            if (currentOuts >= 3)
+            if (pa.EndsInning)
             {
                 currentOuts = 0;
                 currentInning++;
@@ -780,6 +783,11 @@ else
                 pendingPA.Result = "FC";
             }
 
+            if (pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
+            {
+                pendingPA.EndsInning = true;
+            }
+
             if (viewingPaIndex != null)
             {
                 await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
@@ -843,16 +851,44 @@ else
 
     private async Task ClearPlay()
     {
-        int indexToDelete = viewingPaIndex ?? -1;
-        if (indexToDelete >= 0 && indexToDelete < plateAppearances.Count)
+        if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
         {
-            var pa = plateAppearances[indexToDelete];
-            await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
-            plateAppearances.RemoveAt(indexToDelete);
+            var pa = plateAppearances[viewingPaIndex.Value];
             
-            viewingPaIndex = null;
+            // Just reset the play's data instead of deleting it, to preserve the timeline sequence
+            pa.Result = ""; // Empty string acts as a blank/placeholder play
+            pa.OutsRecorded = 0;
+            pa.RunsScored = 0;
+            pa.RunnerOn1B_End = pa.RunnerOn1B;
+            pa.RunnerOn2B_End = pa.RunnerOn2B;
+            pa.RunnerOn3B_End = pa.RunnerOn3B;
+            pa.EndsInning = false;
+            
+            await StatsRepository.UpdatePlateAppearanceAsync(pa);
+            
             await RippleStateAsync();
             RecalculateState();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletePlay()
+    {
+        if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
+        {
+            var pa = plateAppearances[viewingPaIndex.Value];
+            await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
+            plateAppearances.RemoveAt(viewingPaIndex.Value);
+            
+            // If we deleted the very last play, go back to live batter
+            if (viewingPaIndex.Value >= plateAppearances.Count)
+            {
+                viewingPaIndex = null;
+            }
+            
+            await RippleStateAsync();
+            RecalculateState();
+            StateHasChanged();
         }
     }
 
@@ -920,43 +956,27 @@ else
         return (scored, outs);
     }
 
-    private async Task NextInning()
+    private bool IsEndsInningToggled()
     {
-        if (currentOuts == 0)
+        if (viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count)
         {
-             PlateAppearance pa = new PlateAppearance
-             {
-                 GameId = GameId,
-                 PlayerId = currentBatterId,
-                 Inning = currentInning,
-                 OrderNumber = plateAppearances.Count + 1,
-                 Result = "Skip",
-                 OutsRecorded = 3
-             };
-             await StatsRepository.AddPlateAppearanceAsync(pa);
-             plateAppearances.Add(pa);
+            return plateAppearances[viewingPaIndex.Value].EndsInning;
         }
-        else
+        return false;
+    }
+
+    private async Task ToggleEndInning()
+    {
+        if (viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count)
         {
-            if (viewingPaIndex != null)
-            {
-                // Viewing a past PA
-                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
-                pa.OutsRecorded = 3 - currentOuts;
-                await StatsRepository.UpdatePlateAppearanceAsync(pa);
-            }
-            else
-            {
-                // Live batter
-                PlateAppearance lastPa = plateAppearances.Last();
-                lastPa.OutsRecorded += (3 - currentOuts);
-                await StatsRepository.UpdatePlateAppearanceAsync(lastPa);
-            }
+            PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
+            pa.EndsInning = !pa.EndsInning;
+            await StatsRepository.UpdatePlateAppearanceAsync(pa);
+            
+            await RippleStateAsync();
+            RecalculateState();
+            StateHasChanged();
         }
-        
-        await RippleStateAsync();
-        RecalculateState();
-        StateHasChanged();
     }
 
     private async Task RippleStateAsync()
@@ -993,7 +1013,7 @@ else
             temp2B = pa.RunnerOn2B_End;
             temp3B = pa.RunnerOn3B_End;
             
-            if (tempOuts >= 3)
+            if (pa.EndsInning)
             {
                 tempOuts = 0;
                 tempInning++;
