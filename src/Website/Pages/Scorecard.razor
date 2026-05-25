@@ -897,7 +897,8 @@ else
             zoomInitialized = true;
             try
             {
-                await JS.InvokeVoidAsync("initScorecardZoom", "scorecard-zoom-container");
+                var module = await JS.InvokeAsync<IJSObjectReference>("import", $"./js/scorecard-zoom.js?v={Guid.NewGuid()}");
+                await module.InvokeVoidAsync("init", "scorecard-zoom-container");
             }
             catch (Exception ex)
             {
