@@ -146,6 +146,11 @@ export function init(elementId) {
             e.stopImmediatePropagation();
             return;
         }
+        
+        // Not at boundary: Prevent browser from scrolling the page
+        if (e.cancelable) {
+            e.preventDefault();
+        }
     };
     
     el.addEventListener('touchstart', handleTouchStart, { passive: true });
