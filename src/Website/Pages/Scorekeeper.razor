@@ -800,7 +800,7 @@ else
                 // viewingPaIndex = null; // Auto-advance to next batter
             }
             
-            if (game != null && game.IsScorekeptLive)
+            if (game != null && game.ScorecardStatsSync)
             {
                 await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
             }
@@ -872,7 +872,7 @@ else
             await StatsRepository.UpdatePlateAppearanceAsync(pa);
             
             await RippleStateAsync();
-            if (game != null && game.IsScorekeptLive)
+            if (game != null && game.ScorecardStatsSync)
             {
                 await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
             }
@@ -896,7 +896,7 @@ else
             }
             
             await RippleStateAsync();
-            if (game != null && game.IsScorekeptLive)
+            if (game != null && game.ScorecardStatsSync)
             {
                 await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
             }

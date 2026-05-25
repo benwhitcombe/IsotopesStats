@@ -24,7 +24,7 @@ public record Game : IEntity
 
     public bool IsHome { get; set; }
 
-    public bool IsScorekeptLive { get; set; }
+    public bool ScorecardStatsSync { get; set; }
 
     public int OpponentId { get; set; }
 

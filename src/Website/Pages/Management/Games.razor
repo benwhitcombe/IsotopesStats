@@ -81,10 +81,14 @@ else if (isEditing)
                 <InputText class="form-control" @bind-Value="editingGame.Diamond" placeholder="e.g. Diamond 1" />
                 <ValidationMessage For="@(() => editingGame.Diamond)" style="color: var(--isotopes-red); font-size: 0.8rem; margin-top: 0.25rem;" />
             </div>
-            <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 0.5rem;">
+            <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem;">
                 <div class="form-check">
                     <InputCheckbox id="ishome" class="form-check-input" @bind-Value="editingGame.IsHome" />
                     <label class="form-check-label" for="ishome" style="font-weight: bold; margin-bottom: 0;">Home Game?</label>
+                </div>
+                <div class="form-check" style="margin-left: 1rem;">
+                    <InputCheckbox id="scorecardStatsSync" class="form-check-input" @bind-Value="editingGame.ScorecardStatsSync" />
+                    <label class="form-check-label" for="scorecardStatsSync" style="font-weight: bold; margin-bottom: 0;">Scorecard Stats Sync?</label>
                 </div>
             </div>
             <div class="form-group">
@@ -516,8 +520,8 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, IsScorekeptLive = true };
-            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, IsScorekeptLive = true };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, ScorecardStatsSync = true };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, ScorecardStatsSync = true };
             playerStats.Clear();
             originalStats.Clear();
             seasonRoster.Clear();
@@ -546,8 +550,8 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, IsScorekeptLive = true };
-            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, IsScorekeptLive = true };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, ScorecardStatsSync = true };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, ScorecardStatsSync = true };
             
             editingGame.GameNumber = await StatsRepository.GetNextGameNumberAsync(editingGame.SeasonId);
 

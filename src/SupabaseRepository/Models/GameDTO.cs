@@ -34,8 +34,8 @@ internal class GameDTO : BaseModel
     [Column("isdeleted")]
     public bool IsDeleted { get; set; } = false;
 
-    [Column("is_scorekept_live")]
-    public bool IsScorekeptLive { get; set; } = false;
+    [Column("scorecard_stats_sync")]
+    public bool ScorecardStatsSync { get; set; } = false;
 
     [Column("visitingteamscore")]
     public int? VisitingTeamScore { get; set; }
