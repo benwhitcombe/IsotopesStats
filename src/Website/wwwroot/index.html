@@ -188,9 +188,9 @@
             
             panzoom(el, {
                 maxZoom: 5,
-                minZoom: 0.2,
+                minZoom: startZoom, // Prevent zooming out further than the initial full-width view
                 bounds: true,
-                boundsPadding: 0.1,
+                boundsPadding: 0, // Do not allow dragging off screen
                 initialZoom: startZoom,
                 initialX: 0,
                 initialY: 0,
