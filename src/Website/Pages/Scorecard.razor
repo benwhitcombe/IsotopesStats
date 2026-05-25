@@ -97,10 +97,10 @@ else
             @{
                 int tableWidth = 40 + 250 + 45 + (TotalColumns * 90);
             }
-            <table class="scorecard-grid" style="width: @(tableWidth)px;">
+            <table class="scorecard-grid" style="width: 100%; min-width: @(tableWidth)px;">
                 <colgroup>
                     <col style="width: 40px;" />
-                    <col style="width: 250px;" />
+                    <col style="width: auto;" />
                     <col style="width: 45px;" />
                     @for (int i = 1; i <= TotalColumns; i++)
                     {
@@ -436,6 +436,12 @@ else
         margin: 0 auto;
         text-align: left;
     }
+    @@media (min-width: 1024px) {
+        .scorecard-container {
+            display: block;
+            width: 100%;
+        }
+    }
     .header-table td {
         padding: 5px 0;
         line-height: 1.2;
@@ -457,19 +463,19 @@ else
         color: #000 !important;
     }
     .pos-col { width: 40px; min-width: 40px; }
-    .player-col { width: 250px; min-width: 250px; }
+    .player-col { min-width: 250px; }
     .hr-col { width: 45px; min-width: 45px; border-right: 4px solid #000 !important; }
     .inning-col { width: 90px; min-width: 90px; }
     
     .player-num {
         text-align: center;
         font-weight: bold;
-        font-size: 1.25rem;
+        font-size: 1.75rem;
         padding: 0;
     }
     .player-name {
         font-weight: bold;
-        font-size: 1.25rem;
+        font-size: 1.75rem;
         text-transform: uppercase;
         padding-left: 5px;
     }
