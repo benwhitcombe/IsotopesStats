@@ -17,7 +17,8 @@ export function init(elementId) {
     // Add constraints for zooming
     if (el.parentElement) {
         el.parentElement.style.overflow = 'hidden';
-        el.parentElement.style.touchAction = 'none';
+        // Remove touchAction = 'none' so native scrolling can occur when we allow it
+        el.parentElement.style.touchAction = 'auto';
         el.parentElement.style.maxHeight = '85vh';
         el.parentElement.style.width = '100%';
     }
@@ -109,6 +110,51 @@ export function init(elementId) {
     
     requestAnimationFrame(enforceBounds);
     
+    // Intercept touchmove to allow native scroll chaining when at boundaries
+    let touchStartY = 0;
+    let touchStartX = 0;
+    
+    const handleTouchStart = (e) => {
+        if (e.touches.length === 1) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+        }
+    };
+    
+    const handleTouchMove = (e) => {
+        if (!window._pzInstance) return;
+        if (e.touches.length > 1) return; // Let panzoom handle pinch
+        
+        let t = window._pzInstance.getTransform();
+        let currentY = e.touches[0].clientY;
+        let deltaY = currentY - touchStartY;
+        
+        var rect = el.parentElement.getBoundingClientRect();
+        var pH = window.innerHeight - rect.top;
+        if (pH < 200) pH = el.parentElement.clientHeight;
+        var eH = el.clientHeight * t.scale;
+        var minY = pH - eH - 100;
+        
+        // If we are at the top boundary and pulling down (deltaY > 0)
+        if (t.y >= 20 && deltaY > 0) {
+            e.stopImmediatePropagation();
+            return;
+        }
+        
+        // If we are at the bottom boundary and pulling up (deltaY < 0)
+        if (t.y <= minY && deltaY < 0) {
+            e.stopImmediatePropagation();
+            return;
+        }
+    };
+    
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false });
+    
     // Cleanup function attached to element to stop loop if element is removed
-    el._stopBoundsLoop = () => { isRunning = false; };
+    el._stopBoundsLoop = () => { 
+        isRunning = false; 
+        el.removeEventListener('touchstart', handleTouchStart);
+        el.removeEventListener('touchmove', handleTouchMove, { capture: true });
+    };
 }
