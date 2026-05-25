@@ -246,7 +246,7 @@ else
             
             <!-- Batter Info -->
             <div class="text-center mt-2" style="min-height: 4rem;">
-                <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">BATTER</h6>
+                <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">@(viewingPaIndex == null ? "CURRENT BATTER" : "BATTER")</h6>
                 <h3 class="fw-bold mb-0 slide-fade" @key="currentBatterId">
                     @currentBatterName
                     @if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
@@ -773,7 +773,7 @@ else
             {
                 PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
                 plateAppearances.Add(savedPa);
-                viewingPaIndex = plateAppearances.Count - 1; // Stay on the newly recorded PA
+                // viewingPaIndex = null; // Auto-advance to next batter
             }
             
             RecalculateState();
@@ -905,8 +905,7 @@ else
 
     private async Task NextInning()
     {
-        // Add a dummy out to force inning over
-        if (currentOuts < 3)
+        if (currentOuts == 0)
         {
              PlateAppearance pa = new PlateAppearance
              {
@@ -914,14 +913,32 @@ else
                  PlayerId = currentBatterId,
                  Inning = currentInning,
                  OrderNumber = plateAppearances.Count + 1,
-                 Result = "Inning Over",
-                 OutsRecorded = 3 - currentOuts
+                 Result = "Skip",
+                 OutsRecorded = 3
              };
              await StatsRepository.AddPlateAppearanceAsync(pa);
              plateAppearances.Add(pa);
-             RecalculateState();
-             StateHasChanged();
         }
+        else
+        {
+            if (viewingPaIndex != null)
+            {
+                // Viewing a past PA
+                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
+                pa.OutsRecorded = 3 - currentOuts;
+                await StatsRepository.UpdatePlateAppearanceAsync(pa);
+            }
+            else
+            {
+                // Live batter
+                PlateAppearance lastPa = plateAppearances.Last();
+                lastPa.OutsRecorded += (3 - currentOuts);
+                await StatsRepository.UpdatePlateAppearanceAsync(lastPa);
+            }
+        }
+        
+        RecalculateState();
+        StateHasChanged();
     }
 
 }
