@@ -64,12 +64,15 @@ export function init(elementId) {
         if (!t) return;
         
         var pW = el.parentElement.clientWidth;
-        var pH = el.parentElement.clientHeight;
+        var rect = el.parentElement.getBoundingClientRect();
+        var pH = window.innerHeight - rect.top; // Calculate exact visible height on screen
+        if (pH < 200) pH = el.parentElement.clientHeight; // Fallback if something is weird
+        
         var eW = el.clientWidth * t.scale;
         var eH = el.clientHeight * t.scale;
         
         var minX = pW - eW;
-        var minY = pH - eH;
+        var minY = pH - eH - 100; // Add 100px padding to the bottom so it's not tightly bound
         
         // If element is smaller than parent, center it.
         if (minX > 0) minX = minX / 2;
@@ -89,10 +92,12 @@ export function init(elementId) {
         
         // Clamp Y
         if (eH >= pH) {
-            if (newY > 0) { newY = 0; changed = true; }
+            if (newY > 20) { newY = 20; changed = true; } // 20px overscroll at top
             if (newY < minY) { newY = minY; changed = true; }
         } else {
-            if (Math.abs(newY - minY) > 1) { newY = minY; changed = true; }
+            // If it's smaller, don't rigidly lock it, allow panning within the safe zone
+            if (newY > 20) { newY = 20; changed = true; }
+            if (newY < minY) { newY = minY; changed = true; }
         }
         
         if (changed) {
