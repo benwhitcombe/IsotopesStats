@@ -516,8 +516,8 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
-            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, IsScorekeptLive = true };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, IsScorekeptLive = true };
             playerStats.Clear();
             originalStats.Clear();
             seasonRoster.Clear();
@@ -546,8 +546,8 @@ else
         }
         else
         {
-            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId };
-            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId };
+            editingGame = new Game { Date = DateTime.Now, SeasonId = selectedSeasonId, IsScorekeptLive = true };
+            originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, IsScorekeptLive = true };
             
             editingGame.GameNumber = await StatsRepository.GetNextGameNumberAsync(editingGame.SeasonId);
 
