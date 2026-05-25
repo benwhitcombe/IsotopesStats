@@ -26,10 +26,6 @@
         color: var(--isotopes-accent) !important;
         border-color: var(--isotopes-accent) !important;
     }
-    .play-btn-hit:hover:not(.active-play) {
-        background-color: var(--isotopes-accent) !important;
-        color: white !important;
-    }
     .play-btn-hit.active-play {
         background-color: var(--isotopes-accent) !important;
         color: white !important;
@@ -39,10 +35,6 @@
     .play-btn-out {
         color: var(--isotopes-red) !important;
         border-color: var(--isotopes-red) !important;
-    }
-    .play-btn-out:hover:not(.active-play) {
-        background-color: var(--isotopes-red) !important;
-        color: white !important;
     }
     .play-btn-out.active-play {
         background-color: var(--isotopes-red) !important;
@@ -54,9 +46,19 @@
         color: #6c757d !important;
         border-color: #6c757d !important;
     }
-    .play-btn-util:hover:not([disabled]) {
-        background-color: #6c757d !important;
-        color: white !important;
+    @@media (hover: hover) {
+        .play-btn-hit:hover:not(.active-play) {
+            background-color: var(--isotopes-accent) !important;
+            color: white !important;
+        }
+        .play-btn-out:hover:not(.active-play) {
+            background-color: var(--isotopes-red) !important;
+            color: white !important;
+        }
+        .play-btn-util:hover:not([disabled]) {
+            background-color: #6c757d !important;
+            color: white !important;
+        }
     }
 
     @@keyframes popHighlight {
