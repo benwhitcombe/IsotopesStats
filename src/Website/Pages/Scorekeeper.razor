@@ -484,10 +484,23 @@ else
                 runnerOn3B = null;
             }
             
-            batterOrderIndex = (batterOrderIndex + 1) % Math.Max(1, battingOrderIds.Count);
+            int actualIndex = battingOrderIds.IndexOf(pa.PlayerId);
+            if (actualIndex >= 0)
+            {
+                batterOrderIndex = (actualIndex + 1) % Math.Max(1, battingOrderIds.Count);
+            }
+            else
+            {
+                batterOrderIndex = (batterOrderIndex + 1) % Math.Max(1, battingOrderIds.Count);
+            }
         }
 
-        if (battingOrderIds.Count > 0)
+        if (viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count)
+        {
+            currentBatterId = plateAppearances[viewingPaIndex.Value].PlayerId;
+            currentBatterName = GetPlayerName(currentBatterId);
+        }
+        else if (battingOrderIds.Count > 0)
         {
             currentBatterId = battingOrderIds[batterOrderIndex];
             currentBatterName = GetPlayerName(currentBatterId);
@@ -768,6 +781,7 @@ else
             if (viewingPaIndex != null)
             {
                 await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
+                await RippleStateAsync();
             }
             else
             {
@@ -835,6 +849,7 @@ else
             plateAppearances.RemoveAt(indexToDelete);
             
             viewingPaIndex = null;
+            await RippleStateAsync();
             RecalculateState();
         }
     }
@@ -937,8 +952,54 @@ else
             }
         }
         
+        await RippleStateAsync();
         RecalculateState();
         StateHasChanged();
+    }
+
+    private async Task RippleStateAsync()
+    {
+        int tempInning = 1;
+        int tempOuts = 0;
+        int? temp1B = null;
+        int? temp2B = null;
+        int? temp3B = null;
+
+        foreach (var pa in plateAppearances)
+        {
+            bool changed = false;
+            if (pa.RunnerOn1B != temp1B) { pa.RunnerOn1B = temp1B; changed = true; }
+            if (pa.RunnerOn2B != temp2B) { pa.RunnerOn2B = temp2B; changed = true; }
+            if (pa.RunnerOn3B != temp3B) { pa.RunnerOn3B = temp3B; changed = true; }
+            if (pa.Inning != tempInning) { pa.Inning = tempInning; changed = true; }
+            if (pa.OutsBefore != tempOuts) { pa.OutsBefore = tempOuts; changed = true; }
+            
+            if (changed)
+            {
+                // Clear ghost runners from End states
+                if (pa.RunnerOn1B_End != null && pa.RunnerOn1B_End != pa.RunnerOn1B && pa.RunnerOn1B_End != pa.RunnerOn2B && pa.RunnerOn1B_End != pa.RunnerOn3B && pa.RunnerOn1B_End != pa.PlayerId) pa.RunnerOn1B_End = null;
+                if (pa.RunnerOn2B_End != null && pa.RunnerOn2B_End != pa.RunnerOn1B && pa.RunnerOn2B_End != pa.RunnerOn2B && pa.RunnerOn2B_End != pa.RunnerOn3B && pa.RunnerOn2B_End != pa.PlayerId) pa.RunnerOn2B_End = null;
+                if (pa.RunnerOn3B_End != null && pa.RunnerOn3B_End != pa.RunnerOn1B && pa.RunnerOn3B_End != pa.RunnerOn2B && pa.RunnerOn3B_End != pa.RunnerOn3B && pa.RunnerOn3B_End != pa.PlayerId) pa.RunnerOn3B_End = null;
+                
+                await StatsRepository.UpdatePlateAppearanceAsync(pa);
+            }
+
+            tempInning = pa.Inning;
+            tempOuts += pa.OutsRecorded;
+            
+            temp1B = pa.RunnerOn1B_End;
+            temp2B = pa.RunnerOn2B_End;
+            temp3B = pa.RunnerOn3B_End;
+            
+            if (tempOuts >= 3)
+            {
+                tempOuts = 0;
+                tempInning++;
+                temp1B = null;
+                temp2B = null;
+                temp3B = null;
+            }
+        }
     }
 
 }
