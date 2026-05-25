@@ -167,6 +167,9 @@
             const el = document.getElementById(elementId);
             if (!el) return;
             
+            // Only enable pan/zoom functionality on mobile/tablet displays
+            if (window.innerWidth >= 1024) return;
+            
             // Disable native browser touch scrolling so panzoom can capture pinch/drag gestures
             el.style.touchAction = 'none';
             if (el.parentElement) {

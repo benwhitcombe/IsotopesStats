@@ -23,7 +23,7 @@ else if (game == null)
 else
 {
     <div class="scorecard-wrapper">
-        <div class="d-flex flex-row flex-wrap justify-content-between align-items-center no-print mb-3 gap-2">
+        <div class="d-flex flex-row justify-content-between align-items-center no-print mb-3 gap-2">
             <h2 class="mb-0">Scorecard</h2>
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 <button class="view-btn active" onclick="window.print()">Print Scorecard</button>
@@ -40,7 +40,7 @@ else
                 <div>
                     <strong class="text-dark">Warning:</strong> The official game stats do not match the play-by-play plate appearances.
                 </div>
-                <button class="view-btn active" style="background-color: var(--isotopes-accent); color: #000; border: none;" @onclick="OpenSyncModal">Reconcile Stats</button>
+                <button class="view-btn active" style="background-color: var(--isotopes-accent); color: white; border: none;" @onclick="OpenSyncModal">Reconcile Stats</button>
             </div>
         }
 
