@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Isotopes Stats</title>
     <base href="/" />
+    <link href="manifest.json" rel="manifest" />
+    <link rel="apple-touch-icon" href="logo.svg" />
     
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
@@ -159,6 +161,7 @@
     </script>
 
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
     <script src="js/Sortable.min.js"></script>
     <script src="js/panzoom.min.js"></script>
     <script src="js/site.js?v=21"></script>
