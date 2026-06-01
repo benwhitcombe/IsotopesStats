@@ -23,7 +23,7 @@ public class SessionStorageService
         {
             if (!await IsAvailable()) return;
             string json = JsonSerializer.Serialize(value, _options);
-            await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", key, json);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
         }
         catch (Exception ex)
         {
@@ -36,7 +36,7 @@ public class SessionStorageService
         try
         {
             if (!await IsAvailable()) return default;
-            string json = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", key);
+            string json = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
             if (string.IsNullOrEmpty(json))
                 return default;
 
@@ -54,7 +54,7 @@ public class SessionStorageService
         try
         {
             if (!await IsAvailable()) return;
-            await _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", key);
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
         }
         catch (Exception ex)
         {
@@ -68,7 +68,7 @@ public class SessionStorageService
         if (_isAvailable.HasValue) return _isAvailable.Value;
         try
         {
-            _isAvailable = await _jsRuntime.InvokeAsync<bool>("eval", "typeof sessionStorage !== 'undefined' && (()=>{try{sessionStorage.setItem('test','1');sessionStorage.removeItem('test');return true;}catch(e){return false;}})()");
+            _isAvailable = await _jsRuntime.InvokeAsync<bool>("eval", "typeof localStorage !== 'undefined' && (()=>{try{localStorage.setItem('test','1');localStorage.removeItem('test');return true;}catch(e){return false;}})()");
         }
         catch
         {

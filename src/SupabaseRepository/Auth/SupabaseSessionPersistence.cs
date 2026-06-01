@@ -24,11 +24,11 @@ internal class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
             string json = JsonConvert.SerializeObject(session);
             if (_jsRuntime is IJSInProcessRuntime inProcess)
             {
-                inProcess.InvokeVoid("sessionStorage.setItem", SessionKey, json);
+                inProcess.InvokeVoid("localStorage.setItem", SessionKey, json);
             }
             else
             {
-                _ = _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", SessionKey, json);
+                _ = _jsRuntime.InvokeVoidAsync("localStorage.setItem", SessionKey, json);
             }
         }
         catch (Exception ex)
@@ -43,11 +43,11 @@ internal class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
         {
             if (_jsRuntime is IJSInProcessRuntime inProcess)
             {
-                inProcess.InvokeVoid("sessionStorage.removeItem", SessionKey);
+                inProcess.InvokeVoid("localStorage.removeItem", SessionKey);
             }
             else
             {
-                _ = _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", SessionKey);
+                _ = _jsRuntime.InvokeVoidAsync("localStorage.removeItem", SessionKey);
             }
         }
         catch (Exception ex)
@@ -62,7 +62,7 @@ internal class SupabaseSessionPersistence : IGotrueSessionPersistence<Session>
         {
             if (_jsRuntime is IJSInProcessRuntime inProcess)
             {
-                string? json = inProcess.Invoke<string>("sessionStorage.getItem", SessionKey);
+                string? json = inProcess.Invoke<string>("localStorage.getItem", SessionKey);
                 if (string.IsNullOrEmpty(json)) return null;
 
                 return JsonConvert.DeserializeObject<Session>(json);

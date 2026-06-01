@@ -155,6 +155,13 @@ else if (!isLineupSet)
 }
 else
 {
+    @if (isProcessing)
+    {
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 1050; display: flex; justify-content: center; align-items: center;">
+            <div class="spinner-border text-danger" role="status"></div>
+        </div>
+    }
+
     <div class="scorekeeper-container mx-auto" style="max-width: 600px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="mb-0 fw-bold text-nowrap me-3">Scorekeeper</h2>
@@ -281,7 +288,9 @@ else
                 <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick="PrevPlay" disabled="@(plateAppearances.Count == 0 || viewingPaIndex == 0)">&laquo; Prev</button>
             </div>
             <div class="col-3">
-                <button class="view-btn play-btn w-100 py-3 @(IsEndsInningToggled() ? "play-btn-out active-play" : "play-btn-out bg-white")" @onclick="ToggleEndInning" disabled="@(viewingPaIndex == null)">End Inning</button>
+                <button class="view-btn play-btn w-100 h-100 @(IsEndsInningToggled() ? "play-btn-out active-play" : "play-btn-out bg-white")" @onclick="ToggleEndInning" disabled="@(viewingPaIndex == null)" style="padding-left: 2px; padding-right: 2px; font-size: 0.8rem; line-height: 1.1;">
+                    @(IsEndsInningToggled() ? "☑" : "☐") End<br>Inning
+                </button>
             </div>
             <div class="col-3">
                 <button class="view-btn play-btn play-btn-util w-100 py-3" @onclick='() => RecordPlay("Skip")'>Skip</button>
@@ -320,6 +329,7 @@ else
     public int? paIndex { get; set; }
 
     private bool isLoading = true;
+    private bool isProcessing = false;
     private Game? game;
     private List<PlateAppearance> plateAppearances = new();
     private List<Player> roster = new();
@@ -439,22 +449,32 @@ else
     {
         if (setupBattingOrderIds.Count == 0 || game == null) return;
         
-        List<StatEntry> stats = new();
-        for (int i = 0; i < setupBattingOrderIds.Count; i++)
+        isProcessing = true;
+        StateHasChanged();
+        try
         {
-            stats.Add(new StatEntry
+            List<StatEntry> stats = new();
+            for (int i = 0; i < setupBattingOrderIds.Count; i++)
             {
-                PlayerId = setupBattingOrderIds[i],
-                GameId = GameId,
-                BO = i + 1
-            });
+                stats.Add(new StatEntry
+                {
+                    PlayerId = setupBattingOrderIds[i],
+                    GameId = GameId,
+                    BO = i + 1
+                });
+            }
+            
+            await StatsRepository.UpdateGameWithStatsAsync(game, stats);
+            
+            battingOrderIds = setupBattingOrderIds.ToList();
+            isLineupSet = true;
+            RecalculateState();
         }
-        
-        await StatsRepository.UpdateGameWithStatsAsync(game, stats);
-        
-        battingOrderIds = setupBattingOrderIds.ToList();
-        isLineupSet = true;
-        RecalculateState();
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
     }
 
     private void RecalculateState()
@@ -614,14 +634,6 @@ else
 
     private void ProcessNextRunner()
     {
-        if (pendingPA != null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
-        {
-            // 3rd out auto-resolve: clear queue
-            runnersToAdvance.Clear();
-            
-            // Assume remaining unprompted runners stayed (or didn't reach if batter)
-            // (Batter doesn't make it to base if they are in queue and 3rd out happens)
-        }
 
         if (runnersToAdvance.Count > 0)
         {
@@ -673,13 +685,12 @@ else
             pendingPA.RunnerOn3B_End = runnerId;
         }
 
-        if (runnersToAdvance.Count > 0 && pendingPA.OutsBefore + pendingPA.OutsRecorded < 3)
+        if (runnersToAdvance.Count > 0)
         {
             ProcessNextRunner();
         }
         else
         {
-            // Auto-resolve if 3 outs reached
             runnersToAdvance.Clear();
             isModalVisible = false;
             await SavePendingPA();
@@ -773,41 +784,50 @@ else
     {
         if (pendingPA != null)
         {
-            // Smart play detection
-            if (pendingPA.Result == "FO" && pendingPA.RunsScored > 0)
-            {
-                pendingPA.Result = "SF";
-            }
-            else if ((pendingPA.Result == "1B" || pendingPA.Result == "2B" || pendingPA.Result == "3B") && pendingPA.OutsRecorded > 0)
-            {
-                pendingPA.Result = "FC";
-            }
-
-            if (pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
-            {
-                pendingPA.EndsInning = true;
-            }
-
-            if (viewingPaIndex != null)
-            {
-                await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
-                await RippleStateAsync();
-            }
-            else
-            {
-                PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
-                plateAppearances.Add(savedPa);
-                // viewingPaIndex = null; // Auto-advance to next batter
-            }
-            
-            if (game != null && game.ScorecardStatsSync)
-            {
-                await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
-            }
-            
-            RecalculateState();
-            pendingPA = null;
+            isProcessing = true;
             StateHasChanged();
+            try
+            {
+                // Smart play detection
+                if (pendingPA.Result == "FO" && pendingPA.RunsScored > 0)
+                {
+                    pendingPA.Result = "SF";
+                }
+                else if ((pendingPA.Result == "1B" || pendingPA.Result == "2B" || pendingPA.Result == "3B") && pendingPA.OutsRecorded > 0)
+                {
+                    pendingPA.Result = "FC";
+                }
+
+                if (viewingPaIndex == null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
+                {
+                    pendingPA.EndsInning = true;
+                }
+
+                if (viewingPaIndex != null)
+                {
+                    await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
+                    await RippleStateAsync();
+                }
+                else
+                {
+                    PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
+                    plateAppearances.Add(savedPa);
+                    // viewingPaIndex = null; // Auto-advance to next batter
+                }
+                
+                if (game != null && game.ScorecardStatsSync)
+                {
+                    await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
+                }
+                
+                RecalculateState();
+                pendingPA = null;
+            }
+            finally
+            {
+                isProcessing = false;
+                StateHasChanged();
+            }
         }
     }
 
@@ -858,26 +878,35 @@ else
     {
         if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
         {
-            var pa = plateAppearances[viewingPaIndex.Value];
-            
-            // Just reset the play's data instead of deleting it, to preserve the timeline sequence
-            pa.Result = ""; // Empty string acts as a blank/placeholder play
-            pa.OutsRecorded = 0;
-            pa.RunsScored = 0;
-            pa.RunnerOn1B_End = pa.RunnerOn1B;
-            pa.RunnerOn2B_End = pa.RunnerOn2B;
-            pa.RunnerOn3B_End = pa.RunnerOn3B;
-            pa.EndsInning = false;
-            
-            await StatsRepository.UpdatePlateAppearanceAsync(pa);
-            
-            await RippleStateAsync();
-            if (game != null && game.ScorecardStatsSync)
-            {
-                await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
-            }
-            RecalculateState();
+            isProcessing = true;
             StateHasChanged();
+            try
+            {
+                var pa = plateAppearances[viewingPaIndex.Value];
+                
+                // Just reset the play's data instead of deleting it, to preserve the timeline sequence
+                pa.Result = ""; // Empty string acts as a blank/placeholder play
+                pa.OutsRecorded = 0;
+                pa.RunsScored = 0;
+                pa.RunnerOn1B_End = pa.RunnerOn1B;
+                pa.RunnerOn2B_End = pa.RunnerOn2B;
+                pa.RunnerOn3B_End = pa.RunnerOn3B;
+                pa.EndsInning = false;
+                
+                await StatsRepository.UpdatePlateAppearanceAsync(pa);
+                
+                await RippleStateAsync();
+                if (game != null && game.ScorecardStatsSync)
+                {
+                    await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
+                }
+                RecalculateState();
+            }
+            finally
+            {
+                isProcessing = false;
+                StateHasChanged();
+            }
         }
     }
 
@@ -885,23 +914,32 @@ else
     {
         if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
         {
-            var pa = plateAppearances[viewingPaIndex.Value];
-            await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
-            plateAppearances.RemoveAt(viewingPaIndex.Value);
-            
-            // If we deleted the very last play, go back to live batter
-            if (viewingPaIndex.Value >= plateAppearances.Count)
-            {
-                viewingPaIndex = null;
-            }
-            
-            await RippleStateAsync();
-            if (game != null && game.ScorecardStatsSync)
-            {
-                await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
-            }
-            RecalculateState();
+            isProcessing = true;
             StateHasChanged();
+            try
+            {
+                var pa = plateAppearances[viewingPaIndex.Value];
+                await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
+                plateAppearances.RemoveAt(viewingPaIndex.Value);
+                
+                // If we deleted the very last play, go back to live batter
+                if (viewingPaIndex.Value >= plateAppearances.Count)
+                {
+                    viewingPaIndex = null;
+                }
+                
+                await RippleStateAsync();
+                if (game != null && game.ScorecardStatsSync)
+                {
+                    await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
+                }
+                RecalculateState();
+            }
+            finally
+            {
+                isProcessing = false;
+                StateHasChanged();
+            }
         }
     }
 
@@ -982,13 +1020,22 @@ else
     {
         if (viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count)
         {
-            PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
-            pa.EndsInning = !pa.EndsInning;
-            await StatsRepository.UpdatePlateAppearanceAsync(pa);
-            
-            await RippleStateAsync();
-            RecalculateState();
+            isProcessing = true;
             StateHasChanged();
+            try
+            {
+                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
+                pa.EndsInning = !pa.EndsInning;
+                await StatsRepository.UpdatePlateAppearanceAsync(pa);
+                
+                await RippleStateAsync();
+                RecalculateState();
+            }
+            finally
+            {
+                isProcessing = false;
+                StateHasChanged();
+            }
         }
     }
 
