@@ -228,17 +228,17 @@ else
                 }
                 @if (viewingPaIndex != null)
                 {
-                    var (scored, outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
+                    (List<string> scored, List<(string Name, int StartBase)> outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
                     @if (scored.Any())
                     {
                         <div class="position-absolute d-flex flex-row gap-1 align-items-center badge-fade" style="left: 50%; top: 100%; transform: translateX(-50%); margin-top: 10px; z-index: 10;">
-                            @foreach (var p in scored)
+                            @foreach (string p in scored)
                             {
                                 <div class="badge bg-success">@p</div>
                             }
                         </div>
                     }
-                    @foreach (var o in outs)
+                    @foreach ((string Name, int StartBase) o in outs)
                     {
                         if (o.StartBase == 1)
                         {
@@ -634,6 +634,11 @@ else
 
     private void ProcessNextRunner()
     {
+        if (viewingPaIndex == null && pendingPA != null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
+        {
+            AutoResolveRemainingRunners();
+            runnersToAdvance.Clear();
+        }
 
         if (runnersToAdvance.Count > 0)
         {
@@ -688,6 +693,10 @@ else
         if (runnersToAdvance.Count > 0)
         {
             ProcessNextRunner();
+            if (!isModalVisible)
+            {
+                await SavePendingPA();
+            }
         }
         else
         {
@@ -807,6 +816,15 @@ else
                 {
                     await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
                     await RippleStateAsync();
+                    
+                    if (viewingPaIndex < plateAppearances.Count - 1)
+                    {
+                        viewingPaIndex++;
+                    }
+                    else
+                    {
+                        viewingPaIndex = null;
+                    }
                 }
                 else
                 {
@@ -836,6 +854,72 @@ else
         isModalVisible = false;
         runnersToAdvance.Clear();
         pendingPA = null;
+    }
+
+    private void AutoResolveRemainingRunners()
+    {
+        if (pendingPA == null) return;
+
+        bool isBatterSafe = pendingPA.Result == "1B" || pendingPA.Result == "2B" || pendingPA.Result == "3B" || pendingPA.Result == "FC";
+        
+        bool r1InQueue = runnersToAdvance.Contains(1);
+        bool r2InQueue = runnersToAdvance.Contains(2);
+        bool r3InQueue = runnersToAdvance.Contains(3);
+        bool batterInQueue = runnersToAdvance.Contains(0);
+
+        if (batterInQueue)
+        {
+            if (pendingPA.Result == "1B" || pendingPA.Result == "FC") pendingPA.RunnerOn1B_End = pendingPA.PlayerId;
+            else if (pendingPA.Result == "2B") pendingPA.RunnerOn2B_End = pendingPA.PlayerId;
+            else if (pendingPA.Result == "3B") pendingPA.RunnerOn3B_End = pendingPA.PlayerId;
+        }
+
+        bool forceFromBatter = batterInQueue && isBatterSafe;
+        bool is1BForced = forceFromBatter && pendingPA.RunnerOn1B != null;
+        bool is2BForced = is1BForced && pendingPA.RunnerOn2B != null;
+        bool is3BForced = is2BForced && pendingPA.RunnerOn3B != null;
+
+        if (r1InQueue && pendingPA.RunnerOn1B != null)
+        {
+            if (is1BForced)
+            {
+                pendingPA.RunnerOn1B_End = null;
+                if (pendingPA.Result == "3B") pendingPA.RunsScored++;
+                else if (pendingPA.Result == "2B") pendingPA.RunnerOn3B_End = pendingPA.RunnerOn1B;
+                else pendingPA.RunnerOn2B_End = pendingPA.RunnerOn1B;
+            }
+            else
+            {
+                pendingPA.RunnerOn1B_End = pendingPA.RunnerOn1B;
+            }
+        }
+
+        if (r2InQueue && pendingPA.RunnerOn2B != null)
+        {
+            if (is2BForced)
+            {
+                pendingPA.RunnerOn2B_End = null;
+                if (pendingPA.Result == "3B" || pendingPA.Result == "2B") pendingPA.RunsScored++;
+                else pendingPA.RunnerOn3B_End = pendingPA.RunnerOn2B;
+            }
+            else
+            {
+                pendingPA.RunnerOn2B_End = pendingPA.RunnerOn2B;
+            }
+        }
+
+        if (r3InQueue && pendingPA.RunnerOn3B != null)
+        {
+            if (is3BForced)
+            {
+                pendingPA.RunnerOn3B_End = null;
+                pendingPA.RunsScored++;
+            }
+            else
+            {
+                pendingPA.RunnerOn3B_End = pendingPA.RunnerOn3B;
+            }
+        }
     }
 
 
@@ -882,7 +966,7 @@ else
             StateHasChanged();
             try
             {
-                var pa = plateAppearances[viewingPaIndex.Value];
+                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
                 
                 // Just reset the play's data instead of deleting it, to preserve the timeline sequence
                 pa.Result = ""; // Empty string acts as a blank/placeholder play
@@ -918,7 +1002,7 @@ else
             StateHasChanged();
             try
             {
-                var pa = plateAppearances[viewingPaIndex.Value];
+                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
                 await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
                 plateAppearances.RemoveAt(viewingPaIndex.Value);
                 
@@ -972,23 +1056,23 @@ else
 
     private (List<string> Scored, List<(string Name, int StartBase)> Outs) GetRunnersHomeAndOut(PlateAppearance pa)
     {
-        var starters = new List<(int PlayerId, int Base)>();
+        List<(int PlayerId, int Base)> starters = new List<(int PlayerId, int Base)>();
         if (pa.RunnerOn3B.HasValue) starters.Add((pa.RunnerOn3B.Value, 3));
         if (pa.RunnerOn2B.HasValue) starters.Add((pa.RunnerOn2B.Value, 2));
         if (pa.RunnerOn1B.HasValue) starters.Add((pa.RunnerOn1B.Value, 1));
         starters.Add((pa.PlayerId, 0)); // Batter
 
-        var enders = new HashSet<int>();
+        HashSet<int> enders = new HashSet<int>();
         if (pa.RunnerOn1B_End.HasValue) enders.Add(pa.RunnerOn1B_End.Value);
         if (pa.RunnerOn2B_End.HasValue) enders.Add(pa.RunnerOn2B_End.Value);
         if (pa.RunnerOn3B_End.HasValue) enders.Add(pa.RunnerOn3B_End.Value);
 
-        var missing = starters.Where(s => !enders.Contains(s.PlayerId))
+        List<(int PlayerId, int Base)> missing = starters.Where(s => !enders.Contains(s.PlayerId))
                               .OrderByDescending(s => s.Base)
                               .ToList();
 
-        var scored = new List<string>();
-        var outs = new List<(string Name, int StartBase)>();
+        List<string> scored = new List<string>();
+        List<(string Name, int StartBase)> outs = new List<(string Name, int StartBase)>();
         
         int runs = pa.RunsScored;
 
@@ -1047,7 +1131,7 @@ else
         int? temp2B = null;
         int? temp3B = null;
 
-        foreach (var pa in plateAppearances)
+        foreach (PlateAppearance pa in plateAppearances)
         {
             bool changed = false;
             if (pa.RunnerOn1B != temp1B) { pa.RunnerOn1B = temp1B; changed = true; }

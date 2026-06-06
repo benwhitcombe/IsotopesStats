@@ -515,6 +515,17 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         if (game == null) return;
 
         List<StatEntry> aggregatedStats = await CalculateStatsFromPlateAppearancesAsync(gameId);
+        
+        int totalRuns = aggregatedStats.Sum(s => s.R);
+        if (game.IsHome)
+        {
+            game.HomeTeamScore = totalRuns;
+        }
+        else
+        {
+            game.VisitingTeamScore = totalRuns;
+        }
+
         await UpdateGameWithStatsAsync(game, aggregatedStats);
     }
 }
