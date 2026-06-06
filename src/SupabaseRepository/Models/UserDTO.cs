@@ -21,4 +21,7 @@ internal class UserDTO : BaseModel
 
     [Column("isdeleted")]
     public bool? IsDeleted { get; set; }
+
+    [Column("send_error_notifications")]
+    public bool SendErrorNotifications { get; set; }
 }

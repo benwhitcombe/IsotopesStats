@@ -11,4 +11,6 @@ public record UserRolesSummaryView : IEntity<string>
     public string RoleNames { get; set; } = string.Empty;
 
     public bool IsDeleted { get; set; } = false;
+
+    public bool SendErrorNotifications { get; set; } = false;
 }

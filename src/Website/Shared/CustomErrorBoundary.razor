@@ -7,12 +7,7 @@
 }
 else
 {
-    <div style="font-family: monospace; padding: 1rem; background: white; color: black; line-height: 1.4; word-break: break-all; white-space: pre-wrap;">
-        ERROR: @CurrentException.Message
-        @CurrentException.StackTrace
-        
-        UA: @UserAgent
-    </div>
+    <!-- The JS displayGlobalError function will take over the UI -->
 }
 
 @code {
@@ -25,12 +20,14 @@ else
         catch { UserAgent = "Error getting UA"; }
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnErrorAsync(Exception exception)
     {
-        if (CurrentException != null)
+        await base.OnErrorAsync(exception);
+        try 
         {
-            Console.WriteLine($"Boundary caught error: {CurrentException.Message}");
-            Console.WriteLine(CurrentException.StackTrace);
+            string message = $"ERROR: {exception.Message}\n\nStack Trace:\n{exception.StackTrace}";
+            await JSRuntime.InvokeVoidAsync("displayGlobalError", "BLAZOR EXCEPTION", message);
         }
+        catch { }
     }
 }

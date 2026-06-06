@@ -42,92 +42,91 @@
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; max-width: 400px; border: 1px solid #dc3545; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <h4 style="color: #dc3545; margin-top: 0; font-family: sans-serif;">Oops! Something went wrong.</h4>
+            <p style="color: #333; font-family: sans-serif; font-size: 14px;">We've encountered an unexpected issue. The error has been automatically logged for our team to review.</p>
+            <button onclick="window.location.reload(true)" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">Reload Page</button>
+        </div>
     </div>
 
     <style>
         #blazor-error-ui {
-            z-index: 99998 !important;
-            bottom: 60px !important; /* Move it up so it doesn't cover the force reload button if both show */
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1050;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 
     <script type="text/javascript">
-        function displayGlobalError(prefix, content, color, bg) {
-            // Avoid duplicates
-            if (document.querySelector('[data-error-content="' + btoa(content.substring(0, 100)) + '"]')) return;
-
-            const errorDiv = document.createElement('div');
-            errorDiv.setAttribute('data-error-content', btoa(content.substring(0, 100)));
-            errorDiv.style.position = 'fixed';
-            errorDiv.style.top = '0';
-            errorDiv.style.left = '0';
-            errorDiv.style.width = '100%';
-            errorDiv.style.background = bg || 'black';
-            errorDiv.style.color = color || 'white';
-            errorDiv.style.zIndex = '100000';
-            errorDiv.style.padding = '15px';
-            errorDiv.style.fontSize = '11px';
-            errorDiv.style.fontFamily = 'monospace';
-            errorDiv.style.wordBreak = 'break-all';
-            errorDiv.style.whiteSpace = 'pre-wrap';
-            const fullErrorText = prefix + '\n' + content + '\n\nUA: ' + navigator.userAgent;
-            errorDiv.innerHTML = '<strong>' + prefix + '</strong> (Click to copy)\n' + content + '\n\nUA: ' + navigator.userAgent;
-            
-            errorDiv.onclick = function() {
-                const textArea = document.createElement("textarea");
-                textArea.value = fullErrorText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    const originalBg = errorDiv.style.background;
-                    errorDiv.style.background = '#4CAF50';
-                    setTimeout(() => { errorDiv.style.background = originalBg; }, 500);
-                } catch (err) {
-                    console.error('Fallback copy failed', err);
-                }
-                document.body.removeChild(textArea);
-                
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(fullErrorText).catch(e => {});
-                }
-            };
-
-            if (document.body) {
-                document.body.appendChild(errorDiv);
-                addForceReloadButton();
-            } else {
-                // If body not ready, try again in a bit
-                setTimeout(function() { 
-                    if (document.body) {
-                        document.body.appendChild(errorDiv);
-                        addForceReloadButton();
-                    }
-                }, 500);
+        async function getSupabaseConfig() {
+            if (window.supabaseConfig) return window.supabaseConfig;
+            try {
+                const response = await fetch('appsettings.json');
+                const data = await response.json();
+                window.supabaseConfig = data.Supabase;
+                return window.supabaseConfig;
+            } catch (err) {
+                console.error("Could not load appsettings", err);
+                return null;
             }
         }
 
-        function addForceReloadButton() {
-            if (document.getElementById('force-reload-btn')) return;
-            const btn = document.createElement('button');
-            btn.id = 'force-reload-btn';
-            btn.innerHTML = 'FORCE CACHE CLEAR & RELOAD';
-            btn.style.position = 'fixed';
-            btn.style.bottom = '20px';
-            btn.style.left = '20px';
-            btn.style.right = '20px';
-            btn.style.padding = '20px';
-            btn.style.background = 'yellow';
-            btn.style.color = 'black';
-            btn.style.fontWeight = 'bold';
-            btn.style.zIndex = '100001';
-            btn.onclick = function() {
-                window.location.reload(true);
-            };
-            document.body.appendChild(btn);
+        async function logErrorToSupabase(message, stack_trace) {
+            const config = await getSupabaseConfig();
+            if (!config) return;
+            
+            let token = config.Key;
+            try {
+                const sessionStr = localStorage.getItem('supabase_session');
+                if (sessionStr) {
+                    const session = JSON.parse(sessionStr);
+                    const parsedToken = session.access_token || session.AccessToken;
+                    if (parsedToken) {
+                        token = parsedToken;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not read auth token");
+            }
+
+            try {
+                await fetch(`${config.Url}/rest/v1/error_logs`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': config.Key,
+                        'Authorization': `Bearer ${token}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        message: message || "Unknown error",
+                        stack_trace: stack_trace || "No stack trace available",
+                        user_agent: navigator.userAgent
+                    })
+                });
+            } catch(e) {
+                console.error("Failed to log error to Supabase", e);
+            }
+        }
+
+        function displayGlobalError(prefix, content) {
+            // Avoid duplicates
+            if (window.hasDisplayedError) return;
+            window.hasDisplayedError = true;
+
+            // Show friendly UI
+            document.getElementById('blazor-error-ui').style.display = 'flex';
+            
+            // Hide the Blazor loading spinner if it's there
+            const appDiv = document.getElementById('app');
+            if (appDiv) appDiv.style.display = 'none';
+
+            // Send to Supabase
+            logErrorToSupabase(prefix, content);
         }
 
         // Intercept console.error to catch Blazor Critical errors that don't bubble to window.onerror
@@ -138,7 +137,7 @@
                 const message = args.join(' ');
                 
                 if (message.includes('crit:') || message.includes('Unhandled exception') || message.includes('InvalidCharacterError')) {
-                    displayGlobalError('BLAZOR CRITICAL', message, 'white', 'darkred');
+                    displayGlobalError('BLAZOR CRITICAL', message);
                 }
                 
                 originalError.apply(console, arguments);
@@ -152,11 +151,11 @@
                 return;
             }
 
-            displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'), 'lime', 'black');
+            displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'));
         };
 
         window.addEventListener('unhandledrejection', function (event) {
-            displayGlobalError('PROMISE REJECTION', event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A'), 'white', 'darkred');
+            displayGlobalError('PROMISE REJECTION', event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A'));
         });
     </script>
 

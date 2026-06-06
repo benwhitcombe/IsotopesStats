@@ -15,6 +15,8 @@ public record User : IEntity<string>
     
     public bool IsDeleted { get; set; } = false;
 
+    public bool SendErrorNotifications { get; set; } = false;
+
     public List<UserRole> Roles { get; set; } = new();
 
     public User DeepClone() => this with { Roles = new List<UserRole>(Roles) };
