@@ -96,52 +96,58 @@
                         @if (HasAnyManagementPermission(mgmtContext.User))
                         {
                             <div style="background: #f9f9f9; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
-                                @* Management Section *@
-                                <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold;">
-                                    Management
-                                </div>
-                                <AuthorizeView Policy="Manage Games" Context="pContext">
-                                    <NavLink href="management/games" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>🏟️</span> Games
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Opponents" Context="pContext">
-                                    <NavLink href="management/opponents" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                        </svg> Opponents
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Players" Context="pContext">
-                                    <NavLink href="management/players" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>👥</span> Players
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Seasons" Context="pContext">
-                                    <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>🗓️</span> Seasons
-                                    </NavLink>
-                                </AuthorizeView>
+                                @if (HasAnyManagementSectionPermission(mgmtContext.User))
+                                {
+                                    @* Management Section *@
+                                    <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold;">
+                                        Management
+                                    </div>
+                                    <AuthorizeView Policy="Manage Games" Context="pContext">
+                                        <NavLink href="management/games" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>🏟️</span> Games
+                                        </NavLink>
+                                    </AuthorizeView>
+                                    <AuthorizeView Policy="Manage Opponents" Context="pContext">
+                                        <NavLink href="management/opponents" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                            </svg> Opponents
+                                        </NavLink>
+                                    </AuthorizeView>
+                                    <AuthorizeView Policy="Manage Players" Context="pContext">
+                                        <NavLink href="management/players" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>👥</span> Players
+                                        </NavLink>
+                                    </AuthorizeView>
+                                    <AuthorizeView Policy="Manage Seasons" Context="pContext">
+                                        <NavLink href="management/seasons" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>🗓️</span> Seasons
+                                        </NavLink>
+                                    </AuthorizeView>
+                                }
 
-                                @* Administration Section *@
-                                <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; border-top: 1px solid #eee; margin-top: 0.5rem;">
-                                    Administration
-                                </div>
-                                <AuthorizeView Policy="Manage Logs" Context="pContext">
-                                    <NavLink href="management/logs" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>📜</span> Logs
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Roles" Context="pContext">
-                                    <NavLink href="management/roles" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>🛠️</span> Roles
-                                    </NavLink>
-                                </AuthorizeView>
-                                <AuthorizeView Policy="Manage Users" Context="pContext">
-                                    <NavLink href="management/users" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
-                                        <span>🔑</span> Users
-                                    </NavLink>
-                                </AuthorizeView>
+                                @if (HasAnyAdministrationSectionPermission(mgmtContext.User))
+                                {
+                                    @* Administration Section *@
+                                    <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold; @(HasAnyManagementSectionPermission(mgmtContext.User) ? "border-top: 1px solid #eee; margin-top: 0.5rem;" : "")">
+                                        Administration
+                                    </div>
+                                    <AuthorizeView Policy="Manage Logs" Context="pContext">
+                                        <NavLink href="management/logs" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>📜</span> Logs
+                                        </NavLink>
+                                    </AuthorizeView>
+                                    <AuthorizeView Policy="Manage Roles" Context="pContext">
+                                        <NavLink href="management/roles" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>🛠️</span> Roles
+                                        </NavLink>
+                                    </AuthorizeView>
+                                    <AuthorizeView Policy="Manage Users" Context="pContext">
+                                        <NavLink href="management/users" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
+                                            <span>🔑</span> Users
+                                        </NavLink>
+                                    </AuthorizeView>
+                                }
                             </div>
                         }
                     </Authorized>
@@ -173,34 +179,40 @@
             {
                 <div class="management-sub-nav desktop-only">
                     <div class="sub-nav-content">
-                        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
-                            Management
-                        </div>
-                        <AuthorizeView Policy="Manage Games" Context="pContext">
-                            <NavLink href="management/games">Games</NavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="Manage Opponents" Context="pContext">
-                            <NavLink href="management/opponents">Opponents</NavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="Manage Players" Context="pContext">
-                            <NavLink href="management/players">Players</NavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="Manage Seasons" Context="pContext">
-                            <NavLink href="management/seasons">Seasons</NavLink>
-                        </AuthorizeView>
+                        @if (HasAnyManagementSectionPermission(subnavContext.User))
+                        {
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
+                                Management
+                            </div>
+                            <AuthorizeView Policy="Manage Games" Context="pContext">
+                                <NavLink href="management/games">Games</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="Manage Opponents" Context="pContext">
+                                <NavLink href="management/opponents">Opponents</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="Manage Players" Context="pContext">
+                                <NavLink href="management/players">Players</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="Manage Seasons" Context="pContext">
+                                <NavLink href="management/seasons">Seasons</NavLink>
+                            </AuthorizeView>
+                        }
 
-                        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin: 0 1rem 0 2rem; border-right: 1px solid #ddd; padding-right: 1.5rem; border-left: 1px solid #ddd; padding-left: 2rem;">
-                            Administration
-                        </div>
-                        <AuthorizeView Policy="Manage Logs" Context="pContext">
-                            <NavLink href="management/logs">Logs</NavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="Manage Roles" Context="pContext">
-                            <NavLink href="management/roles">Roles</NavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="Manage Users" Context="pContext">
-                            <NavLink href="management/users">Users</NavLink>
-                        </AuthorizeView>
+                        @if (HasAnyAdministrationSectionPermission(subnavContext.User))
+                        {
+                            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem; @(HasAnyManagementSectionPermission(subnavContext.User) ? "margin-left: 1rem; border-left: 1px solid #ddd; padding-left: 2rem;" : "")">
+                                Administration
+                            </div>
+                            <AuthorizeView Policy="Manage Logs" Context="pContext">
+                                <NavLink href="management/logs">Logs</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="Manage Roles" Context="pContext">
+                                <NavLink href="management/roles">Roles</NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Policy="Manage Users" Context="pContext">
+                                <NavLink href="management/users">Users</NavLink>
+                            </AuthorizeView>
+                        }
                     </div>
                 </div>
             }
@@ -296,12 +308,22 @@
 
     private bool HasAnyManagementPermission(ClaimsPrincipal user)
     {
+        return HasAnyManagementSectionPermission(user) || HasAnyAdministrationSectionPermission(user);
+    }
+
+    private bool HasAnyManagementSectionPermission(ClaimsPrincipal user)
+    {
         return user.HasClaim(c => c.Type == "Permission" && 
             (c.Value == "Manage Games" || 
              c.Value == "Manage Players" || 
              c.Value == "Manage Opponents" || 
-             c.Value == "Manage Seasons" || 
-             c.Value == "Manage Users" || 
+             c.Value == "Manage Seasons"));
+    }
+
+    private bool HasAnyAdministrationSectionPermission(ClaimsPrincipal user)
+    {
+        return user.HasClaim(c => c.Type == "Permission" && 
+            (c.Value == "Manage Users" || 
              c.Value == "Manage Roles" ||
              c.Value == "Manage Logs"));
     }
