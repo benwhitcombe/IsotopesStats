@@ -485,6 +485,7 @@ internal class StatsRepository : BaseRepository, IStatsRepository
                     if (pa.RunnerOn3B.HasValue) runnersBefore.Add(pa.RunnerOn3B.Value);
                     if (pa.RunnerOn2B.HasValue) runnersBefore.Add(pa.RunnerOn2B.Value);
                     if (pa.RunnerOn1B.HasValue) runnersBefore.Add(pa.RunnerOn1B.Value);
+                    runnersBefore.Add(pa.PlayerId); // Ensure the batter can also be credited with a run
 
                     HashSet<int> runnersAfter = new HashSet<int>();
                     if (pa.RunnerOn3B_End.HasValue) runnersAfter.Add(pa.RunnerOn3B_End.Value);
