@@ -211,8 +211,20 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     {
         try
         {
-            await Supabase.Auth.ResetPasswordForEmail(email);
-            return true;
+            var body = new Dictionary<string, object>
+            {
+                { "email", email },
+                { "action", "forgot_password" }
+            };
+
+            var options = new Supabase.Functions.Client.InvokeFunctionOptions { Body = body };
+            var response = await Supabase.Functions.Invoke("create-user", null, options);
+            
+            if (!string.IsNullOrEmpty(response))
+            {
+                return true;
+            }
+            return false;
         }
         catch (Exception ex)
         {
