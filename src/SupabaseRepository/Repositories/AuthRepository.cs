@@ -240,6 +240,10 @@ internal class AuthRepository : BaseRepository, IAuthRepository
             await Supabase.Auth.VerifyOTP(email, token, global::Supabase.Gotrue.Constants.EmailOtpType.Recovery);
             UserAttributes attrs = new UserAttributes { Password = newPassword };
             await Supabase.Auth.Update(attrs);
+            
+            // Force the user to log in manually using their new password
+            await Supabase.Auth.SignOut();
+            
             return true;
         }
         catch (Exception ex)

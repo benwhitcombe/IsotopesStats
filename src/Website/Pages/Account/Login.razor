@@ -84,7 +84,9 @@
             {
                 SharedState.OpenMenuOnLoad = true;
 
-                if (!string.IsNullOrEmpty(ReturnUrl))
+                if (!string.IsNullOrEmpty(ReturnUrl) && 
+                    !ReturnUrl.ToLower().Contains("reset-password") && 
+                    !ReturnUrl.ToLower().Contains("forgot-password"))
                 {
                     Navigation.NavigateTo(ReturnUrl);
                 }
