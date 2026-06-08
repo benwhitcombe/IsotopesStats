@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "K+k/8i2G",
+  "version": "q/TSu7j1",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -14,7 +14,7 @@ self.assetsManifest = {
       "url": "Website.styles.css"
     },
     {
-      "hash": "sha256-lJSF0aiU1NNfzRRf7yP6el27LH3WSOUNlzMkDL5kJOs=",
+      "hash": "sha256-STSRkXVwu+ImoErz4nAsUHxHn9I4clDjONjyNDhfOJ4=",
       "url": "_framework/Domain.wasm"
     },
     {
@@ -150,7 +150,7 @@ self.assetsManifest = {
       "url": "_framework/Supabase.wasm"
     },
     {
-      "hash": "sha256-YPKa2GSVBMwUgAQBsO4qi4xIS+dpbRrryGUvXqbapkY=",
+      "hash": "sha256-jVL076GX6kutIuegzQ1c7De6s8lNLwzmaFbu9dc6pxg=",
       "url": "_framework/SupabaseRepository.wasm"
     },
     {
@@ -270,7 +270,7 @@ self.assetsManifest = {
       "url": "_framework/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-5Ui5YFYAwZp5QZFXglGYSxYPTlycN2n22eun9MENKCM=",
+      "hash": "sha256-vADizCO7WqRIHwPOUadHWNpKyMmrQwlFDNtP+VCeI9g=",
       "url": "_framework/System.Private.CoreLib.wasm"
     },
     {
@@ -322,7 +322,7 @@ self.assetsManifest = {
       "url": "_framework/System.Runtime.Serialization.Primitives.wasm"
     },
     {
-      "hash": "sha256-uANMssbov6gdjoNGzNB7mRNI2Z6UR1S34K0OYZRr41s=",
+      "hash": "sha256-kIK6wJCP+t6FduDyUPEG7blFLF9wmZJ8JOEnBL+WU+s=",
       "url": "_framework/System.Runtime.wasm"
     },
     {
@@ -386,7 +386,7 @@ self.assetsManifest = {
       "url": "_framework/System.wasm"
     },
     {
-      "hash": "sha256-MDD5wc09tiXYncCJhoi5JKfkGgyuVeTM+zYE7Wdx5b4=",
+      "hash": "sha256-KZym1VW73Ejt6mKkrNhepN4EVk+LKMNSRFVqRbgyeyc=",
       "url": "_framework/Website.wasm"
     },
     {
@@ -394,7 +394,7 @@ self.assetsManifest = {
       "url": "_framework/Websocket.Client.wasm"
     },
     {
-      "hash": "sha256-pEShOkW52V00XsqMLaDb0Pa1T1jX33cZpEvJM54L2RA=",
+      "hash": "sha256-VP9kQ4bgwWSJXMQrdIqX+SHHeQnVPeMou8ypCC+NaH8=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -490,7 +490,7 @@ self.assetsManifest = {
       "url": "images/defense.png"
     },
     {
-      "hash": "sha256-6njnNVmo0Q1Nsfun+qpgtm2My/MO6dmvp2D4kBIpgZg=",
+      "hash": "sha256-LphUthPGQGZ2wr4ZrXAqH06NXUJVEt7o5Sa0gXNpW+M=",
       "url": "index.html"
     },
     {
