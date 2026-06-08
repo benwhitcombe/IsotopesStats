@@ -17,12 +17,13 @@
 @code {
     [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
     [Parameter] public string? Warning { get; set; }
+    [Parameter] public string? ItemName { get; set; }
     [Parameter] public EventCallback OnDeleted { get; set; }
     [Parameter] public Func<TId, Task> DeleteAction { get; set; } = null!;
 
     private bool isVisible = false;
     private TItem? itemToDelete;
-    private string TypeName => typeof(TItem).Name.Replace("ViewModel", "");
+    private string TypeName => ItemName ?? typeof(TItem).Name.Replace("ViewModel", "");
 
     public void ConfirmDelete(TItem item)
     {
@@ -70,7 +71,7 @@
                 Action = UserLogAction.Deleted,
                 EntityType = TypeName,
                 EntityId = item.Id?.ToString() ?? "",
-                Description = $"Deleted {TypeName}: {identifier}",
+                Description = $"Deleted {TypeName}: {identifier}\nDetails: {item.ToString()}",
                 Timestamp = DateTime.UtcNow
             });
         }

@@ -313,7 +313,24 @@
         else if (emailProp != null && Item != null) identifier = emailProp.GetValue(Item)?.ToString() ?? "";
         
         if (string.IsNullOrEmpty(identifier)) identifier = $"ID: {GetItemId()}";
-        return $"{action} {TypeName}: {identifier}";
+        
+        string desc = $"{action} {TypeName}: {identifier}";
+
+        if (action == UserLogAction.Updated && OriginalItem != null && Item != null)
+        {
+            desc += $"\nFrom: {OriginalItem.ToString()}";
+            if (_lastExtraState != null) desc += $"\nFrom ExtraState: {_lastExtraState.ToString()}";
+            
+            desc += $"\nTo: {Item.ToString()}";
+            if (ExtraState != null) desc += $"\nTo ExtraState: {ExtraState.ToString()}";
+        }
+        else if (Item != null)
+        {
+            desc += $"\nDetails: {Item.ToString()}";
+            if (ExtraState != null) desc += $"\nExtraState: {ExtraState.ToString()}";
+        }
+
+        return desc;
     }
 
     public void Dispose()

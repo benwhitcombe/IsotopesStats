@@ -12,7 +12,7 @@
 
 <PageTitle>Isotopes - Manage Roles</PageTitle>
 
-<DeleteManager TItem="UserRole" TId="int" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="IAuthRepository.DeleteUserRoleAsync" />
+<DeleteManager TItem="UserRole" TId="int" @ref="deleteManager" OnDeleted="LoadData" DeleteAction="IAuthRepository.DeleteUserRoleAsync" ItemName="Role" />
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Manage Roles</h3>

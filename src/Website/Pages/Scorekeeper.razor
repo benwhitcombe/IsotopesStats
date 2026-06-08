@@ -5,6 +5,7 @@
 @attribute [Authorize(Policy = "Manage Games")]
 @inject IStatsRepository StatsRepository
 @inject NavigationManager NavigationManager
+@inject IAuthRepository AuthSvc
 
 <PageTitle>Scorekeeping - Isotopes</PageTitle>
 
@@ -328,6 +329,28 @@ else
     [SupplyParameterFromQuery]
     public int? paIndex { get; set; }
 
+    [CascadingParameter] 
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private async Task LogActionAsync(string description)
+    {
+        if (authenticationStateTask == null) return;
+        var authState = await authenticationStateTask;
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var userEmail = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "unknown";
+            await AuthSvc.AddLogAsync(new UserLog
+            {
+                UserEmail = userEmail,
+                Action = UserLogAction.Updated,
+                EntityType = "Game",
+                EntityId = GameId.ToString(),
+                Description = description,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
     private bool isLoading = true;
     private bool isProcessing = false;
     private Game? game;
@@ -469,6 +492,7 @@ else
             battingOrderIds = setupBattingOrderIds.ToList();
             isLineupSet = true;
             RecalculateState();
+            await LogActionAsync($"Set batting order for Game {GameId}");
         }
         finally
         {
@@ -816,6 +840,7 @@ else
                 {
                     await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
                     await RippleStateAsync();
+                    await LogActionAsync($"Updated play for Game {GameId} to {pendingPA.Result} (Inning {pendingPA.Inning})");
                     
                     if (viewingPaIndex < plateAppearances.Count - 1)
                     {
@@ -830,6 +855,7 @@ else
                 {
                     PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
                     plateAppearances.Add(savedPa);
+                    await LogActionAsync($"Recorded play for Game {GameId}: {pendingPA.Result} (Inning {pendingPA.Inning})");
                     // viewingPaIndex = null; // Auto-advance to next batter
                 }
                 
@@ -978,6 +1004,7 @@ else
                 pa.EndsInning = false;
                 
                 await StatsRepository.UpdatePlateAppearanceAsync(pa);
+                await LogActionAsync($"Cleared play at index {viewingPaIndex.Value} for Game {GameId}");
                 
                 await RippleStateAsync();
                 if (game != null && game.ScorecardStatsSync)
@@ -1002,9 +1029,11 @@ else
             StateHasChanged();
             try
             {
-                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
+                int pIndex = viewingPaIndex.Value;
+                PlateAppearance pa = plateAppearances[pIndex];
                 await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
-                plateAppearances.RemoveAt(viewingPaIndex.Value);
+                plateAppearances.RemoveAt(pIndex);
+                await LogActionAsync($"Deleted play at index {pIndex} for Game {GameId}");
                 
                 // If we deleted the very last play, go back to live batter
                 if (viewingPaIndex.Value >= plateAppearances.Count)
@@ -1111,6 +1140,7 @@ else
                 PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
                 pa.EndsInning = !pa.EndsInning;
                 await StatsRepository.UpdatePlateAppearanceAsync(pa);
+                await LogActionAsync($"Toggled end inning (now {pa.EndsInning}) for play at index {viewingPaIndex.Value} for Game {GameId}");
                 
                 await RippleStateAsync();
                 RecalculateState();

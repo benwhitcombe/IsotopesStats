@@ -6,6 +6,7 @@
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @inject IJSRuntime JS
+@inject IAuthRepository AuthSvc
 
 <PageTitle>Scorecard - Isotopes</PageTitle>
 
@@ -28,6 +29,7 @@ else
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 @if (canManageGames)
                 {
+                    <button class="view-btn" style="background-color: var(--isotopes-red); color: white; border-color: var(--isotopes-red);" @onclick="OpenResetModal">Reset Scorecard</button>
                     <a href="/management/games/@GameId/scorekeeping" class="view-btn active">Scorekeeper</a>
                 }
             </div>
@@ -407,6 +409,44 @@ else
     </div>
 }
 
+@if (isResetModalVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: var(--isotopes-red);">
+                    <h5 class="modal-title fw-bold">Reset Scorecard</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseResetModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reset the scorecard for this game?</p>
+                    <p class="text-danger fw-bold mb-0">This will permanently delete:</p>
+                    <ul class="text-danger text-start" style="text-align: left;">
+                        <li>All plate appearances</li>
+                        <li>The batting order</li>
+                        <li>All official game stats (if synced)</li>
+                        <li>The inning-by-inning opponent score</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseResetModal" disabled="@isProcessing">Cancel</button>
+                    <button type="button" class="btn text-white fw-bold" style="background-color: var(--isotopes-red);" @onclick="ResetScorecardAsync" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="ms-1">Resetting...</span>
+                        }
+                        else
+                        {
+                            <span>Yes, Reset Scorecard</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
     .scorecard-wrapper {
         width: 100%;
@@ -600,6 +640,28 @@ else
     [Parameter]
     public int GameId { get; set; }
 
+    [CascadingParameter] 
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private async Task LogActionAsync(string description)
+    {
+        if (authenticationStateTask == null) return;
+        var authState = await authenticationStateTask;
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var userEmail = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "unknown";
+            await AuthSvc.AddLogAsync(new UserLog
+            {
+                UserEmail = userEmail,
+                Action = UserLogAction.Updated,
+                EntityType = "Game",
+                EntityId = GameId.ToString(),
+                Description = description,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
     private bool isLoading = true;
     private Game? game;
     private List<Player> roster = new();
@@ -610,6 +672,8 @@ else
     private List<StatEntry> mismatchedPlayers = new();
     private bool isOutOfSync = false;
     private bool isSyncModalVisible = false;
+    private bool isResetModalVisible = false;
+    private bool isProcessing = false;
     private bool zoomInitialized = false;
     
     private string opponentName = "Unknown";
@@ -626,8 +690,16 @@ else
         var authResult = await AuthorizationService.AuthorizeAsync(authState.User, "Manage Games");
         canManageGames = authResult.Succeeded;
 
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
         try
         {
+            isLoading = true;
+            StateHasChanged();
+
             game = await StatsRepository.GetGameAsync(GameId);
             if (game != null)
             {
@@ -647,6 +719,7 @@ else
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -822,6 +895,7 @@ else
         game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : scores.Values.Sum();
         
         await StatsRepository.UpdateGameAsync(game);
+        await LogActionAsync($"Updated opponent score for inning {colIndex} to {value} for Game {GameId}");
     }
     
     private void HandleCellClick(PlateAppearance? pa)
@@ -870,6 +944,47 @@ else
     private void OpenSyncModal() => isSyncModalVisible = true;
     private void CloseSyncModal() => isSyncModalVisible = false;
 
+    private void OpenResetModal() => isResetModalVisible = true;
+    private void CloseResetModal() => isResetModalVisible = false;
+
+    private async Task ResetScorecardAsync()
+    {
+        isProcessing = true;
+        StateHasChanged();
+        try
+        {
+            var pas = await StatsRepository.GetPlateAppearancesAsync(GameId);
+            foreach (var pa in pas)
+            {
+                await StatsRepository.DeletePlateAppearanceAsync(pa.Id);
+            }
+
+            if (game != null)
+            {
+                game.SetOpponentInningScores(new System.Collections.Generic.Dictionary<int, int>());
+                game.HomeTeamScore = null;
+                game.VisitingTeamScore = null;
+                
+                await StatsRepository.UpdateGameAsync(game);
+                
+                if (game.ScorecardStatsSync)
+                {
+                    await StatsRepository.UpdateGameWithStatsAsync(game, new List<StatEntry>());
+                }
+            }
+
+            await LogActionAsync($"Reset scorecard (cleared lineup, plays, and scores) for Game {GameId}");
+            
+            CloseResetModal();
+            await LoadDataAsync();
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task SyncAllStats()
     {
         await StatsRepository.SyncGameStatsFromPlateAppearancesAsync(GameId);
@@ -878,6 +993,7 @@ else
         BuildScorecardGrid();
         CloseSyncModal();
         StateHasChanged();
+        await LogActionAsync($"Synced calculated stats from play-by-play for Game {GameId}");
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)

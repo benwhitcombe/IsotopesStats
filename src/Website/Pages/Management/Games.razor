@@ -695,7 +695,7 @@ else
 
     private async Task DeleteGame()
     {
-        await AuthSvc.AddLogAsync(new UserLog { Action = UserLogAction.Deleted, EntityType = "Game", EntityId = editingGame.Id.ToString(), Description = $"Deleted game {editingGame.GameNumber}" });
+        await AuthSvc.AddLogAsync(new UserLog { Action = UserLogAction.Deleted, EntityType = "Game", EntityId = editingGame.Id.ToString(), Description = $"Deleted game {editingGame.GameNumber}\nDetails: {editingGame.ToString()}" });
         await StatsRepository.DeleteGameAsync(editingGame.Id);
         await LoadGames();
     }
