@@ -20,6 +20,12 @@ public static class ServiceCollectionExtensions
                 AutoConnectRealtime = true,
                 SessionHandler = new SupabaseSessionPersistence(sp.GetRequiredService<IJSRuntime>())
             };
+            
+            // Prevent Blazor WebAssembly's underlying fetch API from caching GET requests
+            options.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            options.Headers["Pragma"] = "no-cache";
+            options.Headers["Expires"] = "0";
+            
             return new Supabase.Client(url, key, options);
         });
 
