@@ -1,4 +1,4 @@
-/* Manifest version: 1MeG9QlJ */
+/* Manifest version: ZrQzh6tv */
 // Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 self.importScripts('./service-worker-assets.js');
