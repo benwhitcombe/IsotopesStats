@@ -143,9 +143,8 @@ internal class AuthRepository : BaseRepository, IAuthRepository
 
     public async Task DeleteUserAsync(string userId)
     {
-        DomainUser user = new DomainUser { Id = userId, IsDeleted = true };
-        await Supabase.From<UserDTO>().Update(Mapper.ToDTO(user));
         await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, userId).Delete();
+        await Supabase.From<UserDTO>().Filter("id", Operator.Equals, userId).Delete();
     }
 
     public async Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false)
