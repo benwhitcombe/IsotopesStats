@@ -102,11 +102,12 @@
                                     <div style="padding: 1.5rem 1.5rem 0.5rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #999; font-weight: bold;">
                                         Management
                                     </div>
-                                    <AuthorizeView Policy="Manage Games" Context="pContext">
+                                    @if (mgmtContext.User.HasClaim("Permission", "Manage Games") || mgmtContext.User.HasClaim("Permission", "Manage Scorekeeping"))
+                                    {
                                         <NavLink href="management/games" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                             <span>🏟️</span> Games
                                         </NavLink>
-                                    </AuthorizeView>
+                                    }
                                     <AuthorizeView Policy="Manage Opponents" Context="pContext">
                                         <NavLink href="management/opponents" class="drawer-item" style="border-bottom: none; background: transparent;" @onclick="ToggleMenu">
                                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -184,9 +185,10 @@
                             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; display: flex; align-items: center; margin-right: 1rem; border-right: 1px solid #ddd; padding-right: 1.5rem;">
                                 Management
                             </div>
-                            <AuthorizeView Policy="Manage Games" Context="pContext">
+                            @if (subnavContext.User.HasClaim("Permission", "Manage Games") || subnavContext.User.HasClaim("Permission", "Manage Scorekeeping"))
+                            {
                                 <NavLink href="management/games">Games</NavLink>
-                            </AuthorizeView>
+                            }
                             <AuthorizeView Policy="Manage Opponents" Context="pContext">
                                 <NavLink href="management/opponents">Opponents</NavLink>
                             </AuthorizeView>
@@ -315,6 +317,7 @@
     {
         return user.HasClaim(c => c.Type == "Permission" && 
             (c.Value == "Manage Games" || 
+             c.Value == "Manage Scorekeeping" ||
              c.Value == "Manage Players" || 
              c.Value == "Manage Opponents" || 
              c.Value == "Manage Seasons"));

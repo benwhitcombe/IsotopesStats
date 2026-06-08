@@ -5,20 +5,22 @@
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Shared
 @using Microsoft.AspNetCore.Components.Forms
-@attribute [Authorize(Policy = "Manage Games")]
+@attribute [Authorize]
 @inject IStatsRepository StatsRepository
 @inject IAuthRepository AuthSvc
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject SessionStorageService SessionStorage
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 
 <PageTitle>Isotopes - Manage Games</PageTitle>
 
 <DeleteManager TItem="Game" TId="int" @ref="deleteManager" OnDeleted="LoadGames" DeleteAction="StatsRepository.DeleteGameAsync" />
 
-<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; padding-top: 0.25rem;">
     <h3 style="margin:0">Manage Games</h3>
-    @if (!isLoading && !isEditing)
+    @if (canManageGames && !isLoading && !isEditing)
     {
         <button class="view-btn active" @onclick='() => StartEdit("add", 0)'>Add New Game</button>
     }
@@ -200,8 +202,11 @@ else
                                 <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
 
                                     <button class="view-btn" @onclick='() => Navigation.NavigateTo($"/management/games/{game.Id}/scorecard")'>Scorecard</button>
-                                    <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
-                                    <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
+                                    @if (canManageGames)
+                                    {
+                                        <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
+                                        <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -248,8 +253,11 @@ else
                         <div style="display: flex; gap: 0.5rem;">
 
                             <button class="view-btn" @onclick='() => Navigation.NavigateTo($"/management/games/{game.Id}/scorecard")'>Scorecard</button>
-                            <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
-                            <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
+                            @if (canManageGames)
+                            {
+                                <button class="view-btn" @onclick='() => StartEdit("edit", game.Id)'>Edit</button>
+                                <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => deleteManager.ConfirmDelete(game)">Delete</button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -275,6 +283,9 @@ else
 @code {
     [Parameter] public string? Action { get; set; }
     [Parameter] public int? Id { get; set; }
+    
+    private bool canManageGames = false;
+    private bool canManageScorekeeping = false;
 
     private DeleteManager<Game, int> deleteManager = null!;
     private ModelEditor<Game> modelEditor = null!;
@@ -327,6 +338,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var manageGamesResult = await AuthorizationService.AuthorizeAsync(authState.User, "Manage Games");
+        canManageGames = manageGamesResult.Succeeded;
+
+        var manageScorekeepingResult = await AuthorizationService.AuthorizeAsync(authState.User, "Manage Scorekeeping");
+        canManageScorekeeping = manageScorekeepingResult.Succeeded;
+
+        if (!canManageGames && !canManageScorekeeping)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
         allSeasons = await StatsRepository.GetSeasonsAsync();
         if (activeSeasons.Any())
         {

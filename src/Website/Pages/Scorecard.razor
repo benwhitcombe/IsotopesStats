@@ -26,9 +26,9 @@ else if (game == null)
 else
 {
     <div class="scorecard-wrapper">
-        <div class="d-flex flex-row justify-content-between align-items-center no-print mb-3 gap-2">
+        <div class="d-flex flex-row justify-content-between align-items-center no-print mb-3 gap-2 pt-1">
             <h2 class="mb-0">Scorecard</h2>
-            <div class="d-flex flex-wrap justify-content-center gap-2">
+            <div class="d-flex flex-wrap justify-content-center gap-2 p-1">
                 @if (canManageGames)
                 {
                     <button class="view-btn" style="background-color: var(--isotopes-red); color: white; border-color: var(--isotopes-red);" @onclick="OpenResetModal">Reset Scorecard</button>

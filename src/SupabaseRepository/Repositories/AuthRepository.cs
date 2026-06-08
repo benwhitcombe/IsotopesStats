@@ -109,11 +109,26 @@ internal class AuthRepository : BaseRepository, IAuthRepository
 
     public async Task UpdateUserAsync(DomainUser user, List<int> newRoleIds)
     {
-        await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, user.Id).Delete();
-        foreach (int roleId in newRoleIds)
+        var existingResponse = await Supabase.From<UserUserRolesDTO>().Filter("userid", Operator.Equals, user.Id).Get();
+        var existingIds = existingResponse.Models.Select(x => x.RoleId).ToList();
+
+        var toDelete = existingIds.Except(newRoleIds).ToList();
+        var toInsert = newRoleIds.Except(existingIds).ToList();
+
+        // Insert new roles first
+        foreach (int roleId in toInsert)
         {
             UserUserRoles link = new UserUserRoles { UserId = user.Id, RoleId = roleId };
             await Supabase.From<UserUserRolesDTO>().Insert(Mapper.ToDTO(link));
+        }
+
+        // Delete removed roles last
+        if (toDelete.Any())
+        {
+            await Supabase.From<UserUserRolesDTO>()
+                .Filter("userid", Operator.Equals, user.Id)
+                .Filter("roleid", Operator.In, toDelete)
+                .Delete();
         }
         
         await UpdateAsync(user, Mapper.ToDTO);
@@ -275,12 +290,27 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     public async Task UpdateUserRoleAsync(UserRole role, List<int> permissionIds)
     {
         await UpdateAsync(role, Mapper.ToDTO);
-        await Supabase.From<RolePermissionDTO>().Filter("roleid", Operator.Equals, role.Id).Delete();
+        
+        var existingResponse = await Supabase.From<RolePermissionDTO>().Filter("roleid", Operator.Equals, role.Id).Get();
+        var existingIds = existingResponse.Models.Select(x => x.PermissionId).ToList();
 
-        foreach (int permId in permissionIds)
+        var toDelete = existingIds.Except(permissionIds).ToList();
+        var toInsert = permissionIds.Except(existingIds).ToList();
+
+        // Insert new permissions first (while user still has Manage Roles)
+        foreach (int permId in toInsert)
         {
             RolePermission link = new RolePermission { RoleId = role.Id, PermissionId = permId };
             await Supabase.From<RolePermissionDTO>().Insert(Mapper.ToDTO(link));
+        }
+
+        // Delete removed permissions last
+        if (toDelete.Any())
+        {
+            await Supabase.From<RolePermissionDTO>()
+                .Filter("roleid", Operator.Equals, role.Id)
+                .Filter("permissionid", Operator.In, toDelete)
+                .Delete();
         }
     }
 
