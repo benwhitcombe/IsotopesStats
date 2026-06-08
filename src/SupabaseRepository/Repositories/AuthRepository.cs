@@ -237,7 +237,7 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     {
         try
         {
-            await Supabase.Auth.VerifyOTP(email, token, EmailOtpType.Recovery);
+            await Supabase.Auth.VerifyOTP(email, token, global::Supabase.Gotrue.Constants.EmailOtpType.Recovery);
             UserAttributes attrs = new UserAttributes { Password = newPassword };
             await Supabase.Auth.Update(attrs);
             return true;
