@@ -1,8 +1,10 @@
 @page "/management/games/{GameId:int}/scorekeeping"
+@implements IDisposable
+@using System.Threading
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Domain.Interfaces
 @using IsotopesStats.Website.Components
-@attribute [Authorize(Policy = "Manage Games")]
+@attribute [Authorize(Policy = "Manage Scorekeeping")]
 @inject IStatsRepository StatsRepository
 @inject NavigationManager NavigationManager
 @inject IAuthRepository AuthSvc
@@ -88,6 +90,17 @@
     .badge-fade {
         animation: simpleFadeIn 0.3s ease-in-out;
     }
+
+    @@keyframes successPulse {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+    .success-pulse {
+        animation: successPulse 1.2s cubic-bezier(0.66, 0, 0, 1);
+        border: 2px solid var(--isotopes-green) !important;
+        border-radius: 0.5rem;
+    }
 </style>
 
 @if (isLoading)
@@ -158,8 +171,11 @@ else
 {
     @if (isProcessing)
     {
-        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 1050; display: flex; justify-content: center; align-items: center;">
-            <div class="spinner-border text-danger" role="status"></div>
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: @(showSuccessAnimation ? "transparent" : "rgba(255,255,255,0.7)"); z-index: 1050; display: flex; justify-content: center; align-items: center;">
+            @if (!showSuccessAnimation)
+            {
+                <div class="spinner-border text-danger" role="status"></div>
+            }
         </div>
     }
 
@@ -172,7 +188,7 @@ else
             </div>
         </div>
         <!-- Diamond / Bases View -->
-        <div class="stat-card mb-2 py-3 position-relative">
+        <div class="stat-card mb-2 py-3 position-relative @(showSuccessAnimation ? "success-pulse" : "")" style="transition: border 0.3s;">
             <div class="d-flex justify-content-between text-center px-4 mb-2">
                 <div>
                     <h6 class="mb-0 text-muted">INNING</h6>
@@ -332,6 +348,8 @@ else
     [CascadingParameter] 
     private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
 
+    private CancellationTokenSource cts = new();
+
     private async Task LogActionAsync(string description)
     {
         if (authenticationStateTask == null) return;
@@ -353,6 +371,7 @@ else
 
     private bool isLoading = true;
     private bool isProcessing = false;
+    private bool showSuccessAnimation = false;
     private Game? game;
     private List<PlateAppearance> plateAppearances = new();
     private List<Player> roster = new();
@@ -421,6 +440,8 @@ else
         {
             isLoading = false;
         }
+        
+        _ = PollForUpdatesAsync();
     }
 
     protected override void OnParametersSet()
@@ -433,6 +454,116 @@ else
             }
             RecalculateState();
         }
+    }
+
+    private async Task PollForUpdatesAsync()
+    {
+        using PeriodicTimer timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await SilentUpdateAsync();
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task SilentUpdateAsync()
+    {
+        if (isProcessing || pendingPA != null || isModalVisible || !isLineupSet) return;
+
+        try
+        {
+            List<PlateAppearance> newPAs = await StatsRepository.GetPlateAppearancesAsync(GameId);
+            
+            bool isNewRemotePlay = newPAs.Count > plateAppearances.Count;
+            
+            bool currentPlayChanged = false;
+            int? changedIndex = null;
+            if (viewingPaIndex != null && viewingPaIndex < newPAs.Count && viewingPaIndex < plateAppearances.Count)
+            {
+                PlateAppearance oldPa = plateAppearances[viewingPaIndex.Value];
+                PlateAppearance newPa = newPAs[viewingPaIndex.Value];
+                if (oldPa.Result != newPa.Result || oldPa.RunsScored != newPa.RunsScored || oldPa.OutsRecorded != newPa.OutsRecorded)
+                {
+                    currentPlayChanged = true;
+                    changedIndex = viewingPaIndex.Value;
+                }
+            }
+
+            if (isNewRemotePlay || currentPlayChanged)
+            {
+                await InvokeAsync(async () =>
+                {
+                    if (isProcessing || pendingPA != null || isModalVisible || !isLineupSet) return;
+                    
+                    plateAppearances = newPAs;
+                    
+                    if (viewingPaIndex == null && isNewRemotePlay)
+                    {
+                        isProcessing = true;
+                        viewingPaIndex = plateAppearances.Count - 1;
+                        RecalculateState();
+                        
+                        showSuccessAnimation = true;
+                        StateHasChanged();
+                        
+                        await Task.Delay(1200, cts.Token);
+                        
+                        showSuccessAnimation = false;
+                        if (viewingPaIndex == plateAppearances.Count - 1)
+                        {
+                            viewingPaIndex = null;
+                            RecalculateState();
+                        }
+                        isProcessing = false;
+                        StateHasChanged();
+                    }
+                    else if (viewingPaIndex != null && currentPlayChanged && changedIndex != null)
+                    {
+                        isProcessing = true;
+                        RecalculateState();
+                        
+                        showSuccessAnimation = true;
+                        StateHasChanged();
+                        
+                        await Task.Delay(1200, cts.Token);
+                        
+                        showSuccessAnimation = false;
+                        if (viewingPaIndex == changedIndex)
+                        {
+                            if (viewingPaIndex < plateAppearances.Count - 1)
+                            {
+                                viewingPaIndex++;
+                            }
+                            else
+                            {
+                                viewingPaIndex = null;
+                            }
+                            RecalculateState();
+                        }
+                        isProcessing = false;
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        RecalculateState();
+                        StateHasChanged();
+                    }
+                });
+            }
+        }
+        catch (Exception)
+        {
+            // Ignore background update errors
+        }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
     }
 
     private string GetPlayerName(int id)
@@ -819,6 +950,9 @@ else
         {
             isProcessing = true;
             StateHasChanged();
+            
+            int? currentViewingIndex = viewingPaIndex;
+            
             try
             {
                 // Smart play detection
@@ -831,32 +965,24 @@ else
                     pendingPA.Result = "FC";
                 }
 
-                if (viewingPaIndex == null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
+                if (currentViewingIndex == null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
                 {
                     pendingPA.EndsInning = true;
                 }
 
-                if (viewingPaIndex != null)
+                if (currentViewingIndex != null)
                 {
                     await StatsRepository.UpdatePlateAppearanceAsync(pendingPA);
                     await RippleStateAsync();
                     await LogActionAsync($"Updated play for Game {GameId} to {pendingPA.Result} (Inning {pendingPA.Inning})");
-                    
-                    if (viewingPaIndex < plateAppearances.Count - 1)
-                    {
-                        viewingPaIndex++;
-                    }
-                    else
-                    {
-                        viewingPaIndex = null;
-                    }
                 }
                 else
                 {
                     PlateAppearance savedPa = await StatsRepository.AddPlateAppearanceAsync(pendingPA);
                     plateAppearances.Add(savedPa);
+                    currentViewingIndex = plateAppearances.Count - 1;
+                    viewingPaIndex = currentViewingIndex;
                     await LogActionAsync($"Recorded play for Game {GameId}: {pendingPA.Result} (Inning {pendingPA.Inning})");
-                    // viewingPaIndex = null; // Auto-advance to next batter
                 }
                 
                 if (game != null && game.ScorecardStatsSync)
@@ -866,9 +992,29 @@ else
                 
                 RecalculateState();
                 pendingPA = null;
+                
+                showSuccessAnimation = true;
+                StateHasChanged();
+                
+                await Task.Delay(1200);
             }
             finally
             {
+                showSuccessAnimation = false;
+                
+                if (viewingPaIndex == currentViewingIndex)
+                {
+                    if (viewingPaIndex < plateAppearances.Count - 1)
+                    {
+                        viewingPaIndex++;
+                    }
+                    else
+                    {
+                        viewingPaIndex = null;
+                    }
+                    RecalculateState();
+                }
+                
                 isProcessing = false;
                 StateHasChanged();
             }

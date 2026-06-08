@@ -27,6 +27,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredServ
 builder.Services.AddAuthorizationCore(options =>
 {
     options.AddPolicy("Manage Games", policy => policy.RequireClaim("Permission", "Manage Games"));
+    options.AddPolicy("Manage Scorekeeping", policy => policy.RequireClaim("Permission", "Manage Scorekeeping"));
     options.AddPolicy("Manage Players", policy => policy.RequireClaim("Permission", "Manage Players"));
     options.AddPolicy("Manage Opponents", policy => policy.RequireClaim("Permission", "Manage Opponents"));
     options.AddPolicy("Manage Seasons", policy => policy.RequireClaim("Permission", "Manage Seasons"));

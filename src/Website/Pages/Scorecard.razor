@@ -1,4 +1,6 @@
 @page "/management/games/{GameId:int}/scorecard"
+@implements IDisposable
+@using System.Threading
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Domain.Interfaces
 @inject IStatsRepository StatsRepository
@@ -148,7 +150,7 @@ else
                                 
                                 bool isEndOfInning = pa != null && pa.EndsInning;
 
-                                <td class="pa-cell @(pa != null && canManageGames ? "pa-clickable" : "")" @onclick="() => HandleCellClick(pa)">
+                                <td class="pa-cell @(pa != null && canManageGames ? "pa-clickable" : "") @(pa != null && recentlyChangedPaIds.Contains(pa.Id) ? "pa-updated" : "")" @onclick="() => HandleCellClick(pa)">
                                     <div class="pa-cell-content">
                                         @if (pa != null)
                                         {
@@ -634,6 +636,14 @@ else
         border-top: 4px solid #000 !important;
     }
 
+    @@keyframes highlight-fade {
+        0% { background-color: rgba(255, 215, 0, 0.4); box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.8); }
+        100% { background-color: transparent; box-shadow: none; }
+    }
+    
+    .pa-updated {
+        animation: highlight-fade 2.5s ease-out;
+    }
 </style>
 
 @code {
@@ -642,6 +652,9 @@ else
 
     [CascadingParameter] 
     private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private CancellationTokenSource cts = new();
+    private HashSet<int> recentlyChangedPaIds = new();
 
     private async Task LogActionAsync(string description)
     {
@@ -687,10 +700,95 @@ else
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var authResult = await AuthorizationService.AuthorizeAsync(authState.User, "Manage Games");
+        var authResult = await AuthorizationService.AuthorizeAsync(authState.User, "Manage Scorekeeping");
         canManageGames = authResult.Succeeded;
 
         await LoadDataAsync();
+        
+        _ = PollForUpdatesAsync();
+    }
+
+    private async Task PollForUpdatesAsync()
+    {
+        using PeriodicTimer timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await SilentUpdateAsync();
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task SilentUpdateAsync()
+    {
+        try
+        {
+            List<PlateAppearance> newPAs = await StatsRepository.GetPlateAppearancesAsync(GameId);
+            bool changed = false;
+            HashSet<int> changedIds = new();
+
+            foreach(PlateAppearance newPa in newPAs)
+            {
+                PlateAppearance? oldPa = plateAppearances.FirstOrDefault(p => p.Id == newPa.Id);
+                if (oldPa == null || 
+                    oldPa.Result != newPa.Result || 
+                    oldPa.RunsScored != newPa.RunsScored || 
+                    oldPa.RunnerOn1B != newPa.RunnerOn1B || 
+                    oldPa.RunnerOn2B != newPa.RunnerOn2B || 
+                    oldPa.RunnerOn3B != newPa.RunnerOn3B ||
+                    oldPa.RunnerOn1B_End != newPa.RunnerOn1B_End || 
+                    oldPa.RunnerOn2B_End != newPa.RunnerOn2B_End || 
+                    oldPa.RunnerOn3B_End != newPa.RunnerOn3B_End ||
+                    oldPa.OutsRecorded != newPa.OutsRecorded ||
+                    oldPa.EndsInning != newPa.EndsInning)
+                {
+                    changedIds.Add(newPa.Id);
+                    changed = true;
+                }
+            }
+
+            if (plateAppearances.Count != newPAs.Count) changed = true;
+
+            if (changed)
+            {
+                List<StatEntry> newGameStats = await StatsRepository.GetGameStatsAsync(GameId);
+                List<StatEntry> newCalculatedStats = await StatsRepository.CalculateStatsFromPlateAppearancesAsync(GameId);
+                Game? newGame = await StatsRepository.GetGameAsync(GameId);
+
+                await InvokeAsync(() =>
+                {
+                    plateAppearances = newPAs;
+                    gameStats = newGameStats;
+                    calculatedStats = newCalculatedStats;
+                    if (newGame != null) game = newGame;
+
+                    recentlyChangedPaIds = changedIds;
+                    BuildScorecardGrid();
+                    CalculateDifferences();
+                    StateHasChanged();
+                });
+
+                // Clear highlights after animation
+                await Task.Delay(2500, cts.Token);
+                await InvokeAsync(() =>
+                {
+                    recentlyChangedPaIds.Clear();
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (Exception)
+        {
+            // Ignore background update errors
+        }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
     }
 
     private async Task LoadDataAsync()

@@ -250,6 +250,11 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         return response.Model?.SeasonId ?? 0;
     }
 
+    public async Task AddGameAsync(Game game)
+    {
+        await Supabase.From<GameDTO>().Insert(Mapper.ToDTO(game));
+    }
+
     public async Task AddGameWithStatsAsync(Game game, List<StatEntry> stats)
     {
         Dictionary<string, object> parameters = new Dictionary<string, object>

@@ -110,172 +110,7 @@ else if (isEditing)
             </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 2rem;">
-            <label style="font-weight: bold; margin-bottom: 1rem; display: block;">Select Game Lineup</label>
-            <div class="selectable-grid" style="background: #f9f9f9; padding: 0.75rem; border-radius: 12px; border: 1px solid #eee;">
-                @foreach (Player player in seasonRoster)
-                {
-                    <CheckboxButton 
-                        Id="@($"gl-{player.Id}")" 
-                        Text="@player.Name" 
-                        Checked="@IsPlayerInLineup(player.Id)" 
-                        CheckedChanged="@((bool val) => TogglePlayerInLineup(player, val))" />
-                }
-            </div>
-        </div>
-
-        <h5 style="margin-bottom: 1rem; color: var(--isotopes-accent);">Player Stats</h5>
-        
-        <div class="desktop-only">
-            <div class="table-container" style="padding: 0; overflow: hidden;">
-                <table class="table table-sm admin-stats-table" style="margin-bottom: 0;">
-                    <thead>
-                        <tr>
-                            <th style="width: 200px; border-right: 2px solid #ddd;">Player</th>
-                            <th title="@StatDefinitions.GetDefinition("PA")">PA</th>
-                            <th title="@StatDefinitions.GetDefinition("AB")">AB</th>
-                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("H")">H</th>
-                            <th title="@StatDefinitions.GetDefinition("1B")">1B</th>
-                            <th title="@StatDefinitions.GetDefinition("2B")">2B</th>
-                            <th title="@StatDefinitions.GetDefinition("3B")">3B</th>
-                            <th title="@StatDefinitions.GetDefinition("HR")">HR</th>
-                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("IPHR")">IPHR</th>
-                            <th title="@StatDefinitions.GetDefinition("BB")">BB</th>
-                            <th title="@StatDefinitions.GetDefinition("K")">K</th>
-                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("KF")">KF</th>
-                            <th title="@StatDefinitions.GetDefinition("SF")">SF</th>
-                            <th title="@StatDefinitions.GetDefinition("FC")">FC</th>
-                            <th title="@StatDefinitions.GetDefinition("GO")">GO</th>
-                            <th style="border-right: 2px solid #ddd;" title="@StatDefinitions.GetDefinition("FO")">FO</th>
-                            <th title="@StatDefinitions.GetDefinition("R")">R</th>
-                            <th title="@StatDefinitions.GetDefinition("RBI")">RBI</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (int i = 0; i < playerStats.Count; i++)
-                        {
-                            StatEntry stat = playerStats[i];
-                            int index = i;
-                            bool paWarning = i > 0 && stat.PA > playerStats[i - 1].PA;
-
-                            <tr @key="stat.PlayerId"
-                                draggable="true" 
-                                @ondragstart='async (e) => { await JSRuntime.InvokeVoidAsync("initDrag"); HandleDragStart(stat); }' 
-                                @ondragover="() => HandleDragOver(stat)"
-                                @ondrop="() => HandleDrop(stat)"
-                                class="reorderable-row @(stat == targetStat ? "drag-over" : "")">
-                                <td class="player-col" style="border-right: 2px solid #ddd;">@(index + 1). @stat.PlayerName</td>
-                                <td style="vertical-align: middle; font-weight: bold; background-color: @(paWarning ? "var(--isotopes-red)" : "transparent"); color: @(paWarning ? "white" : "#666");">@stat.PA</td>
-                                <td style="vertical-align: middle; font-weight: bold; color: #666;">@stat.AB</td>
-                                <td style="border-right: 2px solid #ddd; font-weight: bold; color: var(--isotopes-accent);">@stat.H</td>
-                                <td class="@(activeColumnIndex == 1 ? "active-col" : "")"><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" @onfocus="() => activeColumnIndex = 1" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 2 ? "active-col" : "")"><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" @onfocus="() => activeColumnIndex = 2" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 3 ? "active-col" : "")"><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" @onfocus="() => activeColumnIndex = 3" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 4 ? "active-col" : "")"><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" @onfocus="() => activeColumnIndex = 4" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 5 ? "active-col" : "")" style="border-right: 2px solid #ddd;"><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" @onfocus="() => activeColumnIndex = 5" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 6 ? "active-col" : "")"><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" @onfocus="() => activeColumnIndex = 6" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 7 ? "active-col" : "")"><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" @onfocus="() => activeColumnIndex = 7" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 8 ? "active-col" : "")" style="border-right: 2px solid #ddd;"><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" @onfocus="() => activeColumnIndex = 8" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 9 ? "active-col" : "")"><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" @onfocus="() => activeColumnIndex = 9" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 10 ? "active-col" : "")"><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" @onfocus="() => activeColumnIndex = 10" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 11 ? "active-col" : "")"><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" @onfocus="() => activeColumnIndex = 11" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 12 ? "active-col" : "")" style="border-right: 2px solid #ddd;"><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" @onfocus="() => activeColumnIndex = 12" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" /></td>
-                                <td class="@(activeColumnIndex == 13 ? "active-col" : "")"><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" @onfocus="() => activeColumnIndex = 13" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                                <td class="@(activeColumnIndex == 14 ? "active-col" : "")"><input type="number" value="@stat.RBI" @oninput="(e) => HandleStatChange(stat, nameof(stat.RBI), e.Value)" @onfocus="() => activeColumnIndex = 14" @onblur="() => activeColumnIndex = null" class="form-control form-control-sm" style="color: var(--isotopes-red); font-weight: bold;" /></td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #ddd;">
-                        <tr>
-                            <td style="border-right: 2px solid #ddd;">TEAM TOTALS</td>
-                            <td>@playerStats.Sum(s => s.PA)</td>
-                            <td>@playerStats.Sum(s => s.AB)</td>
-                            <td style="border-right: 2px solid #ddd; color: var(--isotopes-accent);">@playerStats.Sum(s => s.H)</td>
-                            <td class="@(activeColumnIndex == 1 ? "active-col" : "")">@playerStats.Sum(s => s.H1B)</td>
-                            <td class="@(activeColumnIndex == 2 ? "active-col" : "")">@playerStats.Sum(s => s.H2B)</td>
-                            <td class="@(activeColumnIndex == 3 ? "active-col" : "")">@playerStats.Sum(s => s.H3B)</td>
-                            <td class="@(activeColumnIndex == 4 ? "active-col" : "")">@playerStats.Sum(s => s.HR)</td>
-                            <td class="@(activeColumnIndex == 5 ? "active-col" : "")" style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.IPHR)</td>
-                            <td class="@(activeColumnIndex == 6 ? "active-col" : "")">@playerStats.Sum(s => s.BB)</td>
-                            <td class="@(activeColumnIndex == 7 ? "active-col" : "")">@playerStats.Sum(s => s.K)</td>
-                            <td class="@(activeColumnIndex == 8 ? "active-col" : "")" style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.KF)</td>
-                            <td class="@(activeColumnIndex == 9 ? "active-col" : "")">@playerStats.Sum(s => s.SF)</td>
-                            <td class="@(activeColumnIndex == 10 ? "active-col" : "")">@playerStats.Sum(s => s.FC)</td>
-                            <td class="@(activeColumnIndex == 11 ? "active-col" : "")">@playerStats.Sum(s => s.GO)</td>
-                            <td class="@(activeColumnIndex == 12 ? "active-col" : "")" style="border-right: 2px solid #ddd;">@playerStats.Sum(s => s.FO)</td>
-                            <td class="@(activeColumnIndex == 13 ? "active-col" : "")" style="color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</td>
-                            <td class="@(activeColumnIndex == 14 ? "active-col" : "")" style="color: var(--isotopes-red);">@playerStats.Sum(s => s.RBI)</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
-        <div class="mobile-only">
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
-                @for (int i = 0; i < playerStats.Count; i++)
-                {
-                    StatEntry stat = playerStats[i];
-                    int index = i;
-                    bool paWarning = i > 0 && stat.PA > playerStats[i - 1].PA;
-
-                    <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 1px solid #eee;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
-                            <div style="color: var(--isotopes-accent); font-weight: bold;">@(index + 1). @stat.PlayerName</div>
-                            <div style="font-size: 0.8rem; display: flex; gap: 8px;">
-                                <span class="badge @(paWarning ? "bg-danger" : "bg-light text-dark")">PA: @stat.PA</span>
-                                <span class="badge bg-light text-dark">AB: @stat.AB</span>
-                                <span class="badge bg-primary">H: @stat.H</span>
-                            </div>
-                        </div>
-                        <div class="admin-stats-grid">
-                            <div class="admin-stat-input"><label>1B</label><input type="number" value="@stat.H1B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H1B), e.Value)" @onfocus="() => activeColumnIndex = 1" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>2B</label><input type="number" value="@stat.H2B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H2B), e.Value)" @onfocus="() => activeColumnIndex = 2" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>3B</label><input type="number" value="@stat.H3B" @oninput="(e) => HandleStatChange(stat, nameof(stat.H3B), e.Value)" @onfocus="() => activeColumnIndex = 3" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>HR</label><input type="number" value="@stat.HR" @oninput="(e) => HandleStatChange(stat, nameof(stat.HR), e.Value)" @onfocus="() => activeColumnIndex = 4" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>IPHR</label><input type="number" value="@stat.IPHR" @oninput="(e) => HandleStatChange(stat, nameof(stat.IPHR), e.Value)" @onfocus="() => activeColumnIndex = 5" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>BB</label><input type="number" value="@stat.BB" @oninput="(e) => HandleStatChange(stat, nameof(stat.BB), e.Value)" @onfocus="() => activeColumnIndex = 6" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>K</label><input type="number" value="@stat.K" @oninput="(e) => HandleStatChange(stat, nameof(stat.K), e.Value)" @onfocus="() => activeColumnIndex = 7" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>KF</label><input type="number" value="@stat.KF" @oninput="(e) => HandleStatChange(stat, nameof(stat.KF), e.Value)" @onfocus="() => activeColumnIndex = 8" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>SF</label><input type="number" value="@stat.SF" @oninput="(e) => HandleStatChange(stat, nameof(stat.SF), e.Value)" @onfocus="() => activeColumnIndex = 9" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FC</label><input type="number" value="@stat.FC" @oninput="(e) => HandleStatChange(stat, nameof(stat.FC), e.Value)" @onfocus="() => activeColumnIndex = 10" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>GO</label><input type="number" value="@stat.GO" @oninput="(e) => HandleStatChange(stat, nameof(stat.GO), e.Value)" @onfocus="() => activeColumnIndex = 11" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>FO</label><input type="number" value="@stat.FO" @oninput="(e) => HandleStatChange(stat, nameof(stat.FO), e.Value)" @onfocus="() => activeColumnIndex = 12" @onblur="() => activeColumnIndex = null" class="form-control" /></div>
-                            <div class="admin-stat-input"><label>R</label><input type="number" value="@stat.R" @oninput="(e) => HandleStatChange(stat, nameof(stat.R), e.Value)" @onfocus="() => activeColumnIndex = 13" @onblur="() => activeColumnIndex = null" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                            <div class="admin-stat-input"><label>RBI</label><input type="number" value="@stat.RBI" @oninput="(e) => HandleStatChange(stat, nameof(stat.RBI), e.Value)" @onfocus="() => activeColumnIndex = 14" @onblur="() => activeColumnIndex = null" class="form-control" style="font-weight: bold; color: var(--isotopes-red);" /></div>
-                        </div>
-                    </div>
-                }
-
-                <div class="stat-card" style="margin-bottom: 0; padding: 1rem; border: 2px solid var(--isotopes-accent); background: #f0f7ff;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--isotopes-accent); margin-bottom: 0.5rem; padding-bottom: 0.3rem;">
-                        <div style="color: var(--isotopes-accent); font-weight: 900;">TEAM TOTALS</div>
-                        <div style="font-size: 0.8rem; display: flex; gap: 8px;">
-                            <span class="badge bg-light text-dark">PA: @playerStats.Sum(s => s.PA)</span>
-                            <span class="badge bg-light text-dark">AB: @playerStats.Sum(s => s.AB)</span>
-                            <span class="badge bg-primary">H: @playerStats.Sum(s => s.H)</span>
-                        </div>
-                    </div>
-                    <div class="admin-stats-grid">
-                        <div class="admin-stat-input"><label>1B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H1B)</div></div>
-                        <div class="admin-stat-input"><label>2B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H2B)</div></div>
-                        <div class="admin-stat-input"><label>3B</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.H3B)</div></div>
-                        <div class="admin-stat-input"><label>HR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.HR)</div></div>
-                        <div class="admin-stat-input"><label>IPHR</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.IPHR)</div></div>
-                        <div class="admin-stat-input"><label>BB</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.BB)</div></div>
-                        <div class="admin-stat-input"><label>K</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.K)</div></div>
-                        <div class="admin-stat-input"><label>KF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.KF)</div></div>
-                        <div class="admin-stat-input"><label>SF</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.SF)</div></div>
-                        <div class="admin-stat-input"><label>FC</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FC)</div></div>
-                        <div class="admin-stat-input"><label>GO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.GO)</div></div>
-                        <div class="admin-stat-input"><label>FO</label><div class="form-control" style="background:#eee">@playerStats.Sum(s => s.FO)</div></div>
-                        <div class="admin-stat-input"><label>R</label><div class="form-control" style="background: white; font-weight: bold; color: var(--isotopes-red);">@playerStats.Sum(s => s.R)</div></div>
-                        <div class="admin-stat-input"><label>RBI</label><div class="form-control" style="background: white; font-weight: bold; color: var(--isotopes-red);">@playerStats.Sum(s => s.RBI)</div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ModelEditor>
+        </ModelEditor>
 }
 else
 {
@@ -448,17 +283,13 @@ else
     private List<Game> games = new();
     private List<StatEntry> playerStats = new();
     private List<StatEntry> originalStats = new();
-    private List<Player> seasonRoster = new();
     private List<Opponent> availableOpponents = new();
     private Game editingGame = new() { Date = DateTime.Now };
     private Game originalGame = new() { Date = DateTime.Now };
     private int selectedSeasonId;
     private bool isEditing = false;
 
-    private StatEntry? draggedStat;
-    private StatEntry? targetStat;
 
-    private int? activeColumnIndex;
 
     private string sortColumn = "#";
     private bool sortDescending = false;
@@ -524,7 +355,6 @@ else
             originalGame = new Game { Date = editingGame.Date, SeasonId = selectedSeasonId, ScorecardStatsSync = true };
             playerStats.Clear();
             originalStats.Clear();
-            seasonRoster.Clear();
         }
 
         isEditing = nextEditing;
@@ -541,7 +371,6 @@ else
             {
                 editingGame = game with { };
                 originalGame = game with { };
-                await LoadSeasonRoster();
                 await LoadAvailableOpponents();
                 playerStats = await StatsRepository.GetGameStatsAsync(game.Id);
                 playerStats = playerStats.OrderBy(s => s.BO).ToList();
@@ -555,7 +384,6 @@ else
             
             editingGame.GameNumber = await StatsRepository.GetNextGameNumberAsync(editingGame.SeasonId);
 
-            await LoadSeasonRoster();
             await LoadAvailableOpponents();
             playerStats = new List<StatEntry>();
             originalStats = new List<StatEntry>();
@@ -573,11 +401,7 @@ else
                 editingGame = persisted;
             }
 
-            List<StatEntry>? persistedExtra = await SessionStorage.GetItemAsync<List<StatEntry>>($"EditState_Game_{Id ?? 0}_Extra");
-            if (persistedExtra != null)
-            {
-                playerStats = persistedExtra;
-            }
+            
             StateHasChanged();
         }
         catch { }
@@ -609,10 +433,7 @@ else
 
     private async Task OnEditingSeasonChanged()
     {
-        await LoadSeasonRoster();
         await LoadAvailableOpponents();
-        playerStats = playerStats.Where(ps => seasonRoster.Any(r => r.Id == ps.PlayerId)).ToList();
-        ReassignBO();
 
         if (editingGame.Id == 0)
         {
@@ -622,7 +443,6 @@ else
         if (modelEditor != null) await modelEditor.SaveExtraState();
     }
 
-    private async Task LoadSeasonRoster() => seasonRoster = await StatsRepository.GetPlayersAsync(editingGame.SeasonId);
     private async Task LoadAvailableOpponents() => availableOpponents = await StatsRepository.GetOpponentsAsync(editingGame.SeasonId);
 
     private void StartEdit(string action, int id)
@@ -631,65 +451,12 @@ else
         else Navigation.NavigateTo($"/management/games/edit/{id}");
     }
 
-    private bool IsPlayerInLineup(int playerId) => playerStats.Any(ps => ps.PlayerId == playerId);
-
-    private async Task TogglePlayerInLineup(Player player, bool isChecked)
-    {
-        if (isChecked)
-        {
-            if (!playerStats.Any(ps => ps.PlayerId == player.Id))
-                playerStats.Add(new StatEntry { PlayerId = player.Id, Player = player, BO = playerStats.Count + 1 });
-        }
-        else
-        {
-            playerStats.RemoveAll(ps => ps.PlayerId == player.Id);
-            ReassignBO();
-        }
-        if (modelEditor != null) await modelEditor.SaveExtraState();
-    }
-
-    private void ReassignBO()
-    {
-        for (int i = 0; i < playerStats.Count; i++) playerStats[i].BO = i + 1;
-    }
-
-    private async Task HandleStatChange(StatEntry stat, string propertyName, object? value)
-    {
-        if (value == null) return;
-        System.Reflection.PropertyInfo? prop = typeof(StatEntry).GetProperty(propertyName);
-        if (prop != null)
-        {
-            try {
-                object? typedValue = Convert.ChangeType(value.ToString(), prop.PropertyType);
-                prop.SetValue(stat, typedValue);
-                if (modelEditor != null) await modelEditor.SaveExtraState();
-            } catch { }
-        }
-    }
-
-    private void HandleDragStart(StatEntry stat) => draggedStat = stat;
-    private void HandleDragOver(StatEntry stat) => targetStat = stat;
-
-    private async Task HandleDrop(StatEntry dropTargetStat)
-    {
-        if (draggedStat == null || draggedStat == dropTargetStat) { targetStat = null; return; }
-        int oldIndex = playerStats.IndexOf(draggedStat);
-        int newIndex = playerStats.IndexOf(dropTargetStat);
-        if (oldIndex != -1 && newIndex != -1)
-        {
-            playerStats.RemoveAt(oldIndex);
-            playerStats.Insert(newIndex, draggedStat);
-            ReassignBO();
-            if (modelEditor != null) await modelEditor.SaveExtraState();
-        }
-        draggedStat = null;
-        targetStat = null;
-    }
+    
 
     private async Task SaveGame()
     {
-        if (editingGame.Id == 0) await StatsRepository.AddGameWithStatsAsync(editingGame, playerStats);
-        else await StatsRepository.UpdateGameWithStatsAsync(editingGame, playerStats);
+        if (editingGame.Id == 0) await StatsRepository.AddGameAsync(editingGame);
+        else await StatsRepository.UpdateGameAsync(editingGame);
         await LoadGames();
     }
 

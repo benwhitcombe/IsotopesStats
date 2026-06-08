@@ -48,6 +48,7 @@ public interface IStatsRepository
     
     Task<int> GetMostRecentStatsSeasonIdAsync();
     Task AddGameWithStatsAsync(Game game, List<StatEntry> stats);
+    Task AddGameAsync(Game game);
     Task UpdateGameWithStatsAsync(Game game, List<StatEntry> stats);
     Task UpdateGameAsync(Game game);
     Task DeleteGameAsync(int gameId);
