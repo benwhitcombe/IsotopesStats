@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "IOw4nrFW",
+  "version": "UZ0/n23E",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -14,7 +14,7 @@ self.assetsManifest = {
       "url": "Website.styles.css"
     },
     {
-      "hash": "sha256-3taRCvkiemLsMY6Bh54RXanzmtRt9QEQByHNNvLRZ0Q=",
+      "hash": "sha256-5xbnF7Uu1FCUQQwWZihBSmS6lPMm4WO6rPU9DkT/Sj0=",
       "url": "_framework/Domain.wasm"
     },
     {
@@ -150,7 +150,7 @@ self.assetsManifest = {
       "url": "_framework/Supabase.wasm"
     },
     {
-      "hash": "sha256-tuVm7OKK8WS8AlUdokprUwAxv8KkzpQJHcBbp2xrQ2I=",
+      "hash": "sha256-F9561XBKreCacCsGwAa5hS8yQEXDRS32afYbSOx/DEs=",
       "url": "_framework/SupabaseRepository.wasm"
     },
     {
@@ -386,7 +386,7 @@ self.assetsManifest = {
       "url": "_framework/System.wasm"
     },
     {
-      "hash": "sha256-PK71wno23b5omYS4BxrIKq41i/MWScN9agTYnOSdRmw=",
+      "hash": "sha256-r7ZFx1k/atEo225T800/BM+M5UZq1EmQHr0YAgPFvEA=",
       "url": "_framework/Website.wasm"
     },
     {
@@ -394,7 +394,7 @@ self.assetsManifest = {
       "url": "_framework/Websocket.Client.wasm"
     },
     {
-      "hash": "sha256-U9KhJ4tQUaQ91QTUv8x8CNiyfx2y/fJiwDyzWDxqPuQ=",
+      "hash": "sha256-Y9kwW04kUdZvkD9S5g/cox3POoStpID39gck4ywnBGI=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -490,7 +490,7 @@ self.assetsManifest = {
       "url": "images/defense.png"
     },
     {
-      "hash": "sha256-LphUthPGQGZ2wr4ZrXAqH06NXUJVEt7o5Sa0gXNpW+M=",
+      "hash": "sha256-gun2ic0iM8e6U/KuxQrHQ+naeaH5F0j+t0NhO2BMxx0=",
       "url": "index.html"
     },
     {
