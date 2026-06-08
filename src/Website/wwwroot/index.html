@@ -161,7 +161,13 @@
     </script>
 
     <script src="_framework/blazor.webassembly.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').catch(function(err) {
+                console.warn('Service worker registration failed or was blocked by the browser.');
+            });
+        }
+    </script>
     <script src="js/Sortable.min.js"></script>
     <script src="js/panzoom.min.js"></script>
     <script src="js/site.js?v=21"></script>
