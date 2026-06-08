@@ -13,4 +13,12 @@ public record UserRole : IEntity
     public List<Permission> Permissions { get; set; } = new();
 
     public UserRole DeepClone() => this with { Permissions = new List<Permission>(Permissions) };
+
+    public virtual bool Equals(UserRole? other)
+    {
+        if (other == null) return false;
+        return Id == other.Id && Name == other.Name && IsDeleted == other.IsDeleted;
+    }
+
+    public override int GetHashCode() => System.HashCode.Combine(Id, Name, IsDeleted);
 }

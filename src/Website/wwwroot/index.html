@@ -136,7 +136,8 @@
                 const args = Array.from(arguments);
                 const message = args.join(' ');
                 
-                if (message.includes('crit:') || message.includes('Unhandled exception') || message.includes('InvalidCharacterError')) {
+                const lowerMsg = message.toLowerCase();
+                if (lowerMsg.includes('crit:') || lowerMsg.includes('unhandled exception') || lowerMsg.includes('invalidcharactererror')) {
                     displayGlobalError('BLAZOR CRITICAL', message);
                 }
                 

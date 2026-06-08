@@ -1,5 +1,5 @@
 <div class="confirm-overlay @(IsVisible ? "visible" : "")" @onclick="Cancel">
-    <div class="confirm-modal @(IsVisible ? "show" : "")" onclick="event.stopPropagation();">
+    <div class="confirm-modal @(IsVisible ? "show" : "")" @onclick:stopPropagation="true">
         <div class="confirm-header">
             <h4>@Title</h4>
         </div>

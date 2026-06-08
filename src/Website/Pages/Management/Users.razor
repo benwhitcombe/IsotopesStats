@@ -24,6 +24,13 @@
     }
 </div>
 
+@if (!string.IsNullOrEmpty(alertMessage))
+{
+    <div class="view-fade-in" style="background: @(isAlertSuccess ? "#f0fdf4" : "#fff5f5"); color: @(isAlertSuccess ? "#166534" : "var(--isotopes-red)"); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid @(isAlertSuccess ? "#bbf7d0" : "#ffebeb"); text-align: center; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <span>@(isAlertSuccess ? "✅" : "⚠️")</span> @alertMessage
+    </div>
+}
+
 @if (isEditing)
 {
     <ModelEditor 
@@ -128,6 +135,7 @@ else
                             </td>
                             <td style="text-align: left; font-size: 0.85rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
                             <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
+                                <button class="view-btn" style="margin-right: 0.5rem;" @onclick='() => ResendEmail(user.Email)'>✉️ Resend Invite</button>
                                 <button class="view-btn" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
                                 <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
                             </td>
@@ -163,6 +171,7 @@ else
                 <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between;">
                     <div style="font-size: 0.8rem; color: #666;">@user.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</div>
                     <div style="display: flex; gap: 0.5rem;">
+                        <button class="view-btn" style="padding: 0.3rem 0.8rem;" @onclick='() => ResendEmail(user.Email)'>✉️ Resend</button>
                         <button class="view-btn" style="padding: 0.3rem 0.8rem;" @onclick='() => StartEdit("edit", user.Id)'>Edit</button>
                         <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red); padding: 0.3rem 0.8rem;" @onclick="() => deleteManager.ConfirmDelete(user)">Delete</button>
                     </div>
@@ -334,6 +343,22 @@ else
     private async Task DeleteUserByIdAsync(string id)
     {
         await IAuthRepository.DeleteUserAsync(id);
+    }
+
+    private string? alertMessage;
+    private bool isAlertSuccess;
+
+    private async Task ResendEmail(string email)
+    {
+        bool success = await IAuthRepository.ResendWelcomeEmailAsync(email);
+        isAlertSuccess = success;
+        alertMessage = success ? $"Welcome email successfully resent to {email}" : $"Failed to resend email to {email}";
+        StateHasChanged();
+        
+        // Auto-hide alert after 3 seconds
+        await Task.Delay(3000);
+        alertMessage = null;
+        StateHasChanged();
     }
 
     private ModelEditor<UserEditViewModel> modelEditor = null!;

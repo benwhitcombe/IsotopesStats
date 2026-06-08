@@ -10,6 +10,7 @@ public interface IAuthRepository
     Task LogoutAsync();
     Task<List<UserRolesSummaryView>> GetUsersAsync();
     Task<bool> IsEmailUniqueAsync(string email, string excludeUserId = "");
+    Task<bool> ResendWelcomeEmailAsync(string email);
     Task<bool> RegisterAsync(string email, List<int> roleIds);
     Task UpdateUserAsync(User user, List<int> newRoleIds);
     Task UpdateUserPasswordAsync(string userId, string newPassword);

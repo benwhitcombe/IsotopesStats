@@ -57,7 +57,7 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     {
         Table<UserDTO> query = Supabase.From<UserDTO>()
             .Filter("email", Operator.Equals, email)
-            .Filter("isdeleted", Operator.Equals, false);
+            .Filter("isdeleted", Operator.Equals, "false");
 
         if (!string.IsNullOrEmpty(excludeUserId))
         {
@@ -70,24 +70,39 @@ internal class AuthRepository : BaseRepository, IAuthRepository
 
     public async Task<bool> RegisterAsync(string email, List<int> roleIds)
     {
-        try
+        var body = new Dictionary<string, object>
         {
-            string temporaryPassword = Guid.NewGuid().ToString("N") + "!";
-            Session? response = await Supabase.Auth.SignUp(email, temporaryPassword);
-            if (response?.User != null && !string.IsNullOrEmpty(response.User.Id))
+            { "email", email },
+            { "roleIds", roleIds }
+        };
+
+            var options = new Supabase.Functions.Client.InvokeFunctionOptions { Body = body };
+            var token = Supabase.Auth.CurrentSession?.AccessToken;
+            var response = await Supabase.Functions.Invoke("create-user", token, options);
+            
+            // Supabase Functions returns HTTP OK if the function executed successfully
+            if (!string.IsNullOrEmpty(response))
             {
-                foreach (int roleId in roleIds)
-                {
-                    UserUserRoles link = new UserUserRoles { UserId = response.User.Id, RoleId = roleId };
-                    await Supabase.From<UserUserRolesDTO>().Insert(Mapper.ToDTO(link));
-                }
-                await Supabase.Auth.ResetPasswordForEmail(email);
                 return true;
             }
-        }
-        catch (Exception ex)
+            return false;
+    }
+
+    public async Task<bool> ResendWelcomeEmailAsync(string email)
+    {
+        var body = new Dictionary<string, object>
         {
-            Console.WriteLine($"Registration failed: {ex.Message}");
+            { "email", email },
+            { "action", "resend" }
+        };
+
+        var options = new Supabase.Functions.Client.InvokeFunctionOptions { Body = body };
+        var token = Supabase.Auth.CurrentSession?.AccessToken;
+        var response = await Supabase.Functions.Invoke("create-user", token, options);
+        
+        if (!string.IsNullOrEmpty(response))
+        {
+            return true;
         }
         return false;
     }
