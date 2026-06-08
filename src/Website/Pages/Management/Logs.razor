@@ -64,7 +64,15 @@
                                     @log.EntityType
                                 </td>
                                 <td style="text-align: left; font-size: 0.85rem; padding-right: 1rem;">
-                                    @log.Description
+                                    @{
+                                        string firstLine = log.Description.Split('\n').FirstOrDefault() ?? "";
+                                        bool hasMore = log.Description.Contains('\n');
+                                    }
+                                    @firstLine
+                                    @if (hasMore)
+                                    {
+                                        <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none" style="font-weight: 600;" @onclick="() => OpenDetailsModal(log)">View Details</button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -103,7 +111,15 @@
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: #555; padding-top: 0.5rem; border-top: 1px solid #eee;">
-                        @log.Description
+                        @{
+                            string firstLine = log.Description.Split('\n').FirstOrDefault() ?? "";
+                            bool hasMore = log.Description.Contains('\n');
+                        }
+                        @firstLine
+                        @if (hasMore)
+                        {
+                            <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none" style="font-weight: 600;" @onclick="() => OpenDetailsModal(log)">View Details</button>
+                        }
                     </div>
                 </div>
             }
@@ -111,10 +127,41 @@
     </div>
 </div>
 
+@if (selectedLog != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Log Details</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDetailsModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>User:</strong> @selectedLog.UserEmail<br/>
+                        <strong>Action:</strong> <span class="badge @GetActionBadgeClass(selectedLog.Action)">@selectedLog.Action</span><br/>
+                        <strong>Entity:</strong> @selectedLog.EntityType<br/>
+                        <strong>Timestamp:</strong> @selectedLog.Timestamp.ToLocalTime().ToString("MMM dd, yyyy h:mm:ss tt")
+                    </div>
+                    <hr/>
+                    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; background-color: #f8f9fa; padding: 1rem; border-radius: 4px; border: 1px solid #dee2e6;">@selectedLog.Description</pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDetailsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<UserLog> logs = new();
     private string searchTerm = "";
     private string? errorMessage;
+    private UserLog? selectedLog;
+
+    private void OpenDetailsModal(UserLog log) => selectedLog = log;
+    private void CloseDetailsModal() => selectedLog = null;
 
     private IEnumerable<UserLog> filteredLogs => string.IsNullOrWhiteSpace(searchTerm) 
         ? logs 

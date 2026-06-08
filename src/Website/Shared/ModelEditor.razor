@@ -303,6 +303,19 @@
         }
     }
 
+    private string SerializeObject(object? obj)
+    {
+        if (obj == null) return "null";
+        try
+        {
+            return System.Text.Json.JsonSerializer.Serialize(obj, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return obj.ToString() ?? "";
+        }
+    }
+
     private string GetLogDescription(UserLogAction action)
     {
         string identifier = "";
@@ -318,16 +331,16 @@
 
         if (action == UserLogAction.Updated && OriginalItem != null && Item != null)
         {
-            desc += $"\nFrom: {OriginalItem.ToString()}";
-            if (_lastExtraState != null) desc += $"\nFrom ExtraState: {_lastExtraState.ToString()}";
+            desc += $"\nFrom:\n{SerializeObject(OriginalItem)}";
+            if (_lastExtraState != null) desc += $"\nFrom ExtraState:\n{SerializeObject(_lastExtraState)}";
             
-            desc += $"\nTo: {Item.ToString()}";
-            if (ExtraState != null) desc += $"\nTo ExtraState: {ExtraState.ToString()}";
+            desc += $"\nTo:\n{SerializeObject(Item)}";
+            if (ExtraState != null) desc += $"\nTo ExtraState:\n{SerializeObject(ExtraState)}";
         }
         else if (Item != null)
         {
-            desc += $"\nDetails: {Item.ToString()}";
-            if (ExtraState != null) desc += $"\nExtraState: {ExtraState.ToString()}";
+            desc += $"\nDetails:\n{SerializeObject(Item)}";
+            if (ExtraState != null) desc += $"\nExtraState:\n{SerializeObject(ExtraState)}";
         }
 
         return desc;
