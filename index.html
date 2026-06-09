@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="app-version" content="2026.06.09.1" />
+    <meta name="app-version" content="2026.06.09.2" />
     <meta name="color-scheme" content="light only" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -157,11 +157,30 @@
                 console.warn('Ignored cross-origin script error.');
                 return;
             }
+            
+            // Ignore harmless ResizeObserver errors
+            if (message.includes('ResizeObserver loop')) {
+                return;
+            }
+            
+            // Ignore errors originating from browser extensions
+            if (source && (source.includes('chrome-extension://') || source.includes('moz-extension://'))) {
+                return;
+            }
 
             displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'));
         };
 
         window.addEventListener('unhandledrejection', function (event) {
+            const reasonStr = (event.reason || '').toString();
+            // Ignore generic network failures often caused by crawlers, ad-blockers, or temporary offline states
+            if (reasonStr.includes('Failed to fetch') || 
+                reasonStr.includes('Load failed') || 
+                reasonStr.includes('NetworkError') ||
+                reasonStr.includes('The user aborted a request')) {
+                console.warn('Ignored expected network promise rejection:', event.reason);
+                return;
+            }
             displayGlobalError('PROMISE REJECTION', event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A'));
         });
     </script>
