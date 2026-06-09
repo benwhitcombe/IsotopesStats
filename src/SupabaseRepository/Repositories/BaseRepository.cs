@@ -1,6 +1,7 @@
 using IsotopesStats.Domain.Models;
 using IsotopesStats.SupabaseRepository.Mappings;
 using Postgrest;
+using Postgrest.Exceptions;
 using Postgrest.Models;
 using Postgrest.Responses;
 using System;
@@ -22,6 +23,32 @@ internal abstract class BaseRepository
         Mapper = mapper;
     }
 
+    protected async Task<T> ExecuteWithAuthRetryAsync<T>(Func<Task<T>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (PostgrestException ex) when (ex.Message != null && ex.Message.Contains("JWT expired"))
+        {
+            await Supabase.Auth.SignOut();
+            return await action();
+        }
+    }
+
+    protected async Task ExecuteWithAuthRetryAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (PostgrestException ex) when (ex.Message != null && ex.Message.Contains("JWT expired"))
+        {
+            await Supabase.Auth.SignOut();
+            await action();
+        }
+    }
+
     protected async Task<List<ModelType>> GetListAsync<ModelType, DTOType>(
         Func<DTOType, ModelType> toModel,
         string orderColumn,
@@ -29,69 +56,81 @@ internal abstract class BaseRepository
         bool onlyActive = true)
         where DTOType : BaseModel, new()
     {
-        Table<DTOType> query = (Table<DTOType>)Supabase.From<DTOType>();
-        
-        if (onlyActive)
+        return await ExecuteWithAuthRetryAsync(async () =>
         {
-            // Only apply the filter if the DTO has an IsDeleted property
-            if (typeof(DTOType).GetProperty("IsDeleted") != null)
+            Table<DTOType> query = (Table<DTOType>)Supabase.From<DTOType>();
+            
+            if (onlyActive)
             {
-                // Use string "false" for boolean filters to avoid Postgrest type exceptions in generic methods
-                query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+                if (typeof(DTOType).GetProperty("IsDeleted") != null)
+                {
+                    query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+                }
             }
-        }
 
-        ModeledResponse<DTOType> response = await query.Order(orderColumn, ordering).Get();
-        return response.Models.Select(toModel).ToList();
+            ModeledResponse<DTOType> response = await query.Order(orderColumn, ordering).Get();
+            return response.Models.Select(toModel).ToList();
+        });
     }
 
     protected async Task<int> InsertAsync<ModelType, DTOType>(ModelType model, Func<ModelType, DTOType> toDTO)
         where DTOType : BaseModel, new()
     {
-        ModeledResponse<DTOType> response = await Supabase.From<DTOType>().Insert(toDTO(model));
-        
-        PropertyInfo? prop = typeof(DTOType).GetProperty("Id");
-        object? value = prop?.GetValue(response.Model);
-        return value is int intValue ? intValue : 0;
+        return await ExecuteWithAuthRetryAsync(async () =>
+        {
+            ModeledResponse<DTOType> response = await Supabase.From<DTOType>().Insert(toDTO(model));
+            
+            PropertyInfo? prop = typeof(DTOType).GetProperty("Id");
+            object? value = prop?.GetValue(response.Model);
+            return value is int intValue ? intValue : 0;
+        });
     }
 
     protected async Task UpdateAsync<ModelType, DTOType>(ModelType model, Func<ModelType, DTOType> toDTO)
         where DTOType : BaseModel, new()
     {
-        await Supabase.From<DTOType>().Update(toDTO(model));
+        await ExecuteWithAuthRetryAsync(async () =>
+        {
+            await Supabase.From<DTOType>().Update(toDTO(model));
+        });
     }
 
     protected async Task SoftDeleteAsync<DTOType>(int id)
         where DTOType : BaseModel, new()
     {
-        DTOType dto = new DTOType();
-        PropertyInfo? idProp = typeof(DTOType).GetProperty("Id");
-        PropertyInfo? delProp = typeof(DTOType).GetProperty("IsDeleted");
-        
-        idProp?.SetValue(dto, id);
-        delProp?.SetValue(dto, true);
-        
-        await Supabase.From<DTOType>().Update(dto);
+        await ExecuteWithAuthRetryAsync(async () =>
+        {
+            DTOType dto = new DTOType();
+            PropertyInfo? idProp = typeof(DTOType).GetProperty("Id");
+            PropertyInfo? delProp = typeof(DTOType).GetProperty("IsDeleted");
+            
+            idProp?.SetValue(dto, id);
+            delProp?.SetValue(dto, true);
+            
+            await Supabase.From<DTOType>().Update(dto);
+        });
     }
 
     protected async Task<bool> IsUniqueAsync<DTOType>(string column, string value, int excludeId = 0)
         where DTOType : BaseModel, new()
     {
-        Table<DTOType> query = (Table<DTOType>)Supabase.From<DTOType>()
-            .Filter(column, Constants.Operator.Equals, value);
-
-        // Only apply the filter if the DTO has an IsDeleted property
-        if (typeof(DTOType).GetProperty("IsDeleted") != null)
+        return await ExecuteWithAuthRetryAsync(async () =>
         {
-            query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
-        }
+            Table<DTOType> query = (Table<DTOType>)Supabase.From<DTOType>()
+                .Filter(column, Constants.Operator.Equals, value);
 
-        if (excludeId != 0)
-        {
-            query = query.Filter("id", Constants.Operator.NotEqual, excludeId);
-        }
+            if (typeof(DTOType).GetProperty("IsDeleted") != null)
+            {
+                query = query.Filter("isdeleted", Constants.Operator.Equals, "false");
+            }
 
-        ModeledResponse<DTOType> response = await query.Get();
-        return response.Models.Count == 0;
+            if (excludeId != 0)
+            {
+                query = query.Filter("id", Constants.Operator.NotEqual, excludeId);
+            }
+
+            ModeledResponse<DTOType> response = await query.Get();
+            return response.Models.Count == 0;
+        });
     }
 }
