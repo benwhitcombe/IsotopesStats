@@ -63,6 +63,20 @@ try
 catch (Exception ex) 
 { 
     Console.WriteLine($"Auth initialization failed: {ex.Message}"); 
+    try 
+    { 
+        var jsRuntime = host.Services.GetRequiredService<IJSRuntime>();
+        if (jsRuntime is IJSInProcessRuntime inProcess)
+        {
+            inProcess.InvokeVoid("localStorage.removeItem", "supabase_session");
+        }
+        else
+        {
+            await jsRuntime.InvokeVoidAsync("localStorage.removeItem", "supabase_session");
+        }
+        await supabase.Auth.SignOut(); 
+    } 
+    catch {}
 }
 
 // Ensure the UI reflects the loaded auth state
