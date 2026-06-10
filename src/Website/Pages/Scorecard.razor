@@ -276,16 +276,27 @@ else
                         <td colspan="3" class="text-end fw-bold fs-4 pe-2 align-middle border-bottom-0 border-start-0 border-end-0">Runs</td>
                         @for (int col = 1; col <= TotalColumns; col++)
                         {
-                            <td class="p-0 m-0" style="position: relative; height: 50px;">
-                                <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0;">
-                                    <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                </svg>
-                                <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
-                                    <span class="fw-bold fs-5">@GetRunsInColumn(col)</span>
-                                </div>
-                                <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1;">
-                                    <span class="fw-bold fs-5">@GetCumulativeRuns(col)</span>
-                                </div>
+                            int currentColumn = col;
+                            bool isLastForInning = IsLastColumnForInning(currentColumn);
+                            <td class="p-0 m-0 @(isLastForInning ? "" : "text-center align-middle")" style="position: relative; height: 50px;">
+                                @if (isLastForInning)
+                                {
+                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0;">
+                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                                    </svg>
+                                    <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
+                                        <span class="fw-bold fs-5">@GetRunsInInning(currentColumn)</span>
+                                    </div>
+                                    <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1;">
+                                        <span class="fw-bold fs-5">@GetCumulativeRuns(currentColumn)</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="w-100 h-100 d-flex justify-content-center align-items-center">
+                                        <span class="fw-bold" style="font-size: 1.5rem;">&rarr;</span>
+                                    </div>
+                                }
                             </td>
                         }
                     </tr>
@@ -296,35 +307,47 @@ else
                         @for (int col = 1; col <= TotalColumns; col++)
                         {
                             int currentColumn = col;
-                            <td class="p-0 m-0" style="position: relative; height: 50px;">
-                                @if (canManageGames)
+                            bool isLastForInning = IsLastColumnForInning(currentColumn);
+                            int currentInning = columnInnings.ContainsKey(currentColumn) ? columnInnings[currentColumn] : currentColumn;
+                            
+                            <td class="p-0 m-0 @(isLastForInning ? "" : "text-center align-middle")" style="position: relative; height: 50px;">
+                                @if (isLastForInning)
                                 {
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
-                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                    </svg>
-                                    <div class="position-absolute" style="top: 0px; left: 2px; z-index: 1; width: 45px;">
-                                        <input type="number" min="0" max="99"
-                                               class="form-control text-start fw-bold fs-5 p-0 m-0 no-print" 
-                                               style="background: transparent; box-shadow: none; border: none; height: 26px;"
-                                               value="@GetOpponentScoreForColumn(currentColumn)"
-                                               @onchange="@(e => UpdateOpponentScoreForColumn(currentColumn, e.Value))" />
-                                        <div class="d-none d-print-block fw-bold fs-5" style="margin-left: 6px; margin-top: 2px;">
-                                            @GetOpponentScoreForColumn(currentColumn)
+                                    @if (canManageGames)
+                                    {
+                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
+                                            <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                                        </svg>
+                                        <div class="position-absolute" style="top: 0px; left: 2px; z-index: 1; width: 45px;">
+                                            <input type="number" min="0" max="99"
+                                                   class="form-control text-start fw-bold fs-5 p-0 m-0 no-print" 
+                                                   style="background: transparent; box-shadow: none; border: none; height: 26px;"
+                                                   value="@GetOpponentScoreForInning(currentInning)"
+                                                   @onchange="@(e => UpdateOpponentScoreForInning(currentInning, e.Value))" />
+                                            <div class="d-none d-print-block fw-bold fs-5" style="margin-left: 6px; margin-top: 2px;">
+                                                @GetOpponentScoreForInning(currentInning)
+                                            </div>
                                         </div>
+                                    }
+                                    else
+                                    {
+                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
+                                            <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                                        </svg>
+                                        <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
+                                            <span class="fw-bold fs-5">@GetOpponentScoreForInning(currentInning)</span>
+                                        </div>
+                                    }
+                                    <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1; pointer-events: none;">
+                                        <span class="fw-bold fs-5">@GetCumulativeOpponentRuns(currentInning)</span>
                                     </div>
                                 }
                                 else
                                 {
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
-                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                    </svg>
-                                    <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
-                                        <span class="fw-bold fs-5">@GetOpponentScoreForColumn(currentColumn)</span>
+                                    <div class="w-100 h-100 d-flex justify-content-center align-items-center">
+                                        <span class="fw-bold" style="font-size: 1.5rem;">&rarr;</span>
                                     </div>
                                 }
-                                <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1; pointer-events: none;">
-                                    <span class="fw-bold fs-5">@GetCumulativeOpponentRuns(currentColumn)</span>
-                                </div>
                             </td>
                         }
                     </tr>
@@ -942,11 +965,30 @@ else
         return (furthest, gotOut);
     }
     
-    private string GetRunsInColumn(int colIndex)
+    private bool IsLastColumnForInning(int colIndex)
     {
-        int runs = paMatrix.Where(kvp => kvp.Key.ColumnIndex == colIndex).Sum(kvp => kvp.Value.RunsScored);
-        bool hasAnyInCol = paMatrix.Any(kvp => kvp.Key.ColumnIndex == colIndex);
-        return hasAnyInCol ? runs.ToString() : "";
+        if (!columnInnings.ContainsKey(colIndex)) return true;
+        int currentInning = columnInnings[colIndex];
+        
+        if (columnInnings.ContainsKey(colIndex + 1) && columnInnings[colIndex + 1] == currentInning)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private string GetRunsInInning(int colIndex)
+    {
+        if (!columnInnings.ContainsKey(colIndex)) return "";
+        int inning = columnInnings[colIndex];
+        
+        var columnsForInning = columnInnings.Where(kvp => kvp.Value == inning).Select(kvp => kvp.Key).ToList();
+        
+        bool hasAnyInInning = paMatrix.Any(kvp => columnsForInning.Contains(kvp.Key.ColumnIndex));
+        if (!hasAnyInInning) return "";
+        
+        int runs = paMatrix.Where(kvp => columnsForInning.Contains(kvp.Key.ColumnIndex)).Sum(kvp => kvp.Value.RunsScored);
+        return runs.ToString();
     }
     
     private string GetCumulativeRuns(int colIndex)
@@ -957,35 +999,35 @@ else
         return total.ToString();
     }
     
-    private string GetOpponentScoreForColumn(int colIndex)
+    private string GetOpponentScoreForInning(int inning)
     {
         if (game == null) return "";
         var scores = game.GetOpponentInningScores();
-        return scores.ContainsKey(colIndex) ? scores[colIndex].ToString() : "";
+        return scores.ContainsKey(inning) ? scores[inning].ToString() : "";
     }
     
-    private string GetCumulativeOpponentRuns(int colIndex)
+    private string GetCumulativeOpponentRuns(int inning)
     {
         if (game == null) return "";
         var scores = game.GetOpponentInningScores();
-        if (!scores.ContainsKey(colIndex)) return "";
+        if (!scores.ContainsKey(inning)) return "";
         
-        int total = scores.Where(kvp => kvp.Key <= colIndex).Sum(kvp => kvp.Value);
+        int total = scores.Where(kvp => kvp.Key <= inning).Sum(kvp => kvp.Value);
         return total.ToString();
     }
     
-    private async Task UpdateOpponentScoreForColumn(int colIndex, object? value)
+    private async Task UpdateOpponentScoreForInning(int inning, object? value)
     {
         if (game == null) return;
         
         var scores = game.GetOpponentInningScores();
         if (value != null && int.TryParse(value.ToString(), out int score))
         {
-            scores[colIndex] = score;
+            scores[inning] = score;
         }
         else
         {
-            scores.Remove(colIndex);
+            scores.Remove(inning);
         }
         
         game.SetOpponentInningScores(scores);
@@ -993,7 +1035,7 @@ else
         game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : scores.Values.Sum();
         
         await StatsRepository.UpdateGameAsync(game);
-        await LogActionAsync($"Updated opponent score for inning {colIndex} to {value} for Game {GameId}");
+        await LogActionAsync($"Updated opponent score for inning {inning} to {value} for Game {GameId}");
     }
     
     private void HandleCellClick(PlateAppearance? pa)
