@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="app-version" content="2026.06.10.2" />
+    <meta name="app-version" content="2026.06.12.1" />
     <meta name="color-scheme" content="light only" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -135,6 +135,24 @@
             logErrorToSupabase(prefix, content);
         }
 
+        function displayBrowserTooOldError() {
+            if (window.hasDisplayedError) return;
+            window.hasDisplayedError = true;
+
+            const errorUi = document.getElementById('blazor-error-ui');
+            errorUi.style.display = 'flex';
+            
+            errorUi.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; max-width: 400px; border: 1px solid #ff9800; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <h4 style="color: #ff9800; margin-top: 0; font-family: sans-serif;">Browser Too Old</h4>
+                    <p style="color: #333; font-family: sans-serif; font-size: 14px;">Your browser does not support modern WebAssembly features required by this application. Please update your browser to the latest version.</p>
+                </div>
+            `;
+
+            const appDiv = document.getElementById('app');
+            if (appDiv) appDiv.style.display = 'none';
+        }
+
         // Intercept console.error to catch Blazor Critical errors that don't bubble to window.onerror
         (function() {
             const originalError = console.error;
@@ -168,6 +186,11 @@
                 return;
             }
 
+            if (message && message.includes("doesn't support WASM exception handling")) {
+                displayBrowserTooOldError();
+                return;
+            }
+
             displayGlobalError('JS ERROR', message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\nStack: ' + (error ? error.stack : 'N/A'));
         };
 
@@ -181,6 +204,12 @@
                 console.warn('Ignored expected network promise rejection:', event.reason);
                 return;
             }
+
+            if (reasonStr.includes("doesn't support WASM exception handling")) {
+                displayBrowserTooOldError();
+                return;
+            }
+
             displayGlobalError('PROMISE REJECTION', event.reason + '\nStack: ' + (event.reason ? event.reason.stack : 'N/A'));
         });
     </script>

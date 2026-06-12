@@ -19,6 +19,9 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Restore workloads
+        run: dotnet workload restore src/Website/Website.csproj
+
       - name: Publish application
         run: dotnet publish src/Website/Website.csproj -c Release -o release
 
