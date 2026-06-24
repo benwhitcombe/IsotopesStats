@@ -236,7 +236,15 @@
     {
         Navigation.LocationChanged += HandleLocationChanged;
         SharedState.OnChanged += StateHasChanged;
-        seasons = await StatsRepository.GetSeasonsAsync();
+        try
+        {
+            seasons = await StatsRepository.GetSeasonsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load seasons: {ex.Message}");
+            seasons = new List<Season>();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

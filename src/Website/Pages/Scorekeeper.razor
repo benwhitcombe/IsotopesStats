@@ -190,17 +190,21 @@ else
         <!-- Diamond / Bases View -->
         <div class="stat-card mb-2 py-3 position-relative @(showSuccessAnimation ? "success-pulse" : "")" style="transition: border 0.3s;">
             <div class="d-flex justify-content-between text-center px-4 mb-2">
+                @{
+                    int displayRuns = runsScored + (viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunsScored : 0);
+                    int displayOuts = currentOuts + (viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].OutsRecorded : 0);
+                }
                 <div>
                     <h6 class="mb-0 text-muted">INNING</h6>
                     <div class="fs-4 fw-bold" style="color: var(--isotopes-primary);">@currentInning</div>
                 </div>
                 <div>
                     <h6 class="mb-0 text-muted">SCORE</h6>
-                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-green);" @key="runsScored">@runsScored</div>
+                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-green);" @key="displayRuns">@displayRuns</div>
                 </div>
                 <div>
                     <h6 class="mb-0 text-muted">OUTS</h6>
-                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-red);" @key="currentOuts">@currentOuts</div>
+                    <div class="fs-4 fw-bold pop-highlight" style="color: var(--isotopes-red);" @key="displayOuts">@displayOuts</div>
                 </div>
             </div>
 

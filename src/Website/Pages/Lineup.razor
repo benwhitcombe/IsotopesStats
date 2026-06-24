@@ -362,7 +362,6 @@ else
     private Dictionary<int, PositionAutocompleteCell> posCells = new();
 
     private BattingOrderEntry? draggedEntry;
-    private BattingOrderEntry? targetEntry;
 
     private int? dragTargetIndex;
     private bool? dragTargetFromBench;
@@ -1433,7 +1432,6 @@ else
 
         // Reset drag state
         draggedEntry = null;
-        targetEntry = null;
         dragTargetIndex = null;
         dragTargetFromBench = null;
         draggingType = DragMode.None;
