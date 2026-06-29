@@ -3,9 +3,27 @@
 
 <div class="scorekeeper-container mx-auto" style="max-width: 600px;">
     <style>
+        .scorekeeper-container .btn {
+            transition: all 0.2s ease;
+        }
         .scorekeeper-container .btn:focus, .scorekeeper-container .btn:active {
             box-shadow: none !important;
             outline: none !important;
+        }
+        .selected-success {
+            background-color: white !important;
+            color: #198754 !important;
+            border: 2px solid #198754 !important;
+        }
+        .selected-primary {
+            background-color: white !important;
+            color: #0d6efd !important;
+            border: 2px solid #0d6efd !important;
+        }
+        .selected-danger {
+            background-color: white !important;
+            color: #dc3545 !important;
+            border: 2px solid #dc3545 !important;
         }
     </style>
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -83,7 +101,7 @@
     </div>
 
     <!-- Diamond / Bases View -->
-    <div class="stat-card mb-2 py-3 position-relative">
+    <div class="stat-card mb-2 py-1 position-relative" style="padding-bottom: 40px !important;">
 
         <!-- Baseball Diamond Graphic -->
         <div class="position-relative mx-auto mt-2 mb-4" style="width: 200px; height: 200px;">
@@ -146,10 +164,10 @@
                 </div>
             }
             
-            <div class="position-absolute d-flex flex-row gap-1 justify-content-center" style="left: 50%; top: 100%; transform: translateX(-50%); z-index: 10;">
+            <div class="position-absolute d-flex flex-row gap-1 justify-content-center" style="left: 50%; top: 95%; transform: translateX(-50%); z-index: 10;">
                 @foreach (var scoredRunner in DisplayScoredRunners)
                 {
-                    <div class="badge badge-fade bg-success">
+                    <div class="badge badge-fade bg-success shadow-sm">
                         @scoredRunner.Name
                     </div>
                 }
@@ -157,7 +175,7 @@
         </div>
         
         <!-- Batter Info -->
-        <div class="text-center mt-2">
+        <div class="text-center mt-2 mb-2">
             <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">CURRENT BATTER</h6>
             <h3 class="fw-bold mb-0 text-dark">@CurrentBatter</h3>
         </div>
@@ -169,36 +187,33 @@
         {
             <!-- Play Controls -->
             <div class="row g-2 mb-3">
-                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("1B")'>1B</button></div>
-                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("2B")'>2B</button></div>
-                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("3B")'>3B</button></div>
+                <div class="col-4"><button class="@GetPlayButtonClass("1B")" @onclick='() => StartPlay("1B")'>@GetPlayButtonText("1B")</button></div>
+                <div class="col-4"><button class="@GetPlayButtonClass("2B")" @onclick='() => StartPlay("2B")'>@GetPlayButtonText("2B")</button></div>
+                <div class="col-4"><button class="@GetPlayButtonClass("3B")" @onclick='() => StartPlay("3B")'>@GetPlayButtonText("3B")</button></div>
                 
-                <div class="col-6"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("HR")'>HR</button></div>
-                <div class="col-6"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("IPHR")'>IPHR</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("HR")" @onclick='() => StartPlay("HR")'>@GetPlayButtonText("HR")</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("IPHR")" @onclick='() => StartPlay("IPHR")'>@GetPlayButtonText("IPHR")</button></div>
                 
-                <div class="col-6"><button class="btn btn-primary text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("BB")'>BB</button></div>
-                <div class="col-6"><button class="btn btn-primary text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("FC")' disabled="@(RunnerOn1B == null && RunnerOn2B == null && RunnerOn3B == null)">FC</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("BB")" @onclick='() => StartPlay("BB")'>@GetPlayButtonText("BB")</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("FC")" @onclick='() => StartPlay("FC")' disabled="@(RunnerOn1B == null && RunnerOn2B == null && RunnerOn3B == null)">@GetPlayButtonText("FC")</button></div>
                 
-                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("GO")'>GO</button></div>
-                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("FO")'>FO</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("GO")" @onclick='() => StartPlay("GO")'>@GetPlayButtonText("GO")</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("FO")" @onclick='() => StartPlay("FO")'>@GetPlayButtonText("FO")</button></div>
                 
-                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("K")'>K</button></div>
-                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("KF")'>KF</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("K")" @onclick='() => StartPlay("K")'>@GetPlayButtonText("K")</button></div>
+                <div class="col-6"><button class="@GetPlayButtonClass("KF")" @onclick='() => StartPlay("KF")'>@GetPlayButtonText("KF")</button></div>
             </div>
             
             <div class="row g-2 mt-2">
-                <div class="col-3">
+                <div class="col-4">
                     <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm text-nowrap" disabled="@(batterIndex == 0)" @onclick="GoPrev">&laquo; Prev</button>
                 </div>
-                <div class="col-3">
-                    <button class="btn btn-outline-danger w-100 h-100 shadow-sm fw-bold" style="padding-left: 2px; padding-right: 2px; font-size: 0.8rem; line-height: 1.1;">
-                        ☐ End<br>Inning
+                <div class="col-4">
+                    <button class="btn @(IsEndsInningToggled() ? "selected-danger" : "btn-danger text-white") w-100 h-100 shadow-sm fw-bold" style="padding-left: 2px; padding-right: 2px; font-size: 0.8rem; line-height: 1.1;" @onclick="ToggleEndInning">
+                        @(IsEndsInningToggled() ? "✓ End Inning" : "End Inning")
                     </button>
                 </div>
-                <div class="col-3">
-                    <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm" @onclick='() => StartPlay("Skip")'>Skip</button>
-                </div>
-                <div class="col-3">
+                <div class="col-4">
                     <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm text-nowrap" disabled="@(batterIndex >= RecordedPlays.Count)" @onclick="GoNext">Next &raquo;</button>
                 </div>
             </div>
@@ -255,9 +270,10 @@
                     </div>
                     
                     <div class="mb-3">
-                        <button class="btn @((ManualEndInning || DisplayOuts >= 3) ? "btn-danger text-white shadow-sm" : "btn-outline-danger") w-100 py-2 fw-bold" 
+                        <button class="btn @((ManualEndInning || DisplayOuts >= 3) ? "selected-danger" : "btn-danger text-white shadow-sm") w-100 py-2 fw-bold" 
                                 @onclick="() => ManualEndInning = !ManualEndInning"
-                                disabled="@(DisplayOuts >= 3)">
+                                disabled="@(DisplayOuts >= 3)"
+                                style="@(DisplayOuts >= 3 ? "opacity: 1;" : "")">
                             @((ManualEndInning || DisplayOuts >= 3) ? "✓ End Inning" : "End Inning")
                         </button>
                     </div>
@@ -336,12 +352,14 @@
     private class RecordedPlay
     {
         public string Result { get; set; } = "";
+        public int Inning { get; set; }
         public int RunsThisInning { get; set; }
         public int IsotopesScore { get; set; }
         public int Outs { get; set; }
         public string? RunnerOn1B { get; set; }
         public string? RunnerOn2B { get; set; }
         public string? RunnerOn3B { get; set; }
+        public int BatterIndex { get; set; }
         public string? IsotopesBatterName { get; set; }
     }
 
@@ -626,19 +644,6 @@
         RunsThisInning += runsScoredThisPlay;
         IsotopesScore += runsScoredThisPlay;
 
-        // Save play to history
-        RecordedPlays.Add(new RecordedPlay
-        {
-            Result = PendingResult,
-            RunsThisInning = RunsThisInning,
-            IsotopesScore = IsotopesScore,
-            Outs = Outs,
-            RunnerOn1B = RunnerOn1B,
-            RunnerOn2B = RunnerOn2B,
-            RunnerOn3B = RunnerOn3B,
-            IsotopesBatterName = CurrentBatter
-        });
-
         if (Outs >= 3 || ManualEndInning)
         {
             Outs = 0;
@@ -671,5 +676,92 @@
         batterIndex++;
         IsEditingPlay = false;
         PendingResult = "";
+    }
+
+    private void ToggleEndInning()
+    {
+        if (batterIndex > 0 && batterIndex <= RecordedPlays.Count)
+        {
+            if (RecordedPlays[batterIndex - 1].Result == "End Inning")
+            {
+                RecordedPlays.RemoveAt(batterIndex - 1);
+                batterIndex--;
+            }
+            else
+            {
+                RecordedPlays.Insert(batterIndex, new RecordedPlay
+                {
+                    Result = "End Inning",
+                    Inning = this.Inning,
+                    RunsThisInning = this.RunsThisInning,
+                    IsotopesScore = this.IsotopesScore,
+                    Outs = this.Outs,
+                    RunnerOn1B = this.RunnerOn1B,
+                    RunnerOn2B = this.RunnerOn2B,
+                    RunnerOn3B = this.RunnerOn3B,
+                    BatterIndex = this.batterIndex,
+                    IsotopesBatterName = CurrentBatter
+                });
+                batterIndex++;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private string GetPlayButtonText(string result)
+    {
+        if (batterIndex > 0 && batterIndex <= RecordedPlays.Count)
+        {
+            if (RecordedPlays[batterIndex - 1].Result == result)
+            {
+                return $"✓ {result}";
+            }
+        }
+        return result;
+    }
+
+    private string GetPlayButtonClass(string result)
+    {
+        string css = "btn text-white fw-bold w-100 py-3 shadow-sm";
+        bool isOut = result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF";
+
+        string baseClass = "";
+        string selectedClass = "";
+
+        if (isOut) 
+        {
+            baseClass = "btn-danger";
+            selectedClass = "selected-danger";
+        }
+        else if (result == "BB" || result == "FC")
+        {
+            baseClass = "btn-primary";
+            selectedClass = "selected-primary";
+        }
+        else 
+        {
+            baseClass = "btn-success";
+            selectedClass = "selected-success";
+        }
+        
+        css += " " + baseClass;
+            
+        if (batterIndex > 0 && batterIndex <= RecordedPlays.Count)
+        {
+            if (RecordedPlays[batterIndex - 1].Result == result)
+            {
+                css += " " + selectedClass;
+            }
+        }
+        return css;
+    }
+
+    private bool IsEndsInningToggled()
+    {
+        if (batterIndex > 0 && batterIndex <= RecordedPlays.Count)
+        {
+            return RecordedPlays[batterIndex - 1].Result == "End Inning";
+        }
+        return false;
     }
 }
