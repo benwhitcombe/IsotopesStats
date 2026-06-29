@@ -29,6 +29,12 @@ public record PlateAppearance : IEntity
     public int? RunnerOn2B_End { get; set; }
     public int? RunnerOn3B_End { get; set; }
     
+    // Outs that occurred on this play
+    public int? OutAt1B { get; set; } // PlayerId of runner thrown out at 1B
+    public int? OutAt2B { get; set; } // PlayerId of runner thrown out at 2B
+    public int? OutAt3B { get; set; } // PlayerId of runner thrown out at 3B
+    public int? OutAtHome { get; set; } // PlayerId of runner thrown out at Home
+    
     // Navigation properties
     public Player? Player { get; set; }
     public Game? Game { get; set; }

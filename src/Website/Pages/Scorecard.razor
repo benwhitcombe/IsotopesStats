@@ -913,6 +913,11 @@ else
         else if (initialPa.Result == "3B") furthest = 3;
         else if (initialPa.Result == "HR" || initialPa.Result == "IPHR") return (4, false);
         
+        if (initialPa.OutAt1B == batterId) { gotOut = true; furthest = 0; }
+        else if (initialPa.OutAt2B == batterId) { gotOut = true; furthest = 1; }
+        else if (initialPa.OutAt3B == batterId) { gotOut = true; furthest = 2; }
+        else if (initialPa.OutAtHome == batterId) { gotOut = true; furthest = 3; }
+        
         var subsequentPAs = plateAppearances
             .Where(p => p.Inning == initialPa.Inning && p.OrderNumber > initialPa.OrderNumber)
             .OrderBy(p => p.OrderNumber)
@@ -921,6 +926,11 @@ else
         foreach (var pa in subsequentPAs)
         {
             if (pa.PlayerId == batterId) break;
+            
+            if (pa.OutAt1B == batterId) { gotOut = true; furthest = 0; break; }
+            if (pa.OutAt2B == batterId) { gotOut = true; furthest = 1; break; }
+            if (pa.OutAt3B == batterId) { gotOut = true; furthest = 2; break; }
+            if (pa.OutAtHome == batterId) { gotOut = true; furthest = 3; break; }
             
             if (pa.RunnerOn1B_End == batterId) furthest = Math.Max(furthest, 1);
             if (pa.RunnerOn2B_End == batterId) furthest = Math.Max(furthest, 2);
@@ -953,7 +963,7 @@ else
                         }
                     }
                     
-                    if (!scored)
+                    if (!scored && !gotOut)
                     {
                         gotOut = true;
                         break;

@@ -45,7 +45,10 @@
 
     private string GetDestinationLabel(int dest) => dest switch
     {
-        0 => "Out",
+        -1 => "Out at 1st",
+        -2 => "Out at 2nd",
+        -3 => "Out at 3rd",
+        -4 => "Out at Home",
         1 => CurrentBase == 1 ? "Stayed on 1st" : "1st Base",
         2 => CurrentBase == 2 ? "Stayed on 2nd" : "2nd Base",
         3 => CurrentBase == 3 ? "Stayed on 3rd" : "3rd Base",
@@ -55,7 +58,7 @@
 
     private string GetButtonClass(int dest)
     {
-        if (dest == 0) return "btn btn-outline-danger btn-lg";
+        if (dest < 0) return "btn btn-outline-danger btn-lg";
         if (dest == 4) return "btn btn-outline-success btn-lg";
         if (dest == CurrentBase && dest != 0) return "btn btn-outline-secondary btn-lg";
         return "btn btn-outline-primary btn-lg";
@@ -71,8 +74,13 @@
             if (i >= MinBase) options.Add(i);
         }
         
-        // 2. Out
-        options.Add(0);
+        // 2. Out options (starting from CurrentBase up to MaxBase)
+        int minOutBase = Math.Max(1, CurrentBase); // 1st base minimum
+        // If they are on a base, they can be picked off at their current base
+        for (int i = minOutBase; i <= MaxBase; i++)
+        {
+            options.Add(-i);
+        }
         
         // 3. Stayed on current base (if valid and not the batter)
         if (CurrentBase >= MinBase && CurrentBase <= MaxBase && CurrentBase != 0)

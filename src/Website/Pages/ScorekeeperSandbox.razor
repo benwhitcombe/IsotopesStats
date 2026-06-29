@@ -1,0 +1,675 @@
+@page "/sandbox"
+@inject IStatsRepository StatsRepository
+
+<div class="scorekeeper-container mx-auto" style="max-width: 600px;">
+    <style>
+        .scorekeeper-container .btn:focus, .scorekeeper-container .btn:active {
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    </style>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0 fw-bold text-nowrap me-3">Scorekeeper</h2>
+        <div class="d-flex gap-2 justify-content-end w-100">
+            <button class="btn btn-sm btn-outline-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" disabled>Reset</button>
+            <button class="btn btn-sm btn-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" disabled>Delete</button>
+        </div>
+    </div>
+
+    <!-- Scoreboard Header (Outside Diamond Container) -->
+    <div class="mb-2">
+        <div class="d-flex bg-white border rounded shadow-sm overflow-hidden mb-2">
+            <!-- Teams & Scores -->
+            <div class="flex-grow-1">
+                @if (IsHome)
+                {
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                        <div class="smart-name-container text-truncate me-2">
+                            <span class="full-name fw-bold text-muted" style="letter-spacing: 1px; font-size: 0.85rem;">@(SandboxOpponent?.Name ?? "Opponent")</span>
+                            <span class="short-name fw-bold text-muted" style="letter-spacing: 1px; font-size: 0.85rem;">@(SandboxOpponent?.ShortName ?? "Opp")</span>
+                        </div>
+                        <div class="fw-bold fs-5">@OpponentScore</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2">
+                        <div class="text-truncate me-2">
+                            <span class="fw-bold" style="color: var(--isotopes-primary); letter-spacing: 1px; font-size: 0.85rem;">Isotopes</span>
+                        </div>
+                        <div class="fw-bold fs-5">@DisplayIsotopesScore</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                        <div class="text-truncate me-2">
+                            <span class="fw-bold" style="color: var(--isotopes-primary); letter-spacing: 1px; font-size: 0.85rem;">Isotopes</span>
+                        </div>
+                        <div class="fw-bold fs-5">@DisplayIsotopesScore</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2">
+                        <div class="smart-name-container text-truncate me-2">
+                            <span class="full-name fw-bold text-muted" style="letter-spacing: 1px; font-size: 0.85rem;">@(SandboxOpponent?.Name ?? "Opponent")</span>
+                            <span class="short-name fw-bold text-muted" style="letter-spacing: 1px; font-size: 0.85rem;">@(SandboxOpponent?.ShortName ?? "Opp")</span>
+                        </div>
+                        <div class="fw-bold fs-5">@OpponentScore</div>
+                    </div>
+                }
+            </div>
+            <!-- Game State -->
+            <div class="d-flex flex-column justify-content-center align-items-center px-3 border-start bg-light" style="min-width: 110px;">
+                <div class="fw-bold text-muted mb-2" style="font-size: 0.9rem;">
+                    @if (IsHome)
+                    {
+                        <span class="fs-6 me-1">&#x25BC;</span><text>Bot @Inning</text>
+                    }
+                    else
+                    {
+                        <span class="fs-6 me-1">&#x25B2;</span><text>Top @Inning</text>
+                    }
+                </div>
+                <div class="d-flex gap-1 mb-1">
+                    <div class="rounded-circle @(DisplayOuts >= 1 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                    <div class="rounded-circle @(DisplayOuts >= 2 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                    <div class="rounded-circle @(DisplayOuts >= 3 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inning Runs Tracker -->
+        <div class="text-center">
+            <span class="badge @(DisplayRunsThisInning > 0 ? "bg-success" : "bg-secondary") text-white px-3 py-2 shadow-sm rounded-pill" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                +@DisplayRunsThisInning Runs This Inning
+            </span>
+        </div>
+    </div>
+
+    <!-- Diamond / Bases View -->
+    <div class="stat-card mb-2 py-3 position-relative">
+
+        <!-- Baseball Diamond Graphic -->
+        <div class="position-relative mx-auto mt-2 mb-4" style="width: 200px; height: 200px;">
+            <div class="diamond-container h-100 w-100">
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <!-- Base paths -->
+                    <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#ddd" stroke-width="2" />
+                    <!-- 1B -->
+                    <polygon points="90,50 85,45 80,50 85,55" fill="@(DisplayRunnerOn1B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- 2B -->
+                    <polygon points="50,10 45,15 50,20 55,15" fill="@(DisplayRunnerOn2B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- 3B -->
+                    <polygon points="10,50 15,45 20,50 15,55" fill="@(DisplayRunnerOn3B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+                    <!-- Home Plate (pointing down) -->
+                    <polygon points="45,85 55,85 55,90 50,95 45,90" fill="#fff" stroke="#aaa" />
+                </svg>
+            </div>
+            
+            @if (DisplayRunnerOn2B != null)
+            {
+                <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 50%; bottom: 90%; transform: translateX(-50%); z-index: 10;">
+                    @DisplayRunnerOn2B
+                </div>
+            }
+            @if (DisplayRunnerOn3B != null)
+            {
+                <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); right: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+                    @DisplayRunnerOn3B
+                </div>
+            }
+            @if (DisplayRunnerOn1B != null)
+            {
+                <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+                    @DisplayRunnerOn1B
+                </div>
+            }
+            
+            @foreach (var outRunner in DisplayOutRunners.Where(r => r.Destination == -1))
+            {
+                <div class="position-absolute badge badge-fade bg-danger" style="left: 75%; top: 75%; transform: translate(-50%, -50%); z-index: 10;">
+                    @outRunner.Name
+                </div>
+            }
+            @foreach (var outRunner in DisplayOutRunners.Where(r => r.Destination == -2))
+            {
+                <div class="position-absolute badge badge-fade bg-danger" style="left: 75%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">
+                    @outRunner.Name
+                </div>
+            }
+            @foreach (var outRunner in DisplayOutRunners.Where(r => r.Destination == -3))
+            {
+                <div class="position-absolute badge badge-fade bg-danger" style="left: 25%; top: 25%; transform: translate(-50%, -50%); z-index: 10;">
+                    @outRunner.Name
+                </div>
+            }
+            @foreach (var outRunner in DisplayOutRunners.Where(r => r.Destination == -4))
+            {
+                <div class="position-absolute badge badge-fade bg-danger" style="left: 25%; top: 75%; transform: translate(-50%, -50%); z-index: 10;">
+                    @outRunner.Name
+                </div>
+            }
+            
+            <div class="position-absolute d-flex flex-row gap-1 justify-content-center" style="left: 50%; top: 100%; transform: translateX(-50%); z-index: 10;">
+                @foreach (var scoredRunner in DisplayScoredRunners)
+                {
+                    <div class="badge badge-fade bg-success">
+                        @scoredRunner.Name
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- Batter Info -->
+        <div class="text-center mt-2">
+            <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">CURRENT BATTER</h6>
+            <h3 class="fw-bold mb-0 text-dark">@CurrentBatter</h3>
+        </div>
+    </div>
+
+    <!-- Play Controls OR Runner Advancement Editor Wrapper -->
+    <div style="min-height: 480px;">
+        @if (!IsEditingPlay)
+        {
+            <!-- Play Controls -->
+            <div class="row g-2 mb-3">
+                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("1B")'>1B</button></div>
+                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("2B")'>2B</button></div>
+                <div class="col-4"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("3B")'>3B</button></div>
+                
+                <div class="col-6"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("HR")'>HR</button></div>
+                <div class="col-6"><button class="btn btn-success text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("IPHR")'>IPHR</button></div>
+                
+                <div class="col-6"><button class="btn btn-primary text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("BB")'>BB</button></div>
+                <div class="col-6"><button class="btn btn-primary text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("FC")' disabled="@(RunnerOn1B == null && RunnerOn2B == null && RunnerOn3B == null)">FC</button></div>
+                
+                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("GO")'>GO</button></div>
+                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("FO")'>FO</button></div>
+                
+                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("K")'>K</button></div>
+                <div class="col-6"><button class="btn btn-danger text-white fw-bold w-100 py-3 shadow-sm" @onclick='() => StartPlay("KF")'>KF</button></div>
+            </div>
+            
+            <div class="row g-2 mt-2">
+                <div class="col-3">
+                    <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm text-nowrap" disabled="@(batterIndex == 0)" @onclick="GoPrev">&laquo; Prev</button>
+                </div>
+                <div class="col-3">
+                    <button class="btn btn-outline-danger w-100 h-100 shadow-sm fw-bold" style="padding-left: 2px; padding-right: 2px; font-size: 0.8rem; line-height: 1.1;">
+                        ☐ End<br>Inning
+                    </button>
+                </div>
+                <div class="col-3">
+                    <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm" @onclick='() => StartPlay("Skip")'>Skip</button>
+                </div>
+                <div class="col-3">
+                    <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm text-nowrap" disabled="@(batterIndex >= RecordedPlays.Count)" @onclick="GoNext">Next &raquo;</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Runner Advancement Editor -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h5 class="mb-0 fw-bold">
+                            <span class="badge @GetBadgeColor(PendingResult) me-2">@PendingResult</span>
+                            Runner Advancement
+                        </h5>
+                    </div>
+                    
+                    <div>
+                        @foreach (var runner in ActiveRunners)
+                        {
+                            <div class="bg-light p-2 rounded border mb-3">
+                                <div class="fw-bold mb-2">@(runner.IsBatter ? "Batter" : $"Runner on {runner.StartBase}B") (@runner.Name)</div>
+                                <div class="d-flex gap-1 overflow-auto pb-1" style="white-space: nowrap;">
+                                    @if (runner.IsBatter && (PendingResult == "K" || PendingResult == "KF" || PendingResult == "GO" || PendingResult == "FO" || PendingResult == "SF"))
+                                    {
+                                        <button class="btn btn-sm btn-danger fw-bold shadow-none" style="pointer-events: none;">Out</button>
+                                    }
+                                    else if (PendingResult == "BB" || PendingResult == "HR" || PendingResult == "IPHR" || PendingResult == "K" || PendingResult == "KF")
+                                    {
+                                        <button class="btn btn-sm @(runner.Destination == 4 ? "btn-success" : "btn-primary") fw-bold shadow-none" style="pointer-events: none;">
+                                            @(runner.Destination == 4 ? "Home" : $"{runner.Destination}B")
+                                        </button>
+                                    }
+                                    else if (!runner.ShowOutOptions)
+                                    {
+                                        @if (IsSafeBaseAllowed(runner, 1)) { <button class="btn btn-sm @(runner.Destination == 1 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 1)">1B</button> }
+                                        @if (IsSafeBaseAllowed(runner, 2)) { <button class="btn btn-sm @(runner.Destination == 2 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 2)">2B</button> }
+                                        @if (IsSafeBaseAllowed(runner, 3)) { <button class="btn btn-sm @(runner.Destination == 3 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 3)">3B</button> }
+                                        @if (IsSafeBaseAllowed(runner, 4)) { <button class="btn btn-sm @(runner.Destination == 4 ? "btn-success fw-bold" : "btn-outline-success") shadow-none" @onclick="() => SetRunnerDest(runner, 4)">Home</button> }
+                                        
+                                        <button class="btn btn-sm btn-outline-danger shadow-none ms-auto" @onclick="() => ToggleOutOptions(runner)">Out</button>
+                                    }
+                                    else
+                                    {
+                                        @if (IsOutBaseAllowed(runner, 1)) { <button class="btn btn-sm @(runner.Destination == -1 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -1)">Out 1B</button> }
+                                        @if (IsOutBaseAllowed(runner, 2)) { <button class="btn btn-sm @(runner.Destination == -2 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -2)">Out 2B</button> }
+                                        @if (IsOutBaseAllowed(runner, 3)) { <button class="btn btn-sm @(runner.Destination == -3 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -3)">Out 3B</button> }
+                                        @if (IsOutBaseAllowed(runner, 4)) { <button class="btn btn-sm @(runner.Destination == -4 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -4)">Out Home</button> }
+                                        
+                                        <button class="btn btn-sm btn-outline-secondary shadow-none ms-auto" @onclick="() => ToggleOutOptions(runner)">Safe</button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="mb-3">
+                        <button class="btn @((ManualEndInning || DisplayOuts >= 3) ? "btn-danger text-white shadow-sm" : "btn-outline-danger") w-100 py-2 fw-bold" 
+                                @onclick="() => ManualEndInning = !ManualEndInning"
+                                disabled="@(DisplayOuts >= 3)">
+                            @((ManualEndInning || DisplayOuts >= 3) ? "✓ End Inning" : "End Inning")
+                        </button>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-secondary flex-grow-1 py-2 fw-bold shadow-sm" @onclick="CancelPlay">Cancel</button>
+                        <button class="btn btn-primary flex-grow-1 py-2 fw-bold shadow-sm" @onclick="SavePlay">Save Play</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private IsotopesStats.Domain.Models.Opponent? SandboxOpponent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var opponents = await StatsRepository.GetAllOpponentsAsync();
+        SandboxOpponent = opponents.FirstOrDefault(o => o.Name != "Isotopes");
+    }
+
+    // Game State
+    private bool IsHome = true;
+    private int Inning = 1;
+    private int IsotopesScore = 0;
+    private int OpponentScore = 0;
+    private int RunsThisInning = 0;
+    private int Outs = 0;
+    private string? RunnerOn1B = null;
+    private string? RunnerOn2B = null;
+    private string? RunnerOn3B = null;
+
+    // UI State
+    private bool IsEditingPlay = false;
+    private string PendingResult = "";
+    private List<RunnerState> ActiveRunners = new();
+    private bool ManualEndInning = false;
+
+    // Display State (shows projected state while editing)
+    private int DisplayRunsThisInning => IsEditingPlay ? RunsThisInning + ActiveRunners.Count(r => r.Destination == 4) : RunsThisInning;
+    private int DisplayIsotopesScore => IsEditingPlay ? IsotopesScore + ActiveRunners.Count(r => r.Destination == 4) : IsotopesScore;
+    private int DisplayOuts => IsEditingPlay ? Outs + ActiveRunners.Count(r => r.Destination < 0) : Outs;
+
+
+    private string? DisplayRunnerOn1B => IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 1)?.Name : RunnerOn1B;
+    private string? DisplayRunnerOn2B => IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 2)?.Name : RunnerOn2B;
+    private string? DisplayRunnerOn3B => IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 3)?.Name : RunnerOn3B;
+
+    private IEnumerable<RunnerState> DisplayOutRunners => IsEditingPlay ? ActiveRunners.Where(r => r.Destination < 0) : Enumerable.Empty<RunnerState>();
+    private IEnumerable<RunnerState> DisplayScoredRunners => IsEditingPlay ? ActiveRunners.Where(r => r.Destination == 4) : Enumerable.Empty<RunnerState>();
+
+
+
+    private class RunnerState
+    {
+        public string Name { get; set; } = "";
+        public bool IsBatter { get; set; }
+        public int StartBase { get; set; } // 0 for Batter, 1-3 for bases
+        public int Destination { get; set; } // 1-4 for safe bases, -1 to -4 for out locations
+        public bool ShowOutOptions { get; set; }
+    }
+
+    private string[] lineup = { "Dan", "Mike", "Steve", "Dave", "Chris", "John", "Ben", "Tom", "Joe", "Sam" };
+    private int batterIndex = 0;
+    private string CurrentBatter => lineup[batterIndex % lineup.Length];
+
+    private string GetBadgeColor(string result)
+    {
+        if (result == "1B" || result == "2B" || result == "3B" || result == "HR" || result == "IPHR") return "bg-success";
+        if (result == "BB" || result == "FC") return "bg-primary";
+        return "bg-danger";
+    }
+
+    private class RecordedPlay
+    {
+        public string Result { get; set; } = "";
+        public int RunsThisInning { get; set; }
+        public int IsotopesScore { get; set; }
+        public int Outs { get; set; }
+        public string? RunnerOn1B { get; set; }
+        public string? RunnerOn2B { get; set; }
+        public string? RunnerOn3B { get; set; }
+        public string? IsotopesBatterName { get; set; }
+    }
+
+    private List<RecordedPlay> RecordedPlays = new();
+
+    private void GoPrev()
+    {
+        if (batterIndex > 0)
+        {
+            batterIndex--;
+            RestoreState(batterIndex);
+            IsEditingPlay = false;
+        }
+    }
+
+    private void GoNext()
+    {
+        if (batterIndex < RecordedPlays.Count)
+        {
+            batterIndex++;
+            RestoreState(batterIndex);
+            IsEditingPlay = false;
+        }
+    }
+
+    private void RestoreState(int index)
+    {
+        if (index == 0)
+        {
+            RunsThisInning = 0; IsotopesScore = 0; Outs = 0; RunnerOn1B = RunnerOn2B = RunnerOn3B = null;
+        }
+        else
+        {
+            var p = RecordedPlays[index - 1];
+            RunsThisInning = p.RunsThisInning; IsotopesScore = p.IsotopesScore; Outs = p.Outs; RunnerOn1B = p.RunnerOn1B; RunnerOn2B = p.RunnerOn2B; RunnerOn3B = p.RunnerOn3B;
+        }
+    }
+
+    private void StartPlay(string result)
+    {
+        if (result == "Skip")
+        {
+            RecordPlay("Skip");
+            return;
+        }
+
+        PendingResult = result;
+        ActiveRunners.Clear();
+        ManualEndInning = false;
+        IsEditingPlay = true;
+
+        bool isOut = result == "K" || result == "KF" || result == "GO" || result == "FO" || result == "SF";
+        bool isHit = result == "1B" || result == "2B" || result == "3B" || result == "HR" || result == "IPHR";
+        int advanceBy = 0;
+        if (result == "1B") advanceBy = 1;
+        if (result == "2B") advanceBy = 2;
+        if (result == "3B") advanceBy = 3;
+        if (result == "HR" || result == "IPHR") advanceBy = 4;
+
+        // Auto-advance logic
+        bool fcLeadAssumedOut = false;
+
+        // 3B runner
+        if (RunnerOn3B != null)
+        {
+            int dest = 3;
+            if (advanceBy > 0)
+            {
+                dest = 3 + advanceBy;
+            }
+            else
+            {
+                if (result == "SF") dest = 4; // Sac fly scores
+                else if (result == "GO" || result == "BB")
+                {
+                    // Forced home if bases loaded
+                    if (RunnerOn1B != null && RunnerOn2B != null) dest = 4;
+                }
+                else if (result == "FC")
+                {
+                    if (!fcLeadAssumedOut)
+                    {
+                        dest = -4; // Assume lead runner out at home
+                        fcLeadAssumedOut = true;
+                    }
+                    else if (RunnerOn1B != null && RunnerOn2B != null) dest = 4;
+                }
+            }
+            if (dest > 4) dest = 4;
+            ActiveRunners.Add(new RunnerState { Name = RunnerOn3B, StartBase = 3, Destination = dest, ShowOutOptions = dest < 0 });
+        }
+        
+        // 2B runner
+        if (RunnerOn2B != null)
+        {
+            int dest = 2;
+            if (advanceBy > 0)
+            {
+                dest = 2 + advanceBy;
+            }
+            else
+            {
+                if (result == "GO" || result == "BB")
+                {
+                    // Forced to 3B if 1B is occupied
+                    if (RunnerOn1B != null) dest = 3;
+                }
+                else if (result == "FC")
+                {
+                    if (!fcLeadAssumedOut)
+                    {
+                        dest = -3;
+                        fcLeadAssumedOut = true;
+                    }
+                    else if (RunnerOn1B != null) dest = 3;
+                }
+            }
+            if (dest > 4) dest = 4;
+            ActiveRunners.Add(new RunnerState { Name = RunnerOn2B, StartBase = 2, Destination = dest, ShowOutOptions = dest < 0 });
+        }
+
+        // 1B runner
+        if (RunnerOn1B != null)
+        {
+            int dest = 1;
+            if (advanceBy > 0)
+            {
+                dest = 1 + advanceBy;
+            }
+            else
+            {
+                if (result == "GO" || result == "BB")
+                {
+                    dest = 2; // Forced to 2B
+                }
+                else if (result == "FC")
+                {
+                    if (!fcLeadAssumedOut)
+                    {
+                        dest = -2;
+                        fcLeadAssumedOut = true;
+                    }
+                    else dest = 2;
+                }
+            }
+            if (dest > 4) dest = 4;
+            ActiveRunners.Add(new RunnerState { Name = RunnerOn1B, StartBase = 1, Destination = dest, ShowOutOptions = dest < 0 });
+        }
+        
+        // Batter
+        if (!isOut)
+        {
+            int dest = advanceBy > 0 ? advanceBy : 1; // BB and FC goes to 1
+            ActiveRunners.Add(new RunnerState { Name = CurrentBatter, IsBatter = true, StartBase = 0, Destination = dest, ShowOutOptions = dest < 0 });
+        }
+        else
+        {
+            ActiveRunners.Add(new RunnerState { Name = CurrentBatter, IsBatter = true, StartBase = 0, Destination = -1, ShowOutOptions = true });
+        }
+    }
+
+    private void ToggleOutOptions(RunnerState runner)
+    {
+        runner.ShowOutOptions = !runner.ShowOutOptions;
+        
+        if (runner.ShowOutOptions)
+        {
+            // Toggled to Out: auto-select the first valid Out base
+            if (runner.Destination > 0) 
+            {
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (IsOutBaseAllowed(runner, i))
+                    {
+                        runner.Destination = -i;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Toggled to Safe: auto-select the first valid Safe base
+            if (runner.Destination < 0)
+            {
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (IsSafeBaseAllowed(runner, i))
+                    {
+                        runner.Destination = i;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private bool IsSafeBaseAllowed(RunnerState runner, int baseNum)
+    {
+        if (runner.IsBatter)
+        {
+            if (PendingResult == "1B" || PendingResult == "FC" || PendingResult == "BB") return baseNum == 1;
+            if (PendingResult == "2B") return baseNum == 2;
+            if (PendingResult == "3B") return baseNum == 3;
+            if (PendingResult == "HR" || PendingResult == "IPHR") return baseNum == 4;
+            return false;
+        }
+        else
+        {
+            if (baseNum < runner.StartBase) return false;
+            
+            if (baseNum == runner.StartBase)
+            {
+                // Can they stay on their base?
+                bool batterReachesSafely = PendingResult == "1B" || PendingResult == "2B" || PendingResult == "3B" || PendingResult == "HR" || PendingResult == "IPHR" || PendingResult == "BB" || PendingResult == "FC";
+                bool isForced = runner.StartBase == 1 || 
+                               (runner.StartBase == 2 && RunnerOn1B != null) || 
+                               (runner.StartBase == 3 && RunnerOn1B != null && RunnerOn2B != null);
+                
+                if (batterReachesSafely && isForced) return false;
+            }
+            
+            // If the batter got an extra base hit, lead runners must have safely cleared those bases
+            if (PendingResult == "2B" && baseNum <= 2) return false;
+            if (PendingResult == "3B" && baseNum <= 3) return false;
+            
+            return true;
+        }
+    }
+
+    private bool IsOutBaseAllowed(RunnerState runner, int baseNum)
+    {
+        if (runner.IsBatter)
+        {
+            if (PendingResult == "1B") return baseNum == 2; // Can only get out stretching to 2nd
+            if (PendingResult == "2B") return baseNum == 3; // Can only get out stretching to 3rd
+            if (PendingResult == "3B") return baseNum == 4; // Can only get out stretching Home
+            if (PendingResult == "FC" || PendingResult == "BB") return baseNum > 1; // Safe at 1st, out beyond
+            if (PendingResult == "HR" || PendingResult == "IPHR") return false;
+            return baseNum >= 1; // Outs like GO, FO etc
+        }
+        else
+        {
+            if (baseNum < runner.StartBase) return false;
+
+            // Cannot be out at a base the batter hit to (because then the batter wouldn't be credited with that hit)
+            if (PendingResult == "2B" && baseNum <= 2) return false;
+            if (PendingResult == "3B" && baseNum <= 3) return false;
+
+            return baseNum > runner.StartBase || (baseNum == runner.StartBase && (PendingResult == "K" || PendingResult == "KF")); // Can be picked off
+        }
+    }
+
+    private void SetRunnerDest(RunnerState runner, int dest)
+    {
+        runner.Destination = dest;
+        if (dest > 0) runner.ShowOutOptions = false;
+    }
+
+    private void CancelPlay()
+    {
+        IsEditingPlay = false;
+        PendingResult = "";
+        ManualEndInning = false;
+    }
+
+    private void SavePlay()
+    {
+        // Apply the results to the state
+        RunnerOn1B = RunnerOn2B = RunnerOn3B = null;
+
+        int runsScoredThisPlay = 0;
+        foreach (var r in ActiveRunners)
+        {
+            if (r.Destination == 4) runsScoredThisPlay++;
+            else if (r.Destination < 0) Outs++;
+            else if (r.Destination == 1) RunnerOn1B = r.Name;
+            else if (r.Destination == 2) RunnerOn2B = r.Name;
+            else if (r.Destination == 3) RunnerOn3B = r.Name;
+        }
+        
+        RunsThisInning += runsScoredThisPlay;
+        IsotopesScore += runsScoredThisPlay;
+
+        // Save play to history
+        RecordedPlays.Add(new RecordedPlay
+        {
+            Result = PendingResult,
+            RunsThisInning = RunsThisInning,
+            IsotopesScore = IsotopesScore,
+            Outs = Outs,
+            RunnerOn1B = RunnerOn1B,
+            RunnerOn2B = RunnerOn2B,
+            RunnerOn3B = RunnerOn3B,
+            IsotopesBatterName = CurrentBatter
+        });
+
+        if (Outs >= 3 || ManualEndInning)
+        {
+            Outs = 0;
+            RunnerOn1B = RunnerOn2B = RunnerOn3B = null;
+            ManualEndInning = false;
+        }
+
+        RecordPlay(PendingResult);
+    }
+
+    private void RecordPlay(string result)
+    {
+        if (batterIndex < RecordedPlays.Count)
+        {
+            RecordedPlays.RemoveRange(batterIndex, RecordedPlays.Count - batterIndex);
+        }
+
+        RecordedPlays.Add(new RecordedPlay
+        {
+            Result = result,
+            RunsThisInning = this.RunsThisInning,
+            IsotopesScore = this.IsotopesScore,
+            Outs = this.Outs,
+            RunnerOn1B = this.RunnerOn1B,
+            RunnerOn2B = this.RunnerOn2B,
+            RunnerOn3B = this.RunnerOn3B,
+            IsotopesBatterName = CurrentBatter
+        });
+
+        batterIndex++;
+        IsEditingPlay = false;
+        PendingResult = "";
+    }
+}

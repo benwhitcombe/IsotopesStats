@@ -51,6 +51,18 @@ internal class PlateAppearanceDTO : BaseModel
     [Column("runneron3b_end")]
     public int? RunnerOn3B_End { get; set; }
 
+    [Column("out_at_1b")]
+    public int? OutAt1B { get; set; }
+
+    [Column("out_at_2b")]
+    public int? OutAt2B { get; set; }
+
+    [Column("out_at_3b")]
+    public int? OutAt3B { get; set; }
+
+    [Column("out_at_home")]
+    public int? OutAtHome { get; set; }
+
     [Column("ends_inning")]
     public bool EndsInning { get; set; }
 }

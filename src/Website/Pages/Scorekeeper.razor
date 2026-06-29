@@ -292,14 +292,18 @@ else
 
         <!-- Play Controls -->
         <div class="row g-2 mb-3">
-            <div class="col-6"><button class="@GetPlayButtonClass("1B")" @onclick='() => RecordPlay("1B")'>1B</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("2B")" @onclick='() => RecordPlay("2B")'>2B</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("3B")" @onclick='() => RecordPlay("3B")'>3B</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("IPHR")" @onclick='() => RecordPlay("IPHR")'>IPHR</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("HR")" @onclick='() => RecordPlay("HR")'>HR</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("BB")" @onclick='() => RecordPlay("BB")'>BB</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("GO")" @onclick='() => RecordPlay("GO")'>GO</button></div>
-            <div class="col-6"><button class="@GetPlayButtonClass("FO")" @onclick='() => RecordPlay("FO")'>FO</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("1B")" @onclick='() => RecordPlay("1B")'>1B</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("2B")" @onclick='() => RecordPlay("2B")'>2B</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("3B")" @onclick='() => RecordPlay("3B")'>3B</button></div>
+            
+            <div class="col-4"><button class="@GetPlayButtonClass("HR")" @onclick='() => RecordPlay("HR")'>HR</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("IPHR")" @onclick='() => RecordPlay("IPHR")'>IPHR</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("BB")" @onclick='() => RecordPlay("BB")'>BB</button></div>
+            
+            <div class="col-4"><button class="@GetPlayButtonClass("FC")" @onclick='() => RecordPlay("FC")'>FC</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("GO")" @onclick='() => RecordPlay("GO")'>GO</button></div>
+            <div class="col-4"><button class="@GetPlayButtonClass("FO")" @onclick='() => RecordPlay("FO")'>FO</button></div>
+            
             <div class="col-6"><button class="@GetPlayButtonClass("K")" @onclick='() => RecordPlay("K")'>K</button></div>
             <div class="col-6"><button class="@GetPlayButtonClass("KF")" @onclick='() => RecordPlay("KF")'>KF</button></div>
         </div>
@@ -832,9 +836,13 @@ else
         {
             pendingPA.RunsScored++;
         }
-        else if (destination == 0)
+        else if (destination <= 0)
         {
             pendingPA.OutsRecorded++;
+            if (destination == -1) pendingPA.OutAt1B = runnerId;
+            else if (destination == -2) pendingPA.OutAt2B = runnerId;
+            else if (destination == -3) pendingPA.OutAt3B = runnerId;
+            else if (destination == -4) pendingPA.OutAtHome = runnerId;
         }
         else if (destination == 1)
         {
@@ -963,10 +971,6 @@ else
                 if (pendingPA.Result == "FO" && pendingPA.RunsScored > 0)
                 {
                     pendingPA.Result = "SF";
-                }
-                else if ((pendingPA.Result == "1B" || pendingPA.Result == "2B" || pendingPA.Result == "3B") && pendingPA.OutsRecorded > 0)
-                {
-                    pendingPA.Result = "FC";
                 }
 
                 if (currentViewingIndex == null && pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
