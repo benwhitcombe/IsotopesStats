@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "HHqy8fy2",
+  "version": "CcV+F5ux",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -14,7 +14,7 @@ self.assetsManifest = {
       "url": "Website.styles.css"
     },
     {
-      "hash": "sha256-r8B9Q5tKo1O8Fmaq+ktuFay4Xb5b1fvP1yVzTSnVrjU=",
+      "hash": "sha256-2wBxIfFSql4Gm2E0aY9la7QGgXndKdkVxQIPlMGLi5o=",
       "url": "_framework/Domain.wasm"
     },
     {
@@ -38,7 +38,7 @@ self.assetsManifest = {
       "url": "_framework/Microsoft.AspNetCore.Components.WebAssembly.wasm"
     },
     {
-      "hash": "sha256-SuLHMbIrRQPzVw6+IhDKUWUfLb8933ziMc5wr8IenRQ=",
+      "hash": "sha256-xLhXE4OBdshJBTX5cXFfSMXfm6aYBLPm9ZFRIs8WoMM=",
       "url": "_framework/Microsoft.AspNetCore.Components.wasm"
     },
     {
@@ -150,7 +150,7 @@ self.assetsManifest = {
       "url": "_framework/Supabase.wasm"
     },
     {
-      "hash": "sha256-AvQhfUhIA+JNQrZWdOG9V+Z5xV4TO6VoXVBECsIieTg=",
+      "hash": "sha256-5xHti3HdUuKL1uxP1gkY99G9FGld/B0DBuDikMJXq+g=",
       "url": "_framework/SupabaseRepository.wasm"
     },
     {
@@ -270,7 +270,7 @@ self.assetsManifest = {
       "url": "_framework/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-mD7j6JZXiEcSsva2TnKx03Kfsf6q66+amEEm7T+xu/A=",
+      "hash": "sha256-LHojThAf9m6J7xymUUAoRHKRfh5Oz5HOnu1lA6PgyXM=",
       "url": "_framework/System.Private.CoreLib.wasm"
     },
     {
@@ -386,7 +386,7 @@ self.assetsManifest = {
       "url": "_framework/System.wasm"
     },
     {
-      "hash": "sha256-+uQRdzYYa9T7uaACQUcogHAIAW4HbCkCY2f1r2sFAbM=",
+      "hash": "sha256-Z+ecsovzno9qwDv9DCS5uG9E5zdTmDCvXqp6p0alsKM=",
       "url": "_framework/Website.wasm"
     },
     {
@@ -394,7 +394,7 @@ self.assetsManifest = {
       "url": "_framework/Websocket.Client.wasm"
     },
     {
-      "hash": "sha256-J47dCb8vSrk5UHeCa2lBpdn3LtBo45sqs3pvMRXeQZ8=",
+      "hash": "sha256-oBQXsXIin+35rlGAdP3YBJS5pAFND0cyx7ZeBXafo2o=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -490,7 +490,7 @@ self.assetsManifest = {
       "url": "images/defense.png"
     },
     {
-      "hash": "sha256-tCuZY9GNkq/iarEMSEOOqAhQWqk80f9gZvFGVUdv0bo=",
+      "hash": "sha256-ZAZepeRb5+l/TODtdyvjeMprLSnSd3rOwruQsRYCJs0=",
       "url": "index.html"
     },
     {
