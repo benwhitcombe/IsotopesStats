@@ -1,4 +1,4 @@
-@page "/management/games/{GameId:int}/scorecard"
+@page "/games/{GameId:int}/scorecard"
 @implements IDisposable
 @using System.Threading
 @using IsotopesStats.Domain.Models
@@ -32,7 +32,7 @@ else
                 @if (canManageGames)
                 {
                     <button class="view-btn" style="background-color: var(--isotopes-red); color: white; border-color: var(--isotopes-red);" @onclick="OpenResetModal">Reset</button>
-                    <a href="/management/games/@GameId/scorekeeping" class="view-btn active">Scorekeeper</a>
+                    <a href="/games/@GameId/scorekeeping" class="view-btn active">Scorekeeper</a>
                 }
             </div>
         </div>
@@ -46,313 +46,19 @@ else
                 <button class="view-btn active" style="background-color: var(--isotopes-accent); color: white; border: none;" @onclick="OpenSyncModal">Reconcile Stats</button>
             </div>
         }
-
         <div class="zoom-viewport" style="overflow: hidden; width: 100%;">
             <div class="scorecard-container" id="scorecard-zoom-container">
-                <!-- Unified Header Section -->
-            <div class="d-flex w-100" style="padding: 10px;">
-                <!-- Details Box -->
-                <div class="flex-grow-1 d-flex flex-column pe-4 justify-content-between" style="line-height: 1.5;">
-                    <div class="d-flex align-items-end mb-2 border-bottom border-dark border-2 pb-1" style="min-height: 2rem;">
-                        <div class="fw-bold me-2 fs-5 text-start">Teams:</div>
-                        <div class="flex-grow-1 text-start fw-bold fs-5 ps-2">
-                            @(game.IsHome ? $"{opponentName} vs. Isotopes" : $"Isotopes @ {opponentName}")
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-end mb-2 border-bottom border-dark border-2 pb-1" style="min-height: 2rem;">
-                        <div class="fw-bold me-2 fs-5 text-start">Date:</div>
-                        <div class="text-start fw-bold fs-5 flex-grow-1 ps-2">
-                            @game.Date.ToString("MMMM dd, yyyy")
-                        </div>
-                        <div class="fw-bold mx-2 fs-5">Start Time:</div>
-                        <div class="text-start fw-bold fs-5 flex-grow-1 ps-2">
-                            @game.Date.ToString("h:mm tt")
-                        </div>
-                        <div class="fw-bold mx-2 fs-5">End Time:</div>
-                        <div class="text-start fw-bold fs-5 flex-grow-1 ps-2">
-                            @game.Date.AddHours(1.5).ToString("h:mm tt")
-                        </div>
-                        <div class="fw-bold mx-2 fs-5">Diamond:</div>
-                        <div class="text-start fw-bold fs-5 flex-grow-1 ps-2">
-                            @(game.Diamond ?? "")
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-end mb-2 border-bottom border-dark border-2 pb-1" style="min-height: 2rem;">
-                        <div class="fw-bold me-2 fs-5 text-start">Weather:</div>
-                        <div class="flex-grow-1"></div>
-                    </div>
-                    <div class="d-flex align-items-end mb-2 border-bottom border-dark border-2 pb-1" style="min-height: 2rem;">
-                        <div class="fw-bold me-2 fs-5 text-start">Umpire:</div>
-                        <div class="flex-grow-1"></div>
-                    </div>
-                </div>
-                <!-- Logo Box -->
-                <div class="d-flex align-items-center justify-content-center" style="width: 120px;">
-                    <svg viewBox="0 0 100 100" width="100" height="100" style="fill:none; stroke:#000; stroke-width:5;">
-                        <circle cx="50" cy="50" r="5" fill="#000" stroke="none"/>
-                        <ellipse cx="50" cy="50" rx="45" ry="15" />
-                        <ellipse cx="50" cy="50" rx="45" ry="15" transform="rotate(60 50 50)" />
-                        <ellipse cx="50" cy="50" rx="45" ry="15" transform="rotate(120 50 50)" />
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Main Scorecard Grid -->
-            @{
-                int tableWidth = 40 + 250 + 45 + (TotalColumns * 90);
-            }
-            <table class="scorecard-grid" style="width: 100%; min-width: @(tableWidth)px;">
-                <colgroup>
-                    <col style="width: 40px;" />
-                    <col style="width: auto;" />
-                    <col style="width: 45px;" />
-                    @for (int i = 1; i <= TotalColumns; i++)
-                    {
-                        <col style="width: 90px;" />
-                    }
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th class="pos-col fs-5" style="border-top: none;"></th>
-                        <th class="player-col fs-5 text-start ps-2" style="border-top: none;">Player</th>
-                        <th class="hr-col" style="border-top: none;">HRs</th>
-                        @for (int i = 1; i <= TotalColumns; i++)
-                        {
-                            <th class="inning-col fs-4" style="border-top: none;">@(columnInnings.ContainsKey(i) ? columnInnings[i].ToString() : "")</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (int row = 1; row <= TotalBatters; row++)
-                    {
-                        int batterIndex = row;
-                        int? playerId = GetPlayerIdForBattingOrder(batterIndex);
-                        
-                        <tr>
-                            <td class="player-num">
-                                <div>@batterIndex</div>
-                            </td>
-                            <td class="player-name">
-                                <div>@(playerId.HasValue ? GetPlayerName(playerId.Value) : "")</div>
-                            </td>
-                            <td class="hr-cell text-center align-middle fw-bold fs-5">
-                                @(playerId.HasValue ? GetPlayerTotalHR(playerId.Value) : "")
-                            </td>
-                            
-                            @for (int col = 1; col <= TotalColumns; col++)
-                            {
-                                int currentColumn = col;
-                                PlateAppearance? pa = null;
-                                if (playerId.HasValue && paMatrix.ContainsKey((playerId.Value, currentColumn)))
-                                {
-                                    pa = paMatrix[(playerId.Value, currentColumn)];
-                                }
-                                
-                                bool isEndOfInning = pa != null && pa.EndsInning;
-
-                                <td class="pa-cell @(pa != null && canManageGames ? "pa-clickable" : "") @(pa != null && recentlyChangedPaIds.Contains(pa.Id) ? "pa-updated" : "")" @onclick="() => HandleCellClick(pa)">
-                                    <div class="pa-cell-content">
-                                        @if (pa != null)
-                                        {
-                                            var pathStatus = GetBasePathStatus(pa);
-                                            int furthest = pathStatus.Furthest;
-                                            bool gotOut = pathStatus.GotOut;
-                                            string result = pa.Result;
-                                            
-                                            <div class="pa-top-labels">
-                                                <span class="circleable @(result == "1B" ? "circled" : "")">1B</span>
-                                                <span class="circleable @(result == "2B" ? "circled" : "")">2B</span>
-                                                <span class="circleable @(result == "3B" ? "circled" : "")">3B</span>
-                                                <span class="circleable @(result == "HR" ? "circled" : "")">HR</span>
-                                            </div>
-                                            
-                                            <div class="pa-right-labels">
-                                                @if (result == "FC") { <span class="circleable circled">FC</span> }
-                                                @if (result == "IPHR") { <span class="circleable-wide circled">IPHR</span> }
-                                            </div>
-
-                                            <div class="pa-left-labels">
-                                                @if (result == "GO") { <span class="circleable circled">GO</span> }
-                                                @if (result == "FO") { <span class="circleable circled">FO</span> }
-                                                @if (result == "SF") { <span class="circleable circled">SF</span> }
-                                            </div>
-                                            
-                                            @if (result != "Skip")
-                                            {
-                                                <svg viewBox="0 0 100 100" class="pa-diamond">
-                                                    @if (result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF")
-                                                    {
-                                                        <line x1="5" y1="5" x2="95" y2="95" stroke="#000" stroke-width="6" />
-                                                        <line x1="95" y1="5" x2="5" y2="95" stroke="#000" stroke-width="6" />
-                                                    }
-                                                    
-                                                    <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
-                                                    @if (furthest >= 1) { <line x1="50" y1="90" x2="90" y2="50" stroke="#000" stroke-width="5" /> }
-                                                    @if (furthest >= 2) { <line x1="90" y1="50" x2="50" y2="10" stroke="#000" stroke-width="5" /> }
-                                                    @if (furthest >= 3) { <line x1="50" y1="10" x2="10" y2="50" stroke="#000" stroke-width="5" /> }
-                                                    @if (furthest >= 4) { 
-                                                        <line x1="10" y1="50" x2="50" y2="90" stroke="#000" stroke-width="5" /> 
-                                                        <polygon points="50,90 90,50 50,10 10,50" fill="#666" stroke="#000" stroke-width="5" />
-                                                    }
-                                                    
-                                                    @if (gotOut) {
-                                                        @if (furthest == 1) { 
-                                                            <line x1="90" y1="50" x2="70" y2="30" stroke="#000" stroke-width="5" /> 
-                                                            <line x1="60" y1="20" x2="80" y2="40" stroke="#000" stroke-width="4" />
-                                                            <line x1="80" y1="20" x2="60" y2="40" stroke="#000" stroke-width="4" />
-                                                        }
-                                                        else if (furthest == 2) { 
-                                                            <line x1="50" y1="10" x2="30" y2="30" stroke="#000" stroke-width="5" /> 
-                                                            <line x1="20" y1="20" x2="40" y2="40" stroke="#000" stroke-width="4" />
-                                                            <line x1="40" y1="20" x2="20" y2="40" stroke="#000" stroke-width="4" />
-                                                        }
-                                                        else if (furthest == 3) { 
-                                                            <line x1="10" y1="50" x2="30" y2="70" stroke="#000" stroke-width="5" /> 
-                                                            <line x1="20" y1="60" x2="40" y2="80" stroke="#000" stroke-width="4" />
-                                                            <line x1="40" y1="60" x2="20" y2="80" stroke="#000" stroke-width="4" />
-                                                        }
-                                                        else if (furthest == 0) {
-                                                            <line x1="50" y1="90" x2="70" y2="70" stroke="#000" stroke-width="5" />
-                                                            <line x1="60" y1="60" x2="80" y2="80" stroke="#000" stroke-width="4" />
-                                                            <line x1="80" y1="60" x2="60" y2="80" stroke="#000" stroke-width="4" />
-                                                        }
-                                                    }
-                                                </svg>
-                                            }
-                                            
-                                            <div class="pa-bottom-labels align-items-center">
-                                                <span class="circleable @(result == "K" || result == "KF" ? "circled" : "")">@(result == "KF" ? "KF" : "K")</span>
-                                                @if (pa.RunsScored > 0)
-                                                {
-                                                    <span style="font-size: 10px; font-weight: bold; white-space: nowrap; line-height: 1.3;">@(pa.RunsScored) RBI</span>
-                                                }
-                                                else
-                                                {
-                                                    <span style="visibility: hidden; font-size: 10px; font-weight: bold; white-space: nowrap; line-height: 1.3;">0 RBI</span>
-                                                }
-                                                <span class="circleable @(result == "BB" ? "circled" : "")">BB</span>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <!-- Blank cell template -->
-                                            <div class="pa-top-labels">
-                                                <span class="circleable">1B</span> 
-                                                <span class="circleable">2B</span> 
-                                                <span class="circleable">3B</span> 
-                                                <span class="circleable">HR</span>
-                                            </div>
-                                            <div class="pa-right-labels">
-                                            </div>
-                                            <svg viewBox="0 0 100 100" class="pa-diamond">
-                                                <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2 2" />
-                                            </svg>
-                                            <div class="pa-bottom-labels align-items-end">
-                                                <span class="circleable">K</span>
-                                                <span class="circleable">BB</span>
-                                            </div>
-                                        }
-                                        @if (isEndOfInning || (pa != null && pa.Result == "Skip"))
-                                        {
-                                            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; overflow: visible;" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                                @if (pa != null && pa.Result == "Skip")
-                                                {
-                                                    <line x1="0" y1="50" x2="100" y2="50" stroke="#000" stroke-width="4" />
-                                                }
-                                                @if (isEndOfInning)
-                                                {
-                                                    <line x1="80" y1="120" x2="120" y2="80" stroke="#000" stroke-width="5" stroke-linecap="round" />
-                                                }
-                                            </svg>
-                                        }
-                                    </div>
-                                </td>
-                            }
-                        </tr>
-                    }
-                    
-                    <!-- Runs Row -->
-                    <tr class="runs-row" style="height: 50px;">
-                        <td colspan="3" class="text-end fw-bold fs-4 pe-2 align-middle border-bottom-0 border-start-0 border-end-0">Runs</td>
-                        @for (int col = 1; col <= TotalColumns; col++)
-                        {
-                            int currentColumn = col;
-                            bool isLastForInning = IsLastColumnForInning(currentColumn);
-                            <td class="p-0 m-0 @(isLastForInning ? "" : "text-center align-middle")" style="position: relative; height: 50px;">
-                                @if (isLastForInning)
-                                {
-                                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0;">
-                                        <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                    </svg>
-                                    <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
-                                        <span class="fw-bold fs-5">@GetRunsInInning(currentColumn)</span>
-                                    </div>
-                                    <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1;">
-                                        <span class="fw-bold fs-5">@GetCumulativeRuns(currentColumn)</span>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex justify-content-center align-items-center">
-                                        <span class="fw-bold" style="font-size: 1.5rem;">&rarr;</span>
-                                    </div>
-                                }
-                            </td>
-                        }
-                    </tr>
-                    
-                    <!-- Opponent Runs Row -->
-                    <tr class="runs-row" style="height: 50px;">
-                        <td colspan="3" class="text-end fw-bold fs-4 pe-2 align-middle border-start-0 border-end-0">Opponent</td>
-                        @for (int col = 1; col <= TotalColumns; col++)
-                        {
-                            int currentColumn = col;
-                            bool isLastForInning = IsLastColumnForInning(currentColumn);
-                            int currentInning = columnInnings.ContainsKey(currentColumn) ? columnInnings[currentColumn] : currentColumn;
-                            
-                            <td class="p-0 m-0 @(isLastForInning ? "" : "text-center align-middle")" style="position: relative; height: 50px;">
-                                @if (isLastForInning)
-                                {
-                                    @if (canManageGames)
-                                    {
-                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
-                                            <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                        </svg>
-                                        <div class="position-absolute" style="top: 0px; left: 2px; z-index: 1; width: 45px;">
-                                            <input type="number" min="0" max="99"
-                                                   class="form-control text-start fw-bold fs-5 p-0 m-0 no-print" 
-                                                   style="background: transparent; box-shadow: none; border: none; height: 26px;"
-                                                   value="@GetOpponentScoreForInning(currentInning)"
-                                                   @onchange="@(e => UpdateOpponentScoreForInning(currentInning, e.Value))" />
-                                            <div class="d-none d-print-block fw-bold fs-5" style="margin-left: 6px; margin-top: 2px;">
-                                                @GetOpponentScoreForInning(currentInning)
-                                            </div>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
-                                            <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                                        </svg>
-                                        <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
-                                            <span class="fw-bold fs-5">@GetOpponentScoreForInning(currentInning)</span>
-                                        </div>
-                                    }
-                                    <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1; pointer-events: none;">
-                                        <span class="fw-bold fs-5">@GetCumulativeOpponentRuns(currentInning)</span>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex justify-content-center align-items-center">
-                                        <span class="fw-bold" style="font-size: 1.5rem;">&rarr;</span>
-                                    </div>
-                                }
-                            </td>
-                        }
-                    </tr>
-                </tbody>
-            </table>
+            <ScorecardGrid 
+                Game="game" 
+                OpponentName="@opponentName"
+                Roster="roster" 
+                GameStats="gameStats" 
+                PlateAppearances="plateAppearances" 
+                TotalBatters="TotalBatters" 
+                RecentlyChangedPaIds="recentlyChangedPaIds" 
+                CanManageGames="canManageGames" 
+                OnCellClick="HandleCellClick" 
+                OnOpponentScoreChanged="HandleOpponentScoreChanged" />
         </div>
         </div>
     </div>
@@ -472,202 +178,7 @@ else
     </div>
 }
 
-<style>
-    .scorecard-wrapper {
-        width: 100%;
-        overflow-x: auto;
-        text-align: center;
-        padding-bottom: 2rem;
-    }
-    .scorecard-container {
-        display: inline-block;
-        background: #fff;
-        color: #000;
-        border: 4px solid #000;
-        margin: 0 auto;
-        text-align: left;
-    }
-    @@media (min-width: 1024px) {
-        .scorecard-container {
-            display: block;
-            width: 100%;
-        }
-    }
-    .header-table td {
-        padding: 5px 0;
-        line-height: 1.2;
-    }
-    .scorecard-grid {
-        table-layout: fixed;
-        border-collapse: collapse;
-        border-top: 4px solid #000;
-    }
-    .scorecard-grid th, .scorecard-grid td {
-        border: 2px solid #000;
-        background-color: transparent !important;
-    }
-    .scorecard-grid th {
-        text-align: center;
-        padding: 5px;
-        font-weight: bold;
-        border-bottom: 4px solid #000;
-        color: #000 !important;
-    }
-    .pos-col { width: 40px; min-width: 40px; }
-    .player-col { min-width: 250px; }
-    .hr-col { width: 45px; min-width: 45px; border-right: 4px solid #000 !important; }
-    .inning-col { width: 90px; min-width: 90px; }
-    
-    .player-num {
-        text-align: center;
-        font-weight: bold;
-        font-size: 1.75rem;
-        padding: 0;
-    }
-    .player-name {
-        font-weight: bold;
-        font-size: 1.75rem;
-        text-transform: uppercase;
-        padding-left: 5px;
-    }
-    
-    .pa-cell {
-        height: 90px;
-        padding: 0;
-        vertical-align: top;
-    }
-    .pa-clickable {
-        cursor: pointer;
-    }
-    .pa-cell-content {
-        position: relative;
-        width: 100%;
-        height: 90px;
-        padding: 2px;
-        overflow: visible;
-    }
-    
-    .pa-top-labels {
-        font-size: 10px;
-        display: flex;
-        justify-content: space-around;
-        position: absolute;
-        top: 2px;
-        width: 100%;
-        left: 0;
-        font-family: monospace;
-    }
-    
-    .pa-right-labels {
-        font-size: 10px;
-        position: absolute;
-        right: 2px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        font-family: monospace;
-    }
-    
-    .pa-bottom-labels {
-        font-size: 10px;
-        display: flex;
-        justify-content: space-between;
-        position: absolute;
-        bottom: 2px;
-        width: 100%;
-        left: 0;
-        padding: 0 4px;
-        font-family: monospace;
-        align-items: center;
-    }
 
-    .circleable {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.3rem;
-        height: 1.3rem;
-        border-radius: 50%;
-        border: 1px solid transparent;
-        font-weight: inherit;
-        font-size: inherit;
-    }
-    
-    .circleable.circled {
-        border-color: #000;
-    }
-    
-    .circleable-wide {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 2px;
-        height: 1.1rem;
-        min-width: 1.5rem;
-        border-radius: 40%;
-        border: 1px solid transparent;
-        font-weight: inherit;
-        font-size: inherit;
-    }
-    
-    .circleable-wide.circled {
-        border-color: #000;
-    }
-    
-    .pa-left-labels {
-        font-size: 10px;
-        position: absolute;
-        left: 2px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        font-family: monospace;
-    }
-    
-    .pa-diamond {
-        position: absolute;
-        top: 48%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 42px;
-        height: 42px;
-        z-index: 1;
-    }
-    
-    .pa-outs {
-        position: absolute;
-        bottom: 2px;
-        right: 2px;
-        display: flex;
-        gap: 2px;
-    }
-    
-    .out-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #000;
-        border-radius: 50%;
-        display: inline-block;
-    }
-    
-    .runs-row td {
-        height: 50px;
-        border-top: 4px solid #000 !important;
-    }
-
-    @@keyframes highlight-fade {
-        0% { background-color: rgba(255, 215, 0, 0.4); box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.8); }
-        100% { background-color: transparent; box-shadow: none; }
-    }
-    
-    .pa-updated {
-        animation: highlight-fade 2.5s ease-out;
-    }
-</style>
 
 @code {
     [Parameter]
@@ -715,9 +226,6 @@ else
     private string opponentName = "Unknown";
     
     private int TotalBatters => Math.Max(15, gameStats.Count > 0 ? gameStats.Max(s => s.BO) : 0);
-    private int TotalColumns = 10;
-    private Dictionary<(int PlayerId, int ColumnIndex), PlateAppearance> paMatrix = new();
-    private Dictionary<int, int> columnInnings = new();
     private bool canManageGames = false;
 
     protected override async Task OnInitializedAsync()
@@ -844,200 +352,19 @@ else
         }
     }
 
-    private int? GetPlayerIdForBattingOrder(int bo)
-    {
-        return gameStats.FirstOrDefault(s => s.BO == bo)?.PlayerId;
-    }
 
-    private string GetPlayerName(int id)
-    {
-        return roster.FirstOrDefault(p => p.Id == id)?.Name ?? "Unknown";
-    }
-    
-    private string GetPlayerTotalHR(int playerId)
-    {
-        int hrs = plateAppearances.Count(pa => pa.PlayerId == playerId && (pa.Result == "HR" || pa.Result == "IPHR"));
-        return hrs > 0 ? hrs.ToString() : "";
-    }
-
-    private void BuildScorecardGrid()
-    {
-        paMatrix.Clear();
-        columnInnings.Clear();
-        
-        int currentColumnIndex = 1;
-        int currentInning = 1;
-        columnInnings[currentColumnIndex] = currentInning;
-        HashSet<int> playersInCurrentColumn = new HashSet<int>();
-        
-        var sortedPAs = plateAppearances.OrderBy(p => p.OrderNumber).ToList();
-        
-        foreach (var pa in sortedPAs)
-        {
-            while (currentInning < pa.Inning)
-            {
-                currentColumnIndex++;
-                currentInning++;
-                columnInnings[currentColumnIndex] = currentInning;
-                playersInCurrentColumn.Clear();
-            }
-            
-            if (playersInCurrentColumn.Contains(pa.PlayerId))
-            {
-                currentColumnIndex++;
-                columnInnings[currentColumnIndex] = currentInning;
-                playersInCurrentColumn.Clear();
-            }
-            
-            playersInCurrentColumn.Add(pa.PlayerId);
-            paMatrix[(pa.PlayerId, currentColumnIndex)] = pa;
-        }
-        
-        TotalColumns = Math.Max(10, currentColumnIndex);
-        
-        for (int c = currentColumnIndex + 1; c <= TotalColumns; c++)
-        {
-            currentInning++;
-            columnInnings[c] = currentInning;
-        }
-    }
-
-    private (int Furthest, bool GotOut) GetBasePathStatus(PlateAppearance initialPa)
-    {
-        int batterId = initialPa.PlayerId;
-        int furthest = 0;
-        bool gotOut = false;
-        
-        if (initialPa.Result == "1B" || initialPa.Result == "BB" || initialPa.Result == "FC") furthest = 1;
-        else if (initialPa.Result == "2B") furthest = 2;
-        else if (initialPa.Result == "3B") furthest = 3;
-        else if (initialPa.Result == "HR" || initialPa.Result == "IPHR") return (4, false);
-        
-        if (initialPa.OutAt1B == batterId) { gotOut = true; furthest = 0; }
-        else if (initialPa.OutAt2B == batterId) { gotOut = true; furthest = 1; }
-        else if (initialPa.OutAt3B == batterId) { gotOut = true; furthest = 2; }
-        else if (initialPa.OutAtHome == batterId) { gotOut = true; furthest = 3; }
-        
-        var subsequentPAs = plateAppearances
-            .Where(p => p.Inning == initialPa.Inning && p.OrderNumber > initialPa.OrderNumber)
-            .OrderBy(p => p.OrderNumber)
-            .ToList();
-            
-        foreach (var pa in subsequentPAs)
-        {
-            if (pa.PlayerId == batterId) break;
-            
-            if (pa.OutAt1B == batterId) { gotOut = true; furthest = 0; break; }
-            if (pa.OutAt2B == batterId) { gotOut = true; furthest = 1; break; }
-            if (pa.OutAt3B == batterId) { gotOut = true; furthest = 2; break; }
-            if (pa.OutAtHome == batterId) { gotOut = true; furthest = 3; break; }
-            
-            if (pa.RunnerOn1B_End == batterId) furthest = Math.Max(furthest, 1);
-            if (pa.RunnerOn2B_End == batterId) furthest = Math.Max(furthest, 2);
-            if (pa.RunnerOn3B_End == batterId) furthest = Math.Max(furthest, 3);
-            
-            List<int> runnersBefore = new List<int>();
-            if (pa.RunnerOn3B.HasValue) runnersBefore.Add(pa.RunnerOn3B.Value);
-            if (pa.RunnerOn2B.HasValue) runnersBefore.Add(pa.RunnerOn2B.Value);
-            if (pa.RunnerOn1B.HasValue) runnersBefore.Add(pa.RunnerOn1B.Value);
-            
-            if (runnersBefore.Contains(batterId))
-            {
-                HashSet<int> runnersAfter = new HashSet<int>();
-                if (pa.RunnerOn3B_End.HasValue) runnersAfter.Add(pa.RunnerOn3B_End.Value);
-                if (pa.RunnerOn2B_End.HasValue) runnersAfter.Add(pa.RunnerOn2B_End.Value);
-                if (pa.RunnerOn1B_End.HasValue) runnersAfter.Add(pa.RunnerOn1B_End.Value);
-                
-                if (!runnersAfter.Contains(batterId))
-                {
-                    int baseRuns = pa.RunsScored - ((pa.Result == "HR" || pa.Result == "IPHR") ? 1 : 0);
-                    bool scored = false;
-                    if (baseRuns > 0)
-                    {
-                        List<int> leftBases = runnersBefore.Where(r => !runnersAfter.Contains(r)).ToList();
-                        int index = leftBases.IndexOf(batterId);
-                        if (index >= 0 && index < baseRuns)
-                        {
-                            scored = true;
-                            furthest = 4;
-                        }
-                    }
-                    
-                    if (!scored && !gotOut)
-                    {
-                        gotOut = true;
-                        break;
-                    }
-                }
-            }
-        }
-        
-        return (furthest, gotOut);
-    }
-    
-    private bool IsLastColumnForInning(int colIndex)
-    {
-        if (!columnInnings.ContainsKey(colIndex)) return true;
-        int currentInning = columnInnings[colIndex];
-        
-        if (columnInnings.ContainsKey(colIndex + 1) && columnInnings[colIndex + 1] == currentInning)
-        {
-            return false;
-        }
-        return true;
-    }
-
-    private string GetRunsInInning(int colIndex)
-    {
-        if (!columnInnings.ContainsKey(colIndex)) return "";
-        int inning = columnInnings[colIndex];
-        
-        var columnsForInning = columnInnings.Where(kvp => kvp.Value == inning).Select(kvp => kvp.Key).ToList();
-        
-        bool hasAnyInInning = paMatrix.Any(kvp => columnsForInning.Contains(kvp.Key.ColumnIndex));
-        if (!hasAnyInInning) return "";
-        
-        int runs = paMatrix.Where(kvp => columnsForInning.Contains(kvp.Key.ColumnIndex)).Sum(kvp => kvp.Value.RunsScored);
-        return runs.ToString();
-    }
-    
-    private string GetCumulativeRuns(int colIndex)
-    {
-        bool hasAnyInCol = paMatrix.Any(kvp => kvp.Key.ColumnIndex == colIndex);
-        if (!hasAnyInCol) return "";
-        int total = paMatrix.Where(kvp => kvp.Key.ColumnIndex <= colIndex).Sum(kvp => kvp.Value.RunsScored);
-        return total.ToString();
-    }
-    
-    private string GetOpponentScoreForInning(int inning)
-    {
-        if (game == null) return "";
-        var scores = game.GetOpponentInningScores();
-        return scores.ContainsKey(inning) ? scores[inning].ToString() : "";
-    }
-    
-    private string GetCumulativeOpponentRuns(int inning)
-    {
-        if (game == null) return "";
-        var scores = game.GetOpponentInningScores();
-        if (!scores.ContainsKey(inning)) return "";
-        
-        int total = scores.Where(kvp => kvp.Key <= inning).Sum(kvp => kvp.Value);
-        return total.ToString();
-    }
-    
-    private async Task UpdateOpponentScoreForInning(int inning, object? value)
+    private async Task HandleOpponentScoreChanged((int inning, object? value) args)
     {
         if (game == null) return;
         
         var scores = game.GetOpponentInningScores();
-        if (value != null && int.TryParse(value.ToString(), out int score))
+        if (args.value != null && int.TryParse(args.value.ToString(), out int score))
         {
-            scores[inning] = score;
+            scores[args.inning] = score;
         }
         else
         {
-            scores.Remove(inning);
+            scores.Remove(args.inning);
         }
         
         game.SetOpponentInningScores(scores);
@@ -1045,7 +372,17 @@ else
         game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : scores.Values.Sum();
         
         await StatsRepository.UpdateGameAsync(game);
-        await LogActionAsync($"Updated opponent score for inning {inning} to {value} for Game {GameId}");
+        await LogActionAsync($"Updated opponent score for inning {args.inning} to {args.value} for Game {GameId}");
+    }
+
+    private string GetPlayerName(int id)
+    {
+        return roster.FirstOrDefault(p => p.Id == id)?.Name ?? "Unknown";
+    }
+
+    private void BuildScorecardGrid()
+    {
+        // Now handled entirely within ScorecardGrid.razor
     }
     
     private void HandleCellClick(PlateAppearance? pa)
@@ -1055,11 +392,11 @@ else
             int index = plateAppearances.OrderBy(p => p.Id).ToList().IndexOf(pa);
             if (index >= 0)
             {
-                NavigationManager.NavigateTo($"/management/games/{GameId}/scorekeeping?paIndex={index}");
+                NavigationManager.NavigateTo($"/games/{GameId}/scorekeeping?paIndex={index}");
             }
             else
             {
-                NavigationManager.NavigateTo($"/management/games/{GameId}/scorekeeping");
+                NavigationManager.NavigateTo($"/games/{GameId}/scorekeeping");
             }
         }
     }

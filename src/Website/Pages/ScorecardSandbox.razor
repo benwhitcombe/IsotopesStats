@@ -1,0 +1,92 @@
+@page "/sandbox/scorecard"
+@using IsotopesStats.Domain.Models
+@using IsotopesStats.Website.Shared
+@using IsotopesStats.Website.Shared.Models
+@inject IsotopesStats.Website.Services.SessionStorageService SessionStorage
+@inject NavigationManager NavigationManager
+
+<div class="scorecard-wrapper">
+    <div class="d-flex flex-row justify-content-between align-items-center no-print mb-3 gap-2 pt-1">
+        <h2 class="mb-0">Scorecard</h2>
+        <div class="d-flex flex-wrap justify-content-center gap-2 p-1">
+            <button class="view-btn" style="background-color: var(--isotopes-red); color: white; border-color: var(--isotopes-red);" @onclick="ResetSandbox">Reset</button>
+            <a href="/sandbox/scorekeeper" class="view-btn active">Scorekeeper</a>
+        </div>
+    </div>
+
+    <div class="zoom-viewport" style="overflow: hidden; width: 100%;">
+        <div class="scorecard-container" id="scorecard-zoom-container">
+    <ScorecardGrid 
+        Game="DummyGame"
+        OpponentName="Opponent"
+        ShowHeaderData="false"
+        Roster="DummyRoster"
+        GameStats="DummyGameStats"
+        PlateAppearances="DummyPAs"
+        TotalBatters="TotalBatters"
+        CanManageGames="true"
+        OnCellClick="HandleCellClick" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private Game DummyGame = new Game { Id = 1, OpponentId = 1, Date = DateTime.Now };
+    private List<Player> DummyRoster = new();
+    private List<StatEntry> DummyGameStats = new();
+    private List<PlateAppearance> DummyPAs = new();
+    
+    private int TotalBatters => Math.Max(15, DummyGameStats.Count > 0 ? DummyGameStats.Max(s => s.BO) : 0);
+    
+    private string[] lineup = Array.Empty<string>();
+    private List<SandboxRecordedPlay> savedPlaysList = new();
+
+    private void HandleCellClick(PlateAppearance pa)
+    {
+        if (pa != null && savedPlaysList != null)
+        {
+            var play = savedPlaysList.FirstOrDefault(p => p.PA != null && p.PA.Id == pa.Id);
+            if (play != null)
+            {
+                var index = savedPlaysList.IndexOf(play);
+                NavigationManager.NavigateTo($"/sandbox/scorekeeper?paIndex={index}");
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var savedLineup = await SessionStorage.GetItemAsync<string[]>("Sandbox_Lineup");
+        if (savedLineup != null && savedLineup.Length > 0)
+        {
+            lineup = savedLineup;
+        }
+
+        // 1. Build Roster and GameStats
+        for (int i = 0; i < lineup.Length; i++)
+        {
+            var playerId = i + 1;
+            DummyRoster.Add(new Player { Id = playerId, Name = lineup[i] });
+            DummyGameStats.Add(new StatEntry { GameId = 1, PlayerId = playerId, BO = i + 1 });
+        }
+
+        await LoadData();
+    }
+
+    private async Task ResetSandbox()
+    {
+        await SessionStorage.RemoveItemAsync("Sandbox_Lineup");
+        await SessionStorage.RemoveItemAsync("Sandbox_RecordedPlays");
+        lineup = Array.Empty<string>();
+        
+        DummyRoster.Clear();
+        DummyGameStats.Clear();
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        DummyPAs.Clear();
+    }
+}

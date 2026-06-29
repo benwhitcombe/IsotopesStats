@@ -384,7 +384,28 @@ internal class StatsRepository : BaseRepository, IStatsRepository
     public async Task UpdatePlateAppearanceAsync(PlateAppearance plateAppearance)
     {
         PlateAppearanceDTO dto = Mapper.ToDTO(plateAppearance);
-        await Supabase.From<PlateAppearanceDTO>().Update(dto);
+        await Supabase.From<PlateAppearanceDTO>()
+            .Where(x => x.Id == dto.Id)
+            .Set(x => x.GameId, dto.GameId)
+            .Set(x => x.PlayerId, dto.PlayerId)
+            .Set(x => x.Inning, dto.Inning)
+            .Set(x => x.OrderNumber, dto.OrderNumber)
+            .Set(x => x.Result, dto.Result)
+            .Set(x => x.OutsBefore, dto.OutsBefore)
+            .Set(x => x.RunnerOn1B, dto.RunnerOn1B)
+            .Set(x => x.RunnerOn2B, dto.RunnerOn2B)
+            .Set(x => x.RunnerOn3B, dto.RunnerOn3B)
+            .Set(x => x.OutsRecorded, dto.OutsRecorded)
+            .Set(x => x.RunsScored, dto.RunsScored)
+            .Set(x => x.RunnerOn1B_End, dto.RunnerOn1B_End)
+            .Set(x => x.RunnerOn2B_End, dto.RunnerOn2B_End)
+            .Set(x => x.RunnerOn3B_End, dto.RunnerOn3B_End)
+            .Set(x => x.OutAt1B, dto.OutAt1B)
+            .Set(x => x.OutAt2B, dto.OutAt2B)
+            .Set(x => x.OutAt3B, dto.OutAt3B)
+            .Set(x => x.OutAtHome, dto.OutAtHome)
+            .Set(x => x.EndsInning, dto.EndsInning)
+            .Update();
     }
 
     public async Task DeletePlateAppearanceAsync(int id)

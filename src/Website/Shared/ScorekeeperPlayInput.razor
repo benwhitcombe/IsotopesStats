@@ -1,0 +1,73 @@
+<div class="row g-2 mb-3">
+    <div class="col-4"><button class="@GetPlayButtonClass("1B")" @onclick='() => OnPlaySelected.InvokeAsync("1B")'>@GetPlayButtonText("1B")</button></div>
+    <div class="col-4"><button class="@GetPlayButtonClass("2B")" @onclick='() => OnPlaySelected.InvokeAsync("2B")'>@GetPlayButtonText("2B")</button></div>
+    <div class="col-4"><button class="@GetPlayButtonClass("3B")" @onclick='() => OnPlaySelected.InvokeAsync("3B")'>@GetPlayButtonText("3B")</button></div>
+    
+    <div class="col-6"><button class="@GetPlayButtonClass("HR")" @onclick='() => OnPlaySelected.InvokeAsync("HR")'>@GetPlayButtonText("HR")</button></div>
+    <div class="col-6"><button class="@GetPlayButtonClass("IPHR")" @onclick='() => OnPlaySelected.InvokeAsync("IPHR")'>@GetPlayButtonText("IPHR")</button></div>
+    
+    <div class="col-6"><button class="@GetPlayButtonClass("BB")" @onclick='() => OnPlaySelected.InvokeAsync("BB")'>@GetPlayButtonText("BB")</button></div>
+    <div class="col-6"><button class="@GetPlayButtonClass("FC")" @onclick='() => OnPlaySelected.InvokeAsync("FC")' disabled="@IsFCDisabled">@GetPlayButtonText("FC")</button></div>
+    
+    <div class="col-6"><button class="@GetPlayButtonClass("GO")" @onclick='() => OnPlaySelected.InvokeAsync("GO")'>@GetPlayButtonText("GO")</button></div>
+    <div class="col-6"><button class="@GetPlayButtonClass("FO")" @onclick='() => OnPlaySelected.InvokeAsync("FO")'>@GetPlayButtonText("FO")</button></div>
+    
+    <div class="col-6"><button class="@GetPlayButtonClass("K")" @onclick='() => OnPlaySelected.InvokeAsync("K")'>@GetPlayButtonText("K")</button></div>
+    <div class="col-6"><button class="@GetPlayButtonClass("KF")" @onclick='() => OnPlaySelected.InvokeAsync("KF")'>@GetPlayButtonText("KF")</button></div>
+</div>
+
+@code {
+    [Parameter] public string? SelectedResult { get; set; }
+    [Parameter] public bool IsFCDisabled { get; set; }
+    [Parameter] public EventCallback<string> OnPlaySelected { get; set; }
+
+    private bool IsPlayResultMatch(string? actualResult, string buttonResult)
+    {
+        if (actualResult == buttonResult) return true;
+        if (actualResult == "SF" && buttonResult == "FO") return true;
+        return false;
+    }
+
+    private string GetPlayButtonText(string result)
+    {
+        if (IsPlayResultMatch(SelectedResult, result))
+        {
+            return $"✓ {result}";
+        }
+        return result;
+    }
+
+    private string GetPlayButtonClass(string result)
+    {
+        string css = "btn text-white fw-bold w-100 py-3 shadow-sm";
+        bool isOut = result == "GO" || result == "FO" || result == "K" || result == "KF" || result == "SF";
+
+        string baseClass = "";
+        string selectedClass = "";
+
+        if (isOut) 
+        {
+            baseClass = "btn-danger";
+            selectedClass = "selected-danger";
+        }
+        else if (result == "BB" || result == "FC")
+        {
+            baseClass = "btn-primary";
+            selectedClass = "selected-primary";
+        }
+        else 
+        {
+            baseClass = "btn-success";
+            selectedClass = "selected-success";
+        }
+        
+        css += " " + baseClass;
+            
+        if (IsPlayResultMatch(SelectedResult, result))
+        {
+            css += " " + selectedClass;
+        }
+        
+        return css;
+    }
+}

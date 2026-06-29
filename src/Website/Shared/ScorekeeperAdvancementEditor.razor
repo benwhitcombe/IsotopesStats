@@ -1,0 +1,207 @@
+@using IsotopesStats.Website.Shared.Models
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <h5 class="mb-0 fw-bold">
+                <span class="badge @GetBadgeColor(PendingResult) me-2">@PendingResult</span>
+                Runner Advancement
+            </h5>
+        </div>
+        
+        <div>
+            @foreach (var runner in ActiveRunners)
+            {
+                <div class="bg-light p-2 rounded border mb-3">
+                    <div class="fw-bold mb-2">@(runner.IsBatter ? "Batter" : $"Runner on {runner.StartBase}B") (@runner.Name)</div>
+                    <div class="d-flex gap-1 overflow-auto pb-1" style="white-space: nowrap;">
+                        @if (runner.IsBatter && (PendingResult == "K" || PendingResult == "KF" || PendingResult == "GO" || PendingResult == "FO" || PendingResult == "SF"))
+                        {
+                            <button class="btn btn-sm btn-danger fw-bold shadow-none" style="pointer-events: none;">Out</button>
+                        }
+                        else if (PendingResult == "BB" || PendingResult == "HR" || PendingResult == "IPHR" || PendingResult == "K" || PendingResult == "KF")
+                        {
+                            <button class="btn btn-sm @(runner.Destination == 4 ? "btn-success" : "btn-primary") fw-bold shadow-none" style="pointer-events: none;">
+                                @(runner.Destination == 4 ? "Home" : $"{runner.Destination}B")
+                            </button>
+                        }
+                        else if (!runner.ShowOutOptions)
+                        {
+                            @if (IsSafeBaseAllowed(runner, 1)) { <button class="btn btn-sm @(runner.Destination == 1 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 1)">1B</button> }
+                            @if (IsSafeBaseAllowed(runner, 2)) { <button class="btn btn-sm @(runner.Destination == 2 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 2)">2B</button> }
+                            @if (IsSafeBaseAllowed(runner, 3)) { <button class="btn btn-sm @(runner.Destination == 3 ? "btn-primary fw-bold" : "btn-outline-primary") shadow-none" @onclick="() => SetRunnerDest(runner, 3)">3B</button> }
+                            @if (IsSafeBaseAllowed(runner, 4)) { <button class="btn btn-sm @(runner.Destination == 4 ? "btn-success fw-bold" : "btn-outline-success") shadow-none" @onclick="() => SetRunnerDest(runner, 4)">Home</button> }
+                            
+                            <button class="btn btn-sm btn-outline-danger shadow-none ms-auto" @onclick="() => ToggleOutOptions(runner)">Out</button>
+                        }
+                        else
+                        {
+                            @if (IsOutBaseAllowed(runner, 1)) { <button class="btn btn-sm @(runner.Destination == -1 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -1)">Out 1B</button> }
+                            @if (IsOutBaseAllowed(runner, 2)) { <button class="btn btn-sm @(runner.Destination == -2 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -2)">Out 2B</button> }
+                            @if (IsOutBaseAllowed(runner, 3)) { <button class="btn btn-sm @(runner.Destination == -3 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -3)">Out 3B</button> }
+                            @if (IsOutBaseAllowed(runner, 4)) { <button class="btn btn-sm @(runner.Destination == -4 ? "btn-danger fw-bold" : "btn-outline-danger") shadow-none" @onclick="() => SetRunnerDest(runner, -4)">Out Home</button> }
+                            
+                            <button class="btn btn-sm btn-outline-secondary shadow-none ms-auto" @onclick="() => ToggleOutOptions(runner)">Safe</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <div class="mb-3">
+            <button class="btn @((ManualEndInning || DisplayOuts >= 3) ? "selected-danger shadow-sm" : "btn-danger text-white shadow-sm") w-100 py-3 fw-bold" 
+                    @onclick="ToggleManualEndInning"
+                    disabled="@(DisplayOuts >= 3)"
+                    style="@(DisplayOuts >= 3 ? "opacity: 1;" : "")">
+                @((ManualEndInning || DisplayOuts >= 3) ? "✓ End Inning" : "End Inning")
+            </button>
+        </div>
+        
+        @if (!IsPlayValid)
+        {
+            <div class="alert alert-warning py-2 mb-3 fw-bold text-center" style="font-size: 0.85rem;">
+                ⚠ Two or more runners cannot be on the same base.
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary flex-grow-1 py-2 fw-bold shadow-sm" @onclick="() => OnCancel.InvokeAsync()">Cancel</button>
+            <button class="btn btn-primary flex-grow-1 py-2 fw-bold shadow-sm" @onclick="() => OnSave.InvokeAsync()" disabled="@(!IsPlayValid)">Save Play</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string PendingResult { get; set; } = "";
+    [Parameter] public List<RunnerState> ActiveRunners { get; set; } = new();
+    [Parameter] public int CurrentOuts { get; set; }
+    [Parameter] public bool ManualEndInning { get; set; }
+    [Parameter] public EventCallback<bool> ManualEndInningChanged { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public bool HasRunnerOn1B { get; set; }
+    [Parameter] public bool HasRunnerOn2B { get; set; }
+
+    private int DisplayOuts => CurrentOuts + ActiveRunners.Count(r => r.Destination < 0);
+
+    private bool IsPlayValid
+    {
+        get
+        {
+            var occupied = new HashSet<int>();
+            foreach (var r in ActiveRunners)
+            {
+                if (r.Destination > 0 && r.Destination < 4)
+                {
+                    if (!occupied.Add(r.Destination)) return false; 
+                }
+            }
+            return true;
+        }
+    }
+
+    private string GetBadgeColor(string res)
+    {
+        if (res == "1B" || res == "2B" || res == "3B" || res == "HR" || res == "IPHR") return "bg-success";
+        if (res == "BB" || res == "FC") return "bg-primary";
+        return "bg-danger";
+    }
+
+    private void SetRunnerDest(RunnerState runner, int dest)
+    {
+        runner.Destination = dest;
+    }
+
+    private void ToggleOutOptions(RunnerState runner)
+    {
+        runner.ShowOutOptions = !runner.ShowOutOptions;
+        
+        if (runner.ShowOutOptions)
+        {
+            if (runner.Destination > 0) 
+            {
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (IsOutBaseAllowed(runner, i))
+                    {
+                        runner.Destination = -i;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (runner.Destination < 0)
+            {
+                for (int i = 1; i <= 4; i++)
+                {
+                    if (IsSafeBaseAllowed(runner, i))
+                    {
+                        runner.Destination = i;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private bool IsSafeBaseAllowed(RunnerState runner, int baseNum)
+    {
+        if (runner.IsBatter)
+        {
+            if (PendingResult == "1B" || PendingResult == "FC" || PendingResult == "BB") return baseNum == 1;
+            if (PendingResult == "2B") return baseNum == 2;
+            if (PendingResult == "3B") return baseNum == 3;
+            if (PendingResult == "HR" || PendingResult == "IPHR") return baseNum == 4;
+            return false;
+        }
+        else
+        {
+            if (baseNum < runner.StartBase) return false;
+            
+            if (baseNum == runner.StartBase)
+            {
+                bool batterReachesSafely = PendingResult == "1B" || PendingResult == "2B" || PendingResult == "3B" || PendingResult == "HR" || PendingResult == "IPHR" || PendingResult == "BB" || PendingResult == "FC";
+                bool isForced = runner.StartBase == 1 || 
+                               (runner.StartBase == 2 && HasRunnerOn1B) || 
+                               (runner.StartBase == 3 && HasRunnerOn1B && HasRunnerOn2B);
+                
+                if (batterReachesSafely && isForced) return false;
+            }
+            
+            if (PendingResult == "2B" && baseNum <= 2) return false;
+            if (PendingResult == "3B" && baseNum <= 3) return false;
+            
+            return true;
+        }
+    }
+
+    private bool IsOutBaseAllowed(RunnerState runner, int baseNum)
+    {
+        if (runner.IsBatter)
+        {
+            if (PendingResult == "1B") return baseNum == 2; 
+            if (PendingResult == "2B") return baseNum == 3; 
+            if (PendingResult == "3B") return baseNum == 4; 
+            if (PendingResult == "FC" || PendingResult == "BB") return baseNum > 1; 
+            if (PendingResult == "HR" || PendingResult == "IPHR") return false;
+            return baseNum >= 1; 
+        }
+        else
+        {
+            if (baseNum < runner.StartBase) return false;
+
+            if (PendingResult == "2B" && baseNum <= 2) return false;
+            if (PendingResult == "3B" && baseNum <= 3) return false;
+
+            return baseNum > runner.StartBase || (baseNum == runner.StartBase && (PendingResult == "K" || PendingResult == "KF")); 
+        }
+    }
+
+    private async Task ToggleManualEndInning()
+    {
+        ManualEndInning = !ManualEndInning;
+        await ManualEndInningChanged.InvokeAsync(ManualEndInning);
+    }
+}
