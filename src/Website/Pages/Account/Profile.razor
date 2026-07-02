@@ -52,6 +52,16 @@ else
                 </div>
             </div>
 
+            @if (currentUser.RoleNames != null && currentUser.RoleNames.Contains("Administrator"))
+            {
+                <div class="form-group">
+                    <label style="font-weight: 800; text-transform: uppercase; font-size: 0.7rem; color: #999; letter-spacing: 1px; margin-bottom: 0.5rem; display: block;">Application Version</label>
+                    <div class="form-control" style="background: #f8f9fa; border-color: #eee; color: #666;">
+                        @appVersion
+                    </div>
+                </div>
+            }
+
             <hr style="margin: 1rem 0; border-color: #eee;" />
 
             <div style="background: #fffcf0; border: 1px solid #ffeeba; padding: 1.5rem; border-radius: 12px;">
@@ -106,6 +116,7 @@ else
     [CascadingParameter] public Task<AuthenticationState> AuthStateTask { get; set; } = null!;
     
     private UserRolesSummaryView? currentUser;
+    private string? appVersion;
     private bool isChangingPassword = false;
     private bool showSuccess = false;
     private string? passwordError;
@@ -124,6 +135,15 @@ else
                 List<UserRolesSummaryView> users = await IAuthRepository.GetUsersAsync();
                 currentUser = users.FirstOrDefault(u => u.Email == email);
             }
+        }
+        
+        try
+        {
+            appVersion = await JSRuntime.InvokeAsync<string>("getAppVersion");
+        }
+        catch
+        {
+            appVersion = "unknown";
         }
     }
 
