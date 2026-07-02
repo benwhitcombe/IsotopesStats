@@ -303,31 +303,47 @@ else
         <div class="stat-card mb-2 py-1 position-relative @(showSuccessAnimation ? "success-pulse" : "")" style="transition: border 0.3s;">
 
             @{
-                int? display1B = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunnerOn1B_End : 
-                                 (IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 1)?.PlayerId : runnerOn1B);
-                int? display2B = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunnerOn2B_End : 
-                                 (IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 2)?.PlayerId : runnerOn2B);
-                int? display3B = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunnerOn3B_End : 
-                                 (IsEditingPlay ? ActiveRunners.FirstOrDefault(r => r.Destination == 3)?.PlayerId : runnerOn3B);
+                List<string> display1B = new();
+                List<string> display2B = new();
+                List<string> display3B = new();
+
+                if (IsEditingPlay)
+                {
+                    display1B = ActiveRunners.Where(r => r.Destination == 1).Select(r => r.Name).ToList();
+                    display2B = ActiveRunners.Where(r => r.Destination == 2).Select(r => r.Name).ToList();
+                    display3B = ActiveRunners.Where(r => r.Destination == 3).Select(r => r.Name).ToList();
+                }
+                else if (viewingPaIndex != null)
+                {
+                    if (plateAppearances[viewingPaIndex.Value].RunnerOn1B_End != null) display1B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn1B_End.Value));
+                    if (plateAppearances[viewingPaIndex.Value].RunnerOn2B_End != null) display2B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn2B_End.Value));
+                    if (plateAppearances[viewingPaIndex.Value].RunnerOn3B_End != null) display3B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn3B_End.Value));
+                }
+                else
+                {
+                    if (runnerOn1B != null) display1B.Add(GetPlayerName(runnerOn1B.Value));
+                    if (runnerOn2B != null) display2B.Add(GetPlayerName(runnerOn2B.Value));
+                    if (runnerOn3B != null) display3B.Add(GetPlayerName(runnerOn3B.Value));
+                }
 
                 List<string> scored = new();
                 List<(string Name, int OutBase)> outs = new();
 
-                if (viewingPaIndex != null)
+                if (IsEditingPlay)
+                {
+                    scored = ActiveRunners.Where(r => r.Destination == 4).Select(r => r.Name).ToList();
+                    outs = ActiveRunners.Where(r => r.Destination < 0).Select(r => (r.Name, Math.Abs(r.Destination))).ToList();
+                }
+                else if (viewingPaIndex != null)
                 {
                     (scored, outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
-                }
-                else if (IsEditingPlay)
-                {
-                    scored = ActiveRunners.Where(r => r.Destination == 4).Select(r => GetPlayerName(r.PlayerId)).ToList();
-                    outs = ActiveRunners.Where(r => r.Destination < 0).Select(r => (GetPlayerName(r.PlayerId), Math.Abs(r.Destination))).ToList();
                 }
             }
             
             <ScorekeeperDiamond 
-                RunnerOn1B="@(display1B != null ? GetPlayerName(display1B.Value) : null)"
-                RunnerOn2B="@(display2B != null ? GetPlayerName(display2B.Value) : null)"
-                RunnerOn3B="@(display3B != null ? GetPlayerName(display3B.Value) : null)"
+                RunnersOn1B="@display1B"
+                RunnersOn2B="@display2B"
+                RunnersOn3B="@display3B"
                 ScoredRunners="@scored"
                 OutRunners="@outs" />
             
@@ -336,7 +352,11 @@ else
                 <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">@(viewingPaIndex == null ? "CURRENT BATTER" : "BATTER")</h6>
                 <h3 class="fw-bold mb-0 text-dark slide-fade" @key="currentBatterId">
                     @(displayBatterIndex). @currentBatterName
-                    @if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
+                    @if (IsEditingPlay)
+                    {
+                        <text> - @pendingResult</text>
+                    }
+                    else if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
                     {
                         <text> - @plateAppearances[viewingPaIndex.Value].Result</text>
                     }
@@ -377,6 +397,7 @@ else
                     ManualEndInningChanged="(val) => ManualEndInning = val"
                     OnCancel="CancelPlay"
                     OnSave="SavePendingPA"
+                    OnRunnersChanged="StateHasChanged"
                     HasRunnerOn1B="@(runnerOn1B != null)"
                     HasRunnerOn2B="@(runnerOn2B != null)" />
             }
@@ -501,13 +522,19 @@ else
         catch (OperationCanceledException) { }
     }
 
+    private int localUpdateCount = 0;
+
     private async Task SilentUpdateAsync()
     {
         if (isProcessing || pendingPA != null || IsEditingPlay || !isLineupSet) return;
 
+        int startUpdateCount = localUpdateCount;
+
         try
         {
             List<PlateAppearance> newPAs = await DataProvider.GetPlateAppearancesAsync();
+            
+            if (localUpdateCount != startUpdateCount) return;
             
             bool isNewRemotePlay = newPAs.Count > plateAppearances.Count;
             
@@ -529,6 +556,7 @@ else
                 await InvokeAsync(async () =>
                 {
                     if (isProcessing || pendingPA != null || IsEditingPlay || !isLineupSet) return;
+                    if (localUpdateCount != startUpdateCount) return;
                     
                     plateAppearances = newPAs;
                     
@@ -744,7 +772,7 @@ else
         int r3Dest = runnerOn3B != null ? 3 : 0;
         int batterDest = isOut ? -1 : (advanceBy > 0 ? advanceBy : 1);
 
-        if (viewingPaIndex != null && viewingPaIndex < plateAppearances.Count)
+        if (viewingPaIndex != null && viewingPaIndex < plateAppearances.Count && plateAppearances[viewingPaIndex.Value].Result == result)
         {
             var pa = plateAppearances[viewingPaIndex.Value];
             List<(int PlayerId, int Base)> starters = new();
@@ -782,12 +810,7 @@ else
             if (runnerOn2B != null) r2Dest = GetDestForPlayer(runnerOn2B.Value);
             if (runnerOn1B != null) r1Dest = GetDestForPlayer(runnerOn1B.Value);
             
-            // For the batter, if the result is unchanged, use the previous destination. 
-            // Otherwise, use the new default destination for the newly selected result.
-            if (plateAppearances[viewingPaIndex.Value].Result == result)
-            {
-                batterDest = GetDestForPlayer(currentBatterId);
-            }
+            batterDest = GetDestForPlayer(currentBatterId);
         }
         else
         {
@@ -865,6 +888,7 @@ else
         if (pendingPA != null)
         {
             isProcessing = true;
+            localUpdateCount++;
             StateHasChanged();
             
             int? currentViewingIndex = viewingPaIndex;
@@ -918,6 +942,7 @@ else
 
                 if (currentViewingIndex != null)
                 {
+                    plateAppearances[currentViewingIndex.Value] = pendingPA;
                     await DataProvider.UpdatePlateAppearanceAsync(pendingPA);
                     await RippleStateAsync();
                     await LogActionAsync($"Updated play for Game {GameId} to {pendingPA.Result} (Inning {pendingPA.Inning})");
@@ -943,14 +968,10 @@ else
                 ManualEndInning = false;
                 pendingPA = null;
                 
-                showSuccessAnimation = true;
                 StateHasChanged();
-                
-                await Task.Delay(1200);
             }
             finally
             {
-                showSuccessAnimation = false;
                 
                 if (viewingPaIndex == currentViewingIndex)
                 {
@@ -1026,6 +1047,7 @@ else
         if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
         {
             isProcessing = true;
+            localUpdateCount++;
             StateHasChanged();
             try
             {
@@ -1063,6 +1085,7 @@ else
         if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
         {
             isProcessing = true;
+            localUpdateCount++;
             StateHasChanged();
             try
             {
@@ -1273,6 +1296,22 @@ else
                 if (pa.RunnerOn1B_End != null && pa.RunnerOn1B_End != pa.RunnerOn1B && pa.RunnerOn1B_End != pa.RunnerOn2B && pa.RunnerOn1B_End != pa.RunnerOn3B && pa.RunnerOn1B_End != pa.PlayerId) pa.RunnerOn1B_End = null;
                 if (pa.RunnerOn2B_End != null && pa.RunnerOn2B_End != pa.RunnerOn1B && pa.RunnerOn2B_End != pa.RunnerOn2B && pa.RunnerOn2B_End != pa.RunnerOn3B && pa.RunnerOn2B_End != pa.PlayerId) pa.RunnerOn2B_End = null;
                 if (pa.RunnerOn3B_End != null && pa.RunnerOn3B_End != pa.RunnerOn1B && pa.RunnerOn3B_End != pa.RunnerOn2B && pa.RunnerOn3B_End != pa.RunnerOn3B && pa.RunnerOn3B_End != pa.PlayerId) pa.RunnerOn3B_End = null;
+                
+                // Add new runners to End states to prevent them from vanishing
+                void EnsureRunnerKept(int? runnerId, int startBase)
+                {
+                    if (runnerId == null) return;
+                    if (pa.RunnerOn1B_End == runnerId || pa.RunnerOn2B_End == runnerId || pa.RunnerOn3B_End == runnerId) return;
+                    if (pa.OutAt1B == runnerId || pa.OutAt2B == runnerId || pa.OutAt3B == runnerId || pa.OutAtHome == runnerId) return;
+                    
+                    if (startBase == 1 && pa.RunnerOn1B_End == null) pa.RunnerOn1B_End = runnerId;
+                    else if (startBase == 2 && pa.RunnerOn2B_End == null) pa.RunnerOn2B_End = runnerId;
+                    else if (startBase == 3 && pa.RunnerOn3B_End == null) pa.RunnerOn3B_End = runnerId;
+                }
+                
+                EnsureRunnerKept(pa.RunnerOn3B, 3);
+                EnsureRunnerKept(pa.RunnerOn2B, 2);
+                EnsureRunnerKept(pa.RunnerOn1B, 1);
                 
                 await DataProvider.UpdatePlateAppearanceAsync(pa);
             }

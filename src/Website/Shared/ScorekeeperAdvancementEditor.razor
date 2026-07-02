@@ -48,16 +48,16 @@
             }
         </div>
         
-        <div class="mb-3">
-            <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm fs-5" @onclick="() => OnSave.InvokeAsync()" disabled="@(!IsPlayValid)">Save Play</button>
-        </div>
-        
         @if (!IsPlayValid)
         {
             <div class="alert alert-warning py-2 mb-3 fw-bold text-center" style="font-size: 0.85rem;">
                 ⚠ Two or more runners cannot be on the same base.
             </div>
         }
+
+        <div class="mb-3">
+            <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm fs-5" @onclick="() => OnSave.InvokeAsync()" disabled="@(!IsPlayValid)">Save Play</button>
+        </div>
 
         <div class="d-flex justify-content-between">
             <button class="btn btn-outline-secondary py-2 px-4 fw-bold shadow-sm" @onclick="() => OnCancel.InvokeAsync()">Cancel</button>
@@ -80,6 +80,7 @@
     [Parameter] public EventCallback<bool> ManualEndInningChanged { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnRunnersChanged { get; set; }
     [Parameter] public bool HasRunnerOn1B { get; set; }
     [Parameter] public bool HasRunnerOn2B { get; set; }
 
@@ -108,12 +109,13 @@
         return "bg-danger";
     }
 
-    private void SetRunnerDest(RunnerState runner, int dest)
+    private async Task SetRunnerDest(RunnerState runner, int dest)
     {
         runner.Destination = dest;
+        await OnRunnersChanged.InvokeAsync();
     }
 
-    private void ToggleOutOptions(RunnerState runner)
+    private async Task ToggleOutOptions(RunnerState runner)
     {
         runner.ShowOutOptions = !runner.ShowOutOptions;
         
@@ -145,6 +147,7 @@
                 }
             }
         }
+        await OnRunnersChanged.InvokeAsync();
     }
 
     private bool IsSafeBaseAllowed(RunnerState runner, int baseNum)
@@ -160,15 +163,17 @@
         else
         {
             if (baseNum < runner.StartBase) return false;
+            if (PendingResult == "HR" || PendingResult == "IPHR") return baseNum == 4;
             
             if (baseNum == runner.StartBase)
             {
-                bool batterReachesSafely = PendingResult == "1B" || PendingResult == "2B" || PendingResult == "3B" || PendingResult == "HR" || PendingResult == "IPHR" || PendingResult == "BB" || PendingResult == "FC";
-                bool isForced = runner.StartBase == 1 || 
-                               (runner.StartBase == 2 && HasRunnerOn1B) || 
-                               (runner.StartBase == 3 && HasRunnerOn1B && HasRunnerOn2B);
-                
-                if (batterReachesSafely && isForced) return false;
+                if (PendingResult == "BB")
+                {
+                    bool isForced = runner.StartBase == 1 || 
+                                   (runner.StartBase == 2 && HasRunnerOn1B) || 
+                                   (runner.StartBase == 3 && HasRunnerOn1B && HasRunnerOn2B);
+                    if (isForced) return false;
+                }
             }
             
             if (PendingResult == "2B" && baseNum <= 2) return false;

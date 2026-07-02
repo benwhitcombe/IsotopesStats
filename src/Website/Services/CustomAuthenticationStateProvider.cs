@@ -11,6 +11,8 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     private readonly Supabase.Client _supabase;
     private readonly IAuthRepository _authRepository;
     private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+    private ClaimsPrincipal? _cachedPrincipal;
+    private string? _cachedUserId;
 
     public CustomAuthenticationStateProvider(Supabase.Client supabase, IAuthRepository authRepository)
     {
@@ -31,16 +33,29 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
             Supabase.Gotrue.Session? session = _supabase.Auth.CurrentSession;
 
             if (session == null || session.User == null || string.IsNullOrEmpty(session.User.Id))
+            {
+                _cachedPrincipal = null;
+                _cachedUserId = null;
                 return new AuthenticationState(_anonymous);
+            }
+
+            if (_cachedUserId == session.User.Id && _cachedPrincipal != null)
+            {
+                return new AuthenticationState(_cachedPrincipal);
+            }
 
             User? dbUser = await _authRepository.GetUserByIdAsync(session.User.Id);
             if (dbUser != null && dbUser.IsDeleted)
             {
+                _cachedPrincipal = null;
+                _cachedUserId = null;
                 return new AuthenticationState(_anonymous);
             }
 
             List<UserRole> roles = await GetUserRolesForUserAsync(session.User.Id);
-            return new AuthenticationState(CreateClaimsPrincipal(session.User, roles));
+            _cachedPrincipal = CreateClaimsPrincipal(session.User, roles);
+            _cachedUserId = session.User.Id;
+            return new AuthenticationState(_cachedPrincipal);
         }
         catch (Exception ex)
         {
@@ -56,6 +71,8 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     public async Task UpdateAuthenticationState(User? userSession)
     {
+        _cachedPrincipal = null;
+        _cachedUserId = null;
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         await Task.CompletedTask;
     }

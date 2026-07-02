@@ -4,33 +4,42 @@
             <!-- Base paths -->
             <polygon points="50,90 90,50 50,10 10,50" fill="none" stroke="#ddd" stroke-width="2" />
             <!-- 1B -->
-            <polygon points="90,50 85,45 80,50 85,55" fill="@(RunnerOn1B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+            <polygon points="90,50 85,45 80,50 85,55" fill="@(RunnersOn1B.Any() ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
             <!-- 2B -->
-            <polygon points="50,10 45,15 50,20 55,15" fill="@(RunnerOn2B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+            <polygon points="50,10 45,15 50,20 55,15" fill="@(RunnersOn2B.Any() ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
             <!-- 3B -->
-            <polygon points="10,50 15,45 20,50 15,55" fill="@(RunnerOn3B != null ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
+            <polygon points="10,50 15,45 20,50 15,55" fill="@(RunnersOn3B.Any() ? "var(--isotopes-accent)" : "#fff")" stroke="#aaa" />
             <!-- Home Plate (pointing down) -->
             <polygon points="45,85 55,85 55,90 50,95 45,90" fill="#fff" stroke="#aaa" />
         </svg>
     </div>
     
     <!-- Runner Names Overlays -->
-    @if (RunnerOn2B != null)
+    @if (RunnersOn2B.Any())
     {
-        <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 50%; bottom: 90%; transform: translateX(-50%); z-index: 10;">
-            @RunnerOn2B
+        <div class="position-absolute d-flex flex-column gap-1 align-items-center badge-fade" style="left: 50%; bottom: 90%; transform: translateX(-50%); z-index: 10;">
+            @foreach(var r in RunnersOn2B)
+            {
+                <div class="badge" style="background-color: var(--isotopes-accent);">@r</div>
+            }
         </div>
     }
-    @if (RunnerOn3B != null)
+    @if (RunnersOn3B.Any())
     {
-        <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); right: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
-            @RunnerOn3B
+        <div class="position-absolute d-flex flex-column gap-1 align-items-end badge-fade" style="right: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+            @foreach(var r in RunnersOn3B)
+            {
+                <div class="badge" style="background-color: var(--isotopes-accent);">@r</div>
+            }
         </div>
     }
-    @if (RunnerOn1B != null)
+    @if (RunnersOn1B.Any())
     {
-        <div class="position-absolute badge badge-fade" style="background-color: var(--isotopes-accent); left: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
-            @RunnerOn1B
+        <div class="position-absolute d-flex flex-column gap-1 align-items-start badge-fade" style="left: 90%; top: 50%; transform: translateY(-50%); z-index: 10;">
+            @foreach(var r in RunnersOn1B)
+            {
+                <div class="badge" style="background-color: var(--isotopes-accent);">@r</div>
+            }
         </div>
     }
 
@@ -69,9 +78,9 @@
 </div>
 
 @code {
-    [Parameter] public string? RunnerOn1B { get; set; }
-    [Parameter] public string? RunnerOn2B { get; set; }
-    [Parameter] public string? RunnerOn3B { get; set; }
+    [Parameter] public IEnumerable<string> RunnersOn1B { get; set; } = Array.Empty<string>();
+    [Parameter] public IEnumerable<string> RunnersOn2B { get; set; } = Array.Empty<string>();
+    [Parameter] public IEnumerable<string> RunnersOn3B { get; set; } = Array.Empty<string>();
     [Parameter] public IEnumerable<string> ScoredRunners { get; set; } = Array.Empty<string>();
     [Parameter] public IEnumerable<(string Name, int OutBase)> OutRunners { get; set; } = Array.Empty<(string Name, int OutBase)>();
 }
