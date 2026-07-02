@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="app-version" content="2026.06.29.4" />
+    <meta name="app-version" content="2026.07.02.1" />
     <meta name="color-scheme" content="light only" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -119,10 +119,25 @@
             }
         }
 
+        // Clear the auto-reload flag after 5 seconds of successful runtime
+        // This allows auto-reload to work again for future errors (e.g., token expiration 1 hour later)
+        // while still preventing infinite reload loops if the page fails immediately upon load.
+        setTimeout(() => {
+            sessionStorage.removeItem('auto_reloaded_on_error');
+        }, 5000);
+
         function displayGlobalError(prefix, content) {
             // Avoid duplicates
             if (window.hasDisplayedError) return;
             window.hasDisplayedError = true;
+
+            const hasAutoReloaded = sessionStorage.getItem('auto_reloaded_on_error');
+            if (!hasAutoReloaded) {
+                console.warn("Attempting automatic reload to recover from error: ", prefix);
+                sessionStorage.setItem('auto_reloaded_on_error', 'true');
+                window.location.reload(true);
+                return;
+            }
 
             // Show friendly UI
             document.getElementById('blazor-error-ui').style.display = 'flex';
