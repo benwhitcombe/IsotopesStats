@@ -88,5 +88,16 @@
     private async Task LoadData()
     {
         DummyPAs.Clear();
+        var plays = await SessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays");
+        if (plays != null)
+        {
+            savedPlaysList = plays;
+            DummyPAs = plays.Where(p => p.PA != null && p.PA.Result != "Skip").Select(p => p.PA!).ToList();
+        }
+        else
+        {
+            savedPlaysList.Clear();
+        }
+        StateHasChanged();
     }
 }
