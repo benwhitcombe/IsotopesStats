@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Website",
   "resources": {
-    "hash": "sha256-KoCjOpDP319P5qa6/NtOWUkVyrZzpiP9TAzC7+Et6Kk=",
+    "hash": "sha256-/QM9bIQ1fomjZzXXJ+24sIeJeq0SqJ+IT1QaiNExjfA=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-YDHEHpc+/PUWFYa9BMCN3EcVlpemjKD024swcpPfMIQ="
     },
@@ -18,7 +18,7 @@
     },
     "coreAssembly": {},
     "assembly": {
-      "Domain.wasm": "sha256-Lw6QEAtmcqO9pvLl0PYsbFSTacq9n3wmoSpLmWyHII4=",
+      "Domain.wasm": "sha256-wUP8zxU1ECi4HdBdBdnNXauOxe0UvpYkD897TewToh0=",
       "Microsoft.AspNetCore.Authorization.wasm": "sha256-4T9EoMvRNYWmSmBGdultJy4lcFUX6pU9rM6OB0tRI7Q=",
       "Microsoft.AspNetCore.Components.Authorization.wasm": "sha256-JjiMiKAGWjsOGDM+k3hDQ5y3vEBdb451H1zOjZLpI00=",
       "Microsoft.AspNetCore.Components.Forms.wasm": "sha256-1Pf2meEYacKdf5lRRfCJ3jzjKu/7EYzQG6kLDDSz5bA=",
@@ -52,7 +52,7 @@
       "Supabase.Realtime.wasm": "sha256-x/ryPhmfvBR+idRmyzcty43CY91ggqdkMiwLH6dvz0w=",
       "Supabase.Storage.wasm": "sha256-/JlNpn7ZLA1o00UE4pLSM3swF93PqY+GW5DgMl4Fook=",
       "Supabase.wasm": "sha256-cDT4RpTWur8+PQKlMzkf+YSS86akr64XMkNGi4xZ8Ec=",
-      "SupabaseRepository.wasm": "sha256-WKHChrbx7kuRcD6zHDFX1lU6Q/KAJKkPe7P6blrtRbQ=",
+      "SupabaseRepository.wasm": "sha256-n4L06GlXXbA073zyXGigxuxo72niu0E9j0F5L1bZRSs=",
       "System.Collections.Concurrent.wasm": "sha256-3AobQF8yH2/g5ErEQ2BrWA3RNx2O7A+4qiJfiFgwjps=",
       "System.Collections.NonGeneric.wasm": "sha256-oVMohSN9Cvexm7sgCSDIWDlyAy+r7OeU0m+kil2D7Gs=",
       "System.Collections.Specialized.wasm": "sha256-C91mc61l0Y1TDrA8kq7qTRtwlD7cUTwmdIIYqgxE3+U=",
@@ -111,7 +111,7 @@
       "System.Xml.ReaderWriter.wasm": "sha256-HOZylUDBPCS6ckrKPeaP8/pxd4AyAQ2ytpz0O4j3NnQ=",
       "System.Xml.XDocument.wasm": "sha256-AP+V92faJnrR7tf8YgJRY+hOVO20XmMdQJrzN1XpHs8=",
       "System.wasm": "sha256-dH8gTwfC8agr9n3W9LFMY/2xjJQVN+9jyVvplI7C1jY=",
-      "Website.wasm": "sha256-I0Dmy/+ZqOTMVlRpXoVSEaBXoCKipYkyMcQ13uK3Wyw=",
+      "Website.wasm": "sha256-46aR95WrJgwL7xzIICdSjH1qFRsJyR+es7gul4r7rX0=",
       "Websocket.Client.wasm": "sha256-mK1Y69iaJIlCiwO57XP3JeGf+acH7UzuOz4D8ngEaSM=",
       "netstandard.wasm": "sha256-c0Rv9ZD40MC34iuiA6Bvo8dKp2d7VUeDbg5zHvoebMA="
     }
