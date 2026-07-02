@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "XNrjZvpk",
+  "version": "LFNCVmjw",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -14,7 +14,7 @@ self.assetsManifest = {
       "url": "Website.styles.css"
     },
     {
-      "hash": "sha256-p9l2v5SGd4/7AMh4++x3DTeHgaLOPW4XaXrdsoiK7Qc=",
+      "hash": "sha256-Lw6QEAtmcqO9pvLl0PYsbFSTacq9n3wmoSpLmWyHII4=",
       "url": "_framework/Domain.wasm"
     },
     {
@@ -150,7 +150,7 @@ self.assetsManifest = {
       "url": "_framework/Supabase.wasm"
     },
     {
-      "hash": "sha256-Gbwx7hE1SKI1O+wEcgkfZfdkgEPqXCd5swOsSER/SoE=",
+      "hash": "sha256-WKHChrbx7kuRcD6zHDFX1lU6Q/KAJKkPe7P6blrtRbQ=",
       "url": "_framework/SupabaseRepository.wasm"
     },
     {
@@ -386,7 +386,7 @@ self.assetsManifest = {
       "url": "_framework/System.wasm"
     },
     {
-      "hash": "sha256-YExSm+L46FdFBwGWHXnrc4t5q7a+pcCcPFGYycF6aZ4=",
+      "hash": "sha256-I0Dmy/+ZqOTMVlRpXoVSEaBXoCKipYkyMcQ13uK3Wyw=",
       "url": "_framework/Website.wasm"
     },
     {
@@ -394,7 +394,7 @@ self.assetsManifest = {
       "url": "_framework/Websocket.Client.wasm"
     },
     {
-      "hash": "sha256-6lHUjlFpAh3FHhbKfwRibI/9qfEeid8SFXmQBPNlxig=",
+      "hash": "sha256-qCycTiYN/qE90MkvB8R3A4mEOcpJmvjSmnngGP/77yY=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -482,7 +482,7 @@ self.assetsManifest = {
       "url": "css/open-iconic/font/fonts/open-iconic.woff"
     },
     {
-      "hash": "sha256-K8WQcFlKygLomIMgyQlfiKpQ8kuUJ42PQjZGC04Ki20=",
+      "hash": "sha256-pc3EhNA4hmdKEcZkFHtf0z+y1/uFxQJu9rgFaisgNtg=",
       "url": "css/site.css"
     },
     {
@@ -490,7 +490,7 @@ self.assetsManifest = {
       "url": "images/defense.png"
     },
     {
-      "hash": "sha256-cgsr/N9iWAU91yrV5wb9cWtMtsZrp7+dpAAU/Qwz4sA=",
+      "hash": "sha256-3yZ7+QUa8xa1sPtfGaUy8QTkbl3AsMuvU/GJV6tAzWQ=",
       "url": "index.html"
     },
     {
@@ -502,7 +502,7 @@ self.assetsManifest = {
       "url": "js/panzoom.min.js"
     },
     {
-      "hash": "sha256-BiUB7DCkJfSZGiQ+0njk30ghpGZOiZ1ii3aEclTBmww=",
+      "hash": "sha256-QFIZm3HWwmuSn9A5Og8kilpTooMM5b8urBxQOPoMzL4=",
       "url": "js/scorecard-zoom.js"
     },
     {

@@ -2,36 +2,37 @@ export function init(elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
     
-    // Only enable pan/zoom functionality on mobile devices (width < 1024px)
-    if (window.innerWidth >= 1024) {
-        // Explicitly remove constraints if they were added
-        if (el.parentElement) {
-            el.parentElement.style.overflow = '';
-            el.parentElement.style.touchAction = '';
-            el.parentElement.style.maxHeight = '';
-            el.parentElement.style.width = '';
-        }
-        return;
-    }
+    // Remove the early return for window.innerWidth >= 1024
+    // so pan/zoom works on desktop too.
     
     // Add constraints for zooming
     if (el.parentElement) {
         el.parentElement.style.overflow = 'hidden';
         // Remove touchAction = 'none' so native scrolling can occur when we allow it
         el.parentElement.style.touchAction = 'auto';
-        el.parentElement.style.maxHeight = '85vh';
         el.parentElement.style.width = '100%';
+        if (window.innerWidth < 1024) {
+            el.parentElement.style.maxHeight = '85vh';
+        } else {
+            el.parentElement.style.maxHeight = 'none'; // Allow native page scrolling on desktop
+        }
     }
     
-    // Calculate initial zoom to fit BOTH width and height on mobile
+    // Calculate initial zoom
     let parentWidth = el.parentElement.clientWidth || window.innerWidth;
     let parentHeight = el.parentElement.clientHeight || (window.innerHeight * 0.85);
-    let elWidth = el.clientWidth || 1235;
-    let elHeight = el.clientHeight || 1500;
+    let elWidth = el.offsetWidth || 1235;
+    let elHeight = el.offsetHeight || 1500;
     
     let widthRatio = (parentWidth - 10) / elWidth;
     let heightRatio = (parentHeight - 10) / elHeight;
+    
     let startZoom = Math.min(widthRatio, heightRatio);
+    if (window.innerWidth >= 1024) {
+        // On desktop, don't force fitting the height to keep it readable,
+        // and limit the max zoom to 1.0 (actual size).
+        startZoom = Math.min(widthRatio, 1);
+    }
     
     // Destroy previous instance if it exists
     if (window._pzInstance) {
@@ -66,11 +67,14 @@ export function init(elementId) {
         
         var pW = el.parentElement.clientWidth;
         var rect = el.parentElement.getBoundingClientRect();
-        var pH = window.innerHeight - rect.top; // Calculate exact visible height on screen
-        if (pH < 200) pH = el.parentElement.clientHeight; // Fallback if something is weird
+        var pH = el.parentElement.clientHeight; 
+        if (window.innerWidth < 1024) {
+            pH = window.innerHeight - rect.top; // Calculate exact visible height on screen for mobile
+            if (pH < 200) pH = el.parentElement.clientHeight; // Fallback if something is weird
+        }
         
-        var eW = el.clientWidth * t.scale;
-        var eH = el.clientHeight * t.scale;
+        var eW = el.offsetWidth * t.scale;
+        var eH = el.offsetHeight * t.scale;
         
         var minX = pW - eW;
         var minY = pH - eH - 100; // Add 100px padding to the bottom so it's not tightly bound
@@ -130,9 +134,12 @@ export function init(elementId) {
         let deltaY = currentY - touchStartY;
         
         var rect = el.parentElement.getBoundingClientRect();
-        var pH = window.innerHeight - rect.top;
-        if (pH < 200) pH = el.parentElement.clientHeight;
-        var eH = el.clientHeight * t.scale;
+        var pH = el.parentElement.clientHeight;
+        if (window.innerWidth < 1024) {
+            pH = window.innerHeight - rect.top;
+            if (pH < 200) pH = el.parentElement.clientHeight;
+        }
+        var eH = el.offsetHeight * t.scale;
         var minY = pH - eH - 100;
         
         // If we are at the top boundary and pulling down (deltaY > 0)
