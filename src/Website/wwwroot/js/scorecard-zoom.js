@@ -52,6 +52,18 @@ export function init(elementId) {
                 e.preventDefault();
             }
             return false; 
+        },
+        beforeWheel: function(e) {
+            if (!window._pzInstance) return false;
+            var t = window._pzInstance.getTransform();
+            
+            // If the user scrolls down (e.deltaY > 0) to zoom out, but we're already fully zoomed out,
+            // ignore the wheel event in panzoom to let the browser natively scroll the page down.
+            if (e.deltaY > 0 && t.scale <= startZoom + 0.001) {
+                return true; 
+            }
+            
+            return false;
         }
     });
     
