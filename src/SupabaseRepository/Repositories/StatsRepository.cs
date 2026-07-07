@@ -544,13 +544,17 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         List<StatEntry> aggregatedStats = await CalculateStatsFromPlateAppearancesAsync(gameId);
         
         int totalRuns = aggregatedStats.Sum(s => s.R);
+        int opponentRuns = game.GetOpponentInningScores().Values.Sum();
+
         if (game.IsHome)
         {
             game.HomeTeamScore = totalRuns;
+            game.VisitingTeamScore = opponentRuns;
         }
         else
         {
             game.VisitingTeamScore = totalRuns;
+            game.HomeTeamScore = opponentRuns;
         }
 
         await UpdateGameWithStatsAsync(game, aggregatedStats);

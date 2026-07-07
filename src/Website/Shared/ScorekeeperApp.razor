@@ -1413,6 +1413,16 @@ else
                 var scores = game.GetOpponentInningScores();
                 scores[promptingInning] = opponentRunsInput;
                 game.SetOpponentInningScores(scores);
+                
+                if (game.IsHome)
+                {
+                    game.VisitingTeamScore = scores.Values.Sum();
+                }
+                else
+                {
+                    game.HomeTeamScore = scores.Values.Sum();
+                }
+
                 await DataProvider.UpdateGameAsync(game);
                 
                 IsPromptingOpponentRuns = false;
