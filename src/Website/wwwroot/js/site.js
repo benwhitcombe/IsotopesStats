@@ -11,6 +11,13 @@ window.isMobileDevice = function () {
     }
 };
 
+// Add a class to the body for CSS targeting based on device type
+document.addEventListener("DOMContentLoaded", function() {
+    if (!window.isMobileDevice()) {
+        document.body.classList.add('desktop-device');
+    }
+});
+
 window.getWindowWidth = function () {
     return window.innerWidth;
 };

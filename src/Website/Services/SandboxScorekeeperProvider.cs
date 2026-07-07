@@ -20,16 +20,18 @@ namespace IsotopesStats.Website.Services
             _sessionStorage = sessionStorage;
         }
 
-        public Task<Game?> GetGameAsync()
+        public async Task<Game?> GetGameAsync()
         {
-            return Task.FromResult<Game?>(new Game 
+            var savedGame = await _sessionStorage.GetItemAsync<Game>("Sandbox_Game");
+            if (savedGame != null) return savedGame;
+            return new Game 
             { 
                 Id = _gameId, 
                 OpponentId = 1, 
                 IsHome = true, 
                 Date = DateTime.Now,
                 Opponent = new Opponent { Id = 1, Name = "Opponent", ShortName = "Opp" }
-            });
+            };
         }
 
         public async Task<List<Player>> GetRosterAsync()
@@ -64,55 +66,69 @@ namespace IsotopesStats.Website.Services
             await _sessionStorage.SetItemAsync("Sandbox_Lineup", names);
         }
 
+        private List<SandboxRecordedPlay>? _cachedPlays = null;
+
         public async Task<List<PlateAppearance>> GetPlateAppearancesAsync()
         {
-            var plays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays");
-            if (plays == null) return new List<PlateAppearance>();
-            
-            return plays.Where(p => p.PA != null && p.PA.Result != "Skip").Select(p => p.PA!).ToList();
+            if (_cachedPlays == null)
+            {
+                _cachedPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays") ?? new List<SandboxRecordedPlay>();
+            }
+            return _cachedPlays.Where(p => p.PA != null).Select(p => p.PA!).ToList();
         }
 
         public async Task<PlateAppearance> SavePlateAppearanceAsync(PlateAppearance pa)
         {
             pa.Id = (int)DateTime.UtcNow.Ticks; // Generate dummy ID
             
-            var existingPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays") ?? new List<SandboxRecordedPlay>();
-            existingPlays.Add(new SandboxRecordedPlay { PA = pa });
+            if (_cachedPlays == null)
+            {
+                _cachedPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays") ?? new List<SandboxRecordedPlay>();
+            }
             
-            await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", existingPlays);
+            _cachedPlays.Add(new SandboxRecordedPlay { PA = pa });
+            await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", _cachedPlays);
             return pa;
         }
 
         public async Task UpdatePlateAppearanceAsync(PlateAppearance pa)
         {
-            var existingPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays");
-            if (existingPlays != null)
+            if (_cachedPlays == null)
             {
-                var playToUpdate = existingPlays.FirstOrDefault(p => p.PA != null && p.PA.Id == pa.Id);
-                if (playToUpdate != null)
-                {
-                    playToUpdate.PA = pa;
-                    await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", existingPlays);
-                }
+                _cachedPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays") ?? new List<SandboxRecordedPlay>();
+            }
+            
+            var playToUpdate = _cachedPlays.FirstOrDefault(p => p.PA != null && p.PA.Id == pa.Id);
+            if (playToUpdate != null)
+            {
+                playToUpdate.PA = pa;
+                await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", _cachedPlays);
             }
         }
 
         public async Task DeletePlateAppearanceAsync(PlateAppearance pa)
         {
-            var existingPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays");
-            if (existingPlays != null)
+            if (_cachedPlays == null)
             {
-                var playToRemove = existingPlays.LastOrDefault(p => p.PA != null && p.PA.Id == pa.Id);
-                if (playToRemove != null)
-                {
-                    existingPlays.Remove(playToRemove);
-                    await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", existingPlays);
-                }
+                _cachedPlays = await _sessionStorage.GetItemAsync<List<SandboxRecordedPlay>>("Sandbox_RecordedPlays") ?? new List<SandboxRecordedPlay>();
             }
+            
+            var playToRemove = _cachedPlays.LastOrDefault(p => p.PA != null && p.PA.Id == pa.Id);
+            if (playToRemove != null)
+            {
+                _cachedPlays.Remove(playToRemove);
+                await _sessionStorage.SetItemAsync("Sandbox_RecordedPlays", _cachedPlays);
+            }
+        }
+
+        public async Task UpdateGameAsync(Game game)
+        {
+            await _sessionStorage.SetItemAsync("Sandbox_Game", game);
         }
 
         public async Task ClearGameDataAsync()
         {
+            _cachedPlays = null;
             await _sessionStorage.RemoveItemAsync("Sandbox_RecordedPlays");
             await _sessionStorage.RemoveItemAsync("Sandbox_Lineup");
         }

@@ -2,8 +2,23 @@ export function init(elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
     
-    // Remove the early return for window.innerWidth >= 1024
-    // so pan/zoom works on desktop too.
+    // Only enable pan/zoom on mobile devices
+    if (window.isMobileDevice && !window.isMobileDevice()) {
+        if (window._pzInstance) {
+            window._pzInstance.dispose();
+            window._pzInstance = null;
+        }
+        if (el.parentElement) {
+            el.parentElement.style.overflow = '';
+            el.parentElement.style.touchAction = '';
+            el.parentElement.style.width = '';
+            el.parentElement.style.maxHeight = '';
+        }
+        // Remove transform if it was previously applied
+        el.style.transform = '';
+        el.style.transformOrigin = '';
+        return;
+    }
     
     // Add constraints for zooming
     if (el.parentElement) {

@@ -458,17 +458,21 @@ private readonly List<string> AllSortableStats = new()
     {
         if (!isLoading && allStats.Any())
         {
-            if (objRef == null)
+            try
             {
-                objRef = DotNetObjectReference.Create(this);
+                if (objRef == null)
+                {
+                    objRef = DotNetObjectReference.Create(this);
+                }
+                await JSRuntime.InvokeVoidAsync("drawerDragging.init", objRef, isDrawerExpanded);
+                
+                if (isFirstDataLoad)
+                {
+                    isFirstDataLoad = false;
+                    await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive", true);
+                }
             }
-            await JSRuntime.InvokeVoidAsync("drawerDragging.init", objRef, isDrawerExpanded);
-            
-            if (isFirstDataLoad)
-            {
-                isFirstDataLoad = false;
-                await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive", true);
-            }
+            catch { }
         }
     }
 
@@ -502,15 +506,19 @@ private readonly List<string> AllSortableStats = new()
     private async Task ToggleDrawer()
     {
         isDrawerExpanded = !isDrawerExpanded;
-        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", isDrawerExpanded);
+        try { await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", isDrawerExpanded); } catch { }
     }
 
     private async Task SelectMobileSort(string column)
     {
         Sort(column, false);
         isDrawerExpanded = false;
-        await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", false);
-        await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive");
+        try 
+        {
+            await JSRuntime.InvokeVoidAsync("drawerDragging.updateState", false);
+            await JSRuntime.InvokeVoidAsync("drawerDragging.scrollToActive");
+        } 
+        catch { }
     }
 
     public void Dispose()

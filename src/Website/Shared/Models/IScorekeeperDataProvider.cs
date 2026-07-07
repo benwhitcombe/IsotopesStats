@@ -14,6 +14,7 @@ namespace IsotopesStats.Website.Shared.Models
         Task<PlateAppearance> SavePlateAppearanceAsync(PlateAppearance pa);
         Task UpdatePlateAppearanceAsync(PlateAppearance pa);
         Task DeletePlateAppearanceAsync(PlateAppearance pa);
+        Task UpdateGameAsync(Game game);
         Task ClearGameDataAsync();
         Task SyncGameStatsAsync();
         Task LogActionAsync(string description);

@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="zoom-viewport" style="overflow: hidden; width: 100%;">
+    <div class="zoom-viewport">
         <div class="scorecard-container" id="scorecard-zoom-container">
     <ScorecardGrid 
         Game="DummyGame"
@@ -93,7 +93,7 @@
         if (plays != null)
         {
             savedPlaysList = plays;
-            DummyPAs = plays.Where(p => p.PA != null && p.PA.Result != "Skip").Select(p => p.PA!).ToList();
+            DummyPAs = plays.Where(p => p.PA != null).Select(p => p.PA!).ToList();
         }
         else
         {

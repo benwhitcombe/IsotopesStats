@@ -847,7 +847,11 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await JSRuntime.InvokeVoidAsync("drawerDragging.initOpponentNames");
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("drawerDragging.initOpponentNames");
+        }
+        catch { }
     }
 
     private string GetStatValue(PlayerStatsSummary player, string stat)

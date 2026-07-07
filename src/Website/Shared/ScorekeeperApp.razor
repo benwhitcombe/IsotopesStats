@@ -97,6 +97,29 @@
         border: 2px solid var(--isotopes-green) !important;
         border-radius: 0.5rem;
     }
+
+    .runs-input {
+        width: 80px !important;
+        height: 50px !important;
+        padding: 0 !important;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+    .runs-input::-webkit-outer-spin-button,
+    .runs-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .circle-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
 </style>
 
 @if (isLoading)
@@ -205,7 +228,6 @@ else
             <h2 class="mb-0 fw-bold text-nowrap me-3">Scorekeeper</h2>
             <div class="d-flex gap-2 justify-content-end w-100">
                 <button class="btn btn-sm btn-outline-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" @onclick="ClearPlay" disabled="@(viewingPaIndex == null)">Reset</button>
-                <button class="btn btn-sm btn-danger fw-bold flex-grow-1 px-1" style="max-width: 100px;" @onclick="DeletePlay" disabled="@(viewingPaIndex == null)">Delete</button>
             </div>
         </div>
         <!-- Scoreboard Header (Outside Diamond Container) -->
@@ -227,7 +249,8 @@ else
                     var oppInningScores = game.GetOpponentInningScores();
                     if (oppInningScores.Any())
                     {
-                        displayOpponentScore = oppInningScores.Where(kvp => kvp.Key < displayInning).Sum(kvp => kvp.Value);
+                        bool isEndingInning = viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count && plateAppearances[viewingPaIndex.Value].EndsInning;
+                        displayOpponentScore = oppInningScores.Where(kvp => kvp.Key < displayInning || (kvp.Key == displayInning && isEndingInning)).Sum(kvp => kvp.Value);
                     }
                     else
                     {
@@ -352,13 +375,17 @@ else
                 <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">@(viewingPaIndex == null ? "CURRENT BATTER" : "BATTER")</h6>
                 <h3 class="fw-bold mb-0 text-dark slide-fade" @key="currentBatterId">
                     @(displayBatterIndex). @currentBatterName
-                    @if (IsEditingPlay)
+                    @if (IsEditingPlay && !string.IsNullOrEmpty(pendingResult))
                     {
                         <text> - @pendingResult</text>
                     }
                     else if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
                     {
-                        <text> - @plateAppearances[viewingPaIndex.Value].Result</text>
+                        var res = plateAppearances[viewingPaIndex.Value].Result;
+                        if (!string.IsNullOrEmpty(res))
+                        {
+                            <text> - @res</text>
+                        }
                     }
                 </h3>
             </div>
@@ -366,7 +393,29 @@ else
 
         <!-- Play Controls OR Runner Advancement Editor Wrapper -->
         <div style="min-height: 480px;">
-            @if (!IsEditingPlay)
+            @if (IsPromptingOpponentRuns)
+            {
+                <div class="stat-card mb-3 p-3">
+                    <h5 class="text-center mb-3">End of Inning @promptingInning</h5>
+                    <p class="text-center text-muted">How many runs did the opponent score in this inning?</p>
+                    
+                    <div class="d-flex justify-content-center align-items-center mb-4 gap-3">
+                        <button class="btn btn-outline-secondary rounded-circle circle-btn" @onclick="() => { if (opponentRunsInput > 0) opponentRunsInput--; }">-</button>
+                        <input type="number" class="form-control fs-2 fw-bold text-center runs-input" @bind="opponentRunsInput" min="0" />
+                        <button class="btn btn-outline-secondary rounded-circle circle-btn" @onclick="() => opponentRunsInput++">+</button>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm" @onclick="CancelOpponentRunsPrompt">Cancel</button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" @onclick="SaveOpponentRunsPrompt">Save</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (!IsEditingPlay)
             {
                 <ScorekeeperPlayInput 
                     SelectedResult="@(viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value ? plateAppearances[viewingPaIndex.Value].Result : null)"
@@ -931,8 +980,13 @@ else
                     pendingPA.Result = "SF";
                 }
 
+                bool showInningPrompt = false;
                 if (ManualEndInning || pendingPA.OutsBefore + pendingPA.OutsRecorded >= 3)
                 {
+                    if (currentViewingIndex == null || !plateAppearances[currentViewingIndex.Value].EndsInning)
+                    {
+                        showInningPrompt = true;
+                    }
                     pendingPA.EndsInning = true;
                 }
                 else
@@ -959,6 +1013,11 @@ else
                 if (game != null && game.ScorecardStatsSync)
                 {
                     await DataProvider.SyncGameStatsAsync();
+                }
+                
+                if (showInningPrompt)
+                {
+                    ShowOpponentRunsPrompt(pendingPA.Inning);
                 }
                 
                 RecalculateState();
@@ -1037,7 +1096,7 @@ else
     private void UpdateUrl()
     {
         var uri = NavigationManager.GetUriWithQueryParameter("paIndex", viewingPaIndex);
-        NavigationManager.NavigateTo(uri, new NavigationOptions { ReplaceHistoryEntry = true });
+        _ = JSRuntime.InvokeVoidAsync("history.replaceState", null, "", uri);
     }
 
 
@@ -1051,54 +1110,31 @@ else
             StateHasChanged();
             try
             {
-                PlateAppearance pa = plateAppearances[viewingPaIndex.Value];
-                
-                // Just reset the play's data instead of deleting it, to preserve the timeline sequence
-                pa.Result = ""; // Empty string acts as a blank/placeholder play
-                pa.OutsRecorded = 0;
-                pa.RunsScored = 0;
-                pa.RunnerOn1B_End = pa.RunnerOn1B;
-                pa.RunnerOn2B_End = pa.RunnerOn2B;
-                pa.RunnerOn3B_End = pa.RunnerOn3B;
-                pa.EndsInning = false;
-                
-                await DataProvider.UpdatePlateAppearanceAsync(pa);
-                await LogActionAsync($"Cleared play at index {viewingPaIndex.Value} for Game {GameId}");
-                
-                await RippleStateAsync();
-                if (game != null && game.ScorecardStatsSync)
-                {
-                    await DataProvider.SyncGameStatsAsync();
-                }
-                RecalculateState();
-            }
-            finally
-            {
-                isProcessing = false;
-                StateHasChanged();
-            }
-        }
-    }
-
-    private async Task DeletePlay()
-    {
-        if (viewingPaIndex != null && viewingPaIndex >= 0 && viewingPaIndex < plateAppearances.Count)
-        {
-            isProcessing = true;
-            localUpdateCount++;
-            StateHasChanged();
-            try
-            {
                 int pIndex = viewingPaIndex.Value;
                 PlateAppearance pa = plateAppearances[pIndex];
-                await DataProvider.DeletePlateAppearanceAsync(pa);
-                plateAppearances.RemoveAt(pIndex);
-                await LogActionAsync($"Deleted play at index {pIndex} for Game {GameId}");
                 
-                // If we deleted the very last play, go back to live batter
-                if (viewingPaIndex.Value >= plateAppearances.Count)
+                if (pIndex == plateAppearances.Count - 1)
                 {
-                    viewingPaIndex = null;
+                    // If it is the last play, completely delete it to allow shrinking the timeline
+                    await DataProvider.DeletePlateAppearanceAsync(pa);
+                    plateAppearances.RemoveAt(pIndex);
+                    await LogActionAsync($"Deleted play at index {pIndex} for Game {GameId}");
+                    
+                    viewingPaIndex = null; // Back to live batter
+                }
+                else
+                {
+                    // Just reset the play's data instead of deleting it, to preserve the timeline sequence
+                    pa.Result = ""; // Empty string acts as a blank/placeholder play
+                    pa.OutsRecorded = 0;
+                    pa.RunsScored = 0;
+                    pa.RunnerOn1B_End = pa.RunnerOn1B;
+                    pa.RunnerOn2B_End = pa.RunnerOn2B;
+                    pa.RunnerOn3B_End = pa.RunnerOn3B;
+                    pa.EndsInning = false;
+                    
+                    await DataProvider.UpdatePlateAppearanceAsync(pa);
+                    await LogActionAsync($"Cleared play at index {pIndex} for Game {GameId}");
                 }
                 
                 await RippleStateAsync();
@@ -1120,7 +1156,7 @@ else
 
     private (List<string> Scored, List<(string Name, int OutBase)> Outs) GetRunnersHomeAndOut(PlateAppearance pa)
     {
-        if (pa.Result == "Skip")
+        if (string.IsNullOrEmpty(pa.Result) || pa.Result == "Skip")
         {
             return (new List<string>(), new List<(string Name, int OutBase)>());
         }
@@ -1212,6 +1248,10 @@ else
                     pa.EndsInning = !pa.EndsInning;
                     await DataProvider.UpdatePlateAppearanceAsync(pa);
                     await LogActionAsync($"Toggled end inning (now {pa.EndsInning}) for play at index {viewingPaIndex.Value} for Game {GameId}");
+                    if (pa.EndsInning)
+                    {
+                        ShowOpponentRunsPrompt(pa.Inning);
+                    }
                 }
                 
                 await RippleStateAsync();
@@ -1264,6 +1304,8 @@ else
                 }
                 
                 RecalculateState();
+                
+                ShowOpponentRunsPrompt(endInningPa.Inning);
             }
             finally
             {
@@ -1330,6 +1372,56 @@ else
                 temp1B = null;
                 temp2B = null;
                 temp3B = null;
+            }
+        }
+    }
+
+    private bool IsPromptingOpponentRuns = false;
+    private int promptingInning = 0;
+    private int opponentRunsInput = 0;
+
+    private void ShowOpponentRunsPrompt(int inningNumber)
+    {
+        if (game == null) return;
+        
+        promptingInning = inningNumber;
+        opponentRunsInput = 0;
+        
+        var scores = game.GetOpponentInningScores();
+        if (scores.TryGetValue(inningNumber, out int existingRuns))
+        {
+            opponentRunsInput = existingRuns;
+        }
+        
+        IsPromptingOpponentRuns = true;
+        StateHasChanged();
+    }
+
+    private void CancelOpponentRunsPrompt()
+    {
+        IsPromptingOpponentRuns = false;
+    }
+
+    private async Task SaveOpponentRunsPrompt()
+    {
+        if (game != null)
+        {
+            isProcessing = true;
+            StateHasChanged();
+            try
+            {
+                var scores = game.GetOpponentInningScores();
+                scores[promptingInning] = opponentRunsInput;
+                game.SetOpponentInningScores(scores);
+                await DataProvider.UpdateGameAsync(game);
+                
+                IsPromptingOpponentRuns = false;
+                RecalculateState();
+            }
+            finally
+            {
+                isProcessing = false;
+                StateHasChanged();
             }
         }
     }

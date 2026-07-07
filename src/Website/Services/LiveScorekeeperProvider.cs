@@ -90,6 +90,11 @@ namespace IsotopesStats.Website.Services
             await LogActionAsync($"Deleted play for Player {pa.PlayerId}");
         }
 
+        public async Task UpdateGameAsync(Game game)
+        {
+            await _statsRepository.UpdateGameAsync(game);
+        }
+
         public Task ClearGameDataAsync()
         {
             // Not implemented for live - we do not allow bulk delete from UI
