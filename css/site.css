@@ -1118,9 +1118,9 @@ tr:last-child td {
 .sort-option.active { background: var(--isotopes-accent); color: white; font-weight: bold; }
 
 /* Management Sub Nav */
-.management-sub-nav { background-color: #f1f1f1; border-bottom: 1px solid #ddd; padding: 0.5rem 0; z-index: 999; }
-.sub-nav-content { max-width: 1400px; margin: 0 auto; display: flex; gap: 2rem; padding: 0 1rem; }
-.sub-nav-content a { color: #555; text-decoration: none; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; }
+.management-sub-nav { background-color: #f1f1f1; border-bottom: 1px solid #ddd; padding: 0.5rem 0; z-index: 999; overflow-x: auto; }
+.sub-nav-content { max-width: 1400px; margin: 0 auto; display: flex; gap: 2rem; padding: 0 1rem; width: max-content; }
+.sub-nav-content a { color: #555; text-decoration: none; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; white-space: nowrap; }
 .sub-nav-content a.active { color: var(--isotopes-red); border-bottom-color: var(--isotopes-red); }
 
 /* Numeric Input Refinements */
@@ -1344,11 +1344,17 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
     .scorecard-wrapper {
         width: 100%;
         overflow-x: auto;
-        text-align: center;
         padding-bottom: 2rem;
     }
+    @media (min-width: 1024px) {
+        .scorecard-wrapper {
+            overflow-x: visible;
+            width: auto;
+        }
+    }
     .scorecard-container {
-        display: inline-block;
+        display: block;
+        width: max-content;
         background: #fff;
         color: #000;
         border: 4px solid #000;
@@ -1356,12 +1362,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
         text-align: left;
         box-sizing: border-box;
     }
-    @media (min-width: 1024px) {
-        .scorecard-container {
-            display: block;
-            width: 100%;
-        }
-    }
+
     .header-table td {
         padding: 5px 0;
         line-height: 1.2;
@@ -1537,3 +1538,29 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none !impo
         animation: highlight-fade 2.5s ease-out;
     }
 
+
+/* Global desktop scroll fix */
+body.desktop-device #app,
+body.desktop-device .page,
+body.desktop-device main,
+body.desktop-device article {
+    display: block !important;
+    min-width: 100% !important;
+    min-width: max-content !important;
+    min-width: -moz-max-content !important;
+    min-width: -webkit-max-content !important;
+}
+
+body.desktop-device .scorecard-wrapper,
+body.desktop-device .zoom-viewport {
+    width: max-content !important;
+}
+
+body.desktop-device .scorecard-wrapper {
+    overflow-x: visible !important;
+}
+
+body.desktop-device .isotopes-header,
+body.desktop-device .management-sub-nav {
+    min-width: 100%;
+}
