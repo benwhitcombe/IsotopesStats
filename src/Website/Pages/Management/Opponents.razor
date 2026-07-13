@@ -166,7 +166,7 @@ else
                         <tr>
                             <th style="text-align: left; padding-left: 1rem;">Name</th>
                             <th style="text-align: left;">Seasons Played</th>
-                            <th style="text-align: center; padding-right: 1rem; width: 1%; white-space: nowrap;">Actions</th>
+                            <th style="text-align: center; padding-right: 1rem; width: 1px; white-space: nowrap;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -183,7 +183,7 @@ else
                                 <td style="text-align: left; font-size: 0.85rem; color: #666;">
                                     @GetSeasonSummary(opponent.Id)
                                 </td>
-                                <td style="text-align: right; padding-right: 1rem; width: 1%; white-space: nowrap;">
+                                <td style="text-align: right; padding-right: 1rem; width: 1px; white-space: nowrap;">
                                     <button class="view-btn" @onclick='() => StartEdit("edit", opponent.Id)'>Edit</button>
                                     <button class="view-btn" style="color: var(--isotopes-red); border-color: var(--isotopes-red);" @onclick="() => deleteManager.ConfirmDelete(opponent)">Delete</button>
                                 </td>

@@ -558,5 +558,6 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         }
 
         await UpdateGameWithStatsAsync(game, aggregatedStats);
+        await UpdateGameAsync(game);
     }
 }
