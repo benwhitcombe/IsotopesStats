@@ -267,13 +267,13 @@
                             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
                                 <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
                             </svg>
-                            <div class="position-absolute" style="top: 0px; left: 2px; z-index: 1; width: 45px;">
-                                <input type="number" min="0" max="99"
-                                       class="form-control text-start fw-bold fs-5 p-0 m-0 no-print" 
-                                       style="background: transparent; box-shadow: none; border: none; height: 26px;"
+                            <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
+                                <input type="text" inputmode="numeric"
+                                       class="text-start fw-bold fs-5 p-0 m-0 no-print" 
+                                       style="background: transparent; box-shadow: none; border: none; height: 26px; width: 30px; outline: none; padding: 0;"
                                        value="@GetOpponentScoreForInning(currentInning)"
                                        @onchange="@(e => OnOpponentScoreChanged.InvokeAsync((currentInning, e.Value)))" />
-                                <div class="d-none d-print-block fw-bold fs-5" style="margin-left: 6px; margin-top: 2px;">
+                                <div class="d-none d-print-block fw-bold fs-5">
                                     @GetOpponentScoreForInning(currentInning)
                                 </div>
                             </div>
@@ -489,13 +489,21 @@
     {
         bool hasAnyInCol = PaMatrix.Any(kvp => kvp.Key.ColumnIndex == colIndex);
         if (!hasAnyInCol) return "";
-        int total = PaMatrix.Where(kvp => kvp.Key.ColumnIndex <= colIndex).Sum(kvp => kvp.Value.RunsScored);
+        
+        var incompleteList = Game?.GetIncompleteInningsList() ?? new List<int>();
+        
+        if (ColumnInnings.ContainsKey(colIndex) && incompleteList.Contains(ColumnInnings[colIndex])) return "DNF";
+
+        int total = PaMatrix.Where(kvp => kvp.Key.ColumnIndex <= colIndex)
+                            .Where(kvp => !incompleteList.Contains(ColumnInnings[kvp.Key.ColumnIndex]))
+                            .Sum(kvp => kvp.Value.RunsScored);
         return total.ToString();
     }
     
     private string GetOpponentScoreForInning(int inning)
     {
         if (Game == null) return "";
+        
         var scores = Game.GetOpponentInningScores();
         return scores.ContainsKey(inning) ? scores[inning].ToString() : "";
     }
@@ -506,7 +514,10 @@
         var scores = Game.GetOpponentInningScores();
         if (!scores.ContainsKey(inning)) return "";
         
-        int total = scores.Where(kvp => kvp.Key <= inning).Sum(kvp => kvp.Value);
+        var incompleteList = Game.GetIncompleteInningsList();
+        if (incompleteList.Contains(inning)) return "DNF";
+        
+        int total = scores.Where(kvp => kvp.Key <= inning && !incompleteList.Contains(kvp.Key)).Sum(kvp => kvp.Value);
         return total.ToString();
     }
 }

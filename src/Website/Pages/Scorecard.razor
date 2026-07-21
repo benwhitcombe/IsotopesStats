@@ -368,8 +368,12 @@ else
         }
         
         game.SetOpponentInningScores(scores);
-        game.VisitingTeamScore = game.IsHome ? scores.Values.Sum() : game.VisitingTeamScore;
-        game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : scores.Values.Sum();
+        
+        var incompleteList = game.GetIncompleteInningsList();
+        int opponentRuns = scores.Where(kvp => !incompleteList.Contains(kvp.Key)).Sum(kvp => kvp.Value);
+        
+        game.VisitingTeamScore = game.IsHome ? opponentRuns : game.VisitingTeamScore;
+        game.HomeTeamScore = game.IsHome ? game.HomeTeamScore : opponentRuns;
         
         await StatsRepository.UpdateGameAsync(game);
         await LogActionAsync($"Updated opponent score for inning {args.inning} to {args.value} for Game {GameId}");

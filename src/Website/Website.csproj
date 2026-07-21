@@ -18,6 +18,10 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Exclude .nojekyll from StaticWebAssets to avoid duplicate asset errors in Visual Studio -->
+    <Content Remove="wwwroot\.nojekyll" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SupabaseRepository\SupabaseRepository.csproj" />

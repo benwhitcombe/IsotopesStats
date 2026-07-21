@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.ComponentModel.DataAnnotations;
 
 namespace IsotopesStats.Domain.Models;
@@ -64,5 +65,46 @@ public record Game : IEntity
     public void SetOpponentInningScores(System.Collections.Generic.Dictionary<int, int> scores)
     {
         OpponentInningScoresJson = System.Text.Json.JsonSerializer.Serialize(scores);
+    }
+
+    public string? IncompleteInnings { get; set; }
+
+    public System.Collections.Generic.List<int> GetIncompleteInningsList()
+    {
+        if (string.IsNullOrWhiteSpace(IncompleteInnings)) return new System.Collections.Generic.List<int>();
+        try
+        {
+            return IncompleteInnings.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(s => int.TryParse(s.Trim(), out int val) ? val : 0)
+                                    .Where(v => v > 0)
+                                    .ToList();
+        }
+        catch
+        {
+            return new System.Collections.Generic.List<int>();
+        }
+    }
+
+    public void ToggleIncompleteInning(int inning)
+    {
+        var list = GetIncompleteInningsList();
+        if (list.Contains(inning))
+        {
+            list.Remove(inning);
+        }
+        else
+        {
+            list.Add(inning);
+        }
+        
+        if (list.Count == 0)
+        {
+            IncompleteInnings = null;
+        }
+        else
+        {
+            list.Sort();
+            IncompleteInnings = string.Join(",", list);
+        }
     }
 }

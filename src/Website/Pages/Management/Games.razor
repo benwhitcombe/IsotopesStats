@@ -103,6 +103,10 @@ else if (isEditing)
                 </InputSelect>
             </div>
             <div class="form-group">
+                <label>Incomplete Innings (comma separated)</label>
+                <InputText class="form-control" @bind-Value="editingGame.IncompleteInnings" placeholder="e.g. 7, 8" />
+            </div>
+            <div class="form-group">
                 <label>@(editingGame.IsHome ? "Isotopes Score" : "Opponent Score")</label>
                 <InputNumber class="form-control" @bind-Value="editingGame.HomeTeamScore" />
             </div>

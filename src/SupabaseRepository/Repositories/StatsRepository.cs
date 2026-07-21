@@ -543,8 +543,13 @@ internal class StatsRepository : BaseRepository, IStatsRepository
 
         List<StatEntry> aggregatedStats = await CalculateStatsFromPlateAppearancesAsync(gameId);
         
-        int totalRuns = aggregatedStats.Sum(s => s.R);
-        int opponentRuns = game.GetOpponentInningScores().Values.Sum();
+        var incompleteInnings = game.GetIncompleteInningsList();
+        List<PlateAppearance> pas = await GetPlateAppearancesAsync(gameId);
+        int totalRuns = pas.Where(pa => !incompleteInnings.Contains(pa.Inning)).Sum(pa => pa.RunsScored);
+        
+        int opponentRuns = game.GetOpponentInningScores()
+                               .Where(kvp => !incompleteInnings.Contains(kvp.Key))
+                               .Sum(kvp => kvp.Value);
 
         if (game.IsHome)
         {

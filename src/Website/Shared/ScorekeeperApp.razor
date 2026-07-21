@@ -405,6 +405,13 @@ else
                         <button class="btn btn-outline-secondary rounded-circle circle-btn" @onclick="() => opponentRunsInput++">+</button>
                     </div>
 
+                    <div class="form-check d-flex justify-content-center align-items-center mb-4">
+                        <input class="form-check-input me-2" type="checkbox" id="markIncomplete" @bind="markIncompleteInningInput" style="transform: scale(1.5); margin-top: 0;" />
+                        <label class="form-check-label text-muted ms-1" for="markIncomplete" style="font-size: 1.1rem;">
+                            Mark inning as incomplete (DNF)
+                        </label>
+                    </div>
+
                     <div class="row g-2">
                         <div class="col-6">
                             <button class="btn btn-secondary w-100 py-3 fw-bold shadow-sm" @onclick="CancelOpponentRunsPrompt">Cancel</button>
@@ -988,10 +995,20 @@ else
                         showInningPrompt = true;
                     }
                     pendingPA.EndsInning = true;
+                    if (currentViewingIndex != null)
+                    {
+                        plateAppearances[currentViewingIndex.Value].EndsInning = true;
+                        await DataProvider.UpdatePlateAppearanceAsync(plateAppearances[currentViewingIndex.Value]);
+                    }
                 }
                 else
                 {
                     pendingPA.EndsInning = false;
+                    if (currentViewingIndex != null)
+                    {
+                        plateAppearances[currentViewingIndex.Value].EndsInning = false;
+                        await DataProvider.UpdatePlateAppearanceAsync(plateAppearances[currentViewingIndex.Value]);
+                    }
                 }
 
                 if (currentViewingIndex != null)
@@ -1338,13 +1355,16 @@ else
                 if (pa.RunnerOn1B_End != null && pa.RunnerOn1B_End != pa.RunnerOn1B && pa.RunnerOn1B_End != pa.RunnerOn2B && pa.RunnerOn1B_End != pa.RunnerOn3B && pa.RunnerOn1B_End != pa.PlayerId) pa.RunnerOn1B_End = null;
                 if (pa.RunnerOn2B_End != null && pa.RunnerOn2B_End != pa.RunnerOn1B && pa.RunnerOn2B_End != pa.RunnerOn2B && pa.RunnerOn2B_End != pa.RunnerOn3B && pa.RunnerOn2B_End != pa.PlayerId) pa.RunnerOn2B_End = null;
                 if (pa.RunnerOn3B_End != null && pa.RunnerOn3B_End != pa.RunnerOn1B && pa.RunnerOn3B_End != pa.RunnerOn2B && pa.RunnerOn3B_End != pa.RunnerOn3B && pa.RunnerOn3B_End != pa.PlayerId) pa.RunnerOn3B_End = null;
-                
+
+                var (scoredNames, _) = GetRunnersHomeAndOut(pa);
+
                 // Add new runners to End states to prevent them from vanishing
                 void EnsureRunnerKept(int? runnerId, int startBase)
                 {
                     if (runnerId == null) return;
                     if (pa.RunnerOn1B_End == runnerId || pa.RunnerOn2B_End == runnerId || pa.RunnerOn3B_End == runnerId) return;
                     if (pa.OutAt1B == runnerId || pa.OutAt2B == runnerId || pa.OutAt3B == runnerId || pa.OutAtHome == runnerId) return;
+                    if (scoredNames.Contains(GetPlayerName(runnerId.Value))) return;
                     
                     if (startBase == 1 && pa.RunnerOn1B_End == null) pa.RunnerOn1B_End = runnerId;
                     else if (startBase == 2 && pa.RunnerOn2B_End == null) pa.RunnerOn2B_End = runnerId;
@@ -1379,6 +1399,7 @@ else
     private bool IsPromptingOpponentRuns = false;
     private int promptingInning = 0;
     private int opponentRunsInput = 0;
+    private bool markIncompleteInningInput = false;
 
     private void ShowOpponentRunsPrompt(int inningNumber)
     {
@@ -1386,6 +1407,7 @@ else
         
         promptingInning = inningNumber;
         opponentRunsInput = 0;
+        markIncompleteInningInput = game.GetIncompleteInningsList().Contains(inningNumber);
         
         var scores = game.GetOpponentInningScores();
         if (scores.TryGetValue(inningNumber, out int existingRuns))
@@ -1414,13 +1436,25 @@ else
                 scores[promptingInning] = opponentRunsInput;
                 game.SetOpponentInningScores(scores);
                 
+                var incompleteList = game.GetIncompleteInningsList();
+                if (markIncompleteInningInput && !incompleteList.Contains(promptingInning))
+                {
+                    game.ToggleIncompleteInning(promptingInning);
+                    incompleteList = game.GetIncompleteInningsList();
+                }
+                else if (!markIncompleteInningInput && incompleteList.Contains(promptingInning))
+                {
+                    game.ToggleIncompleteInning(promptingInning);
+                    incompleteList = game.GetIncompleteInningsList();
+                }
+                
                 if (game.IsHome)
                 {
-                    game.VisitingTeamScore = scores.Values.Sum();
+                    game.VisitingTeamScore = scores.Where(kvp => !incompleteList.Contains(kvp.Key)).Sum(kvp => kvp.Value);
                 }
                 else
                 {
-                    game.HomeTeamScore = scores.Values.Sum();
+                    game.HomeTeamScore = scores.Where(kvp => !incompleteList.Contains(kvp.Key)).Sum(kvp => kvp.Value);
                 }
 
                 await DataProvider.UpdateGameAsync(game);

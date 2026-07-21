@@ -48,4 +48,7 @@ internal class GameDTO : BaseModel
 
     [Column("opponentinningscoresjson")]
     public string? OpponentInningScoresJson { get; set; }
+
+    [Column("incomplete_innings")]
+    public string? IncompleteInnings { get; set; }
 }
