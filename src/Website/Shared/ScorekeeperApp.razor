@@ -1030,6 +1030,7 @@ else
                 if (game != null && game.ScorecardStatsSync)
                 {
                     await DataProvider.SyncGameStatsAsync();
+                    game = await DataProvider.GetGameAsync();
                 }
                 
                 if (showInningPrompt)
@@ -1158,6 +1159,7 @@ else
                 if (game != null && game.ScorecardStatsSync)
                 {
                     await DataProvider.SyncGameStatsAsync();
+                    game = await DataProvider.GetGameAsync();
                 }
                 RecalculateState();
             }
@@ -1275,6 +1277,7 @@ else
                 if (game != null && game.ScorecardStatsSync)
                 {
                     await DataProvider.SyncGameStatsAsync();
+                    game = await DataProvider.GetGameAsync();
                 }
                 RecalculateState();
             }
@@ -1318,6 +1321,7 @@ else
                 if (game != null && game.ScorecardStatsSync)
                 {
                     await DataProvider.SyncGameStatsAsync();
+                    game = await DataProvider.GetGameAsync();
                 }
                 
                 RecalculateState();
