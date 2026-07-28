@@ -11,6 +11,8 @@ public static class EnumerableExtensions
     {
         { "Player", "PlayerName" },
         { "GP", "GamesPlayed" },
+        { "W", "GamesWon" },
+        { "Win %", "WPct" },
         { "H", "H" },
         { "1B", "H1B" },
         { "AB", "AB" },

@@ -45,4 +45,6 @@ public record GameSummaryView
     public int? VisitingTeamScore { get; set; }
 
     public int? HomeTeamScore { get; set; }
+
+    public string Result { get; set; } = string.Empty;
 }

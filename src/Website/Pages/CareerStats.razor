@@ -179,6 +179,12 @@ else
                                 GP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "GP"))</span>
                             </span>
                         </th>
+                        <th class="narrow-col sortable-header @(careerSortColumn == "W" ? "active-sort-header" : "")" title="Wins" @onclick='() => SortCareer("W")'>
+                            <span style="position: relative; display: inline-block;">
+                                W<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "W"))</span>
+                            </span>
+                        </th>
+
                         <th class="narrow-col sortable-header @(careerSortColumn == "PA" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("PA")" @onclick='() => SortCareer("PA")'>
                             <span style="position: relative; display: inline-block;">
                                 PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "PA"))</span>
@@ -284,6 +290,11 @@ else
                                 OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "OPS"))</span>
                             </span>
                         </th>
+                        <th class="narrow-col sortable-header @(careerSortColumn == "Win %" ? "active-sort-header" : "")" title="Win Percentage" @onclick='() => SortCareer("Win %")'>
+                            <span style="position: relative; display: inline-block;">
+                                Win %<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon(careerSortColumn, careerIsAscending, "Win %"))</span>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -294,6 +305,8 @@ else
                             <td class="career-season-name">@seasonStat.SeasonName</td>
                             
                             <td class="group-divider narrow-col">@RenderStatWithMedal("GP", hasPlayed ? seasonStat.Stats.GamesPlayed.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
+                            <td class="narrow-col">@RenderStatWithMedal("W", hasPlayed ? seasonStat.Stats.GamesWon.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
+
                             <td class="narrow-col">@RenderStatWithMedal("PA", hasPlayed ? seasonStat.Stats.PA.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("AB", hasPlayed ? seasonStat.Stats.AB.ToString() : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             
@@ -319,6 +332,7 @@ else
                             <td class="narrow-col">@RenderStatWithMedal("OBP", hasPlayed ? seasonStat.Stats.OBP.ToString(".000") : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("SLG", hasPlayed ? seasonStat.Stats.SLG.ToString(".000") : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                             <td class="narrow-col">@RenderStatWithMedal("OPS", hasPlayed ? seasonStat.Stats.OPS.ToString(".000") : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
+                            <td class="narrow-col">@RenderStatWithMedal("Win %", hasPlayed ? seasonStat.Stats.WPct.ToString(".000") : "-", seasonStat.SeasonId, seasonStat.Stats)</td>
                         </tr>
                     }
                 </tbody>
@@ -326,6 +340,8 @@ else
                     <tr class="game-summary-row">
                         <td class="career-season-name">Career</td>
                         <td class="group-divider narrow-col">@RenderStatWithMedal("GP", overallCareerStats.GamesPlayed.ToString(), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
+                        <td class="narrow-col">@RenderStatWithMedal("W", overallCareerStats.GamesWon.ToString(), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
+
                         <td class="narrow-col">@RenderStatWithMedal("PA", overallCareerStats.PA.ToString(), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
                         <td class="narrow-col">@RenderStatWithMedal("AB", overallCareerStats.AB.ToString(), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
                         
@@ -351,6 +367,7 @@ else
                         <td class="narrow-col">@RenderStatWithMedal("OBP", overallCareerStats.OBP.ToString(".000"), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
                         <td class="narrow-col">@RenderStatWithMedal("SLG", overallCareerStats.SLG.ToString(".000"), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
                         <td class="narrow-col">@RenderStatWithMedal("OPS", overallCareerStats.OPS.ToString(".000"), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
+                        <td class="narrow-col">@RenderStatWithMedal("Win %", overallCareerStats.WPct.ToString(".000"), SharedSessionState.AllSeasonsId, overallCareerStats)</td>
                     </tr>
                 </tfoot>
             </table>
@@ -592,7 +609,7 @@ else
     private bool mobileStatIsAscending = true;
     private readonly List<string> AllSortableStats = new()
     {
-        "AVG", "OBP", "SLG", "OPS", "GP", "PA", "AB", "H", "1B", "2B", "3B", "HR", "IPHR", "R", "RBI", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+        "AVG", "OBP", "SLG", "OPS", "GP", "W", "PA", "AB", "H", "1B", "2B", "3B", "HR", "IPHR", "R", "RBI", "BB", "K", "KF", "SF", "FC", "GO", "FO", "Win %"
     };
     public class SeasonPlayerStats {
         public int SeasonId { get; set; }
@@ -699,6 +716,7 @@ else
                 Stats = new PlayerStatsSummary {
                     PlayerName = PlayerName,
                     GamesPlayed = seasonLogs.Select(x => x.GameId).Distinct().Count(),
+                    GamesWon = seasonLogs.Where(x => x.OurScore > x.OpponentScore).Select(x => x.GameId).Distinct().Count(),
                     H1B = seasonLogs.Sum(x => x.H1B),
                     H2B = seasonLogs.Sum(x => x.H2B),
                     H3B = seasonLogs.Sum(x => x.H3B),
@@ -860,6 +878,8 @@ else
         return stat switch
         {
             "GP" => player.GamesPlayed.ToString(),
+            "W" => player.GamesWon.ToString(),
+            "Win %" => player.WPct.ToString(".000"),
             "PA" => player.PA.ToString(),
             "AB" => player.AB.ToString(),
             "H" => player.H.ToString(),
@@ -902,6 +922,7 @@ else
         return new PlayerStatsSummary {
             PlayerName = PlayerName,
             GamesPlayed = perSeasonStats.Sum(x => x.Stats.GamesPlayed),
+            GamesWon = perSeasonStats.Sum(x => x.Stats.GamesWon),
             H1B = perSeasonStats.Sum(x => x.Stats.H1B),
             H2B = perSeasonStats.Sum(x => x.Stats.H2B),
             H3B = perSeasonStats.Sum(x => x.Stats.H3B),
@@ -950,6 +971,8 @@ else
             "3B" => s => (double)s.H3B,
             "IPHR" => s => (double)s.IPHR,
             "GP" => s => (double)s.GamesPlayed,
+            "W" => s => (double)s.GamesWon,
+            "Win %" => s => s.WPct,
             "PA" => s => (double)s.PA,
             "AB" => s => (double)s.AB,
             "K" => s => (double)s.K,
@@ -965,7 +988,7 @@ else
         double playerValue = selector(pSummary);
 
         // If the player has 0 in a volume category, don't give them a rank
-        if (playerValue == 0 && !new[] { "AVG", "OBP", "SLG", "OPS" }.Contains(category)) return "-";
+        if (playerValue == 0 && !new[] { "AVG", "OBP", "SLG", "OPS", "Win %", "W" }.Contains(category)) return "-";
 
         int rank = 1;
         foreach (PlayerStatsSummary s in sorted)

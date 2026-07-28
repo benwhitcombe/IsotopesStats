@@ -106,6 +106,7 @@ else
                                 GP<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("GP"))</span>
                             </span>
                         </th>
+
                         <th @onclick='() => Sort("PA")' class="sortable-header narrow-col @(currentSortColumn == "PA" ? "active-sort-header" : "")" title="@StatDefinitions.GetDefinition("PA")">
                             <span style="position: relative; display: inline-block;">
                                 PA<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("PA"))</span>
@@ -210,6 +211,11 @@ else
                                 OPS<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("OPS"))</span>
                             </span>
                         </th>
+                        <th @onclick='() => Sort("Win %")' class="sortable-header narrow-col @(currentSortColumn == "Win %" ? "active-sort-header" : "")" title="Win Percentage">
+                            <span style="position: relative; display: inline-block;">
+                                Win %<span class="sort-icon" style="left: 100%; margin-left: 2px;">@(GetSortIcon("Win %"))</span>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -224,6 +230,7 @@ else
                                 </a>
                             </td>
                             <td class="group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
+
                             <td class="narrow-col @(currentSortColumn == "PA" ? "active-sort-col" : "")">@player.PA</td>
                             <td class="narrow-col @(currentSortColumn == "AB" ? "active-sort-col" : "")">@player.AB</td>
                             <td class="group-divider narrow-col @(currentSortColumn == "H" ? "active-sort-col" : "")">@player.H</td>
@@ -245,6 +252,7 @@ else
                             <td class="@(currentSortColumn == "OBP" ? "active-sort-col" : "")">@player.OBP.ToString(".000")</td>
                             <td class="@(currentSortColumn == "SLG" ? "active-sort-col" : "")">@player.SLG.ToString(".000")</td>
                             <td class="@(currentSortColumn == "OPS" ? "active-sort-col" : "")">@player.OPS.ToString(".000")</td>
+                            <td class="narrow-col @(currentSortColumn == "Win %" ? "active-sort-col" : "")">@player.WPct.ToString(".000")</td>
                         </tr>
                     }
                 </tbody>
@@ -253,6 +261,7 @@ else
                         <td></td>
                         <td class="player-name sticky-col">Team</td>
                         <td class="group-divider narrow-col">@teamTotals.GamesPlayed</td>
+
                         <td class="narrow-col">@teamTotals.PA</td>
                         <td class="narrow-col">@teamTotals.AB</td>
                         <td class="group-divider narrow-col">@teamTotals.H</td>
@@ -274,6 +283,7 @@ else
                         <td>@teamTotals.OBP.ToString(".000")</td>
                         <td>@teamTotals.SLG.ToString(".000")</td>
                         <td>@teamTotals.OPS.ToString(".000")</td>
+                        <td class="narrow-col">@teamTotals.WPct.ToString(".000")</td>
                     </tr>
                 </tfoot>
             </table>
@@ -362,7 +372,7 @@ else
     private PlayerStatsSummary? rbiLeader;
 private readonly List<string> AllSortableStats = new()
 {
-    "AVG", "OBP", "SLG", "OPS", "HR", "R", "RBI", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO"
+    "AVG", "OBP", "SLG", "OPS", "HR", "R", "RBI", "H", "1B", "2B", "3B", "IPHR", "GP", "PA", "AB", "BB", "K", "KF", "SF", "FC", "GO", "FO", "Win %"
 };
 
     protected override async Task OnInitializedAsync()
@@ -558,6 +568,8 @@ private readonly List<string> AllSortableStats = new()
         return stat switch
         {
             "GP" => player.GamesPlayed.ToString(),
+            "W" => player.GamesWon.ToString(),
+            "Win %" => player.WPct.ToString(".000"),
             "PA" => player.PA.ToString(),
             "AB" => player.AB.ToString(),
             "H" => player.H.ToString(),

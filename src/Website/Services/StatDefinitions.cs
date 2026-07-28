@@ -23,6 +23,8 @@ namespace IsotopesStats.Website.Services
             { "OBP", "On Base Percentage" },
             { "OPS", "On Base Plus Slugging" },
             { "GP", "Games Played" },
+            { "W", "Wins" },
+            { "Win %", "Win Percentage" },
             { "PA", "Plate Appearances" },
             { "R", "Runs" },
             { "RBI", "Runs Batted In" },

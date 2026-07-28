@@ -16,6 +16,10 @@ internal class PlayerStatsSummaryDTO : BaseModel
     [JsonProperty("gamesplayed")]
     public int GamesPlayed { get; set; }
 
+    [Column("gameswon")]
+    [JsonProperty("gameswon")]
+    public int GamesWon { get; set; }
+
     [Column("h1b")]
     [JsonProperty("h1b")]
     public int H1B { get; set; }

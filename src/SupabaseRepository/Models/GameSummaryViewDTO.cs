@@ -72,5 +72,8 @@ internal class GameSummaryViewDTO : BaseModel
 
     [Column("hometeamscore")]
     public int? HomeTeamScore { get; set; }
+
+    [Column("result")]
+    public string Result { get; set; } = string.Empty;
 }
 

@@ -8,6 +8,11 @@ public record PlayerStatsSummary
 
     public int GamesPlayed { get; set; }
     
+    public int GamesWon { get; set; }
+    
+    [JsonIgnore]
+    public double WPct => GamesPlayed > 0 ? (double)GamesWon / GamesPlayed : 0;
+    
     [JsonIgnore]
     public int H => H1B + H2B + H3B + IPHR + HR;
     
