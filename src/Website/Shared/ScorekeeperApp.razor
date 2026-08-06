@@ -542,6 +542,11 @@ else
                         viewingPaIndex = paIndex.Value;
                     }
                     RecalculateState();
+
+                    if (game.IsHome && viewingPaIndex == null && !game.GetOpponentInningScores().ContainsKey(currentInning))
+                    {
+                        ShowOpponentRunsPrompt(currentInning);
+                    }
                 }
             }
         }
@@ -708,6 +713,11 @@ else
             isLineupSet = true;
             RecalculateState();
             await LogActionAsync($"Set batting order for Game {GameId}");
+
+            if (game.IsHome && !game.GetOpponentInningScores().ContainsKey(currentInning))
+            {
+                ShowOpponentRunsPrompt(currentInning);
+            }
         }
         finally
         {
@@ -1035,7 +1045,14 @@ else
                 
                 if (showInningPrompt)
                 {
-                    ShowOpponentRunsPrompt(pendingPA.Inning);
+                    if (game != null && game.IsHome)
+                    {
+                        ShowOpponentRunsPrompt(pendingPA.Inning + 1);
+                    }
+                    else
+                    {
+                        ShowOpponentRunsPrompt(pendingPA.Inning);
+                    }
                 }
                 
                 RecalculateState();
@@ -1269,7 +1286,14 @@ else
                     await LogActionAsync($"Toggled end inning (now {pa.EndsInning}) for play at index {viewingPaIndex.Value} for Game {GameId}");
                     if (pa.EndsInning)
                     {
-                        ShowOpponentRunsPrompt(pa.Inning);
+                        if (game != null && game.IsHome)
+                        {
+                            ShowOpponentRunsPrompt(pa.Inning + 1);
+                        }
+                        else
+                        {
+                            ShowOpponentRunsPrompt(pa.Inning);
+                        }
                     }
                 }
                 
@@ -1326,7 +1350,14 @@ else
                 
                 RecalculateState();
                 
-                ShowOpponentRunsPrompt(endInningPa.Inning);
+                if (game != null && game.IsHome)
+                {
+                    ShowOpponentRunsPrompt(endInningPa.Inning + 1);
+                }
+                else
+                {
+                    ShowOpponentRunsPrompt(endInningPa.Inning);
+                }
             }
             finally
             {
