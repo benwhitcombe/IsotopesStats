@@ -592,12 +592,15 @@ else
     private List<GameStatsExtendedView>? allLogs;
     private bool isLoading = true;
     private List<Season> seasons = new();
+    private List<Season> playerSeasons = new();
     private List<Player> allPlayers = new();
     private List<PlayerStatsSummary> teamStats = new();
+    private PlayerStatsSummary? currentTeamTotals;
     private PlayerStatsSummary? playerSummary;
     private PlayerStatsSummary overallCareerStats = new();
     private List<SeasonPlayerStats> perSeasonStats = new();
     private Dictionary<int, List<PlayerStatsSummary>> allSeasonTeamStats = new();
+    private Dictionary<int, PlayerStatsSummary> allSeasonTeamTotals = new();
 
     private string careerSortColumn = "Season";
     private bool careerIsAscending = true;
@@ -632,11 +635,13 @@ else
         {
             logs = await StatsRepository.GetAllPlayerGameLogAsync(PlayerName);
             teamStats = await StatsRepository.GetAllStatsSummaryAsync();
+            currentTeamTotals = await StatsRepository.GetAllTeamTotalsAsync();
         }
         else if (targetSeasonId != 0)
         {
             logs = await StatsRepository.GetPlayerGameLogAsync(PlayerName, targetSeasonId);
             teamStats = await StatsRepository.GetStatsSummaryAsync(targetSeasonId);
+            currentTeamTotals = await StatsRepository.GetTeamTotalsAsync(targetSeasonId);
         }
         else
         {
@@ -655,6 +660,7 @@ else
             
             logs = new List<GameStatsExtendedView>();
             teamStats = new List<PlayerStatsSummary>();
+            currentTeamTotals = new PlayerStatsSummary();
         }
 
         playerSummary = teamStats.FirstOrDefault((PlayerStatsSummary s) => s.PlayerName == PlayerName);
@@ -663,10 +669,20 @@ else
         if (targetSeasonId != 0) 
         {
             allSeasonTeamStats[targetSeasonId] = teamStats;
+            if (currentTeamTotals != null)
+            {
+                allSeasonTeamTotals[targetSeasonId] = currentTeamTotals;
+            }
         }
 
         if (allLogs == null || allLogs.Count == 0 || allLogs[0].PlayerName != PlayerName)
         {
+            int playerId = allPlayers.FirstOrDefault(p => p.Name == PlayerName)?.Id ?? 0;
+            if (playerId != 0)
+            {
+                playerSeasons = await StatsRepository.GetSeasonsForPlayerAsync(playerId);
+            }
+            
             allLogs = await StatsRepository.GetAllPlayerGameLogAsync(PlayerName);
             CalculatePerSeasonStats();
             _ = Task.Run(async () => await LoadAllSeasonTeamStats());
@@ -687,6 +703,7 @@ else
         {
             List<PlayerStatsSummary> stats = await StatsRepository.GetAllStatsSummaryAsync();
             allSeasonTeamStats[SharedSessionState.AllSeasonsId] = stats;
+            allSeasonTeamTotals[SharedSessionState.AllSeasonsId] = await StatsRepository.GetAllTeamTotalsAsync();
             await InvokeAsync(StateHasChanged);
         }
 
@@ -696,6 +713,7 @@ else
             {
                 List<PlayerStatsSummary> stats = await StatsRepository.GetStatsSummaryAsync(s.SeasonId);
                 allSeasonTeamStats[s.SeasonId] = stats;
+                allSeasonTeamTotals[s.SeasonId] = await StatsRepository.GetTeamTotalsAsync(s.SeasonId);
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -704,9 +722,9 @@ else
     private void CalculatePerSeasonStats()
     {
         perSeasonStats = new List<SeasonPlayerStats>();
-        if (seasons == null) return;
+        if (seasons == null || playerSeasons == null) return;
 
-        foreach (Season season in seasons)
+        foreach (Season season in seasons.Where(s => playerSeasons.Any(ps => ps.Id == s.Id)))
         {
             List<GameStatsExtendedView> seasonLogs = allLogs?.Where(l => l.SeasonId == season.Id).ToList() ?? new List<GameStatsExtendedView>();
             
@@ -942,18 +960,25 @@ else
 
     private string GetRank(string category)
     {
-        return CalculateRank(category, playerSummary, teamStats);
+        return CalculateRank(category, playerSummary, teamStats, currentTeamTotals);
     }
 
     private string GetRankForSeason(string category, int seasonId, PlayerStatsSummary pSummary)
     {
         if (!allSeasonTeamStats.TryGetValue(seasonId, out List<PlayerStatsSummary>? sTeamStats)) return "N/A";
-        return CalculateRank(category, pSummary, sTeamStats);
+        allSeasonTeamTotals.TryGetValue(seasonId, out PlayerStatsSummary? sTeamTotals);
+        return CalculateRank(category, pSummary, sTeamStats, sTeamTotals);
     }
 
-    private string CalculateRank(string category, PlayerStatsSummary? pSummary, List<PlayerStatsSummary> currentTeamStats)
+    private string CalculateRank(string category, PlayerStatsSummary? pSummary, List<PlayerStatsSummary> currentTeamStats, PlayerStatsSummary? sTeamTotals)
     {
-        if (pSummary == null || !currentTeamStats.Any()) return "N/A";
+        if (pSummary == null || !currentTeamStats.Any() || sTeamTotals == null) return "N/A";
+
+        double minGamesRequired = sTeamTotals.GamesPlayed / 3.0;
+        
+        if (pSummary.GamesPlayed < minGamesRequired) return "-";
+
+        var qualifiedTeamStats = currentTeamStats.Where(p => p.GamesPlayed >= minGamesRequired).ToList();
 
         Func<PlayerStatsSummary, double> selector = category switch
         {
@@ -984,7 +1009,7 @@ else
             _ => s => 0
         };
 
-        List<PlayerStatsSummary> sorted = currentTeamStats.OrderByDescending(selector).ToList();
+        List<PlayerStatsSummary> sorted = qualifiedTeamStats.OrderByDescending(selector).ToList();
         double playerValue = selector(pSummary);
 
         // If the player has 0 in a volume category, don't give them a rank

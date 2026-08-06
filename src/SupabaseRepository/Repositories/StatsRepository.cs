@@ -88,8 +88,17 @@ internal class StatsRepository : BaseRepository, IStatsRepository
     public Task<bool> IsPlayerNameUniqueAsync(string name, int excludeId = 0) => 
         IsUniqueAsync<PlayerDTO>("name", name, excludeId);
 
-    public Task<List<Season>> GetSeasonsForPlayerAsync(int playerId) => 
-        GetSeasonsAsync();
+    public async Task<List<Season>> GetSeasonsForPlayerAsync(int playerId)
+    {
+        ModeledResponse<SeasonPlayerViewDTO> response = await Supabase.From<SeasonPlayerViewDTO>()
+            .Filter("playerid", Constants.Operator.Equals, playerId)
+            .Get();
+            
+        var seasonIds = response.Models.Select(sp => sp.SeasonId).ToList();
+        var allSeasons = await GetSeasonsAsync();
+        
+        return allSeasons.Where(s => seasonIds.Contains(s.Id)).ToList();
+    }
 
     // --- OPPONENTS ---
     public Task<List<Opponent>> GetAllOpponentsAsync() => 

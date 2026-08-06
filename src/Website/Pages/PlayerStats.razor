@@ -219,14 +219,17 @@ else
                     </tr>
                 </thead>
                 <tbody>
+                    @{ double minGamesRequired = teamTotals.GamesPlayed / 3.0; }
                     @for (int i = 0; i < allStats.Count; i++)
                     {
                         PlayerStatsSummary player = allStats[i];
-                        <tr>
-                            <td style="color: #999; font-weight: bold; text-align: center;">@(i + 1)</td>
+                        bool isQualified = player.GamesPlayed >= minGamesRequired;
+                        string rowClass = isQualified ? "" : "unqualified-player";
+                        <tr class="@rowClass">
+                            <td style="color: #999; font-weight: bold; text-align: center;">@(isQualified ? (i + 1).ToString() : "-")</td>
                             <td class="player-name sticky-col">
                                 <a href="/career/@Uri.EscapeDataString(player.PlayerName)/@Uri.EscapeDataString(GetSeasonName(SharedState.SelectedSeasonId))" style="text-decoration: none; color: inherit;">        
-                                    @player.PlayerName
+                                    @player.PlayerName@(isQualified ? "" : "*")
                                 </a>
                             </td>
                             <td class="group-divider narrow-col @(currentSortColumn == "GP" ? "active-sort-col" : "")">@player.GamesPlayed</td>
@@ -288,6 +291,9 @@ else
                 </tfoot>
             </table>
         </div>
+            <div class="mt-2 text-muted mb-4" style="font-size: 0.85rem;">
+                * Minimum 1/3 of team games played required to qualify.
+            </div>
         </div>
 
         <div class="mobile-only view-fade-in" style="animation-delay: 0.2s;">
@@ -304,12 +310,15 @@ else
                     </div>
                 </div>
                 <div class="subtle-fade-in" @key="@(currentSortColumn + isAscending)">
+                    @{ double mobileMinGamesRequired = teamTotals.GamesPlayed / 3.0; }
                     @for (int i = 0; i < allStats.Count; i++)
                     {
                         PlayerStatsSummary player = allStats[i];
-                        <div class="mobile-list-item" @onclick='() => NavigateToLog(player.PlayerName)'>
-                            <div class="mobile-list-rank">@(i + 1)</div>
-                            <div class="mobile-list-name">@player.PlayerName</div>
+                        bool isQualified = player.GamesPlayed >= mobileMinGamesRequired;
+                        string rowClass = isQualified ? "" : "unqualified-player";
+                        <div class="mobile-list-item @rowClass" @onclick='() => NavigateToLog(player.PlayerName)'>
+                            <div class="mobile-list-rank">@(isQualified ? (i + 1).ToString() : "-")</div>
+                            <div class="mobile-list-name">@player.PlayerName@(isQualified ? "" : "*")</div>
                             <div class="mobile-list-value">@GetStatValue(player, currentSortColumn)</div>
                         </div>
                     }
@@ -318,6 +327,9 @@ else
                         <div class="mobile-list-name" style="font-weight: 900; text-align: left;">Team</div>
                         <div class="mobile-list-value">@GetStatValue(teamTotals, currentSortColumn)</div>
                     </div>
+                </div>
+                <div class="mt-2 text-muted px-3 pb-3" style="font-size: 0.85rem;">
+                    * Minimum 1/3 of team games played required to qualify.
                 </div>
             </div>
 
@@ -507,10 +519,14 @@ private readonly List<string> AllSortableStats = new()
     {
         if (!allStats.Any()) return;
 
-        avgLeader = allStats.Where(p => p.AB > 0).SortByColumn("AVG", false).FirstOrDefault();
-        opsLeader = allStats.Where(p => p.PA > 0).SortByColumn("OPS", false).FirstOrDefault();
-        hrLeader = allStats.Where(p => p.HR > 0).SortByColumn("HR", false).FirstOrDefault();
-        rbiLeader = allStats.Where(p => p.RBI > 0).SortByColumn("RBI", false).FirstOrDefault();
+        double minGamesRequired = teamTotals.GamesPlayed / 3.0;
+        var qualified = allStats.Where(p => p.GamesPlayed >= minGamesRequired).ToList();
+        var pool = qualified.Any() ? qualified : allStats;
+
+        avgLeader = pool.Where(p => p.AB > 0).SortByColumn("AVG", false).FirstOrDefault();
+        opsLeader = pool.Where(p => p.PA > 0).SortByColumn("OPS", false).FirstOrDefault();
+        hrLeader = pool.Where(p => p.HR > 0).SortByColumn("HR", false).FirstOrDefault();
+        rbiLeader = pool.Where(p => p.RBI > 0).SortByColumn("RBI", false).FirstOrDefault();
     }
 
     private async Task ToggleDrawer()
@@ -556,7 +572,12 @@ private readonly List<string> AllSortableStats = new()
             isAscending = false;
         }
 
-        allStats = allStats.SortByColumn(column, isAscending).ToList();
+        double minGamesRequired = teamTotals.GamesPlayed / 3.0;
+        var qualified = allStats.Where(p => p.GamesPlayed >= minGamesRequired).SortByColumn(column, isAscending);
+        var unqualified = allStats.Where(p => p.GamesPlayed < minGamesRequired).SortByColumn(column, isAscending);
+        
+        allStats = qualified.Concat(unqualified).ToList();
+
         currentSortColumn = column;
         SessionState.CurrentSortColumn = column;
         SessionState.IsAscending = isAscending;
@@ -676,5 +697,9 @@ private readonly List<string> AllSortableStats = new()
 
     .game-summary-row td:first-child.sticky-col {
         border-right: none !important;
+    }
+
+    .unqualified-player {
+        opacity: 0.5;
     }
 </style>
