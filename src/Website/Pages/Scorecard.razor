@@ -393,7 +393,15 @@ else
         var scores = game.GetOurInningScores();
         if (args.value != null && int.TryParse(args.value.ToString(), out int score))
         {
-            scores[args.inning] = score;
+            int calculatedScore = plateAppearances.Where(p => p.Inning == args.inning).Sum(p => p.RunsScored);
+            if (score == calculatedScore)
+            {
+                scores.Remove(args.inning);
+            }
+            else
+            {
+                scores[args.inning] = score;
+            }
         }
         else
         {

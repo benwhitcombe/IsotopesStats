@@ -528,18 +528,24 @@
     
     private string GetCumulativeRuns(int colIndex)
     {
-        bool hasAnyInCol = PaMatrix.Any(kvp => kvp.Key.ColumnIndex <= colIndex);
-        if (!hasAnyInCol && !(Game?.GetOurInningScores().Any() ?? false)) return "";
+        if (!ColumnInnings.ContainsKey(colIndex)) return "";
+        int currentInning = ColumnInnings[colIndex];
+        
+        int maxInningWithPa = PaMatrix.Any() ? PaMatrix.Keys.Max(k => ColumnInnings[k.ColumnIndex]) : 0;
+        int maxInningWithOurOverride = Game?.GetOurInningScores().Any() == true ? Game.GetOurInningScores().Keys.Max() : 0;
+        int maxInningWithOppOverride = Game?.GetOpponentInningScores().Any() == true ? Game.GetOpponentInningScores().Keys.Max() : 0;
+        
+        int maxActiveInning = Math.Max(maxInningWithPa, Math.Max(maxInningWithOurOverride, maxInningWithOppOverride));
+        
+        if (currentInning > maxActiveInning) return "";
         
         var incompleteList = Game?.GetIncompleteInningsList() ?? new List<int>();
-        
-        if (ColumnInnings.ContainsKey(colIndex) && incompleteList.Contains(ColumnInnings[colIndex])) return "DNF";
+        if (incompleteList.Contains(currentInning)) return "DNF";
 
-        int maxInning = ColumnInnings.ContainsKey(colIndex) ? ColumnInnings[colIndex] : 0;
         int total = 0;
         var overrides = Game?.GetOurInningScores();
         
-        for (int i = 1; i <= maxInning; i++)
+        for (int i = 1; i <= currentInning; i++)
         {
             if (incompleteList.Contains(i)) continue;
             
@@ -569,6 +575,14 @@
     {
         if (Game == null) return "";
         var scores = Game.GetOpponentInningScores();
+        
+        int maxInningWithPa = PaMatrix.Any() ? PaMatrix.Keys.Max(k => ColumnInnings[k.ColumnIndex]) : 0;
+        int maxInningWithOurOverride = Game?.GetOurInningScores().Any() == true ? Game.GetOurInningScores().Keys.Max() : 0;
+        int maxInningWithOppOverride = Game?.GetOpponentInningScores().Any() == true ? Game.GetOpponentInningScores().Keys.Max() : 0;
+        
+        int maxActiveInning = Math.Max(maxInningWithPa, Math.Max(maxInningWithOurOverride, maxInningWithOppOverride));
+        
+        if (inning > maxActiveInning) return "";
         if (!scores.ContainsKey(inning)) return "";
         
         var incompleteList = Game.GetIncompleteInningsList();

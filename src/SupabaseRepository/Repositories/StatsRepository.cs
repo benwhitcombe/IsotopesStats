@@ -554,7 +554,24 @@ internal class StatsRepository : BaseRepository, IStatsRepository
         
         var incompleteInnings = game.GetIncompleteInningsList();
         List<PlateAppearance> pas = await GetPlateAppearancesAsync(gameId);
-        int totalRuns = pas.Where(pa => !incompleteInnings.Contains(pa.Inning)).Sum(pa => pa.RunsScored);
+        
+        var ourScores = game.GetOurInningScores();
+        int maxInning = Math.Max(ourScores.Keys.DefaultIfEmpty(0).Max(), pas.Select(p => p.Inning).DefaultIfEmpty(0).Max());
+        
+        int totalRuns = 0;
+        for (int i = 1; i <= maxInning; i++)
+        {
+            if (incompleteInnings.Contains(i)) continue;
+            
+            if (ourScores.ContainsKey(i))
+            {
+                totalRuns += ourScores[i];
+            }
+            else
+            {
+                totalRuns += pas.Where(pa => pa.Inning == i).Sum(pa => pa.RunsScored);
+            }
+        }
         
         int opponentRuns = game.GetOpponentInningScores()
                                .Where(kvp => !incompleteInnings.Contains(kvp.Key))

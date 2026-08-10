@@ -233,11 +233,34 @@ else
         <!-- Scoreboard Header (Outside Diamond Container) -->
         <div class="mb-2">
             @{
-                int displayRuns = runsScored + (viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].RunsScored : 0);
-                int displayOuts = currentOuts + (viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].OutsRecorded : 0);
-                int displayInning = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].Inning : currentInning;
-                int runsThisInningDisplay = 0;
                 int limit = viewingPaIndex.HasValue ? viewingPaIndex.Value + 1 : plateAppearances.Count;
+                int displayInning = viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].Inning : currentInning;
+                bool isEndingInning = viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count && plateAppearances[viewingPaIndex.Value].EndsInning;
+                
+                int displayRuns = 0;
+                var ourInningScores = game?.GetOurInningScores() ?? new Dictionary<int, int>();
+                
+                for (int i = 1; i <= displayInning; i++)
+                {
+                    if (i < displayInning || (i == displayInning && isEndingInning))
+                    {
+                        if (ourInningScores.ContainsKey(i))
+                        {
+                            displayRuns += ourInningScores[i];
+                        }
+                        else
+                        {
+                            displayRuns += plateAppearances.Take(limit).Where(p => p.Inning == i).Sum(p => p.RunsScored);
+                        }
+                    }
+                    else
+                    {
+                        displayRuns += plateAppearances.Take(limit).Where(p => p.Inning == i).Sum(p => p.RunsScored);
+                    }
+                }
+                
+                int displayOuts = currentOuts + (viewingPaIndex != null ? plateAppearances[viewingPaIndex.Value].OutsRecorded : 0);
+                int runsThisInningDisplay = 0;
                 for (int i = 0; i < limit; i++)
                 {
                     if (plateAppearances[i].Inning == displayInning) runsThisInningDisplay += plateAppearances[i].RunsScored;
@@ -249,7 +272,6 @@ else
                     var oppInningScores = game.GetOpponentInningScores();
                     if (oppInningScores.Any())
                     {
-                        bool isEndingInning = viewingPaIndex != null && viewingPaIndex.Value < plateAppearances.Count && plateAppearances[viewingPaIndex.Value].EndsInning;
                         displayOpponentScore = oppInningScores.Where(kvp => kvp.Key < displayInning || (kvp.Key == displayInning && isEndingInning)).Sum(kvp => kvp.Value);
                     }
                     else
@@ -297,20 +319,41 @@ else
                 <!-- Game State -->
                 <div class="d-flex flex-column justify-content-center align-items-center px-3 border-start bg-light" style="min-width: 110px;">
                     <div class="fw-bold text-muted mb-2" style="font-size: 0.9rem;">
-                        @if (game?.IsHome == true)
+                        @if (IsPromptingOpponentRuns)
                         {
-                            <span class="fs-6 me-1">&#x25BC;</span><text>Bot @displayInning</text>
+                            if (game?.IsHome == true)
+                            {
+                                <span class="fs-6 me-1">&#x25B2;</span><text>Top @promptingInning</text>
+                            }
+                            else
+                            {
+                                <span class="fs-6 me-1">&#x25BC;</span><text>Bot @promptingInning</text>
+                            }
                         }
                         else
                         {
-                            <span class="fs-6 me-1">&#x25B2;</span><text>Top @displayInning</text>
+                            @if (game?.IsHome == true)
+                            {
+                                <span class="fs-6 me-1">&#x25BC;</span><text>Bot @displayInning</text>
+                            }
+                            else
+                            {
+                                <span class="fs-6 me-1">&#x25B2;</span><text>Top @displayInning</text>
+                            }
                         }
                     </div>
-                    <div class="d-flex gap-1 mb-1" @key="displayOuts">
-                        <div class="rounded-circle @(displayOuts >= 1 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
-                        <div class="rounded-circle @(displayOuts >= 2 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
-                        <div class="rounded-circle @(displayOuts >= 3 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
-                    </div>
+                    @if (!IsPromptingOpponentRuns)
+                    {
+                        <div class="d-flex gap-1 mb-1" @key="displayOuts">
+                            <div class="rounded-circle @(displayOuts >= 1 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                            <div class="rounded-circle @(displayOuts >= 2 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                            <div class="rounded-circle @(displayOuts >= 3 ? "bg-danger" : "border border-secondary")" style="width: 10px; height: 10px;"></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex gap-1 mb-1" style="height: 10px;"></div>
+                    }
                 </div>
             </div>
             
@@ -330,36 +373,39 @@ else
                 List<string> display2B = new();
                 List<string> display3B = new();
 
-                if (IsEditingPlay)
-                {
-                    display1B = ActiveRunners.Where(r => r.Destination == 1).Select(r => r.Name).ToList();
-                    display2B = ActiveRunners.Where(r => r.Destination == 2).Select(r => r.Name).ToList();
-                    display3B = ActiveRunners.Where(r => r.Destination == 3).Select(r => r.Name).ToList();
-                }
-                else if (viewingPaIndex != null)
-                {
-                    if (plateAppearances[viewingPaIndex.Value].RunnerOn1B_End != null) display1B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn1B_End.Value));
-                    if (plateAppearances[viewingPaIndex.Value].RunnerOn2B_End != null) display2B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn2B_End.Value));
-                    if (plateAppearances[viewingPaIndex.Value].RunnerOn3B_End != null) display3B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn3B_End.Value));
-                }
-                else
-                {
-                    if (runnerOn1B != null) display1B.Add(GetPlayerName(runnerOn1B.Value));
-                    if (runnerOn2B != null) display2B.Add(GetPlayerName(runnerOn2B.Value));
-                    if (runnerOn3B != null) display3B.Add(GetPlayerName(runnerOn3B.Value));
-                }
-
                 List<string> scored = new();
                 List<(string Name, int OutBase)> outs = new();
 
-                if (IsEditingPlay)
+                if (!IsPromptingOpponentRuns)
                 {
-                    scored = ActiveRunners.Where(r => r.Destination == 4).Select(r => r.Name).ToList();
-                    outs = ActiveRunners.Where(r => r.Destination < 0).Select(r => (r.Name, Math.Abs(r.Destination))).ToList();
-                }
-                else if (viewingPaIndex != null)
-                {
-                    (scored, outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
+                    if (IsEditingPlay)
+                    {
+                        display1B = ActiveRunners.Where(r => r.Destination == 1).Select(r => r.Name).ToList();
+                        display2B = ActiveRunners.Where(r => r.Destination == 2).Select(r => r.Name).ToList();
+                        display3B = ActiveRunners.Where(r => r.Destination == 3).Select(r => r.Name).ToList();
+                    }
+                    else if (viewingPaIndex != null)
+                    {
+                        if (plateAppearances[viewingPaIndex.Value].RunnerOn1B_End != null) display1B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn1B_End.Value));
+                        if (plateAppearances[viewingPaIndex.Value].RunnerOn2B_End != null) display2B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn2B_End.Value));
+                        if (plateAppearances[viewingPaIndex.Value].RunnerOn3B_End != null) display3B.Add(GetPlayerName(plateAppearances[viewingPaIndex.Value].RunnerOn3B_End.Value));
+                    }
+                    else
+                    {
+                        if (runnerOn1B != null) display1B.Add(GetPlayerName(runnerOn1B.Value));
+                        if (runnerOn2B != null) display2B.Add(GetPlayerName(runnerOn2B.Value));
+                        if (runnerOn3B != null) display3B.Add(GetPlayerName(runnerOn3B.Value));
+                    }
+
+                    if (IsEditingPlay)
+                    {
+                        scored = ActiveRunners.Where(r => r.Destination == 4).Select(r => r.Name).ToList();
+                        outs = ActiveRunners.Where(r => r.Destination < 0).Select(r => (r.Name, Math.Abs(r.Destination))).ToList();
+                    }
+                    else if (viewingPaIndex != null)
+                    {
+                        (scored, outs) = GetRunnersHomeAndOut(plateAppearances[viewingPaIndex.Value]);
+                    }
                 }
             }
             
@@ -372,22 +418,25 @@ else
             
             <!-- Batter Info -->
             <div class="text-center mt-2 mb-2" style="min-height: 80px;">
-                <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">@(viewingPaIndex == null ? "CURRENT BATTER" : "BATTER")</h6>
-                <h3 class="fw-bold mb-0 text-dark slide-fade" @key="currentBatterId">
-                    @(displayBatterIndex). @currentBatterName
-                    @if (IsEditingPlay && !string.IsNullOrEmpty(pendingResult))
-                    {
-                        <text> - @pendingResult</text>
-                    }
-                    else if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
-                    {
-                        var res = plateAppearances[viewingPaIndex.Value].Result;
-                        if (!string.IsNullOrEmpty(res))
+                @if (!IsPromptingOpponentRuns)
+                {
+                    <h6 class="text-muted mb-1 fw-bold" style="letter-spacing: 1px;">@(viewingPaIndex == null ? "CURRENT BATTER" : "BATTER")</h6>
+                    <h3 class="fw-bold mb-0 text-dark slide-fade" @key="currentBatterId">
+                        @(displayBatterIndex). @currentBatterName
+                        @if (IsEditingPlay && !string.IsNullOrEmpty(pendingResult))
                         {
-                            <text> - @res</text>
+                            <text> - @pendingResult</text>
                         }
-                    }
-                </h3>
+                        else if (viewingPaIndex != null && plateAppearances.Count > viewingPaIndex.Value)
+                        {
+                            var res = plateAppearances[viewingPaIndex.Value].Result;
+                            if (!string.IsNullOrEmpty(res))
+                            {
+                                <text> - @res</text>
+                            }
+                        }
+                    </h3>
+                }
             </div>
         </div>
 
@@ -895,9 +944,9 @@ else
 
             if (result == "FC")
             {
-                if (runnerOn3B != null) r3Dest = r3Dest > 3 ? -r3Dest : -4;
+                if (runnerOn1B != null) r1Dest = r1Dest > 1 ? -r1Dest : -2;
+                else if (runnerOn3B != null) r3Dest = r3Dest > 3 ? -r3Dest : -4;
                 else if (runnerOn2B != null) r2Dest = r2Dest > 2 ? -r2Dest : -3;
-                else if (runnerOn1B != null) r1Dest = r1Dest > 1 ? -r1Dest : -2;
             }
         }
 
