@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "XeLdINNv",
+  "version": "YNqtV2/k",
   "assets": [
     {
       "hash": "sha256-o++WkqKmt0ZNqAEQvQ9ZuzjuZg5nEp55mhlgH7qru2M=",
@@ -10,7 +10,7 @@ self.assetsManifest = {
       "url": "Website.styles.css"
     },
     {
-      "hash": "sha256-U6ZURTGYqzSGYBLqDwYbBlN6kZaAy/fmo3vmbqd70hA=",
+      "hash": "sha256-Koem+0+WumSb/2aJ4qgWKokA4N8xNkUpzik2sRqJA3U=",
       "url": "_framework/Domain.wasm"
     },
     {
@@ -146,7 +146,7 @@ self.assetsManifest = {
       "url": "_framework/Supabase.wasm"
     },
     {
-      "hash": "sha256-NdJPAfbX6cV3ovlQUAzA9TPscXKqDFLdzGSZN9Pmeh0=",
+      "hash": "sha256-X/8Hrcy+KNZWhCBBAFlcTSJ55dzLDULBL/G0Y7CuqQw=",
       "url": "_framework/SupabaseRepository.wasm"
     },
     {
@@ -230,7 +230,7 @@ self.assetsManifest = {
       "url": "_framework/System.Linq.Queryable.wasm"
     },
     {
-      "hash": "sha256-xkEuRK5Zdzasf4pRo3shpAdMCiRPrgMnUtHsx+d/MTQ=",
+      "hash": "sha256-Iq2wwZEkjEheUeoNaijzecYQGZC8ZzcD22/NBw+OuWQ=",
       "url": "_framework/System.Linq.wasm"
     },
     {
@@ -266,7 +266,7 @@ self.assetsManifest = {
       "url": "_framework/System.ObjectModel.wasm"
     },
     {
-      "hash": "sha256-DQwFDU+VSFA64r+e1216i1xkjzQ2dtWimwR9RS8IEQk=",
+      "hash": "sha256-44Ek3oeYMFX9lheV6XatVmraTvDlMFohrBNMan4DTe0=",
       "url": "_framework/System.Private.CoreLib.wasm"
     },
     {
@@ -382,7 +382,7 @@ self.assetsManifest = {
       "url": "_framework/System.wasm"
     },
     {
-      "hash": "sha256-GX449e0eqaF7jKAjdgT4rTw+Mg+D0IJaJFVMQzl0fic=",
+      "hash": "sha256-BrKGoatdIn9C1daWOKxp83ifZFcx8mMNUbChxUFHU8k=",
       "url": "_framework/Website.wasm"
     },
     {
@@ -390,7 +390,7 @@ self.assetsManifest = {
       "url": "_framework/Websocket.Client.wasm"
     },
     {
-      "hash": "sha256-md6646EO0Iw2ero7CEYB8oIiKyTiIpVff7qDZ0iTSvY=",
+      "hash": "sha256-E8Bu6zvNlH7/T1bY8Ydi5g5GZSF+UwP9VOqqkpYKq98=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -486,7 +486,7 @@ self.assetsManifest = {
       "url": "images/defense.png"
     },
     {
-      "hash": "sha256-SuYZRzqcEGM6nE4wKHj3smEK9zTIozmnXChdySVvtWo=",
+      "hash": "sha256-QdU88gq3QCSQ/pflmS6MiZmboOLr1XmS/Vt1Q17fkPk=",
       "url": "index.html"
     },
     {
