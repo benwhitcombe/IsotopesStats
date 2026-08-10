@@ -227,16 +227,44 @@
             {
                 int currentColumn = col;
                 bool isLastForInning = IsLastColumnForInning(currentColumn);
+                int currentInning = ColumnInnings.ContainsKey(currentColumn) ? ColumnInnings[currentColumn] : currentColumn;
                 <td class="p-0 m-0 @(isLastForInning ? "" : "text-center align-middle")" style="position: relative; height: 50px;">
                     @if (isLastForInning)
                     {
-                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0;">
-                            <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
-                        </svg>
-                        <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
-                            <span class="fw-bold fs-5">@GetRunsInInning(currentColumn)</span>
-                        </div>
-                        <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1;">
+                        @if (CanManageGames)
+                        {
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;">
+                                <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                            </svg>
+                            <div class="position-absolute d-flex" style="top: 2px; left: 8px; z-index: 1;">
+                                <input type="text" inputmode="numeric"
+                                       class="text-start fw-bold fs-5 p-0 m-0 no-print @(IsOurScoreOverridden(currentInning) ? "text-primary" : "")" 
+                                       style="background: transparent; box-shadow: none; border: none; height: 26px; width: 30px; outline: none; padding: 0;"
+                                       value="@GetRunsInInning(currentColumn)"
+                                       @onchange="@(e => OnOurScoreChanged.InvokeAsync((currentInning, e.Value)))" />
+                                @if (IsOurScoreOverridden(currentInning))
+                                {
+                                    <span class="text-primary fw-bold no-print" style="font-size: 0.8rem; margin-left: -5px; margin-top: 2px; pointer-events: none;">*</span>
+                                }
+                                <div class="d-none d-print-block fw-bold fs-5">
+                                    @GetRunsInInning(currentColumn)@if (IsOurScoreOverridden(currentInning)) { <span style="font-size: 0.8rem; vertical-align: super;">*</span> }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0;">
+                                <line x1="100" y1="0" x2="0" y2="100" stroke="#000" stroke-width="1.5" />
+                            </svg>
+                            <div class="position-absolute" style="top: 2px; left: 8px; z-index: 1;">
+                                <span class="fw-bold fs-5">@GetRunsInInning(currentColumn)</span>
+                                @if (IsOurScoreOverridden(currentInning))
+                                {
+                                    <span class="fw-bold" style="font-size: 0.8rem; vertical-align: super;">*</span>
+                                }
+                            </div>
+                        }
+                        <div class="position-absolute" style="bottom: 2px; right: 8px; z-index: 1; pointer-events: none;">
                             <span class="fw-bold fs-5">@GetCumulativeRuns(currentColumn)</span>
                         </div>
                     }
@@ -315,6 +343,7 @@
     [Parameter] public bool CanManageGames { get; set; }
 
     [Parameter] public EventCallback<PlateAppearance?> OnCellClick { get; set; }
+    [Parameter] public EventCallback<(int Inning, object? Value)> OnOurScoreChanged { get; set; }
     [Parameter] public EventCallback<(int Inning, object? Value)> OnOpponentScoreChanged { get; set; }
 
     private Dictionary<(int PlayerId, int ColumnIndex), PlateAppearance> PaMatrix { get; set; } = new();
@@ -476,6 +505,12 @@
         if (!ColumnInnings.ContainsKey(colIndex)) return "";
         int inning = ColumnInnings[colIndex];
         
+        var overrides = Game?.GetOurInningScores();
+        if (overrides != null && overrides.ContainsKey(inning))
+        {
+            return overrides[inning].ToString();
+        }
+        
         var columnsForInning = ColumnInnings.Where(kvp => kvp.Value == inning).Select(kvp => kvp.Key).ToList();
         
         bool hasAnyInInning = PaMatrix.Any(kvp => columnsForInning.Contains(kvp.Key.ColumnIndex));
@@ -485,18 +520,40 @@
         return runs.ToString();
     }
     
+    private bool IsOurScoreOverridden(int inning)
+    {
+        var overrides = Game?.GetOurInningScores();
+        return overrides != null && overrides.ContainsKey(inning);
+    }
+    
     private string GetCumulativeRuns(int colIndex)
     {
-        bool hasAnyInCol = PaMatrix.Any(kvp => kvp.Key.ColumnIndex == colIndex);
-        if (!hasAnyInCol) return "";
+        bool hasAnyInCol = PaMatrix.Any(kvp => kvp.Key.ColumnIndex <= colIndex);
+        if (!hasAnyInCol && !(Game?.GetOurInningScores().Any() ?? false)) return "";
         
         var incompleteList = Game?.GetIncompleteInningsList() ?? new List<int>();
         
         if (ColumnInnings.ContainsKey(colIndex) && incompleteList.Contains(ColumnInnings[colIndex])) return "DNF";
 
-        int total = PaMatrix.Where(kvp => kvp.Key.ColumnIndex <= colIndex)
-                            .Where(kvp => !incompleteList.Contains(ColumnInnings[kvp.Key.ColumnIndex]))
-                            .Sum(kvp => kvp.Value.RunsScored);
+        int maxInning = ColumnInnings.ContainsKey(colIndex) ? ColumnInnings[colIndex] : 0;
+        int total = 0;
+        var overrides = Game?.GetOurInningScores();
+        
+        for (int i = 1; i <= maxInning; i++)
+        {
+            if (incompleteList.Contains(i)) continue;
+            
+            if (overrides != null && overrides.ContainsKey(i))
+            {
+                total += overrides[i];
+            }
+            else
+            {
+                var colsForInning = ColumnInnings.Where(kvp => kvp.Value == i && kvp.Key <= colIndex).Select(kvp => kvp.Key).ToList();
+                total += PaMatrix.Where(kvp => colsForInning.Contains(kvp.Key.ColumnIndex)).Sum(kvp => kvp.Value.RunsScored);
+            }
+        }
+
         return total.ToString();
     }
     

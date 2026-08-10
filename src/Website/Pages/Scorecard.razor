@@ -58,8 +58,15 @@ else
                 RecentlyChangedPaIds="recentlyChangedPaIds" 
                 CanManageGames="canManageGames" 
                 OnCellClick="HandleCellClick" 
+                OnOurScoreChanged="HandleOurScoreChanged"
                 OnOpponentScoreChanged="HandleOpponentScoreChanged" />
-        </div>
+            </div>
+            @if (game?.GetOurInningScores().Any() == true)
+            {
+                <div class="mt-2 fst-italic text-muted text-start" style="font-size: 0.85rem; width: max-content; margin: 0 auto;">
+                    * Manually overridden score
+                </div>
+            }
         </div>
     </div>
 }
@@ -377,6 +384,47 @@ else
         
         await StatsRepository.UpdateGameAsync(game);
         await LogActionAsync($"Updated opponent score for inning {args.inning} to {args.value} for Game {GameId}");
+    }
+
+    private async Task HandleOurScoreChanged((int inning, object? value) args)
+    {
+        if (game == null) return;
+        
+        var scores = game.GetOurInningScores();
+        if (args.value != null && int.TryParse(args.value.ToString(), out int score))
+        {
+            scores[args.inning] = score;
+        }
+        else
+        {
+            scores.Remove(args.inning);
+        }
+        
+        game.SetOurInningScores(scores);
+        
+        var incompleteList = game.GetIncompleteInningsList();
+        int maxInning = Math.Max(scores.Keys.DefaultIfEmpty(0).Max(), plateAppearances.Select(p => p.Inning).DefaultIfEmpty(0).Max());
+        int total = 0;
+        
+        for (int i = 1; i <= maxInning; i++)
+        {
+            if (incompleteList.Contains(i)) continue;
+            
+            if (scores.ContainsKey(i))
+            {
+                total += scores[i];
+            }
+            else
+            {
+                total += plateAppearances.Where(p => p.Inning == i).Sum(p => p.RunsScored);
+            }
+        }
+        
+        game.VisitingTeamScore = game.IsHome ? game.VisitingTeamScore : total;
+        game.HomeTeamScore = game.IsHome ? total : game.HomeTeamScore;
+        
+        await StatsRepository.UpdateGameAsync(game);
+        await LogActionAsync($"Updated our score for inning {args.inning} to {args.value} for Game {GameId}");
     }
 
     private string GetPlayerName(int id)

@@ -67,6 +67,26 @@ public record Game : IEntity
         OpponentInningScoresJson = System.Text.Json.JsonSerializer.Serialize(scores);
     }
 
+    public string? OurInningScoresJson { get; set; }
+
+    public System.Collections.Generic.Dictionary<int, int> GetOurInningScores()
+    {
+        if (string.IsNullOrWhiteSpace(OurInningScoresJson)) return new System.Collections.Generic.Dictionary<int, int>();
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<int, int>>(OurInningScoresJson) ?? new System.Collections.Generic.Dictionary<int, int>();
+        }
+        catch
+        {
+            return new System.Collections.Generic.Dictionary<int, int>();
+        }
+    }
+
+    public void SetOurInningScores(System.Collections.Generic.Dictionary<int, int> scores)
+    {
+        OurInningScoresJson = System.Text.Json.JsonSerializer.Serialize(scores);
+    }
+
     public string? IncompleteInnings { get; set; }
 
     public System.Collections.Generic.List<int> GetIncompleteInningsList()
