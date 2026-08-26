@@ -209,13 +209,31 @@ internal class AuthRepository : BaseRepository, IAuthRepository
             .ToList();
     }
 
-    public async Task<List<UserLog>> GetUserLogsAsync(int limit = 100)
+    public async Task<List<UserLog>> GetUserLogsAsync(int skip = 0, int take = 100, string? searchTerm = null, string? entityType = null, string? entityId = null)
     {
-        ModeledResponse<UserLogDTO> response = await Supabase.From<UserLogDTO>()
+        var query = (Postgrest.Table<UserLogDTO>)Supabase.From<UserLogDTO>();
+        
+        if (!string.IsNullOrWhiteSpace(entityType)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+        if (!string.IsNullOrWhiteSpace(entityId)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entityid", Operator.Equals, entityId);
+        if (!string.IsNullOrWhiteSpace(searchTerm)) query = (Postgrest.Table<UserLogDTO>)query.Filter("description", Operator.ILike, $"%{searchTerm}%");
+        
+        ModeledResponse<UserLogDTO> response = await query
             .Order("timestamp", Ordering.Descending)
-            .Limit(limit)
+            .Range(skip, skip + take - 1)
             .Get();
         return response.Models.Select(x => Mapper.ToModel(x)).ToList();
+    }
+
+    public async Task<int> GetUserLogsCountAsync(string? searchTerm = null, string? entityType = null, string? entityId = null)
+    {
+        var query = (Postgrest.Table<UserLogDTO>)Supabase.From<UserLogDTO>();
+        
+        if (!string.IsNullOrWhiteSpace(entityType)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+        if (!string.IsNullOrWhiteSpace(entityId)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entityid", Operator.Equals, entityId);
+        if (!string.IsNullOrWhiteSpace(searchTerm)) query = (Postgrest.Table<UserLogDTO>)query.Filter("description", Operator.ILike, $"%{searchTerm}%");
+        
+        var response = await query.Count(Postgrest.Constants.CountType.Exact);
+        return response;
     }
 
     public Task AddLogAsync(UserLog log) => 

@@ -311,8 +311,15 @@ internal class StatsRepository : BaseRepository, IStatsRepository
 
     public async Task DeleteGameAsync(int gameId)
     {
-        Game game = new Game { Id = gameId, IsDeleted = true };
-        await Supabase.From<GameDTO>().Update(Mapper.ToDTO(game));
+        GameDTO? gameDto = await Supabase.From<GameDTO>()
+            .Filter("id", Constants.Operator.Equals, gameId)
+            .Single();
+            
+        if (gameDto != null)
+        {
+            gameDto.IsDeleted = true;
+            await Supabase.From<GameDTO>().Update(gameDto);
+        }
     }
 
     public async Task<int> GetNextGameNumberAsync(int seasonId)

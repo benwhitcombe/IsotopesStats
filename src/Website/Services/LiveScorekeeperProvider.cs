@@ -64,7 +64,6 @@ namespace IsotopesStats.Website.Services
             }
             
             await _statsRepository.UpdateGameWithStatsAsync(_game, newStats);
-            await LogActionAsync($"Set batting order with {playerIds.Count} players");
         }
 
         public async Task<List<PlateAppearance>> GetPlateAppearancesAsync()
@@ -75,7 +74,6 @@ namespace IsotopesStats.Website.Services
         public async Task<PlateAppearance> SavePlateAppearanceAsync(PlateAppearance pa)
         {
             var saved = await _statsRepository.AddPlateAppearanceAsync(pa);
-            await LogActionAsync($"Recorded {pa.Result} for Player {pa.PlayerId}");
             return saved;
         }
 
@@ -87,7 +85,6 @@ namespace IsotopesStats.Website.Services
         public async Task DeletePlateAppearanceAsync(PlateAppearance pa)
         {
             await _statsRepository.DeletePlateAppearanceAsync(pa.Id);
-            await LogActionAsync($"Deleted play for Player {pa.PlayerId}");
         }
 
         public async Task UpdateGameAsync(Game game)

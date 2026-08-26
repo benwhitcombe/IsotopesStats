@@ -18,7 +18,8 @@ public interface IAuthRepository
     Task DeleteUserAsync(string userId);
     Task<List<UserRole>> GetUserRolesAsync(bool onlyActive = false);
     Task<List<UserRole>> GetUserRolesForUserAsync(string userId);
-    Task<List<UserLog>> GetUserLogsAsync(int limit = 100);
+    Task<List<UserLog>> GetUserLogsAsync(int skip = 0, int take = 100, string? searchTerm = null, string? entityType = null, string? entityId = null);
+    Task<int> GetUserLogsCountAsync(string? searchTerm = null, string? entityType = null, string? entityId = null);
     Task AddLogAsync(UserLog log);
     Task<bool> GeneratePasswordResetTokenAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string token, string newPassword);

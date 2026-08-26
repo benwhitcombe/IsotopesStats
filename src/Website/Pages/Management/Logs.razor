@@ -2,6 +2,7 @@
 @using IsotopesStats.Website.Services
 @using IsotopesStats.Domain.Models
 @using IsotopesStats.Website.Shared
+@using System.Text.Json
 @attribute [Authorize(Policy = "Manage Logs")]
 @inject IAuthRepository IAuthRepository
 
@@ -9,9 +10,17 @@
 
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">User Action Logs</h3>
-    <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <input type="text" class="form-control" @bind="searchTerm" @bind:event="oninput" placeholder="Search logs..." style="max-width: 250px;" />
-        <button class="view-btn active" @onclick="LoadLogs">Refresh</button>
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <select class="form-select" @bind="filterEntityType" style="max-width: 150px;">
+            <option value="">All Entities</option>
+            <option value="Game">Game</option>
+            <option value="Player">Player</option>
+            <option value="Season">Season</option>
+            <option value="User">User</option>
+            <option value="TeamStats">TeamStats</option>
+        </select>
+        <input type="text" class="form-control" @bind="searchTerm" placeholder="Search logs..." style="max-width: 250px;" />
+        <button class="view-btn active" @onclick="SearchLogs">Search</button>
     </div>
 </div>
 
@@ -36,7 +45,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!filteredLogs.Any())
+                    @if (isLoading)
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 3rem; color: #999;">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </td>
+                        </tr>
+                    }
+                    else if (!logs.Any())
                     {
                         <tr>
                             <td colspan="5" style="text-align: center; padding: 3rem; color: #999;">
@@ -46,7 +63,7 @@
                     }
                     else
                     {
-                        @foreach (UserLog log in filteredLogs)
+                        @foreach (UserLog log in logs)
                         {
                             <tr style="vertical-align: middle;">
                                 <td style="text-align: left; font-size: 0.85rem; white-space: nowrap; padding-left: 1rem;">
@@ -61,7 +78,15 @@
                                     </span>
                                 </td>
                                 <td style="font-size: 0.85rem; color: #666;">
-                                    @log.EntityType
+                                    @{ string link = GetEntityLink(log.EntityType, log.EntityId); }
+                                    @if (link != null)
+                                    {
+                                        <a href="@link" class="text-decoration-none">@log.EntityType</a>
+                                    }
+                                    else
+                                    {
+                                        @log.EntityType
+                                    }
                                 </td>
                                 <td style="text-align: left; font-size: 0.85rem; padding-right: 1rem;">
                                     @{
@@ -85,7 +110,13 @@
 
 <div class="mobile-only">
     <div class="mobile-player-grid view-fade-in" style="display: grid;">
-        @if (!filteredLogs.Any())
+        @if (isLoading)
+        {
+            <div style="text-align: center; padding: 3rem; color: #999;">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        }
+        else if (!logs.Any())
         {
             <div style="text-align: center; padding: 3rem; color: #999;">
                 No log entries found.
@@ -93,7 +124,7 @@
         }
         else
         {
-            @foreach (UserLog log in filteredLogs)
+            @foreach (UserLog log in logs)
             {
                 <div class="mobile-player-card">
                     <div class="mobile-card-header">
@@ -107,7 +138,17 @@
                         </div>
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Entity</span>
-                            <span class="m-stat-val" style="font-size: 0.85rem;">@log.EntityType</span>
+                            <span class="m-stat-val" style="font-size: 0.85rem;">
+                                @{ string mLink = GetEntityLink(log.EntityType, log.EntityId); }
+                                @if (mLink != null)
+                                {
+                                    <a href="@mLink" class="text-decoration-none">@log.EntityType</a>
+                                }
+                                else
+                                {
+                                    @log.EntityType
+                                }
+                            </span>
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: #555; padding-top: 0.5rem; border-top: 1px solid #eee;">
@@ -127,10 +168,22 @@
     </div>
 </div>
 
+<!-- Pagination Controls -->
+@if (totalPages > 1)
+{
+    <div class="d-flex justify-content-center mt-4 mb-4 gap-2 view-fade-in">
+        <button class="btn btn-outline-primary" disabled="@(currentPage == 1)" @onclick="PrevPage">&laquo; Prev</button>
+        <div class="d-flex align-items-center px-3 fw-bold text-muted bg-white border rounded">
+            Page @currentPage of @totalPages
+        </div>
+        <button class="btn btn-outline-primary" disabled="@(currentPage == totalPages)" @onclick="NextPage">Next &raquo;</button>
+    </div>
+}
+
 @if (selectedLog != null)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Log Details</h5>
@@ -144,7 +197,14 @@
                         <strong>Timestamp:</strong> @selectedLog.Timestamp.ToLocalTime().ToString("MMM dd, yyyy h:mm:ss tt")
                     </div>
                     <hr/>
-                    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; background-color: #f8f9fa; padding: 1rem; border-radius: 4px; border: 1px solid #dee2e6;">@selectedLog.Description</pre>
+                    @if (HasJsonDiff(selectedLog.Description))
+                    {
+                        @RenderJsonDiff(selectedLog.Description)
+                    }
+                    else
+                    {
+                        <pre style="white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; background-color: #f8f9fa; padding: 1rem; border-radius: 4px; border: 1px solid #dee2e6;">@selectedLog.Description</pre>
+                    }
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseDetailsModal">Close</button>
@@ -157,36 +217,83 @@
 @code {
     private List<UserLog> logs = new();
     private string searchTerm = "";
+    private string filterEntityType = "";
     private string? errorMessage;
     private UserLog? selectedLog;
+    private bool isLoading = true;
+
+    // Pagination
+    private int currentPage = 1;
+    private int pageSize = 50;
+    private int totalCount = 0;
+    private int totalPages => Math.Max(1, (int)Math.Ceiling((double)totalCount / pageSize));
 
     private void OpenDetailsModal(UserLog log) => selectedLog = log;
     private void CloseDetailsModal() => selectedLog = null;
-
-    private IEnumerable<UserLog> filteredLogs => string.IsNullOrWhiteSpace(searchTerm) 
-        ? logs 
-        : logs.Where(l => 
-            l.UserEmail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-            l.Action.ToString().Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-            l.EntityType.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || 
-            l.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
         await LoadLogs();
     }
 
+    private async Task SearchLogs()
+    {
+        currentPage = 1;
+        await LoadLogs();
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadLogs();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadLogs();
+        }
+    }
+
     private async Task LoadLogs()
     {
         try
         {
+            isLoading = true;
             errorMessage = null;
-            logs = await IAuthRepository.GetUserLogsAsync(200);
+            int skip = (currentPage - 1) * pageSize;
+            
+            logs = await IAuthRepository.GetUserLogsAsync(skip, pageSize, searchTerm, filterEntityType);
+            totalCount = await IAuthRepository.GetUserLogsCountAsync(searchTerm, filterEntityType);
         }
         catch (Exception ex)
         {
             errorMessage = "Error loading logs: " + ex.Message;
         }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string? GetEntityLink(string entityType, string entityId)
+    {
+        if (string.IsNullOrEmpty(entityId)) return null;
+        
+        return entityType.ToLowerInvariant() switch
+        {
+            "game" => $"/management/games/edit/{entityId}",
+            "player" => $"/management/players/edit/{entityId}",
+            "season" => $"/management/seasons/edit/{entityId}",
+            "user" => $"/management/users/edit/{entityId}",
+            "opponent" => $"/management/opponents/edit/{entityId}",
+            _ => null
+        };
     }
 
     private string GetActionBadgeClass(UserLogAction action) => action switch
@@ -196,5 +303,127 @@
         UserLogAction.Deleted => "bg-danger",
         _ => "bg-secondary"
     };
-}
 
+    private bool HasJsonDiff(string description)
+    {
+        return description.Contains("\nFrom:\n") && description.Contains("\nTo:\n");
+    }
+
+    private RenderFragment RenderJsonDiff(string description) => builder =>
+    {
+        try
+        {
+            string[] parts = description.Split(new[] { "\nFrom:\n", "\nTo:\n", "\nFrom ExtraState:\n", "\nTo ExtraState:\n", "\nDetails:\n", "\nExtraState:\n" }, StringSplitOptions.None);
+            
+            if (parts.Length >= 3)
+            {
+                string header = parts[0];
+                string fromJson = parts[1];
+                string toJson = parts[2];
+                
+                var fromDoc = JsonDocument.Parse(fromJson);
+                var toDoc = JsonDocument.Parse(toJson);
+                
+                var fromProps = fromDoc.RootElement.EnumerateObject().ToDictionary(x => x.Name, x => x.Value);
+                var toProps = toDoc.RootElement.EnumerateObject().ToDictionary(x => x.Name, x => x.Value);
+                
+                var allKeys = fromProps.Keys.Union(toProps.Keys).OrderBy(k => k).ToList();
+
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "mb-3");
+                builder.AddContent(2, header);
+                builder.CloseElement();
+
+                builder.OpenElement(3, "div");
+                builder.AddAttribute(4, "class", "table-responsive");
+                builder.OpenElement(5, "table");
+                builder.AddAttribute(6, "class", "table table-bordered table-sm");
+                builder.AddAttribute(7, "style", "font-family: monospace; font-size: 0.85rem;");
+                
+                builder.OpenElement(8, "thead");
+                builder.AddAttribute(9, "class", "table-light");
+                builder.OpenElement(10, "tr");
+                builder.AddMarkupContent(11, "<th>Property</th><th>Before</th><th>After</th>");
+                builder.CloseElement(); // tr
+                builder.CloseElement(); // thead
+                
+                builder.OpenElement(12, "tbody");
+                
+                foreach (var key in allKeys)
+                {
+                    fromProps.TryGetValue(key, out var fromVal);
+                    toProps.TryGetValue(key, out var toVal);
+                    
+                    string fromStr = fromVal.ValueKind != JsonValueKind.Undefined ? fromVal.ToString() : "null";
+                    string toStr = toVal.ValueKind != JsonValueKind.Undefined ? toVal.ToString() : "null";
+                    
+                    bool changed = fromStr != toStr;
+                    
+                    if (changed)
+                    {
+                        builder.OpenElement(13, "tr");
+                        builder.OpenElement(14, "td");
+                        builder.AddAttribute(15, "class", "fw-bold");
+                        builder.AddContent(16, key);
+                        builder.CloseElement();
+                        
+                        builder.OpenElement(17, "td");
+                        builder.AddAttribute(18, "style", "background-color: #ffeef0; color: #b30000;");
+                        builder.AddContent(19, fromStr);
+                        builder.CloseElement();
+                        
+                        builder.OpenElement(20, "td");
+                        builder.AddAttribute(21, "style", "background-color: #e6ffed; color: #005f20;");
+                        builder.AddContent(22, toStr);
+                        builder.CloseElement();
+                        builder.CloseElement(); // tr
+                    }
+                }
+                
+                // Unchanged properties
+                foreach (var key in allKeys)
+                {
+                    fromProps.TryGetValue(key, out var fromVal);
+                    toProps.TryGetValue(key, out var toVal);
+                    
+                    string fromStr = fromVal.ValueKind != JsonValueKind.Undefined ? fromVal.ToString() : "null";
+                    string toStr = toVal.ValueKind != JsonValueKind.Undefined ? toVal.ToString() : "null";
+                    
+                    bool changed = fromStr != toStr;
+                    
+                    if (!changed)
+                    {
+                        builder.OpenElement(13, "tr");
+                        builder.AddAttribute(14, "style", "opacity: 0.6;");
+                        builder.OpenElement(15, "td");
+                        builder.AddAttribute(16, "class", "fw-bold text-muted");
+                        builder.AddContent(17, key);
+                        builder.CloseElement();
+                        
+                        builder.OpenElement(18, "td");
+                        builder.AddAttribute(19, "colspan", "2");
+                        builder.AddContent(20, fromStr);
+                        builder.CloseElement();
+                        builder.CloseElement(); // tr
+                    }
+                }
+                
+                builder.CloseElement(); // tbody
+                builder.CloseElement(); // table
+                builder.CloseElement(); // div
+            }
+            else
+            {
+                builder.OpenElement(0, "pre");
+                builder.AddContent(1, description);
+                builder.CloseElement();
+            }
+        }
+        catch
+        {
+            builder.OpenElement(0, "pre");
+            builder.AddContent(1, description);
+            builder.CloseElement();
+        }
+    };
+}

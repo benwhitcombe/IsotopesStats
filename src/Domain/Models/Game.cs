@@ -41,6 +41,8 @@ public record Game : IEntity
     public int? OurScore => IsHome ? HomeTeamScore : VisitingTeamScore;
     public int? OpponentScore => IsHome ? VisitingTeamScore : HomeTeamScore;
 
+    public string Name => $"Game {GameNumber} vs {(Opponent?.Name ?? "Opponent")} ({Date:MMM dd})";
+
     public bool? IsWin => (OurScore != null && OpponentScore != null) ? (OurScore > OpponentScore) : null;
     public bool? IsTie => (OurScore != null && OpponentScore != null) ? (OurScore == OpponentScore) : null;
 

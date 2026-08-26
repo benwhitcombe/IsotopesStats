@@ -100,14 +100,13 @@ internal abstract class BaseRepository
     {
         await ExecuteWithAuthRetryAsync(async () =>
         {
-            DTOType dto = new DTOType();
-            PropertyInfo? idProp = typeof(DTOType).GetProperty("Id");
-            PropertyInfo? delProp = typeof(DTOType).GetProperty("IsDeleted");
-            
-            idProp?.SetValue(dto, id);
-            delProp?.SetValue(dto, true);
-            
-            await Supabase.From<DTOType>().Update(dto);
+            var existing = await Supabase.From<DTOType>().Filter("id", Constants.Operator.Equals, id).Single();
+            if (existing != null)
+            {
+                PropertyInfo? delProp = typeof(DTOType).GetProperty("IsDeleted");
+                delProp?.SetValue(existing, true);
+                await Supabase.From<DTOType>().Update(existing);
+            }
         });
     }
 

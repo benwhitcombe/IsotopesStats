@@ -761,7 +761,7 @@ else
             battingOrderIds = setupBattingOrderIds.ToList();
             isLineupSet = true;
             RecalculateState();
-            await LogActionAsync($"Set batting order for Game {GameId}");
+            await LogActionAsync($"Set batting order for {game?.Name ?? $"Game {GameId}"}");
 
             if (game.IsHome && !game.GetOpponentInningScores().ContainsKey(currentInning))
             {
@@ -1075,7 +1075,7 @@ else
                     plateAppearances[currentViewingIndex.Value] = pendingPA;
                     await DataProvider.UpdatePlateAppearanceAsync(pendingPA);
                     await RippleStateAsync();
-                    await LogActionAsync($"Updated play for Game {GameId} to {pendingPA.Result} (Inning {pendingPA.Inning})");
+                    await LogActionAsync($"Updated play for {game?.Name ?? $"Game {GameId}"}: Inning {pendingPA.Inning}, {pendingPA.Result} for {GetPlayerName(pendingPA.PlayerId)} ({pendingPA.OutsRecorded} outs, {pendingPA.RunsScored} runs)");
                 }
                 else
                 {
@@ -1083,7 +1083,7 @@ else
                     plateAppearances.Add(savedPa);
                     currentViewingIndex = plateAppearances.Count - 1;
                     viewingPaIndex = currentViewingIndex;
-                    await LogActionAsync($"Recorded play for Game {GameId}: {pendingPA.Result} (Inning {pendingPA.Inning})");
+                    await LogActionAsync($"Recorded play for {game?.Name ?? $"Game {GameId}"}: Inning {pendingPA.Inning}, {pendingPA.Result} for {GetPlayerName(pendingPA.PlayerId)} ({pendingPA.OutsRecorded} outs, {pendingPA.RunsScored} runs)");
                 }
                 
                 if (game != null && game.ScorecardStatsSync)
@@ -1202,12 +1202,13 @@ else
                     // If it is the last play, completely delete it to allow shrinking the timeline
                     await DataProvider.DeletePlateAppearanceAsync(pa);
                     plateAppearances.RemoveAt(pIndex);
-                    await LogActionAsync($"Deleted play at index {pIndex} for Game {GameId}");
+                    await LogActionAsync($"Deleted play for {game?.Name ?? $"Game {GameId}"}: Inning {pa.Inning}, {pa.Result} for {GetPlayerName(pa.PlayerId)}");
                     
                     viewingPaIndex = null; // Back to live batter
                 }
                 else
                 {
+                    string oldResult = pa.Result;
                     // Just reset the play's data instead of deleting it, to preserve the timeline sequence
                     pa.Result = ""; // Empty string acts as a blank/placeholder play
                     pa.OutsRecorded = 0;
@@ -1218,7 +1219,7 @@ else
                     pa.EndsInning = false;
                     
                     await DataProvider.UpdatePlateAppearanceAsync(pa);
-                    await LogActionAsync($"Cleared play at index {pIndex} for Game {GameId}");
+                    await LogActionAsync($"Cleared play for {game?.Name ?? $"Game {GameId}"}: Inning {pa.Inning}, {oldResult} for {GetPlayerName(pa.PlayerId)}");
                 }
                 
                 await RippleStateAsync();
@@ -1325,14 +1326,14 @@ else
                     // This is a dummy "End Inning" play. Toggle = delete it.
                     await DataProvider.DeletePlateAppearanceAsync(pa);
                     plateAppearances.RemoveAt(viewingPaIndex.Value);
-                    await LogActionAsync($"Deleted dummy End Inning play for Game {GameId}");
+                    await LogActionAsync($"Deleted dummy End Inning play for {game?.Name ?? $"Game {GameId}"}: Inning {pa.Inning}");
                     viewingPaIndex = null;
                 }
                 else
                 {
                     pa.EndsInning = !pa.EndsInning;
                     await DataProvider.UpdatePlateAppearanceAsync(pa);
-                    await LogActionAsync($"Toggled end inning (now {pa.EndsInning}) for play at index {viewingPaIndex.Value} for Game {GameId}");
+                    await LogActionAsync($"Toggled end inning (now {pa.EndsInning}) for {game?.Name ?? $"Game {GameId}"}: Inning {pa.Inning}, {pa.Result} for {GetPlayerName(pa.PlayerId)}");
                     if (pa.EndsInning)
                     {
                         if (game != null && game.IsHome)
@@ -1388,7 +1389,7 @@ else
             {
                 PlateAppearance savedPa = await DataProvider.SavePlateAppearanceAsync(endInningPa);
                 plateAppearances.Add(savedPa);
-                await LogActionAsync($"Forced End Inning for Game {GameId}");
+                await LogActionAsync($"Forced End Inning for {game?.Name ?? $"Game {GameId}"}: Inning {currentInning}");
                 
                 await RippleStateAsync();
                 if (game != null && game.ScorecardStatsSync)
