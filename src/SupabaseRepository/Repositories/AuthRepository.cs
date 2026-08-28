@@ -213,7 +213,19 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     {
         var query = (Postgrest.Table<UserLogDTO>)Supabase.From<UserLogDTO>();
         
-        if (!string.IsNullOrWhiteSpace(entityType)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+        if (!string.IsNullOrWhiteSpace(entityType))
+        {
+            if (entityType.Contains(","))
+            {
+                var types = entityType.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.In, types);
+            }
+            else
+            {
+                query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+            }
+        }
+        
         if (!string.IsNullOrWhiteSpace(entityId)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entityid", Operator.Equals, entityId);
         if (!string.IsNullOrWhiteSpace(searchTerm)) query = (Postgrest.Table<UserLogDTO>)query.Filter("description", Operator.ILike, $"%{searchTerm}%");
         
@@ -228,7 +240,19 @@ internal class AuthRepository : BaseRepository, IAuthRepository
     {
         var query = (Postgrest.Table<UserLogDTO>)Supabase.From<UserLogDTO>();
         
-        if (!string.IsNullOrWhiteSpace(entityType)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+        if (!string.IsNullOrWhiteSpace(entityType))
+        {
+            if (entityType.Contains(","))
+            {
+                var types = entityType.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.In, types);
+            }
+            else
+            {
+                query = (Postgrest.Table<UserLogDTO>)query.Filter("entitytype", Operator.Equals, entityType);
+            }
+        }
+        
         if (!string.IsNullOrWhiteSpace(entityId)) query = (Postgrest.Table<UserLogDTO>)query.Filter("entityid", Operator.Equals, entityId);
         if (!string.IsNullOrWhiteSpace(searchTerm)) query = (Postgrest.Table<UserLogDTO>)query.Filter("description", Operator.ILike, $"%{searchTerm}%");
         

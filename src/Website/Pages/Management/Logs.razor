@@ -13,7 +13,7 @@
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
         <select class="form-select" @bind="filterEntityType" style="max-width: 150px;">
             <option value="">All Entities</option>
-            <option value="Game">Game</option>
+            <option value="Game">Game</option><option value="Scorecard">Scorecard</option>
             <option value="Player">Player</option>
             <option value="Season">Season</option>
             <option value="User">User</option>
@@ -78,7 +78,7 @@
                                     </span>
                                 </td>
                                 <td style="font-size: 0.85rem; color: #666;">
-                                    @{ string link = GetEntityLink(log.EntityType, log.EntityId); }
+                                    @{ string link = GetEntityLink(log); }
                                     @if (link != null)
                                     {
                                         <a href="@link" class="text-decoration-none">@log.EntityType</a>
@@ -139,7 +139,7 @@
                         <div class="m-stat" style="align-items: flex-start;">
                             <span class="m-stat-label">Entity</span>
                             <span class="m-stat-val" style="font-size: 0.85rem;">
-                                @{ string mLink = GetEntityLink(log.EntityType, log.EntityId); }
+                                @{ string mLink = GetEntityLink(log); }
                                 @if (mLink != null)
                                 {
                                     <a href="@mLink" class="text-decoration-none">@log.EntityType</a>
@@ -207,7 +207,59 @@
                     }
                 </div>
                 <div class="modal-footer">
+                    @if ((selectedLog.EntityType.Equals("Game", StringComparison.OrdinalIgnoreCase) || selectedLog.EntityType.Equals("Scorecard", StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrEmpty(selectedLog.EntityId))
+                    {
+                        <button type="button" class="btn btn-outline-primary" @onclick="() => OpenTimeline(selectedLog.EntityId)">View Game Timeline</button>
+                    }
                     <button type="button" class="btn btn-secondary" @onclick="CloseDetailsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (timelineGameId != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); z-index: 1060;">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Game Activity Timeline</h5>
+                    <button type="button" class="btn-close" @onclick="CloseTimelineModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (isLoadingTimeline)
+                    {
+                        <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                    }
+                    else if (!timelineLogs.Any())
+                    {
+                        <div class="text-center text-muted">No activity logs found for this game.</div>
+                    }
+                    else
+                    {
+                        <div class="timeline position-relative ps-4 ms-2 border-start border-2 border-primary">
+                            @foreach (var log in timelineLogs)
+                            {
+                                <div class="timeline-item mb-4 position-relative">
+                                    <span class="position-absolute start-0 translate-middle rounded-circle bg-primary" style="width: 12px; height: 12px; left: -16px !important;"></span>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold text-dark">@log.UserEmail</span>
+                                        <span class="text-muted" style="font-size: 0.85rem;">@log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm tt")</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.95rem;">
+                                        @{
+                                            string firstLine = log.Description.Split('\n').FirstOrDefault() ?? "";
+                                            @firstLine
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseTimelineModal">Close</button>
                 </div>
             </div>
         </div>
@@ -230,6 +282,28 @@
 
     private void OpenDetailsModal(UserLog log) => selectedLog = log;
     private void CloseDetailsModal() => selectedLog = null;
+    private string? timelineGameId;
+    private bool isLoadingTimeline = false;
+    private List<UserLog> timelineLogs = new();
+
+    private async Task OpenTimeline(string gameId)
+    {
+        timelineGameId = gameId;
+        isLoadingTimeline = true;
+        try
+        {
+            timelineLogs = await IAuthRepository.GetUserLogsAsync(0, 500, null, "Game,Scorecard", gameId);
+        }
+        finally
+        {
+            isLoadingTimeline = false;
+        }
+    }
+
+    private void CloseTimelineModal()
+    {
+        timelineGameId = null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -281,17 +355,19 @@
         }
     }
 
-    private string? GetEntityLink(string entityType, string entityId)
+    private string? GetEntityLink(UserLog log)
     {
-        if (string.IsNullOrEmpty(entityId)) return null;
+        if (string.IsNullOrEmpty(log.EntityId)) return null;
         
-        return entityType.ToLowerInvariant() switch
+        string type = log.EntityType.ToLowerInvariant();
+        return type switch
         {
-            "game" => $"/management/games/edit/{entityId}",
-            "player" => $"/management/players/edit/{entityId}",
-            "season" => $"/management/seasons/edit/{entityId}",
-            "user" => $"/management/users/edit/{entityId}",
-            "opponent" => $"/management/opponents/edit/{entityId}",
+            "game" => $"/management/games/edit/{log.EntityId}",
+            "scorecard" => $"/games/{log.EntityId}/scorecard",
+            "player" => $"/management/players/edit/{log.EntityId}",
+            "season" => $"/management/seasons/edit/{log.EntityId}",
+            "user" => $"/management/users/edit/{log.EntityId}",
+            "opponent" => $"/management/opponents/edit/{log.EntityId}",
             _ => null
         };
     }
@@ -306,6 +382,7 @@
 
     private bool HasJsonDiff(string description)
     {
+        description = description.Replace("\r\n", "\n");
         return description.Contains("\nFrom:\n") && description.Contains("\nTo:\n");
     }
 
@@ -313,6 +390,7 @@
     {
         try
         {
+            description = description.Replace("\r\n", "\n");
             string[] parts = description.Split(new[] { "\nFrom:\n", "\nTo:\n", "\nFrom ExtraState:\n", "\nTo ExtraState:\n", "\nDetails:\n", "\nExtraState:\n" }, StringSplitOptions.None);
             
             if (parts.Length >= 3)
@@ -427,3 +505,5 @@
         }
     };
 }
+
+

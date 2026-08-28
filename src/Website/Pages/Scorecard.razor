@@ -68,54 +68,7 @@ else
                 </div>
             }
         
-<hr class="my-5" />
 
-<div class="card mb-4 no-print shadow-sm">
-    <div class="card-header bg-light d-flex justify-content-between align-items-center cursor-pointer" @onclick="ToggleLogs">
-        <h5 class="mb-0 fw-bold">Game Activity Timeline</h5>
-        <button class="btn btn-sm btn-outline-secondary">
-            @(showLogs ? "Hide" : "Show") Timeline
-        </button>
-    </div>
-    @if (showLogs)
-    {
-        <div class="card-body bg-white">
-            @if (isLoadingLogs)
-            {
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status"></div>
-                </div>
-            }
-            else if (!gameLogs.Any())
-            {
-                <div class="text-center text-muted py-4">
-                    No activity logs found for this game.
-                </div>
-            }
-            else
-            {
-                <div class="timeline position-relative ps-4 ms-2 border-start border-2 border-primary">
-                    @foreach (var log in gameLogs)
-                    {
-                        <div class="timeline-item mb-4 position-relative">
-                            <span class="position-absolute start-0 translate-middle rounded-circle bg-primary" style="width: 12px; height: 12px; left: -16px !important;"></span>
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="fw-bold text-dark">@log.UserEmail</span>
-                                <span class="text-muted" style="font-size: 0.85rem;">@log.Timestamp.ToLocalTime().ToString("MMM dd, h:mm tt")</span>
-                            </div>
-                            <div class="text-muted" style="font-size: 0.95rem;">
-                                @{
-                                    string firstLine = log.Description.Split('\n').FirstOrDefault() ?? "";
-                                    @firstLine
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
-    }
-</div>
 </div>
     </div>
 }
@@ -257,7 +210,7 @@ else
             {
                 UserEmail = userEmail,
                 Action = UserLogAction.Updated,
-                EntityType = "Game",
+                EntityType = "Scorecard",
                 EntityId = GameId.ToString(),
                 Description = description,
                 Timestamp = DateTime.UtcNow

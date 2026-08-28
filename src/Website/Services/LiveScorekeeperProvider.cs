@@ -113,7 +113,7 @@ namespace IsotopesStats.Website.Services
                 {
                     UserEmail = userEmail,
                     Action = UserLogAction.Updated,
-                    EntityType = "Game",
+                    EntityType = "Scorecard",
                     EntityId = _gameId.ToString(),
                     Description = description,
                     Timestamp = DateTime.UtcNow
