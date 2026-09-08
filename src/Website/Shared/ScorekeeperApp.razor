@@ -445,8 +445,20 @@ else
             @if (IsPromptingOpponentRuns)
             {
                 <div class="stat-card mb-3 p-3">
-                    <h5 class="text-center mb-3">End of Inning @promptingInning</h5>
-                    <p class="text-center text-muted">How many runs did the opponent score in this inning?</p>
+                    <h5 class="text-center mb-3">
+                        @if (game?.IsHome == true)
+                        {
+                            <text>Top of Inning @promptingInning</text>
+                        }
+                        else
+                        {
+                            <text>Bottom of Inning @promptingInning</text>
+                        }
+                    </h5>
+                    <p class="text-center text-muted">
+                        How many runs did the opponent score in the 
+                        @(game?.IsHome == true ? "top" : "bottom") half of the inning?
+                    </p>
                     
                     <div class="d-flex justify-content-center align-items-center mb-4 gap-3">
                         <button class="btn btn-outline-secondary rounded-circle circle-btn" @onclick="() => { if (opponentRunsInput > 0) opponentRunsInput--; }">-</button>
@@ -1543,6 +1555,8 @@ else
                 }
 
                 await DataProvider.UpdateGameAsync(game);
+                await DataProvider.SyncGameStatsAsync();
+                game = await DataProvider.GetGameAsync();
                 
                 IsPromptingOpponentRuns = false;
                 RecalculateState();
