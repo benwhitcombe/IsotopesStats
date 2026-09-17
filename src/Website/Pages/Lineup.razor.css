@@ -391,7 +391,6 @@ tbody.is-dragging-row ::deep .pos-suggestions-dropdown,
 }
 
 .pos-abbr {
-    width: 80px;
     text-align: center;
     font-weight: 900;
     color: black;
@@ -504,7 +503,7 @@ tbody.is-dragging-row ::deep .pos-suggestions-dropdown,
 .field-container-sticky ::deep .defense-bg {
     max-height: 100%;
     max-width: 100%;
-    width: auto;
+    width: 140px;
     height: auto;
     object-fit: contain;
 }
@@ -737,4 +736,13 @@ tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over {
     15% { opacity: 1; transform: translate(-50%, 0); }
     85% { opacity: 1; transform: translate(-50%, 0); }
     100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+.batting-order-col {
+    width: 325px;
+}
+@media (max-width: 1199.98px) {
+    .batting-order-col {
+        width: 140px;
+    }
 }

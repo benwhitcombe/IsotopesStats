@@ -11,6 +11,18 @@
 
 <PageTitle>Isotopes - Lineup</PageTitle>
 
+<style>
+    /* Prevent the 1,000,000px Chromium table bug caused by the global min-width: max-content rule */
+    body.desktop-device #app,
+    body.desktop-device .page,
+    body.desktop-device main {
+        min-width: 100% !important;
+    }
+    body.desktop-device article.content {
+        min-width: 0 !important;
+    }
+</style>
+
 <div class="header-with-filter" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h3 style="margin:0">Lineup</h3>
     <div style="display: flex; gap: 1rem; align-items: center;">
@@ -30,20 +42,41 @@ else
 {
     <CustomErrorBoundary>
     <div class="lineup-card-container">
-                <div class="lineup-card-header">
+                <div class="lineup-card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1.5rem;">
+                    <div style="flex: 1;"></div>
+                    <div class="header-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 2;">
                     <div class="team-name">ISOTOPES</div>
                     <div class="card-title">LINEUP CARD</div>
+                    </div>
+                    <div style="flex: 1; display: flex; justify-content: flex-end;">
+                        <button class="view-btn" style="padding: 0.25rem 1rem;" @onclick="ToggleDefenseView">
+                            @(defenseViewMode == "diamond" ? "Table View" : "Diamond View")
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="lineup-content-wrapper">
-                    <div class="table-pane @(activeViewMode == "lineup" ? "d-flex" : "d-none d-xl-flex") @(selectedBattingIndex != null ? "table-active" : "")">
-                        <div class="lineup-table-wrapper">
-                            <table class="lineup-table">
+                <div class="lineup-content-wrapper" style="@(defenseViewMode == "table" ? "grid-template-columns: 1fr;" : "")">
+                    <div class="table-pane @(activeViewMode == "lineup" ? "d-flex" : "d-none d-xl-flex") @(selectedBattingIndex != null ? "table-active" : "")" style="@(defenseViewMode == "table" ? "width: 100%; border-right: none; min-width: 0;" : "")">
+                        <div class="lineup-table-wrapper" style="@(defenseViewMode == "table" ? "width: 100%; min-width: 0; overflow-x: auto;" : "overflow-x: auto;")">
+                            <table class="lineup-table" @key="defenseViewMode" style="width: 100%; table-layout: fixed; @(defenseViewMode == "table" ? "min-width: 800px;" : "")">
                                 <thead>
                                     <tr>
                                         <th style="width: 40px;">#</th>
-                                        <th>BATTING ORDER</th>
-                                        <th style="width: 80px;">POS</th>
+                                        <th class="batting-order-col">BATTING ORDER</th>
+                                        @if (defenseViewMode == "diamond")
+                                        {
+                                            <th style="width: 80px;">POS</th>
+                                        }
+                                        else
+                                        {
+                                            @for (int i = 1; i <= 7; i++)
+                                            {
+                                                int inning = i;
+                                                <th class="inning-col-header" style="text-align: center; border-left: 1px solid black;">
+                                                    @inning
+                                                </th>
+                                            }
+                                        }
                                     </tr>
                                 </thead>
                                 <tbody @ref="tbodyRef">
@@ -84,19 +117,42 @@ else
                                                     OnFocused="@(() => HandleFocus(index))"
                                                     OnBlurred="@(() => HandleBlur(index))" />
                                             </td>
-                                            <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None ? "selected" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
-                                                id="@($"pos-{index}")">
-                                                <PositionAutocompleteCell 
-                                                    @ref="posCells[index]"
-                                                    Value="@GetEntryPosition(entry)"
-                                                    AvailablePositions="@AvailablePositions"
-                                                    IsMobile="@isMobile"
-                                                    IsInherited="@IsPositionInherited(entry)"
-                                                    OnSelected="@(val => HandlePositionChange(entry, val))"
-                                                    IsDisabled="@(entry.PlayerId == null)"
-                                                    OnFocused="@(() => HandleFocus(index))"
-                                                    OnBlurred="@(() => HandleBlur(index))" />
-                                            </td>
+                                            @if (defenseViewMode == "diamond")
+                                            {
+                                                <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isEntrySelected && isExplicitlySelected && draggingType == DragMode.None ? "selected" : "") @(isPosSwapping ? "just-swapped" : "") @(isPosRemoving ? "just-removed" : "")" 
+                                                    id="@($"pos-{index}")" style="border-left: 1px solid black;">
+                                                    <PositionAutocompleteCell 
+                                                        @ref="posCells[index]"
+                                                        Value="@GetEntryPosition(entry, selectedInning)"
+                                                        AvailablePositions="@AvailablePositions"
+                                                        IsMobile="@isMobile"
+                                                        IsInherited="@IsPositionInherited(entry, selectedInning)"
+                                                        OnSelected="@(val => HandlePositionChange(entry, val, selectedInning))"
+                                                        IsDisabled="@(entry.PlayerId == null)"
+                                                        OnFocused="@(() => HandleFocus(index))"
+                                                        OnBlurred="@(() => HandleBlur(index))" />
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                @for (int inn = 1; inn <= 7; inn++)
+                                                {
+                                                    int inning = inn;
+                                                    bool isSelected = IsEntrySelected(entry, inning);
+                                                    <td class="pos-abbr @(entry.PlayerId == null ? "disabled" : "") @(isSelected && isExplicitlySelected && draggingType == DragMode.None && selectedInning == inning ? "selected" : "") @(isPosSwapping && selectedInning == inning ? "just-swapped" : "") @(isPosRemoving && selectedInning == inning ? "just-removed" : "")" 
+                                                        id="@($"pos-{index}-{inning}")" style="border-left: 1px solid black;">
+                                                        <PositionAutocompleteCell 
+                                                            Value="@GetEntryPosition(entry, inning)"
+                                                            AvailablePositions="@AvailablePositions"
+                                                            IsMobile="@isMobile"
+                                                            IsInherited="@IsPositionInherited(entry, inning)"
+                                                            OnSelected="@(val => HandlePositionChange(entry, val, inning))"
+                                                            IsDisabled="@(entry.PlayerId == null)"
+                                                            OnFocused="@(() => HandleFocus(index))"
+                                                            OnBlurred="@(() => HandleBlur(index))" />
+                                                    </td>
+                                                }
+                                            }
                                         </tr>
                                     }
                                 </tbody>
@@ -110,7 +166,9 @@ else
                         </div>
                     </div>
 
-                    <div class="field-pane @(activeViewMode == "field" ? "d-flex" : "d-none d-xl-flex")">
+                    @if (defenseViewMode == "diamond")
+                    {
+                        <div class="field-pane @(activeViewMode == "field" ? "d-flex" : "d-none d-xl-flex")">
 
                         <div class="field-container-sticky">
                             <div class="field-header">
@@ -152,6 +210,7 @@ else
                             </div>
                         </div>
                     </div>
+                    }
                 </div>
             </div>
             <div class="mt-3 d-flex justify-content-center">
@@ -171,6 +230,13 @@ else
     [Parameter] [SupplyParameterFromQuery(Name = "p")] public string? LineupData { get; set; }
 
     private string activeViewMode = "lineup";
+    private string defenseViewMode = "diamond"; // "diamond" or "table"
+    private string lastRenderedDefenseViewMode = "diamond";
+
+    private void ToggleDefenseView()
+    {
+        defenseViewMode = defenseViewMode == "diamond" ? "table" : "diamond";
+    }
     private bool isMobile = false;
 
     private ElementReference tbodyRef;
@@ -179,13 +245,17 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!isLoading && !isSortableInitialized)
+        if (!isLoading)
         {
             try
             {
-                isSortableInitialized = true;
-                objRef = DotNetObjectReference.Create(this);
-                await JSRuntime.InvokeVoidAsync("initLineupSortable", tbodyRef, objRef);
+                if (!isSortableInitialized || lastRenderedDefenseViewMode != defenseViewMode)
+                {
+                    isSortableInitialized = true;
+                    lastRenderedDefenseViewMode = defenseViewMode;
+                    objRef ??= DotNetObjectReference.Create(this);
+                    await JSRuntime.InvokeVoidAsync("initLineupSortable", tbodyRef, objRef);
+                }
             }
             catch (Exception)
             {
@@ -366,7 +436,7 @@ else
     private int? dragTargetIndex;
     private bool? dragTargetFromBench;
 
-    private bool IsEntrySelected(BattingOrderEntry entry)
+    private bool IsEntrySelected(BattingOrderEntry entry, int targetInning = -1)
     {
         if (selectedIndex == null) return false;
         
@@ -779,17 +849,18 @@ else
         _ = UpdateUrl();
     }
 
-    private void HandlePositionChange(BattingOrderEntry entry, string? newPos)
+    private void HandlePositionChange(BattingOrderEntry entry, string? newPos, int targetInning = -1)
     {
         if (entry.PlayerId == null) return;
 
+        int target = targetInning != -1 ? targetInning : selectedInning;
         string pos = newPos ?? "B";
-        string oldPos = GetEntryPosition(entry);
+        string oldPos = GetEntryPosition(entry, target);
         if (pos == oldPos) return;
 
-        int startInning = selectedInning;
+        int startInning = target;
 
-        if (selectedInning == 1) // Baseline (Inning 1)
+        if (target == 1) // Baseline (Inning 1)
         {
             (int Index, bool FromBench)? oldLoc = GetFieldOrBenchIndex(entry);
 
