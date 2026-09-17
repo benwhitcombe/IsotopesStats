@@ -503,7 +503,7 @@ tbody.is-dragging-row ::deep .pos-suggestions-dropdown,
 .field-container-sticky ::deep .defense-bg {
     max-height: 100%;
     max-width: 100%;
-    width: 140px;
+    width: auto;
     height: auto;
     object-fit: contain;
 }
@@ -744,5 +744,11 @@ tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over {
 @media (max-width: 1199.98px) {
     .batting-order-col {
         width: 140px;
+    }
+}
+
+@media print {
+    button, .view-btn, .lineup-actions, .share-btn {
+        display: none !important;
     }
 }
