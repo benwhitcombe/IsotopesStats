@@ -466,6 +466,8 @@ window.initLineupSortable = function (tbodyElement, dotNetHelper) {
         filter: '.clear-btn, .suggestions-dropdown, .native-player-select',
         preventOnFilter: false,
         fallbackTolerance: 5,
+        delay: 150,
+        delayOnTouchOnly: true,
         forceFallback: true,
         fallbackClass: 'sortable-fallback',
         fallbackOnBody: true,

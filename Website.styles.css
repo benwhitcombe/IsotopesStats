@@ -392,7 +392,6 @@ tbody.is-dragging-row[b-haooa4l116]  .pos-suggestions-dropdown,
 }
 
 .pos-abbr[b-haooa4l116] {
-    width: 80px;
     text-align: center;
     font-weight: 900;
     color: black;
@@ -505,7 +504,7 @@ tbody.is-dragging-row[b-haooa4l116]  .pos-suggestions-dropdown,
 .field-container-sticky[b-haooa4l116]  .defense-bg {
     max-height: 100%;
     max-width: 100%;
-    width: auto;
+    width: 140px;
     height: auto;
     object-fit: contain;
 }
@@ -738,6 +737,15 @@ tr.reorderable-row.empty-row:not(.dragging-hidden).drag-over[b-haooa4l116] {
     15% { opacity: 1; transform: translate(-50%, 0); }
     85% { opacity: 1; transform: translate(-50%, 0); }
     100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+.batting-order-col[b-haooa4l116] {
+    width: 325px;
+}
+@media (max-width: 1199.98px) {
+    .batting-order-col[b-haooa4l116] {
+        width: 140px;
+    }
 }
 /* /Shared/MainLayout.razor.rz.scp.css */
 .page[b-sy2l7isrkd] {
