@@ -7,10 +7,10 @@ namespace IsotopesStats.SupabaseRepository.Models;
 [Table("seasonopponents")]
 internal class SeasonOpponentsDTO : BaseModel
 {
-    [PrimaryKey("seasonid", false)]
+    [Column("seasonid")]
     public int SeasonId { get; set; }
 
-    [PrimaryKey("opponentid", false)]
+    [Column("opponentid")]
     public int OpponentId { get; set; }
 
     [Column("name")]
